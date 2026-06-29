@@ -1,0 +1,283 @@
+import { useState, useRef } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Mic, MicOff, Sparkles, Plus, Loader2 } from "lucide-react";
+import { parseMemo, parseVoiceMemo } from "@/lib/ai-parse.functions";
+import { addExpense, addExpensesBulk } from "@/lib/budget.functions";
+import { money, fmtDateTime } from "@/lib/format";
+
+const CATEGORIES = [
+  "groceries", "dining", "transport", "fuel", "utilities", "housing",
+  "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "other",
+];
+
+type Parsed = { amount: number; category: string; merchant: string | null; occurred_at: string; note: string | null };
+
+export function ExpenseQuickAdd({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
+  return (
+    <Tabs defaultValue="manual">
+      <TabsList className="mb-4">
+        <TabsTrigger value="manual">Manual</TabsTrigger>
+        <TabsTrigger value="ai"><Sparkles className="size-3.5 mr-1" /> AI memo</TabsTrigger>
+        <TabsTrigger value="voice"><Mic className="size-3.5 mr-1" /> Voice</TabsTrigger>
+      </TabsList>
+      <TabsContent value="manual"><ManualForm householdId={householdId} onAdded={onAdded} /></TabsContent>
+      <TabsContent value="ai"><AiMemoForm householdId={householdId} onAdded={onAdded} /></TabsContent>
+      <TabsContent value="voice"><VoiceForm householdId={householdId} onAdded={onAdded} /></TabsContent>
+    </Tabs>
+  );
+}
+
+function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
+  const add = useServerFn(addExpense);
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("groceries");
+  const [merchant, setMerchant] = useState("");
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const n = parseFloat(amount.replace(",", "."));
+    if (!isFinite(n) || n <= 0) return toast.error("Enter a valid amount");
+    setLoading(true);
+    try {
+      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual" } });
+      setAmount(""); setMerchant(""); setNote("");
+      toast.success("Expense added");
+      onAdded?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div>
+        <Label>Amount (€)</Label>
+        <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+      </div>
+      <div>
+        <Label>Category</Label>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Merchant</Label>
+        <Input value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder="e.g. Lidl" />
+      </div>
+      <div className="flex items-end">
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? <Loader2 className="animate-spin" /> : <><Plus /> Add</>}
+        </Button>
+      </div>
+      <div className="md:col-span-4">
+        <Label>Note (optional)</Label>
+        <Input value={note} onChange={(e) => setNote(e.target.value)} />
+      </div>
+    </form>
+  );
+}
+
+function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
+  const parse = useServerFn(parseMemo);
+  const bulk = useServerFn(addExpensesBulk);
+  const [text, setText] = useState("");
+  const [items, setItems] = useState<Parsed[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function doParse() {
+    if (!text.trim()) return;
+    setLoading(true);
+    try {
+      const res = await parse({ data: { text } });
+      setItems(res.items);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Parsing failed");
+    } finally { setLoading(false); }
+  }
+
+  async function confirm() {
+    if (!items?.length) return;
+    setLoading(true);
+    try {
+      await bulk({
+        data: {
+          items: items.map((i) => ({
+            household_id: householdId,
+            amount: i.amount,
+            category: i.category,
+            merchant: i.merchant,
+            occurred_at: i.occurred_at,
+            note: i.note,
+            source: "ai_memo" as const,
+          })),
+        },
+      });
+      toast.success(`Added ${items.length} expense${items.length === 1 ? "" : "s"}`);
+      setItems(null);
+      setText("");
+      onAdded?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="space-y-3">
+      <Textarea
+        placeholder='e.g. "Spent 42€ at Lidl for groceries yesterday, and 18€ on lunch today"'
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+      />
+      {!items ? (
+        <Button onClick={doParse} disabled={loading || !text.trim()}>
+          {loading ? <Loader2 className="animate-spin" /> : <Sparkles />} Parse with AI
+        </Button>
+      ) : (
+        <ParsedReview items={items} setItems={setItems} onConfirm={confirm} onCancel={() => setItems(null)} loading={loading} />
+      )}
+    </div>
+  );
+}
+
+function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
+  const parseVoice = useServerFn(parseVoiceMemo);
+  const bulk = useServerFn(addExpensesBulk);
+  const [recording, setRecording] = useState(false);
+  const [items, setItems] = useState<Parsed[] | null>(null);
+  const [transcript, setTranscript] = useState("");
+  const [loading, setLoading] = useState(false);
+  const recRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  async function start() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const rec = new MediaRecorder(stream, { mimeType: mime });
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mime });
+        const buf = await blob.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        setLoading(true);
+        try {
+          const res = await parseVoice({ data: { audio_base64: base64, mime_type: mime } });
+          setTranscript(res.transcript);
+          setItems(res.items);
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Voice parsing failed");
+        } finally { setLoading(false); }
+      };
+      rec.start();
+      recRef.current = rec;
+      setRecording(true);
+    } catch {
+      toast.error("Microphone permission needed");
+    }
+  }
+
+  function stop() {
+    recRef.current?.stop();
+    setRecording(false);
+  }
+
+  async function confirm() {
+    if (!items?.length) return;
+    setLoading(true);
+    try {
+      await bulk({
+        data: {
+          items: items.map((i) => ({
+            household_id: householdId,
+            amount: i.amount,
+            category: i.category,
+            merchant: i.merchant,
+            occurred_at: i.occurred_at,
+            note: i.note,
+            source: "ai_voice" as const,
+          })),
+        },
+      });
+      toast.success(`Added ${items.length} expense${items.length === 1 ? "" : "s"}`);
+      setItems(null); setTranscript("");
+      onAdded?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        {!recording ? (
+          <Button onClick={start} disabled={loading}><Mic /> Start recording</Button>
+        ) : (
+          <Button onClick={stop} variant="destructive"><MicOff /> Stop & parse</Button>
+        )}
+        {loading && <Loader2 className="animate-spin text-muted-foreground" />}
+        {recording && <span className="text-sm text-muted-foreground animate-pulse">Listening…</span>}
+      </div>
+      {transcript && (
+        <div className="text-sm bg-muted/50 rounded-md p-3">
+          <p className="text-xs uppercase text-muted-foreground mb-1">Transcript</p>
+          <p>{transcript}</p>
+        </div>
+      )}
+      {items && (
+        <ParsedReview items={items} setItems={setItems} onConfirm={confirm} onCancel={() => { setItems(null); setTranscript(""); }} loading={loading} />
+      )}
+    </div>
+  );
+}
+
+function ParsedReview({
+  items, setItems, onConfirm, onCancel, loading,
+}: {
+  items: Parsed[]; setItems: (v: Parsed[]) => void; onConfirm: () => void; onCancel: () => void; loading: boolean;
+}) {
+  function update(idx: number, patch: Partial<Parsed>) {
+    setItems(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+  }
+  function remove(idx: number) { setItems(items.filter((_, i) => i !== idx)); }
+
+  if (!items.length) return <p className="text-sm text-muted-foreground">Nothing detected. Try rephrasing.</p>;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">Review {items.length} parsed expense{items.length === 1 ? "" : "s"}:</p>
+      <div className="space-y-2">
+        {items.map((it, i) => (
+          <div key={i} className="grid grid-cols-12 gap-2 items-center bg-muted/30 rounded-md p-2">
+            <Input className="col-span-3" type="number" step="0.01" value={it.amount} onChange={(e) => update(i, { amount: parseFloat(e.target.value) || 0 })} />
+            <Select value={it.category} onValueChange={(v) => update(i, { category: v })}>
+              <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+              <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+            <Input className="col-span-3" placeholder="merchant" value={it.merchant ?? ""} onChange={(e) => update(i, { merchant: e.target.value })} />
+            <span className="col-span-2 text-xs text-muted-foreground">{fmtDateTime(it.occurred_at)}</span>
+            <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}>×</Button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Button onClick={onConfirm} disabled={loading || !items.length}>
+          {loading ? <Loader2 className="animate-spin" /> : null} Confirm & save ({money(items.reduce((s, i) => s + i.amount, 0))})
+        </Button>
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
