@@ -97,44 +97,21 @@ function AuthPage() {
               </div>
             </div>
 
-            <Tabs defaultValue="signin">
-              <TabsList className="grid grid-cols-2 mb-4">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Create account</TabsTrigger>
-              </TabsList>
+            <form onSubmit={signIn} className="space-y-3">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>Sign in</Button>
+            </form>
+            <p className="text-xs text-muted-foreground mt-4 text-center">
+              New accounts are invite-only. Ask the household admin for an invite link.
+            </p>
 
-              <TabsContent value="signin">
-                <form onSubmit={signIn} className="space-y-3">
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>Sign in</Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="signup">
-                <form onSubmit={signUp} className="space-y-3">
-                  <div>
-                    <Label htmlFor="dn">Your name</Label>
-                    <Input id="dn" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="e.g. Alex" />
-                  </div>
-                  <div>
-                    <Label htmlFor="email2">Email</Label>
-                    <Input id="email2" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="pw2">Password</Label>
-                    <Input id="pw2" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>Create account</Button>
-                </form>
-              </TabsContent>
-            </Tabs>
           </CardContent>
         </Card>
 
