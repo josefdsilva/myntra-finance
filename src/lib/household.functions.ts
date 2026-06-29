@@ -43,7 +43,7 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
     if (mErr) throw mErr;
 
     // Seed buckets
-    await supabase
+    await supabaseAdmin
       .from("buckets")
       .insert(DEFAULT_BUCKETS.map((b) => ({ ...b, household_id: household.id })));
 
