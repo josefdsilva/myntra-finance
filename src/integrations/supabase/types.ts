@@ -354,11 +354,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      current_user_household: { Args: never; Returns: string }
-      is_household_member: {
-        Args: { _household_id: string; _user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       bucket_target_type: "pct_surplus" | "fixed_monthly" | "fixed_yearly"
