@@ -27,21 +27,23 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
       return { household: existing.households, role: existing.role };
     }
 
-    // Create household
-    const { data: household, error: hErr } = await supabase
+    // Create household with admin client — user is already verified by requireSupabaseAuth
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: household, error: hErr } = await supabaseAdmin
       .from("households")
       .insert({ name: "My Household", created_by: userId, baseline_budget: 0, margin_pct: 10 })
       .select()
       .single();
     if (hErr || !household) throw hErr ?? new Error("Failed to create household");
 
-    const { error: mErr } = await supabase
+    const { error: mErr } = await supabaseAdmin
       .from("household_members")
       .insert({ household_id: household.id, user_id: userId, role: "owner" });
     if (mErr) throw mErr;
 
     // Seed buckets
-    await supabase
+    await supabaseAdmin
       .from("buckets")
       .insert(DEFAULT_BUCKETS.map((b) => ({ ...b, household_id: household.id })));
 
