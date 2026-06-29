@@ -11,7 +11,7 @@ import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Household Budget" }] }),
   component: Dashboard,
 });

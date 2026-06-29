@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/expenses", label: "Expenses", icon: Receipt },
   { to: "/allocations", label: "Allocations", icon: PiggyBank },
   { to: "/settings", label: "Settings", icon: Settings },
