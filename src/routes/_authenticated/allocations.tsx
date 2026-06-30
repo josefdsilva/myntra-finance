@@ -34,12 +34,13 @@ function AllocationsPage() {
     enabled: !!householdId,
     queryKey: ["allocations", householdId],
     queryFn: async () => {
-      const [{ data: incomes }, { data: buckets }] = await Promise.all([
+      const [{ data: incomes }, { data: buckets }, { data: firstSalary }] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("buckets").select("*").eq("household_id", householdId!).order("sort_order"),
+        supabase.from("expenses").select("occurred_at").eq("household_id", householdId!).eq("is_salary", true).order("occurred_at", { ascending: true }).limit(1),
       ]);
       const income = (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      return { income, buckets: (buckets ?? []) as Bucket[] };
+      return { income, buckets: (buckets ?? []) as Bucket[], firstSalaryAt: firstSalary?.[0]?.occurred_at ?? null };
     },
   });
 
@@ -126,25 +127,39 @@ function AllocationsPage() {
         </CardContent>
       </Card>
 
-      <YearToDate householdId={householdId} buckets={data?.buckets ?? []} monthlyFn={monthly} />
+      <YearToDate buckets={data?.buckets ?? []} monthlyFn={monthly} firstSalaryAt={data?.firstSalaryAt ?? null} />
     </div>
   );
 }
 
-function YearToDate({ householdId, buckets, monthlyFn }: { householdId?: string; buckets: Bucket[]; monthlyFn: (b: Bucket) => number }) {
-  const monthsElapsed = new Date().getMonth() + 1;
+function YearToDate({ buckets, monthlyFn, firstSalaryAt }: { buckets: Bucket[]; monthlyFn: (b: Bucket) => number; firstSalaryAt: string | null }) {
+  const now = new Date();
+  const year = now.getFullYear();
+  // Start of projection window: first salary (if this year) else Jan 1
+  const start = firstSalaryAt && new Date(firstSalaryAt).getFullYear() === year
+    ? new Date(firstSalaryAt)
+    : new Date(year, 0, 1);
+  // Fractional months elapsed since start (cap at 12)
+  const msPerMonth = (365.25 / 12) * 86400000;
+  const monthsElapsed = Math.max(0, Math.min(12, (now.getTime() - start.getTime()) / msPerMonth));
+  // Months remaining until Dec 31 of this year
+  const yearEndDate = new Date(year, 11, 31, 23, 59, 59);
+  const monthsInYear = Math.max(0, Math.min(12, (yearEndDate.getTime() - start.getTime()) / msPerMonth));
+  const startLabel = start.toLocaleDateString("en-GB");
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><PiggyBank className="size-5" /> Year-to-date projection</CardTitle>
-        <CardDescription>If current allocations continue, here's what each bucket reaches by year end.</CardDescription>
+        <CardDescription>
+          Counted from {startLabel} ({firstSalaryAt && new Date(firstSalaryAt).getFullYear() === year ? "first salary" : "Jan 1"}). If current allocations continue, here's what each bucket reaches by year end.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {!buckets.length ? <p className="text-sm text-muted-foreground">—</p> : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {buckets.map((b) => {
               const ytd = monthlyFn(b) * monthsElapsed;
-              const yearEnd = monthlyFn(b) * 12;
+              const yearEnd = monthlyFn(b) * monthsInYear;
               return (
                 <div key={b.id} className="rounded-lg border p-3">
                   <div className="flex items-center gap-2 mb-1">
