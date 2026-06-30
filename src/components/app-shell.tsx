@@ -2,13 +2,14 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Wallet, Menu, X, Eye, EyeOff } from "lucide-react";
+import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Wallet, Menu, X, Eye, EyeOff, BarChart3 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/expenses", label: "Expenses", icon: Receipt },
+  { to: "/analysis", label: "Analysis", icon: BarChart3 },
   { to: "/allocations", label: "Allocations", icon: PiggyBank },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
