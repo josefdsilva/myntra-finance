@@ -17,7 +17,7 @@ const CATEGORIES = [
   "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "other",
 ];
 
-type Parsed = { amount: number; category: string; merchant: string | null; occurred_at: string; note: string | null };
+type Parsed = { amount: number; category: string; merchant?: string | null; occurred_at?: string; note?: string | null };
 
 export function ExpenseQuickAdd({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   return (
