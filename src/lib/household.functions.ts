@@ -60,9 +60,8 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
       }
     }
 
+    // Create a fresh household with admin client — user is already verified by requireSupabaseAuth
 
-    // Create household with admin client — user is already verified by requireSupabaseAuth
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: household, error: hErr } = await supabaseAdmin
       .from("households")
