@@ -137,10 +137,10 @@ function AnalysisPage() {
     // Starting balance = income entries inside cycle (salaries + receivables count as inflow)
     // Build chronological events; running balance increments on income, decrements on expense.
     const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
-    let bal = 0;
+    // Reserve fixed expenses up-front: balance starts at -fixedTotal on day 1 of the cycle.
+    let bal = -fixedTotal;
     const out: { label: string; iso: string; balance: number }[] = [];
-    // anchor point at cycle start
-    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0 });
+    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: Number(bal.toFixed(2)) });
     for (const ev of events) {
       const amt = Number(ev.amount);
       bal += ev.kind === "income" ? amt : -amt;
