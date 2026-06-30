@@ -36,7 +36,6 @@ const COLORS = [
   "#5c7a99", "#99785c", "#7a5c99", "#99995c",
 ];
 
-type Granularity = "day" | "week" | "month";
 type RangeKey = "30d" | "90d" | "6m" | "12m" | "ytd";
 
 function AnalysisPage() {
@@ -45,12 +44,9 @@ function AnalysisPage() {
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
-  const [gran, setGran] = useState<Granularity>("day");
   const [range, setRange] = useState<RangeKey>("30d");
-  const [showBaseline, setShowBaseline] = useState(true);
-  const [showVariable, setShowVariable] = useState(true);
-  const [chartType, setChartType] = useState<"line" | "bar">("line");
   const [includeFixed, setIncludeFixed] = useState(false);
+
 
   const { start } = useMemo(() => {
     const now = new Date();
