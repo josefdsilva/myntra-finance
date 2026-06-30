@@ -14,7 +14,7 @@ import { money, fmtDateTime } from "@/lib/format";
 
 const CATEGORIES = [
   "groceries", "dining", "transport", "fuel", "utilities", "housing",
-  "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "other",
+  "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "income", "other",
 ];
 
 type Parsed = { amount: number; category: string; merchant?: string | null; occurred_at?: string; note?: string | null };
@@ -42,6 +42,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
   const [isSalary, setIsSalary] = useState(false);
+  const [customDate, setCustomDate] = useState(false);
   const nowLocal = () => {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -56,9 +57,9 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     if (!isFinite(n) || n <= 0) return toast.error("Enter a valid amount");
     setLoading(true);
     try {
-      const occurredIso = occurredAt ? new Date(occurredAt).toISOString() : new Date().toISOString();
+      const occurredIso = customDate && occurredAt ? new Date(occurredAt).toISOString() : new Date().toISOString();
       await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind, is_salary: kind === "income" && isSalary, occurred_at: occurredIso } });
-      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false); setOccurredAt(nowLocal());
+      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false); setCustomDate(false); setOccurredAt(nowLocal());
       toast.success(kind === "income" ? (isSalary ? "Salary recorded — pay cycle updated" : "Money received added") : "Expense added");
       onAdded?.();
     } catch (err) {
@@ -108,8 +109,13 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           </div>
         )}
         <div className="md:col-span-2">
-          <Label>Date & time</Label>
-          <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+          <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none mb-2">
+            <input type="checkbox" checked={customDate} onChange={(e) => setCustomDate(e.target.checked)} className="accent-primary size-4" />
+            <span>Set custom date & time {!customDate && <span className="text-muted-foreground">(defaults to now)</span>}</span>
+          </label>
+          {customDate && (
+            <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+          )}
         </div>
         <div className="md:col-span-2">
           <Label>Note (optional)</Label>
