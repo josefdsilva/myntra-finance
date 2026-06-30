@@ -41,6 +41,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [category, setCategory] = useState("groceries");
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
+  const [isSalary, setIsSalary] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -49,9 +50,9 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     if (!isFinite(n) || n <= 0) return toast.error("Enter a valid amount");
     setLoading(true);
     try {
-      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind } });
-      setAmount(""); setMerchant(""); setNote("");
-      toast.success(kind === "income" ? "Money received added" : "Expense added");
+      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind, is_salary: kind === "income" && isSalary } });
+      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false);
+      toast.success(kind === "income" ? (isSalary ? "Salary recorded — pay cycle updated" : "Money received added") : "Expense added");
       onAdded?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -61,7 +62,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
-        <button type="button" onClick={() => { setKind("expense"); setCategory("groceries"); }}
+        <button type="button" onClick={() => { setKind("expense"); setCategory("groceries"); setIsSalary(false); }}
           className={`px-3 py-1.5 text-sm rounded ${kind === "expense" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>
           Expense
         </button>
@@ -91,6 +92,14 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
             {loading ? <Loader2 className="animate-spin" /> : <><Plus /> Add</>}
           </Button>
         </div>
+        {kind === "income" && (
+          <div className="md:col-span-4">
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input type="checkbox" checked={isSalary} onChange={(e) => setIsSalary(e.target.checked)} className="accent-primary size-4" />
+              <span>This is a salary deposit — start a new pay cycle on this date</span>
+            </label>
+          </div>
+        )}
         <div className="md:col-span-4">
           <Label>Note (optional)</Label>
           <Input value={note} onChange={(e) => setNote(e.target.value)} />
