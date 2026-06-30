@@ -129,12 +129,16 @@ export const parseVoiceMemo = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const result = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
-      output: Output.object({ schema: ParsedList }),
-      system: `You extract household expenses from short voice memos in any language.
-Current time: ${now}. Currency EUR. Always return positive amounts.`,
+      system: `You extract household expenses from voice memos in any language.
+Current time: ${now}. Currency EUR. Always positive amounts.
+Categories: ${CATEGORY_LIST}.
+
+Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+No prose, no markdown fences.`,
       prompt: transcript,
     });
-    return { transcript, ...result.output };
+    const parsed = ParsedList.parse(extractJson(result.text));
+    return { transcript, ...parsed };
   });
 
 const StatementTx = z.object({
