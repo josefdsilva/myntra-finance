@@ -180,11 +180,13 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Before baseline limit" value={money(remaining)} highlight />
+        <StatCard label="Emergency pool" value={money(Math.max(0, surplus - totalAllocated))} hint="Unallocated surplus" />
         <StatCard label="Monthly income" value={money(dashboard?.income ?? 0)} />
         <StatCard label="Fixed expenses" value={money(dashboard?.fixedTotal ?? 0)} />
-        <StatCard label="Variable pool" value={money(variablePool)} />
       </div>
+
 
 
       <Card>
