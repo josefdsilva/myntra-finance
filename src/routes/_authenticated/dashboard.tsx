@@ -215,17 +215,22 @@ function Dashboard() {
             <p className="text-sm text-muted-foreground">No expenses yet this month.</p>
           ) : (
             <ul className="divide-y">
-              {dashboard.recent.map((e) => (
-                <li key={e.id} className="flex items-center justify-between py-3">
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {fmtDateTime(e.occurred_at)} · {e.category}
+              {dashboard.recent.map((e) => {
+                const isIncome = e.kind === "income";
+                return (
+                  <li key={e.id} className="flex items-center justify-between py-3">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {fmtDateTime(e.occurred_at)} · {e.category}{isIncome ? " · received" : ""}
+                      </p>
+                    </div>
+                    <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
+                      {isIncome ? "+" : "−"}{money(e.amount)}
                     </p>
-                  </div>
-                  <p className="font-medium tabular-nums">{money(e.amount)}</p>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </CardContent>
