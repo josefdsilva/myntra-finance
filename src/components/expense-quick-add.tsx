@@ -14,7 +14,7 @@ import { money, fmtDateTime } from "@/lib/format";
 
 const CATEGORIES = [
   "groceries", "dining", "transport", "fuel", "utilities", "housing",
-  "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "other",
+  "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "income", "other",
 ];
 
 type Parsed = { amount: number; category: string; merchant?: string | null; occurred_at?: string; note?: string | null };
