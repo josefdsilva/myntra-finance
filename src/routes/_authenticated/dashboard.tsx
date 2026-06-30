@@ -80,7 +80,8 @@ function Dashboard() {
   const netSpent = Math.max(0, spent - received);
   const remaining = Math.max(0, variablePool - netSpent);
   const overspent = netSpent > variablePool;
-  const daysLeft = daysRemainingInMonth();
+  const cycle = dashboard?.cycle;
+  const daysLeft = cycle?.daysLeft ?? 1;
   const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
   const pctSpent = variablePool > 0 ? Math.min(100, (netSpent / variablePool) * 100) : 0;
 
@@ -118,15 +119,21 @@ function Dashboard() {
     : [];
 
   const monthName = useMemo(() => new Date().toLocaleString("en-GB", { month: "long", year: "numeric" }), []);
+  const cycleLabel = cycle
+    ? cycle.source === "salary"
+      ? `Pay cycle · ${fmtDate(cycle.start)} → ${fmtDate(cycle.end)}${cycle.predicted ? " (predicted)" : ""}`
+      : `Calendar month · ${monthName} (no salary recorded yet)`
+    : monthName;
 
   const setupIncomplete = baseline === 0;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
-        <p className="text-sm text-muted-foreground">{monthName}</p>
+        <p className="text-sm text-muted-foreground">{cycleLabel}</p>
         <h1 className="text-3xl md:text-4xl font-display">Daily overview</h1>
       </header>
+
 
       {setupIncomplete && (
         <Card className="border-warning/40 bg-warning/5">
