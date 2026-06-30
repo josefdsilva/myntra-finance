@@ -105,7 +105,8 @@ function AllocationsPage() {
                         <span className="text-xs text-muted-foreground">
                           {b.target_type === "pct_surplus" ? `${b.target_value}% of surplus`
                            : b.target_type === "fixed_monthly" ? `${money(b.target_value)} / month`
-                           : `${money(b.target_value)} / year`}
+                           : b.target_type === "fixed_yearly" ? `${money(b.target_value)} / year`
+                           : `${money(b.target_value)} by ${b.target_deadline ?? "—"} (${monthsUntil(b.target_deadline)} mo left)`}
                         </span>
                       </div>
                       <span className="font-medium tabular-nums">{money(amount)}</span>
