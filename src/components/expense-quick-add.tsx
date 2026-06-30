@@ -107,7 +107,11 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
             </label>
           </div>
         )}
-        <div className="md:col-span-4">
+        <div className="md:col-span-2">
+          <Label>Date & time</Label>
+          <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+        </div>
+        <div className="md:col-span-2">
           <Label>Note (optional)</Label>
           <Input value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
