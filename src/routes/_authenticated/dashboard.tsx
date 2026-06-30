@@ -6,7 +6,8 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { money, fmtDateTime, daysRemainingInMonth, monthBounds } from "@/lib/format";
+import { money, fmtDateTime, fmtDate } from "@/lib/format";
+import { computeCycle } from "@/lib/cycle";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -29,24 +30,38 @@ function Dashboard() {
     enabled: !!householdId,
     queryKey: ["dashboard", householdId],
     queryFn: async () => {
-      const { start, end } = monthBounds();
+      // 1) Detect cycle from salary income entries
+      const { data: salaries } = await supabase
+        .from("expenses")
+        .select("occurred_at")
+        .eq("household_id", householdId!)
+        .eq("kind", "income")
+        .eq("is_salary", true)
+        .order("occurred_at", { ascending: false })
+        .limit(6);
+      const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
+
       const [{ data: fixed }, { data: expenses }, { data: incomes }, { data: buckets }] = await Promise.all([
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
         supabase
           .from("expenses")
-          .select("id, amount, category, merchant, occurred_at, note, source, kind")
+          .select("id, amount, category, merchant, occurred_at, note, source, kind, is_salary")
           .eq("household_id", householdId!)
-          .gte("occurred_at", start.toISOString())
-          .lt("occurred_at", end.toISOString())
+          .gte("occurred_at", cycle.start.toISOString())
+          .lt("occurred_at", cycle.end.toISOString())
           .order("occurred_at", { ascending: false }),
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("buckets").select("id, name, target_type, target_value, target_deadline, color").eq("household_id", householdId!).order("sort_order"),
       ]);
       const fixedTotal = (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const spent = (expenses ?? []).filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
-      const received = (expenses ?? []).filter((r) => r.kind === "income").reduce((s, r) => s + Number(r.amount), 0);
+      // Exclude salary deposits from "received" — they're the income, not a top-up
+      const received = (expenses ?? [])
+        .filter((r) => r.kind === "income" && !r.is_salary)
+        .reduce((s, r) => s + Number(r.amount), 0);
       const income = (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       return {
+        cycle,
         fixedTotal,
         spent,
         received,
