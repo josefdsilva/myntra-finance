@@ -12,6 +12,7 @@ const expenseInput = z.object({
   source: z.enum(["manual", "ai_memo", "ai_voice", "statement"]).default("manual"),
   source_meta: z.record(z.unknown()).optional(),
   kind: z.enum(["expense", "income"]).default("expense"),
+  is_salary: z.boolean().optional().default(false),
 });
 
 export const addExpense = createServerFn({ method: "POST" })
@@ -31,6 +32,7 @@ export const addExpense = createServerFn({ method: "POST" })
         source: data.source,
         source_meta: (data.source_meta ?? {}) as never,
         kind: data.kind,
+        is_salary: data.kind === "income" ? !!data.is_salary : false,
       })
       .select()
       .single();
@@ -55,6 +57,7 @@ export const addExpensesBulk = createServerFn({ method: "POST" })
       source: d.source,
       source_meta: (d.source_meta ?? {}) as never,
       kind: d.kind,
+      is_salary: d.kind === "income" ? !!d.is_salary : false,
     }));
     const { data: inserted, error } = await context.supabase.from("expenses").insert(rows).select();
     if (error) throw error;

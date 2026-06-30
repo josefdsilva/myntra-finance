@@ -1,0 +1,2 @@
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS is_salary boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS expenses_household_salary_idx ON public.expenses (household_id, occurred_at DESC) WHERE is_salary = true;
