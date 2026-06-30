@@ -15,6 +15,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { startOfDay, startOfWeek, startOfMonth, format as fmt, subDays, subMonths } from "date-fns";
+import { computeCycle } from "@/lib/cycle";
+import { Area } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Household Budget" }] }),
@@ -88,28 +90,107 @@ function AnalysisPage() {
   });
   const variablePool = Math.max(0, baseline - fixedTotal);
 
+  // ---- Burndown (current pay cycle) ----
+  const { data: cycleData } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["burndown-cycle", householdId],
+    queryFn: async () => {
+      const [{ data: salaries }, { data: buckets }, { data: incomesRows }] = await Promise.all([
+        supabase.from("expenses").select("occurred_at")
+          .eq("household_id", householdId!).eq("is_salary", true)
+          .order("occurred_at", { ascending: false }).limit(6),
+        supabase.from("buckets").select("*").eq("household_id", householdId!),
+        supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
+      ]);
+      const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
+      const { data: cycleTx } = await supabase
+        .from("expenses")
+        .select("amount, occurred_at, kind, is_salary")
+        .eq("household_id", householdId!)
+        .gte("occurred_at", cycle.start.toISOString())
+        .lt("occurred_at", cycle.end.toISOString())
+        .order("occurred_at", { ascending: true });
+      const monthlyIncome = (incomesRows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      const surplus = Math.max(0, monthlyIncome - baseline);
+      function monthsUntil(dateStr: string | null): number {
+        if (!dateStr) return 0;
+        const target = new Date(dateStr);
+        const n = new Date();
+        const m = (target.getFullYear() - n.getFullYear()) * 12 + (target.getMonth() - n.getMonth()) + (target.getDate() >= n.getDate() ? 0 : -1) + 1;
+        return Math.max(1, m);
+      }
+      const totalAllocated = (buckets ?? []).reduce((s: number, b: any) => {
+        const v = Number(b.target_value);
+        if (b.target_type === "pct_surplus") return s + (surplus * v) / 100;
+        if (b.target_type === "fixed_monthly") return s + v;
+        if (b.target_type === "fixed_yearly") return s + v / 12;
+        return s + v / monthsUntil(b.target_deadline);
+      }, 0);
+      const unallocated = Math.max(0, surplus - totalAllocated);
+      return { cycle, tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>, unallocated };
+    },
+  });
+
+  const burnSeries = useMemo(() => {
+    if (!cycleData) return [];
+    const { cycle, tx } = cycleData;
+    // Starting balance = income entries inside cycle (salaries + receivables count as inflow)
+    // Build chronological events; running balance increments on income, decrements on expense.
+    const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
+    let bal = 0;
+    const out: { label: string; iso: string; balance: number }[] = [];
+    // anchor point at cycle start
+    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0 });
+    for (const ev of events) {
+      const amt = Number(ev.amount);
+      bal += ev.kind === "income" ? amt : -amt;
+      out.push({
+        label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm"),
+        iso: ev.occurred_at,
+        balance: Number(bal.toFixed(2)),
+      });
+    }
+    // anchor point at "now" (or cycle end, whichever is sooner)
+    const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
+    out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)) });
+    return out;
+  }, [cycleData]);
+
+
   // baseline scaled to current granularity (variable pool only — fixed expenses don't show up as daily spend)
   const scale = gran === "day" ? 1 / 30.4375 : gran === "week" ? 12 / 52 : 1;
   const baselineLine = baseline * scale;
   const variableLine = variablePool * scale;
 
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
+  const onlyIncome = useMemo(() => (expenses ?? []).filter((e) => e.kind === "income"), [expenses]);
+
+  // Fixed expense amount to add to each time bucket when toggled on
+  const fixedPerBucket = gran === "day" ? fixedTotal / 30.4375
+    : gran === "week" ? fixedTotal * 7 / 30.4375
+    : fixedTotal;
 
   const series = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const e of onlySpend) {
-      const d = new Date(e.occurred_at);
-      let bucket: Date;
-      if (gran === "day") bucket = startOfDay(d);
-      else if (gran === "week") bucket = startOfWeek(d, { weekStartsOn: 1 });
-      else bucket = startOfMonth(d);
-      const key = bucket.toISOString();
-      map.set(key, (map.get(key) ?? 0) + Number(e.amount));
+    const spendMap = new Map<string, number>();
+    const incomeMap = new Map<string, number>();
+    function bucketKey(dateStr: string): string {
+      const d = new Date(dateStr);
+      const b = gran === "day" ? startOfDay(d)
+        : gran === "week" ? startOfWeek(d, { weekStartsOn: 1 })
+        : startOfMonth(d);
+      return b.toISOString();
     }
-    // Fill missing buckets between range start and today so the line is continuous
+    for (const e of onlySpend) {
+      const k = bucketKey(e.occurred_at);
+      spendMap.set(k, (spendMap.get(k) ?? 0) + Number(e.amount));
+    }
+    for (const e of onlyIncome) {
+      const k = bucketKey(e.occurred_at);
+      incomeMap.set(k, (incomeMap.get(k) ?? 0) + Number(e.amount));
+    }
     const now = new Date();
     const stepMs = gran === "day" ? 86400000 : gran === "week" ? 7 * 86400000 : 0;
-    const out: { label: string; total: number; iso: string }[] = [];
+    const out: { label: string; spend: number; income: number; iso: string }[] = [];
     function pushBucket(date: Date) {
       const iso = date.toISOString();
       const label = gran === "month"
@@ -117,7 +198,14 @@ function AnalysisPage() {
         : gran === "week"
         ? `W${fmt(date, "II")} ${fmt(date, "dd/MM")}`
         : fmt(date, "dd/MM");
-      out.push({ label, iso, total: Number((map.get(iso) ?? 0).toFixed(2)) });
+      const spendVar = spendMap.get(iso) ?? 0;
+      const spend = includeFixed ? spendVar + fixedPerBucket : spendVar;
+      out.push({
+        label,
+        iso,
+        spend: Number(spend.toFixed(2)),
+        income: Number((incomeMap.get(iso) ?? 0).toFixed(2)),
+      });
     }
     if (gran === "month") {
       let cur = startOfMonth(start);
@@ -135,7 +223,7 @@ function AnalysisPage() {
       }
     }
     return out;
-  }, [onlySpend, gran, start]);
+  }, [onlySpend, onlyIncome, gran, start, includeFixed, fixedPerBucket]);
 
 
   const byCategory = useMemo(() => {
@@ -143,10 +231,15 @@ function AnalysisPage() {
     for (const e of onlySpend) {
       map.set(e.category, (map.get(e.category) ?? 0) + Number(e.amount));
     }
-    return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
-      .sort((a, b) => b.value - a.value);
-  }, [onlySpend]);
+    const arr = Array.from(map.entries())
+      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }));
+    if (includeFixed && fixedTotal > 0) {
+      const monthsInRangeLocal = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
+      arr.push({ name: "fixed expenses", value: Number((fixedTotal * monthsInRangeLocal).toFixed(2)) });
+    }
+    return arr.sort((a, b) => b.value - a.value);
+  }, [onlySpend, includeFixed, fixedTotal, start]);
+
 
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
   const totalIncome = (expenses ?? []).filter((e) => e.kind === "income").reduce((s, e) => s + Number(e.amount), 0);
@@ -196,6 +289,45 @@ function AnalysisPage() {
         <Stat label="Received" value={money(totalIncome)} />
         <Stat label="Net" value={money(totalIncome - totalSpend)} highlight />
       </div>
+
+      {cycleData && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Cycle burndown</CardTitle>
+            <CardDescription>
+              Pay cycle {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
+              {cycleData.cycle.predicted ? " (predicted)" : ""} · running balance from inflows minus outflows
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!burnSeries.length ? (
+              <p className="text-sm text-muted-foreground py-10 text-center">No activity in this cycle yet.</p>
+            ) : (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={burnSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={20} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
+                    <Tooltip formatter={(v: number) => money(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                    <Area type="stepAfter" dataKey="balance" name="Balance" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15} strokeWidth={2} />
+                    {baseline > 0 && (
+                      <ReferenceLine y={baseline} stroke="hsl(var(--destructive))" strokeWidth={1.5} strokeDasharray="4 2"
+                        label={{ value: `Baseline ${money(baseline)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
+                    )}
+                    {baseline > 0 && cycleData.unallocated > 0 && (
+                      <ReferenceLine y={baseline + cycleData.unallocated} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
+                        label={{ value: `Baseline + unallocated ${money(baseline + cycleData.unallocated)}`, position: "insideTopRight", fontSize: 10, fill: "#b45309" }} />
+                    )}
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card>
         <CardHeader className="space-y-3">
@@ -253,11 +385,11 @@ function AnalysisPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={20} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
                   <Tooltip formatter={(v: number) => money(v)} labelStyle={{ color: "var(--foreground)" }} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  {chartType === "bar" ? (
-                    <Bar dataKey="total" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-                  ) : (
-                    <Line type="monotone" dataKey="total" stroke="var(--primary)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                  )}
+                  {chartType === "bar" && <Bar dataKey="spend" name="Spent" fill="var(--primary)" radius={[4, 4, 0, 0]} />}
+                  {chartType === "bar" && <Bar dataKey="income" name="Received" fill="#2c6e6b" radius={[4, 4, 0, 0]} />}
+                  {chartType === "line" && <Line type="monotone" dataKey="spend" name="Spent" stroke="var(--primary)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />}
+                  {chartType === "line" && <Line type="monotone" dataKey="income" name="Received" stroke="#2c6e6b" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 2 }} />}
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
                   {baseline > 0 && showBaseline && (
                     <ReferenceLine y={baselineLine} stroke="hsl(var(--destructive))" strokeWidth={1.5} strokeDasharray="4 2"
                       label={{ value: "Baseline", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
