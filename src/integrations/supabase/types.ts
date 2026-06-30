@@ -52,6 +52,60 @@ export type Database = {
           },
         ]
       }
+      bucket_allocations: {
+        Row: {
+          amount: number
+          bucket_id: string
+          confirmed_at: string
+          confirmed_by: string
+          created_at: string
+          household_id: string
+          id: string
+          note: string | null
+          period: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bucket_id: string
+          confirmed_at?: string
+          confirmed_by: string
+          created_at?: string
+          household_id: string
+          id?: string
+          note?: string | null
+          period: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bucket_id?: string
+          confirmed_at?: string
+          confirmed_by?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          note?: string | null
+          period?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bucket_allocations_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bucket_allocations_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buckets: {
         Row: {
           color: string | null
