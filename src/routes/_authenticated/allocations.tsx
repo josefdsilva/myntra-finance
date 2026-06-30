@@ -18,8 +18,9 @@ export const Route = createFileRoute("/_authenticated/allocations")({
 type Bucket = {
   id: string;
   name: string;
-  target_type: "pct_surplus" | "fixed_monthly" | "fixed_yearly";
+  target_type: "pct_surplus" | "fixed_monthly" | "fixed_yearly" | "goal_by_date";
   target_value: number;
+  target_deadline: string | null;
   color: string | null;
 };
 
