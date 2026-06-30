@@ -36,6 +36,7 @@ export function ExpenseQuickAdd({ householdId, onAdded }: { householdId: string;
 
 function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const add = useServerFn(addExpense);
+  const [kind, setKind] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("groceries");
   const [merchant, setMerchant] = useState("");
@@ -48,9 +49,9 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     if (!isFinite(n) || n <= 0) return toast.error("Enter a valid amount");
     setLoading(true);
     try {
-      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual" } });
+      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind } });
       setAmount(""); setMerchant(""); setNote("");
-      toast.success("Expense added");
+      toast.success(kind === "income" ? "Money received added" : "Expense added");
       onAdded?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -58,30 +59,42 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   }
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <div>
-        <Label>Amount (€)</Label>
-        <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+    <form onSubmit={submit} className="space-y-3">
+      <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
+        <button type="button" onClick={() => { setKind("expense"); setCategory("groceries"); }}
+          className={`px-3 py-1.5 text-sm rounded ${kind === "expense" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>
+          Expense
+        </button>
+        <button type="button" onClick={() => { setKind("income"); setCategory("gifts"); }}
+          className={`px-3 py-1.5 text-sm rounded ${kind === "income" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>
+          Money received
+        </button>
       </div>
-      <div>
-        <Label>Category</Label>
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Merchant</Label>
-        <Input value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder="e.g. Lidl" />
-      </div>
-      <div className="flex items-end">
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? <Loader2 className="animate-spin" /> : <><Plus /> Add</>}
-        </Button>
-      </div>
-      <div className="md:col-span-4">
-        <Label>Note (optional)</Label>
-        <Input value={note} onChange={(e) => setNote(e.target.value)} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <Label>Amount (€)</Label>
+          <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+        </div>
+        <div>
+          <Label>Category</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>{kind === "income" ? "From" : "Merchant"}</Label>
+          <Input value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder={kind === "income" ? "e.g. Grandma" : "e.g. Lidl"} />
+        </div>
+        <div className="flex items-end">
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? <Loader2 className="animate-spin" /> : <><Plus /> Add</>}
+          </Button>
+        </div>
+        <div className="md:col-span-4">
+          <Label>Note (optional)</Label>
+          <Input value={note} onChange={(e) => setNote(e.target.value)} />
+        </div>
       </div>
     </form>
   );
