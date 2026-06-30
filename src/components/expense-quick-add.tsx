@@ -42,6 +42,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
   const [isSalary, setIsSalary] = useState(false);
+  const [customDate, setCustomDate] = useState(false);
   const nowLocal = () => {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
