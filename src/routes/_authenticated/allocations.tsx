@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
+import { confirmBucketAllocation, undoBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { money, yearBounds, monthBounds } from "@/lib/format";
+import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { PiggyBank } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PiggyBank, Check, Undo2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/allocations")({
   head: () => ({ meta: [{ title: "Allocations · Household Budget" }] }),
