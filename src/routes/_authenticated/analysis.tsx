@@ -94,22 +94,34 @@ function AnalysisPage() {
   const variableLine = variablePool * scale;
 
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
+  const onlyIncome = useMemo(() => (expenses ?? []).filter((e) => e.kind === "income"), [expenses]);
+
+  // Fixed expense amount to add to each time bucket when toggled on
+  const fixedPerBucket = gran === "day" ? fixedTotal / 30.4375
+    : gran === "week" ? fixedTotal * 7 / 30.4375
+    : fixedTotal;
 
   const series = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const e of onlySpend) {
-      const d = new Date(e.occurred_at);
-      let bucket: Date;
-      if (gran === "day") bucket = startOfDay(d);
-      else if (gran === "week") bucket = startOfWeek(d, { weekStartsOn: 1 });
-      else bucket = startOfMonth(d);
-      const key = bucket.toISOString();
-      map.set(key, (map.get(key) ?? 0) + Number(e.amount));
+    const spendMap = new Map<string, number>();
+    const incomeMap = new Map<string, number>();
+    function bucketKey(dateStr: string): string {
+      const d = new Date(dateStr);
+      const b = gran === "day" ? startOfDay(d)
+        : gran === "week" ? startOfWeek(d, { weekStartsOn: 1 })
+        : startOfMonth(d);
+      return b.toISOString();
     }
-    // Fill missing buckets between range start and today so the line is continuous
+    for (const e of onlySpend) {
+      const k = bucketKey(e.occurred_at);
+      spendMap.set(k, (spendMap.get(k) ?? 0) + Number(e.amount));
+    }
+    for (const e of onlyIncome) {
+      const k = bucketKey(e.occurred_at);
+      incomeMap.set(k, (incomeMap.get(k) ?? 0) + Number(e.amount));
+    }
     const now = new Date();
     const stepMs = gran === "day" ? 86400000 : gran === "week" ? 7 * 86400000 : 0;
-    const out: { label: string; total: number; iso: string }[] = [];
+    const out: { label: string; spend: number; income: number; iso: string }[] = [];
     function pushBucket(date: Date) {
       const iso = date.toISOString();
       const label = gran === "month"
@@ -117,7 +129,14 @@ function AnalysisPage() {
         : gran === "week"
         ? `W${fmt(date, "II")} ${fmt(date, "dd/MM")}`
         : fmt(date, "dd/MM");
-      out.push({ label, iso, total: Number((map.get(iso) ?? 0).toFixed(2)) });
+      const spendVar = spendMap.get(iso) ?? 0;
+      const spend = includeFixed ? spendVar + fixedPerBucket : spendVar;
+      out.push({
+        label,
+        iso,
+        spend: Number(spend.toFixed(2)),
+        income: Number((incomeMap.get(iso) ?? 0).toFixed(2)),
+      });
     }
     if (gran === "month") {
       let cur = startOfMonth(start);
@@ -135,7 +154,7 @@ function AnalysisPage() {
       }
     }
     return out;
-  }, [onlySpend, gran, start]);
+  }, [onlySpend, onlyIncome, gran, start, includeFixed, fixedPerBucket]);
 
 
   const byCategory = useMemo(() => {
@@ -143,10 +162,15 @@ function AnalysisPage() {
     for (const e of onlySpend) {
       map.set(e.category, (map.get(e.category) ?? 0) + Number(e.amount));
     }
-    return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
-      .sort((a, b) => b.value - a.value);
-  }, [onlySpend]);
+    const arr = Array.from(map.entries())
+      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }));
+    if (includeFixed && fixedTotal > 0) {
+      const monthsInRangeLocal = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
+      arr.push({ name: "fixed expenses", value: Number((fixedTotal * monthsInRangeLocal).toFixed(2)) });
+    }
+    return arr.sort((a, b) => b.value - a.value);
+  }, [onlySpend, includeFixed, fixedTotal, start]);
+
 
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
   const totalIncome = (expenses ?? []).filter((e) => e.kind === "income").reduce((s, e) => s + Number(e.amount), 0);
