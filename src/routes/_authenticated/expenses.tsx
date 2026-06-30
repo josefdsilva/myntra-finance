@@ -129,7 +129,7 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
   const bulk = useServerFn(addExpensesBulk);
   const ref = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<Array<{ amount: number; category: string; merchant: string | null; occurred_at: string; note: string | null }> | null>(null);
+  const [items, setItems] = useState<Array<{ amount: number; category: string; merchant?: string | null; occurred_at?: string; note?: string | null }> | null>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
