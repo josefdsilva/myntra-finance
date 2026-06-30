@@ -18,8 +18,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
 
   useEffect(() => setOpen(false), [pathname]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("privacy-mode") === "1";
+    setPrivacy(stored);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("privacy-on", privacy);
+    localStorage.setItem("privacy-mode", privacy ? "1" : "0");
+  }, [privacy]);
+
 
   async function signOut() {
     await queryClient.cancelQueries();
