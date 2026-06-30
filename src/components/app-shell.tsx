@@ -50,10 +50,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <span className="font-display text-lg">Budget</span>
         </Link>
-        <Button variant="ghost" size="icon" onClick={() => setOpen((s) => !s)}>
-          {open ? <X /> : <Menu />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setPrivacy((s) => !s)}
+            aria-label={privacy ? "Show numbers" : "Hide numbers"}
+            title={privacy ? "Show numbers" : "Hide numbers"}
+          >
+            {privacy ? <EyeOff /> : <Eye />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setOpen((s) => !s)}>
+            {open ? <X /> : <Menu />}
+          </Button>
+        </div>
       </header>
+
 
       {/* Sidebar */}
       <aside
