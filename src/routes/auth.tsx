@@ -96,7 +96,7 @@ function AuthPage() {
               <Button type="submit" className="w-full" disabled={loading}>Sign in</Button>
             </form>
             <p className="text-xs text-muted-foreground mt-4 text-center">
-              New accounts are invite-only. Ask the household admin for an invite link.
+              Sign in with Google (recommended). After signing in, open the invite link your household admin sent you to join.
             </p>
 
           </CardContent>
