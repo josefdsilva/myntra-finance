@@ -46,11 +46,23 @@ function AllocationsPage() {
   const income = data?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
 
+  function monthsUntil(dateStr: string | null): number {
+    if (!dateStr) return 0;
+    const target = new Date(dateStr);
+    const now = new Date();
+    const months =
+      (target.getFullYear() - now.getFullYear()) * 12 +
+      (target.getMonth() - now.getMonth()) +
+      (target.getDate() >= now.getDate() ? 0 : -1) + 1;
+    return Math.max(1, months);
+  }
+
   function monthly(b: Bucket): number {
     const v = Number(b.target_value);
     if (b.target_type === "pct_surplus") return (surplus * v) / 100;
     if (b.target_type === "fixed_monthly") return v;
-    return v / 12;
+    if (b.target_type === "fixed_yearly") return v / 12;
+    return v / monthsUntil(b.target_deadline);
   }
 
   const totalAllocated = (data?.buckets ?? []).reduce((s, b) => s + monthly(b), 0);
