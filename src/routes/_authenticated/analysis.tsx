@@ -15,6 +15,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { startOfDay, startOfWeek, startOfMonth, format as fmt, subDays, subMonths } from "date-fns";
+import { computeCycle } from "@/lib/cycle";
+import { Area } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Household Budget" }] }),
