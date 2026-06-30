@@ -30,7 +30,42 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.classList.toggle("privacy-on", privacy);
     localStorage.setItem("privacy-mode", privacy ? "1" : "0");
+    if (!privacy) return;
+
+    const CURRENCY = /[€$£¥]/;
+    function mark(root: Node) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let n: Node | null;
+      while ((n = walker.nextNode())) {
+        const text = n.nodeValue ?? "";
+        if (!CURRENCY.test(text)) continue;
+        const parent = (n as Text).parentElement;
+        if (parent && !parent.classList.contains("sensitive")) {
+          parent.classList.add("sensitive");
+        }
+      }
+    }
+    mark(document.body);
+    const obs = new MutationObserver((muts) => {
+      for (const m of muts) {
+        m.addedNodes.forEach((node) => {
+          if (node.nodeType === 1 || node.nodeType === 11) mark(node);
+          else if (node.nodeType === 3 && node.parentElement && CURRENCY.test(node.nodeValue ?? "")) {
+            node.parentElement.classList.add("sensitive");
+          }
+        });
+        if (m.type === "characterData") {
+          const target = m.target as Text;
+          if (target.parentElement && CURRENCY.test(target.nodeValue ?? "")) {
+            target.parentElement.classList.add("sensitive");
+          }
+        }
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+    return () => obs.disconnect();
   }, [privacy]);
+
 
 
   async function signOut() {
