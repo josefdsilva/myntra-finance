@@ -84,7 +84,7 @@ function AnalysisPage() {
     },
   });
   const fixedTotal = useMemo(() => fixedRows.reduce((s, r) => s + Number(r.monthly_amount), 0), [fixedRows]);
-  const variablePool = Math.max(0, baseline - fixedTotal);
+  
 
 
   // ---- Burndown (current pay cycle) ----
