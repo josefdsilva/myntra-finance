@@ -5,18 +5,17 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { money, fmtDate } from "@/lib/format";
 import {
-  ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  ReferenceLine, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, ComposedChart, XAxis, YAxis, Tooltip, CartesianGrid,
+  ReferenceLine, PieChart, Pie, Cell, Legend, Area,
 } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { startOfDay, startOfWeek, startOfMonth, format as fmt, subDays, subMonths } from "date-fns";
+import { format as fmt, subDays, subMonths } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
-import { Area } from "recharts";
+
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Household Budget" }] }),
