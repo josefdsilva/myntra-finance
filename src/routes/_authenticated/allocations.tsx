@@ -173,6 +173,8 @@ function AllocationsPage() {
         </CardContent>
       </Card>
 
+      <AllocationHistory history={history ?? []} buckets={data?.buckets ?? []} householdId={householdId!} />
+
       <YearToDate buckets={data?.buckets ?? []} monthlyFn={monthly} firstSalaryAt={data?.firstSalaryAt ?? null} />
     </div>
   );
