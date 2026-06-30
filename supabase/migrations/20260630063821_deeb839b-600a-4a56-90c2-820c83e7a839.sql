@@ -1,0 +1,1 @@
+ALTER TABLE public.buckets ADD COLUMN IF NOT EXISTS target_deadline date;

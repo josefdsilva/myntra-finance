@@ -60,6 +60,7 @@ export type Database = {
           id: string
           name: string
           sort_order: number
+          target_deadline: string | null
           target_type: Database["public"]["Enums"]["bucket_target_type"]
           target_value: number
           updated_at: string
@@ -71,6 +72,7 @@ export type Database = {
           id?: string
           name: string
           sort_order?: number
+          target_deadline?: string | null
           target_type?: Database["public"]["Enums"]["bucket_target_type"]
           target_value?: number
           updated_at?: string
@@ -82,6 +84,7 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number
+          target_deadline?: string | null
           target_type?: Database["public"]["Enums"]["bucket_target_type"]
           target_value?: number
           updated_at?: string
@@ -357,7 +360,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      bucket_target_type: "pct_surplus" | "fixed_monthly" | "fixed_yearly"
+      bucket_target_type:
+        | "pct_surplus"
+        | "fixed_monthly"
+        | "fixed_yearly"
+        | "goal_by_date"
       expense_source: "manual" | "ai_memo" | "ai_voice" | "statement"
       import_status: "pending" | "parsed" | "approved" | "failed"
       member_role: "owner" | "member"
@@ -488,7 +495,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      bucket_target_type: ["pct_surplus", "fixed_monthly", "fixed_yearly"],
+      bucket_target_type: [
+        "pct_surplus",
+        "fixed_monthly",
+        "fixed_yearly",
+        "goal_by_date",
+      ],
       expense_source: ["manual", "ai_memo", "ai_voice", "statement"],
       import_status: ["pending", "parsed", "approved", "failed"],
       member_role: ["owner", "member"],

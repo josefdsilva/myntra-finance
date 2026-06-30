@@ -249,6 +249,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
         name: b.name,
         target_type: b.target_type,
         target_value: Number(b.target_value),
+        target_deadline: b.target_deadline ?? null,
         color: b.color,
         sort_order: b.sort_order,
       },
@@ -317,12 +318,17 @@ function BucketRow({ bucket, onSave, onRemove }: { bucket: any; onSave: (b: any)
               <SelectItem value="pct_surplus">% of monthly surplus</SelectItem>
               <SelectItem value="fixed_monthly">Fixed € per month</SelectItem>
               <SelectItem value="fixed_yearly">Fixed € per year</SelectItem>
+              <SelectItem value="goal_by_date">Goal € by date</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label>
-            {b.target_type === "pct_surplus" ? `Target: ${b.target_value}%` : "Target amount (€)"}
+            {b.target_type === "pct_surplus"
+              ? `Target: ${b.target_value}%`
+              : b.target_type === "goal_by_date"
+              ? "Goal amount (€)"
+              : "Target amount (€)"}
           </Label>
           {b.target_type === "pct_surplus" ? (
             <Slider value={[Number(b.target_value)]} min={0} max={100} step={1} onValueChange={(v) => setB({ ...b, target_value: v[0] })} className="mt-3" />
@@ -330,6 +336,19 @@ function BucketRow({ bucket, onSave, onRemove }: { bucket: any; onSave: (b: any)
             <Input inputMode="decimal" value={b.target_value} onChange={(e) => setB({ ...b, target_value: parseFloat(e.target.value) || 0 })} />
           )}
         </div>
+        {b.target_type === "goal_by_date" && (
+          <div>
+            <Label>Reach by</Label>
+            <Input
+              type="date"
+              value={b.target_deadline ?? ""}
+              onChange={(e) => setB({ ...b, target_deadline: e.target.value || null })}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Monthly contribution = goal ÷ months remaining.
+            </p>
+          </div>
+        )}
       </div>
       {dirty && <Button size="sm" onClick={() => onSave(b)}>Save changes</Button>}
     </div>

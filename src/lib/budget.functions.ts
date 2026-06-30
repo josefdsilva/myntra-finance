@@ -164,8 +164,9 @@ export const upsertBucket = createServerFn({ method: "POST" })
         id: z.string().uuid().optional(),
         household_id: z.string().uuid(),
         name: z.string().min(1).max(60),
-        target_type: z.enum(["pct_surplus", "fixed_monthly", "fixed_yearly"]),
+        target_type: z.enum(["pct_surplus", "fixed_monthly", "fixed_yearly", "goal_by_date"]),
         target_value: z.number().min(0),
+        target_deadline: z.string().date().nullable().optional(),
         color: z.string().max(20).optional().nullable(),
         sort_order: z.number().int().optional(),
       })
