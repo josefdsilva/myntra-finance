@@ -42,6 +42,12 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
   const [isSalary, setIsSalary] = useState(false);
+  const nowLocal = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  };
+  const [occurredAt, setOccurredAt] = useState<string>(nowLocal);
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -50,8 +56,9 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     if (!isFinite(n) || n <= 0) return toast.error("Enter a valid amount");
     setLoading(true);
     try {
-      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind, is_salary: kind === "income" && isSalary } });
-      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false);
+      const occurredIso = occurredAt ? new Date(occurredAt).toISOString() : new Date().toISOString();
+      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind, is_salary: kind === "income" && isSalary, occurred_at: occurredIso } });
+      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false); setOccurredAt(nowLocal());
       toast.success(kind === "income" ? (isSalary ? "Salary recorded — pay cycle updated" : "Money received added") : "Expense added");
       onAdded?.();
     } catch (err) {
