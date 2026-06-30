@@ -109,8 +109,13 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           </div>
         )}
         <div className="md:col-span-2">
-          <Label>Date & time</Label>
-          <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+          <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none mb-2">
+            <input type="checkbox" checked={customDate} onChange={(e) => setCustomDate(e.target.checked)} className="accent-primary size-4" />
+            <span>Set custom date & time {!customDate && <span className="text-muted-foreground">(defaults to now)</span>}</span>
+          </label>
+          {customDate && (
+            <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+          )}
         </div>
         <div className="md:col-span-2">
           <Label>Note (optional)</Label>
