@@ -42,9 +42,13 @@ function AnalysisPage() {
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
   const householdId = hh?.household?.id;
+  const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
   const [gran, setGran] = useState<Granularity>("day");
   const [range, setRange] = useState<RangeKey>("30d");
+  const [showBaseline, setShowBaseline] = useState(true);
+  const [showVariable, setShowVariable] = useState(true);
+  const [chartType, setChartType] = useState<"line" | "bar">("line");
 
   const { start } = useMemo(() => {
     const now = new Date();
