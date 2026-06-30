@@ -34,6 +34,22 @@ const ParsedExpense = z.object({
 
 const ParsedList = z.object({ items: z.array(ParsedExpense) });
 
+function extractJson(text: string): unknown {
+  const trimmed = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    }
+    throw new Error("AI response was not valid JSON: " + text.slice(0, 200));
+  }
+}
+
+const CATEGORY_LIST = CATEGORIES.join(", ");
+
 /** Parse a text memo into one or more structured expenses. */
 export const parseMemo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -46,17 +62,21 @@ export const parseMemo = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
-      output: Output.object({ schema: ParsedList }),
       system: `You extract household expenses from short text memos in any language.
 Current time: ${now}.
 Currency is EUR. Amounts may be written as "12", "12€", "12 EUR", "12.50", "12,50".
 Always return amount as positive number in EUR.
-Pick the best matching category from the enum.
-If date is not given, use now.
-Multiple expenses in one memo => return multiple items.`,
+Pick the best matching category from this list: ${CATEGORY_LIST}.
+If date is not given, use now (ISO 8601).
+Multiple expenses in one memo => multiple items.
+
+Respond ONLY with a JSON object of the shape:
+{"items":[{"amount":number,"category":"<one of the list>","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+No prose, no markdown fences.`,
       prompt: data.text,
     });
-    return result.output;
+    const parsed = ParsedList.parse(extractJson(result.text));
+    return parsed;
   });
 
 /** Transcribe audio (base64 webm/mp4/wav) and parse to expenses. */
