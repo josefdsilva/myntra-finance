@@ -76,6 +76,22 @@ function AnalysisPage() {
     },
   });
 
+  const { data: fixedTotal = 0 } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["fixed-total", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!);
+      return (data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    },
+  });
+  const variablePool = Math.max(0, baseline - fixedTotal);
+
+  // baseline scaled to current granularity (variable pool only — fixed expenses don't show up as daily spend)
+  const scale = gran === "day" ? 1 / 30.4375 : gran === "week" ? 12 / 52 : 1;
+  const baselineLine = baseline * scale;
+  const variableLine = variablePool * scale;
+
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
 
   const series = useMemo(() => {
