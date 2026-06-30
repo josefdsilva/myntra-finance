@@ -138,7 +138,7 @@ function Dashboard() {
           </p>
           <div className="mt-6 space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{money(spent)} spent</span>
+              <span>{money(spent)} spent{received > 0 ? ` · −${money(received)} received` : ""}</span>
               <span>{money(variablePool)} pool</span>
             </div>
             <Progress value={pctSpent} className={overspent ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"} />
