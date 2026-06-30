@@ -30,7 +30,7 @@ function Dashboard() {
     queryKey: ["dashboard", householdId],
     queryFn: async () => {
       const { start, end } = monthBounds();
-      const [{ data: fixed }, { data: expenses }, { data: incomes }] = await Promise.all([
+      const [{ data: fixed }, { data: expenses }, { data: incomes }, { data: buckets }] = await Promise.all([
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
         supabase
           .from("expenses")
@@ -40,11 +40,19 @@ function Dashboard() {
           .lt("occurred_at", end.toISOString())
           .order("occurred_at", { ascending: false }),
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
+        supabase.from("buckets").select("id, name, target_type, target_value, target_deadline, color").eq("household_id", householdId!).order("sort_order"),
       ]);
       const fixedTotal = (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const spent = (expenses ?? []).reduce((s, r) => s + Number(r.amount), 0);
       const income = (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      return { fixedTotal, spent, income, recent: (expenses ?? []).slice(0, 10), totalExpenses: expenses?.length ?? 0 };
+      return {
+        fixedTotal,
+        spent,
+        income,
+        buckets: buckets ?? [],
+        recent: (expenses ?? []).slice(0, 10),
+        totalExpenses: expenses?.length ?? 0,
+      };
     },
   });
 
@@ -54,8 +62,41 @@ function Dashboard() {
   const remaining = Math.max(0, variablePool - spent);
   const overspent = spent > variablePool;
   const daysLeft = daysRemainingInMonth();
-  const safeToday = variablePool > 0 ? Math.max(0, remaining / daysLeft) : 0;
+  const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
   const pctSpent = variablePool > 0 ? Math.min(100, (spent / variablePool) * 100) : 0;
+
+  // Bucket jeopardy: any overspend eats into surplus → reduces bucket allocations
+  const income = dashboard?.income ?? 0;
+  const surplus = Math.max(0, income - baseline);
+  const overspendAmount = Math.max(0, spent - variablePool);
+  const buckets = dashboard?.buckets ?? [];
+
+  function monthsUntil(dateStr: string | null): number {
+    if (!dateStr) return 1;
+    const t = new Date(dateStr);
+    const n = new Date();
+    const m = (t.getFullYear() - n.getFullYear()) * 12 + (t.getMonth() - n.getMonth()) + (t.getDate() >= n.getDate() ? 0 : -1) + 1;
+    return Math.max(1, m);
+  }
+  function bucketMonthly(b: typeof buckets[number]): number {
+    const v = Number(b.target_value);
+    if (b.target_type === "pct_surplus") return (surplus * v) / 100;
+    if (b.target_type === "fixed_monthly") return v;
+    if (b.target_type === "fixed_yearly") return v / 12;
+    return v / monthsUntil(b.target_deadline);
+  }
+  const totalAllocated = buckets.reduce((s, b) => s + bucketMonthly(b), 0);
+  const inJeopardy = overspendAmount > 0 && totalAllocated > 0;
+  // Proportional impact: which buckets lose money
+  const jeopardizedBuckets = inJeopardy
+    ? buckets
+        .map((b) => {
+          const monthly = bucketMonthly(b);
+          const share = totalAllocated > 0 ? monthly / totalAllocated : 0;
+          return { name: b.name, color: b.color, loss: Math.min(monthly, overspendAmount * share) };
+        })
+        .filter((b) => b.loss > 0.01)
+    : [];
 
   const monthName = useMemo(() => new Date().toLocaleString("en-GB", { month: "long", year: "numeric" }), []);
 
@@ -83,12 +124,13 @@ function Dashboard() {
       {/* Hero: safe to spend today */}
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
-          <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Safe to spend today</p>
+          <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Safe to spend per day</p>
           <p className={`text-5xl md:text-6xl font-display ${overspent ? "text-destructive" : "text-primary"}`}>
             {money(safeToday)}
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {daysLeft} day{daysLeft === 1 ? "" : "s"} left · {money(remaining)} remaining in variable budget
+          <p className="text-sm text-muted-foreground mt-3 tabular-nums">
+            {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} left ={" "}
+            <span className="font-medium text-foreground">{money(safeToday)}/day</span>
           </p>
           <div className="mt-6 space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -96,6 +138,44 @@ function Dashboard() {
               <span>{money(variablePool)} pool</span>
             </div>
             <Progress value={pctSpent} className={overspent ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"} />
+          </div>
+
+          {/* Bucket impact */}
+          <div className="mt-6 pt-6 border-t">
+            {!buckets.length ? (
+              <p className="text-xs text-muted-foreground">
+                No savings buckets configured — set targets in <Link to="/settings" className="underline">Settings</Link> to see impact.
+              </p>
+            ) : !inJeopardy ? (
+              <div className="flex items-start gap-3">
+                <span className="mt-1 size-2.5 rounded-full bg-primary shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Buckets on track</p>
+                  <p className="text-xs text-muted-foreground">
+                    Spending up to {money(safeToday)}/day keeps all {buckets.length} bucket{buckets.length === 1 ? "" : "s"} fully funded this month
+                    ({money(totalAllocated)} total).
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3">
+                <span className="mt-1 size-2.5 rounded-full bg-destructive shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-destructive">
+                    Overspent by {money(overspendAmount)} — buckets at risk
+                  </p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    {jeopardizedBuckets.map((b) => (
+                      <li key={b.name} className="flex items-center gap-2">
+                        <span className="size-2 rounded-full" style={{ background: b.color ?? "var(--primary)" }} />
+                        <span className="font-medium text-foreground">{b.name}</span>
+                        <span>−{money(b.loss)} this month</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -105,6 +185,7 @@ function Dashboard() {
         <StatCard label="Fixed expenses" value={money(dashboard?.fixedTotal ?? 0)} />
         <StatCard label="Variable pool" value={money(variablePool)} />
       </div>
+
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
