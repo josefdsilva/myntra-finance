@@ -278,10 +278,17 @@ function AnalysisPage() {
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
                   <Tooltip formatter={(v: number) => money(v)} labelStyle={{ color: "var(--foreground)" }} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
                   {chartType === "bar" ? (
-                    <Bar dataKey="total" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                    <>
+                      <Bar dataKey="spend" name="Spent" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="income" name="Received" fill="#2c6e6b" radius={[4, 4, 0, 0]} />
+                    </>
                   ) : (
-                    <Line type="monotone" dataKey="total" stroke="var(--primary)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                    <>
+                      <Line type="monotone" dataKey="spend" name="Spent" stroke="var(--primary)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                      <Line type="monotone" dataKey="income" name="Received" stroke="#2c6e6b" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 2 }} />
+                    </>
                   )}
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
                   {baseline > 0 && showBaseline && (
                     <ReferenceLine y={baselineLine} stroke="hsl(var(--destructive))" strokeWidth={1.5} strokeDasharray="4 2"
                       label={{ value: "Baseline", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
