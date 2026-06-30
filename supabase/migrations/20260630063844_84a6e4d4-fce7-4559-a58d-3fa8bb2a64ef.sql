@@ -1,0 +1,1 @@
+ALTER TYPE public.bucket_target_type ADD VALUE IF NOT EXISTS 'goal_by_date';
