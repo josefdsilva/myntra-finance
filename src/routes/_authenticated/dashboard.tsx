@@ -180,11 +180,13 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Before baseline limit" value={money(remaining)} highlight />
+        <StatCard label="Emergency pool" value={money(Math.max(0, surplus - totalAllocated))} hint="Unallocated surplus" />
         <StatCard label="Monthly income" value={money(dashboard?.income ?? 0)} />
         <StatCard label="Fixed expenses" value={money(dashboard?.fixedTotal ?? 0)} />
-        <StatCard label="Variable pool" value={money(variablePool)} />
       </div>
+
 
 
       <Card>
@@ -228,12 +230,13 @@ function Dashboard() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, highlight, hint }: { label: string; value: string; highlight?: boolean; hint?: string }) {
   return (
-    <Card>
+    <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
       <CardContent className="pt-6">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
         <p className="text-2xl font-display mt-1">{value}</p>
+        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
       </CardContent>
     </Card>
   );
