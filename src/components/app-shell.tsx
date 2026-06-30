@@ -104,10 +104,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t hidden md:block">
+        <div className="p-3 border-t hidden md:block space-y-1">
+          <Button variant="ghost" className="w-full justify-start" onClick={() => setPrivacy((s) => !s)}>
+            {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            {privacy ? "Show numbers" : "Hide numbers"}
+          </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" /> Sign out
           </Button>
+
         </div>
       </aside>
 
