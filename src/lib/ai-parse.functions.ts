@@ -193,13 +193,15 @@ export const parseBankStatement = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
-      output: Output.object({ schema: StatementList }),
       system: `You extract expense transactions from bank statements.
 Currency is EUR. Return only debits/expenses (skip incoming credits and transfers in).
-Always positive amounts. Categorize using the enum.
-Use the transaction date in ISO 8601 format.`,
+Always positive amounts. Categorize using one of: ${CATEGORY_LIST}.
+Use the transaction date in ISO 8601 format.
+
+Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+No prose, no markdown fences.`,
       messages: userContent,
     });
 
-    return result.output;
+    return StatementList.parse(extractJson(result.text));
   });
