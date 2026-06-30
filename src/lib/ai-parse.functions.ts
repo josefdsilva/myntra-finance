@@ -25,16 +25,14 @@ const CATEGORIES = [
 ] as const;
 
 const ParsedExpense = z.object({
-  amount: z.number().describe("Amount in EUR, positive number"),
+  amount: z.number(),
   category: z.enum(CATEGORIES),
-  merchant: z.string().nullable().describe("Merchant or vendor name, or null"),
-  occurred_at: z
-    .string()
-    .describe("ISO 8601 timestamp; if user says 'yesterday' compute relative to NOW"),
-  note: z.string().nullable(),
+  merchant: z.string().optional(),
+  occurred_at: z.string().optional(),
+  note: z.string().optional(),
 });
 
-const ParsedList = z.object({ items: z.array(ParsedExpense).max(50) });
+const ParsedList = z.object({ items: z.array(ParsedExpense) });
 
 /** Parse a text memo into one or more structured expenses. */
 export const parseMemo = createServerFn({ method: "POST" })
