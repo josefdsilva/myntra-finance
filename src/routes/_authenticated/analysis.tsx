@@ -296,7 +296,7 @@ function AnalysisPage() {
             <CardTitle>Cycle burndown</CardTitle>
             <CardDescription>
               Pay cycle {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
-              {cycleData.cycle.predicted ? " (predicted)" : ""} · running balance from inflows minus outflows
+              {cycleData.cycle.predicted ? " (predicted)" : ""} · fixed expenses ({money(fixedTotal)}) reserved on day 1
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -311,13 +311,11 @@ function AnalysisPage() {
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
                     <Tooltip formatter={(v: number) => money(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
                     <Area type="stepAfter" dataKey="balance" name="Balance" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15} strokeWidth={2} />
-                    {baseline > 0 && (
-                      <ReferenceLine y={baseline} stroke="hsl(var(--destructive))" strokeWidth={1.5} strokeDasharray="4 2"
-                        label={{ value: `Baseline ${money(baseline)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
-                    )}
-                    {baseline > 0 && cycleData.unallocated > 0 && (
-                      <ReferenceLine y={baseline + cycleData.unallocated} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
-                        label={{ value: `Baseline + unallocated ${money(baseline + cycleData.unallocated)}`, position: "insideTopRight", fontSize: 10, fill: "#b45309" }} />
+                    <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeWidth={1} strokeDasharray="2 2"
+                      label={{ value: "Break-even (variable pool consumed)", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    {cycleData.unallocated > 0 && (
+                      <ReferenceLine y={cycleData.unallocated} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
+                        label={{ value: `Unallocated floor ${money(cycleData.unallocated)}`, position: "insideTopRight", fontSize: 10, fill: "#b45309" }} />
                     )}
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </ComposedChart>
