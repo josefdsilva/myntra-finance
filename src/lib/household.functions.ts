@@ -15,17 +15,51 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const { data: existing } = await supabase
+    // Prefer a shared household (member role) over a self-created empty one.
+    const { data: memberships } = await supabase
       .from("household_members")
-      .select("household_id, role, households(*)")
-      .eq("user_id", userId)
-      .order("joined_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .select("household_id, role, joined_at, households(*)")
+      .eq("user_id", userId);
 
-    if (existing?.households) {
-      return { household: existing.households, role: existing.role };
+    if (memberships && memberships.length > 0) {
+      const sorted = [...memberships].sort((a, b) => {
+        // members (joined via invite) come before owners
+        if (a.role !== b.role) return a.role === "member" ? -1 : 1;
+        return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
+      });
+      const pick = sorted[0];
+      if (pick?.households) return { household: pick.households, role: pick.role };
     }
+
+    // Before creating a fresh household, check for a pending invitation by email.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const email = authUser?.user?.email;
+    if (email) {
+      const { data: invite } = await supabaseAdmin
+        .from("household_invitations")
+        .select("id, household_id")
+        .eq("email", email)
+        .is("accepted_at", null)
+        .limit(1)
+        .maybeSingle();
+      if (invite) {
+        await supabaseAdmin
+          .from("household_members")
+          .insert({ household_id: invite.household_id, user_id: userId, role: "member" });
+        await supabaseAdmin
+          .from("household_invitations")
+          .update({ accepted_at: new Date().toISOString() })
+          .eq("id", invite.id);
+        const { data: hh } = await supabaseAdmin
+          .from("households")
+          .select("*")
+          .eq("id", invite.household_id)
+          .single();
+        if (hh) return { household: hh, role: "member" as const };
+      }
+    }
+
 
     // Create household with admin client — user is already verified by requireSupabaseAuth
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
