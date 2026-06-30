@@ -290,6 +290,45 @@ function AnalysisPage() {
         <Stat label="Net" value={money(totalIncome - totalSpend)} highlight />
       </div>
 
+      {cycleData && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Cycle burndown</CardTitle>
+            <CardDescription>
+              Pay cycle {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
+              {cycleData.cycle.predicted ? " (predicted)" : ""} · running balance from inflows minus outflows
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!burnSeries.length ? (
+              <p className="text-sm text-muted-foreground py-10 text-center">No activity in this cycle yet.</p>
+            ) : (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={burnSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={20} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
+                    <Tooltip formatter={(v: number) => money(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                    <Area type="stepAfter" dataKey="balance" name="Balance" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15} strokeWidth={2} />
+                    {baseline > 0 && (
+                      <ReferenceLine y={baseline} stroke="hsl(var(--destructive))" strokeWidth={1.5} strokeDasharray="4 2"
+                        label={{ value: `Baseline ${money(baseline)}`, position: "insideTopRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
+                    )}
+                    {baseline > 0 && cycleData.unallocated > 0 && (
+                      <ReferenceLine y={baseline + cycleData.unallocated} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
+                        label={{ value: `Baseline + unallocated ${money(baseline + cycleData.unallocated)}`, position: "insideTopRight", fontSize: 10, fill: "#b45309" }} />
+                    )}
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+
       <Card>
         <CardHeader className="space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
