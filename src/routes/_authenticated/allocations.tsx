@@ -132,11 +132,12 @@ function AllocationsPage() {
               {data.buckets.map((b) => {
                 const amount = monthly(b);
                 const pct = surplus > 0 ? Math.min(100, (amount / surplus) * 100) : 0;
+                const confirmed = confirmations?.find((c) => c.bucket_id === b.id);
                 return (
                   <div key={b.id} className="space-y-1.5">
-                    <div className="flex justify-between items-baseline">
-                      <div className="flex items-center gap-2">
-                        <span className="size-2.5 rounded-full" style={{ background: b.color ?? "var(--primary)" }} />
+                    <div className="flex justify-between items-baseline gap-3 flex-wrap">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="size-2.5 rounded-full shrink-0" style={{ background: b.color ?? "var(--primary)" }} />
                         <span className="font-medium">{b.name}</span>
                         <span className="text-xs text-muted-foreground">
                           {b.target_type === "pct_surplus" ? `${b.target_value}% of surplus`
@@ -145,7 +146,17 @@ function AllocationsPage() {
                            : `${money(b.target_value)} by ${b.target_deadline ?? "—"} (${monthsUntil(b.target_deadline)} mo left)`}
                         </span>
                       </div>
-                      <span className="font-medium tabular-nums">{money(amount)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium tabular-nums">{money(amount)}</span>
+                        <ConfirmAllocationButton
+                          householdId={householdId!}
+                          bucketId={b.id}
+                          period={period}
+                          suggested={amount}
+                          confirmed={confirmed ?? null}
+                          onChanged={() => refetchConfirmations()}
+                        />
+                      </div>
                     </div>
                     <Progress value={pct} />
                   </div>
