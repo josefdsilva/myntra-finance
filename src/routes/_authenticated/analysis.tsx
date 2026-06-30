@@ -154,7 +154,7 @@ function AnalysisPage() {
     const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
     out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)) });
     return out;
-  }, [cycleData]);
+  }, [cycleData, fixedTotal]);
 
 
   // baseline scaled to current granularity (variable pool only — fixed expenses don't show up as daily spend)
