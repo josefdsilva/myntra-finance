@@ -105,18 +105,37 @@ function AnalysisPage() {
       const key = bucket.toISOString();
       map.set(key, (map.get(key) ?? 0) + Number(e.amount));
     }
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([iso, total]) => {
-        const date = new Date(iso);
-        const label = gran === "month"
-          ? fmt(date, "MMM yyyy")
-          : gran === "week"
-          ? `W${fmt(date, "II")} ${fmt(date, "dd/MM")}`
-          : fmt(date, "dd/MM");
-        return { label, total: Number(total.toFixed(2)) };
-      });
-  }, [onlySpend, gran]);
+    // Fill missing buckets between range start and today so the line is continuous
+    const now = new Date();
+    const stepMs = gran === "day" ? 86400000 : gran === "week" ? 7 * 86400000 : 0;
+    const out: { label: string; total: number; iso: string }[] = [];
+    function pushBucket(date: Date) {
+      const iso = date.toISOString();
+      const label = gran === "month"
+        ? fmt(date, "MMM yyyy")
+        : gran === "week"
+        ? `W${fmt(date, "II")} ${fmt(date, "dd/MM")}`
+        : fmt(date, "dd/MM");
+      out.push({ label, iso, total: Number((map.get(iso) ?? 0).toFixed(2)) });
+    }
+    if (gran === "month") {
+      let cur = startOfMonth(start);
+      const end = startOfMonth(now);
+      while (cur.getTime() <= end.getTime()) {
+        pushBucket(new Date(cur));
+        cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+      }
+    } else {
+      let cur = gran === "day" ? startOfDay(start) : startOfWeek(start, { weekStartsOn: 1 });
+      const end = gran === "day" ? startOfDay(now) : startOfWeek(now, { weekStartsOn: 1 });
+      while (cur.getTime() <= end.getTime()) {
+        pushBucket(new Date(cur));
+        cur = new Date(cur.getTime() + stepMs);
+      }
+    }
+    return out;
+  }, [onlySpend, gran, start]);
+
 
   const byCategory = useMemo(() => {
     const map = new Map<string, number>();
