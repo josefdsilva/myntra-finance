@@ -333,81 +333,8 @@ function AnalysisPage() {
       )}
 
 
-      <Card>
-        <CardHeader className="space-y-3">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <CardTitle>Spending over time</CardTitle>
-              <CardDescription>
-                One point per {gran}
-                {baseline > 0 ? ` · baseline ≈ ${money(baselineLine)} / ${gran}` : ""}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Tabs value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
-                <TabsList>
-                  <TabsTrigger value="line">Line</TabsTrigger>
-                  <TabsTrigger value="bar">Bar</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Tabs value={gran} onValueChange={(v) => setGran(v as Granularity)}>
-                <TabsList>
-                  <TabsTrigger value="day">Day</TabsTrigger>
-                  <TabsTrigger value="week">Week</TabsTrigger>
-                  <TabsTrigger value="month">Month</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </div>
-          {baseline > 0 && (
-            <div className="flex flex-wrap gap-4 text-sm">
-              <Label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={showBaseline} onCheckedChange={(v) => setShowBaseline(!!v)} />
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-0.5 w-4 bg-destructive" />
-                  Baseline ({money(baselineLine)})
-                </span>
-              </Label>
-              <Label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={showVariable} onCheckedChange={(v) => setShowVariable(!!v)} />
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-0.5 w-4 border-t-2 border-dashed border-amber-600" />
-                  Variable pool — fixed expenses excluded ({money(variableLine)})
-                </span>
-              </Label>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {!series.length ? (
-            <p className="text-sm text-muted-foreground py-10 text-center">No expenses in this range.</p>
-          ) : (
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={20} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
-                  <Tooltip formatter={(v: number) => money(v)} labelStyle={{ color: "var(--foreground)" }} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  {chartType === "bar" && <Bar dataKey="spend" name="Spent" fill="var(--primary)" radius={[4, 4, 0, 0]} />}
-                  {chartType === "bar" && <Bar dataKey="income" name="Received" fill="#2c6e6b" radius={[4, 4, 0, 0]} />}
-                  {chartType === "line" && <Line type="monotone" dataKey="spend" name="Spent" stroke="var(--primary)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />}
-                  {chartType === "line" && <Line type="monotone" dataKey="income" name="Received" stroke="#2c6e6b" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 2 }} />}
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  {baseline > 0 && showBaseline && (
-                    <ReferenceLine y={baselineLine} stroke="hsl(var(--destructive))" strokeWidth={1.5} strokeDasharray="4 2"
-                      label={{ value: "Baseline", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
-                  )}
-                  {baseline > 0 && showVariable && (
-                    <ReferenceLine y={variableLine} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
-                      label={{ value: "Variable pool", position: "insideBottomRight", fontSize: 10, fill: "#b45309" }} />
-                  )}
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+
 
 
       <Card>
