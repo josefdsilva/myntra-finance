@@ -49,6 +49,7 @@ function AnalysisPage() {
   const [showBaseline, setShowBaseline] = useState(true);
   const [showVariable, setShowVariable] = useState(true);
   const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const [includeFixed, setIncludeFixed] = useState(false);
 
   const { start } = useMemo(() => {
     const now = new Date();
