@@ -5,18 +5,17 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { money, fmtDate } from "@/lib/format";
 import {
-  ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  ReferenceLine, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, ComposedChart, XAxis, YAxis, Tooltip, CartesianGrid,
+  ReferenceLine, PieChart, Pie, Cell, Legend, Area,
 } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { startOfDay, startOfWeek, startOfMonth, format as fmt, subDays, subMonths } from "date-fns";
+import { format as fmt, subDays, subMonths } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
-import { Area } from "recharts";
+
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Household Budget" }] }),
@@ -37,7 +36,6 @@ const COLORS = [
   "#5c7a99", "#99785c", "#7a5c99", "#99995c",
 ];
 
-type Granularity = "day" | "week" | "month";
 type RangeKey = "30d" | "90d" | "6m" | "12m" | "ytd";
 
 function AnalysisPage() {
@@ -46,12 +44,9 @@ function AnalysisPage() {
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
-  const [gran, setGran] = useState<Granularity>("day");
   const [range, setRange] = useState<RangeKey>("30d");
-  const [showBaseline, setShowBaseline] = useState(true);
-  const [showVariable, setShowVariable] = useState(true);
-  const [chartType, setChartType] = useState<"line" | "bar">("line");
   const [includeFixed, setIncludeFixed] = useState(false);
+
 
   const { start } = useMemo(() => {
     const now = new Date();
@@ -79,16 +74,18 @@ function AnalysisPage() {
     },
   });
 
-  const { data: fixedTotal = 0 } = useQuery({
+  const { data: fixedRows = [] } = useQuery({
     enabled: !!householdId,
-    queryKey: ["fixed-total", householdId],
+    queryKey: ["fixed-rows", householdId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!);
-      return (data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+        .from("fixed_expenses").select("monthly_amount, category, label").eq("household_id", householdId!);
+      return (data ?? []) as Array<{ monthly_amount: number | string; category: string | null; label: string }>;
     },
   });
-  const variablePool = Math.max(0, baseline - fixedTotal);
+  const fixedTotal = useMemo(() => fixedRows.reduce((s, r) => s + Number(r.monthly_amount), 0), [fixedRows]);
+  
+
 
   // ---- Burndown (current pay cycle) ----
   const { data: cycleData } = useQuery({
@@ -156,74 +153,9 @@ function AnalysisPage() {
     return out;
   }, [cycleData, fixedTotal]);
 
-
-  // baseline scaled to current granularity (variable pool only — fixed expenses don't show up as daily spend)
-  const scale = gran === "day" ? 1 / 30.4375 : gran === "week" ? 12 / 52 : 1;
-  const baselineLine = baseline * scale;
-  const variableLine = variablePool * scale;
-
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
-  const onlyIncome = useMemo(() => (expenses ?? []).filter((e) => e.kind === "income"), [expenses]);
 
-  // Fixed expense amount to add to each time bucket when toggled on
-  const fixedPerBucket = gran === "day" ? fixedTotal / 30.4375
-    : gran === "week" ? fixedTotal * 7 / 30.4375
-    : fixedTotal;
 
-  const series = useMemo(() => {
-    const spendMap = new Map<string, number>();
-    const incomeMap = new Map<string, number>();
-    function bucketKey(dateStr: string): string {
-      const d = new Date(dateStr);
-      const b = gran === "day" ? startOfDay(d)
-        : gran === "week" ? startOfWeek(d, { weekStartsOn: 1 })
-        : startOfMonth(d);
-      return b.toISOString();
-    }
-    for (const e of onlySpend) {
-      const k = bucketKey(e.occurred_at);
-      spendMap.set(k, (spendMap.get(k) ?? 0) + Number(e.amount));
-    }
-    for (const e of onlyIncome) {
-      const k = bucketKey(e.occurred_at);
-      incomeMap.set(k, (incomeMap.get(k) ?? 0) + Number(e.amount));
-    }
-    const now = new Date();
-    const stepMs = gran === "day" ? 86400000 : gran === "week" ? 7 * 86400000 : 0;
-    const out: { label: string; spend: number; income: number; iso: string }[] = [];
-    function pushBucket(date: Date) {
-      const iso = date.toISOString();
-      const label = gran === "month"
-        ? fmt(date, "MMM yyyy")
-        : gran === "week"
-        ? `W${fmt(date, "II")} ${fmt(date, "dd/MM")}`
-        : fmt(date, "dd/MM");
-      const spendVar = spendMap.get(iso) ?? 0;
-      const spend = includeFixed ? spendVar + fixedPerBucket : spendVar;
-      out.push({
-        label,
-        iso,
-        spend: Number(spend.toFixed(2)),
-        income: Number((incomeMap.get(iso) ?? 0).toFixed(2)),
-      });
-    }
-    if (gran === "month") {
-      let cur = startOfMonth(start);
-      const end = startOfMonth(now);
-      while (cur.getTime() <= end.getTime()) {
-        pushBucket(new Date(cur));
-        cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
-      }
-    } else {
-      let cur = gran === "day" ? startOfDay(start) : startOfWeek(start, { weekStartsOn: 1 });
-      const end = gran === "day" ? startOfDay(now) : startOfWeek(now, { weekStartsOn: 1 });
-      while (cur.getTime() <= end.getTime()) {
-        pushBucket(new Date(cur));
-        cur = new Date(cur.getTime() + stepMs);
-      }
-    }
-    return out;
-  }, [onlySpend, onlyIncome, gran, start, includeFixed, fixedPerBucket]);
 
 
   const byCategory = useMemo(() => {
@@ -231,14 +163,18 @@ function AnalysisPage() {
     for (const e of onlySpend) {
       map.set(e.category, (map.get(e.category) ?? 0) + Number(e.amount));
     }
-    const arr = Array.from(map.entries())
-      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }));
-    if (includeFixed && fixedTotal > 0) {
+    if (includeFixed && fixedRows.length) {
       const monthsInRangeLocal = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
-      arr.push({ name: "fixed expenses", value: Number((fixedTotal * monthsInRangeLocal).toFixed(2)) });
+      for (const r of fixedRows) {
+        const cat = (r.category?.trim() || r.label?.trim() || "fixed").toLowerCase();
+        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * monthsInRangeLocal);
+      }
     }
-    return arr.sort((a, b) => b.value - a.value);
-  }, [onlySpend, includeFixed, fixedTotal, start]);
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
+      .sort((a, b) => b.value - a.value);
+  }, [onlySpend, includeFixed, fixedRows, start]);
+
 
 
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
@@ -327,81 +263,8 @@ function AnalysisPage() {
       )}
 
 
-      <Card>
-        <CardHeader className="space-y-3">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <CardTitle>Spending over time</CardTitle>
-              <CardDescription>
-                One point per {gran}
-                {baseline > 0 ? ` · baseline ≈ ${money(baselineLine)} / ${gran}` : ""}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Tabs value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
-                <TabsList>
-                  <TabsTrigger value="line">Line</TabsTrigger>
-                  <TabsTrigger value="bar">Bar</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Tabs value={gran} onValueChange={(v) => setGran(v as Granularity)}>
-                <TabsList>
-                  <TabsTrigger value="day">Day</TabsTrigger>
-                  <TabsTrigger value="week">Week</TabsTrigger>
-                  <TabsTrigger value="month">Month</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </div>
-          {baseline > 0 && (
-            <div className="flex flex-wrap gap-4 text-sm">
-              <Label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={showBaseline} onCheckedChange={(v) => setShowBaseline(!!v)} />
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-0.5 w-4 bg-destructive" />
-                  Baseline ({money(baselineLine)})
-                </span>
-              </Label>
-              <Label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={showVariable} onCheckedChange={(v) => setShowVariable(!!v)} />
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-0.5 w-4 border-t-2 border-dashed border-amber-600" />
-                  Variable pool — fixed expenses excluded ({money(variableLine)})
-                </span>
-              </Label>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {!series.length ? (
-            <p className="text-sm text-muted-foreground py-10 text-center">No expenses in this range.</p>
-          ) : (
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={20} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
-                  <Tooltip formatter={(v: number) => money(v)} labelStyle={{ color: "var(--foreground)" }} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  {chartType === "bar" && <Bar dataKey="spend" name="Spent" fill="var(--primary)" radius={[4, 4, 0, 0]} />}
-                  {chartType === "bar" && <Bar dataKey="income" name="Received" fill="#2c6e6b" radius={[4, 4, 0, 0]} />}
-                  {chartType === "line" && <Line type="monotone" dataKey="spend" name="Spent" stroke="var(--primary)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />}
-                  {chartType === "line" && <Line type="monotone" dataKey="income" name="Received" stroke="#2c6e6b" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 2 }} />}
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  {baseline > 0 && showBaseline && (
-                    <ReferenceLine y={baselineLine} stroke="hsl(var(--destructive))" strokeWidth={1.5} strokeDasharray="4 2"
-                      label={{ value: "Baseline", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
-                  )}
-                  {baseline > 0 && showVariable && (
-                    <ReferenceLine y={variableLine} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
-                      label={{ value: "Variable pool", position: "insideBottomRight", fontSize: 10, fill: "#b45309" }} />
-                  )}
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+
 
 
       <Card>
