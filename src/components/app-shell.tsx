@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Wallet, Menu, X } from "lucide-react";
+import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Wallet, Menu, X, Eye, EyeOff } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +18,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
 
   useEffect(() => setOpen(false), [pathname]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("privacy-mode") === "1";
+    setPrivacy(stored);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("privacy-on", privacy);
+    localStorage.setItem("privacy-mode", privacy ? "1" : "0");
+  }, [privacy]);
+
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -38,10 +50,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <span className="font-display text-lg">Budget</span>
         </Link>
-        <Button variant="ghost" size="icon" onClick={() => setOpen((s) => !s)}>
-          {open ? <X /> : <Menu />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setPrivacy((s) => !s)}
+            aria-label={privacy ? "Show numbers" : "Hide numbers"}
+            title={privacy ? "Show numbers" : "Hide numbers"}
+          >
+            {privacy ? <EyeOff /> : <Eye />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setOpen((s) => !s)}>
+            {open ? <X /> : <Menu />}
+          </Button>
+        </div>
       </header>
+
 
       {/* Sidebar */}
       <aside
@@ -80,10 +104,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t hidden md:block">
+        <div className="p-3 border-t hidden md:block space-y-1">
+          <Button variant="ghost" className="w-full justify-start" onClick={() => setPrivacy((s) => !s)}>
+            {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            {privacy ? "Show numbers" : "Hide numbers"}
+          </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" /> Sign out
           </Button>
+
         </div>
       </aside>
 

@@ -131,3 +131,16 @@
     letter-spacing: -0.015em;
   }
 }
+
+/* Privacy mode: blur monetary values and any element opted-in via .sensitive */
+html.privacy-on .tabular-nums,
+html.privacy-on .sensitive {
+  filter: blur(8px);
+  transition: filter 0.15s ease;
+  user-select: none;
+}
+html.privacy-on .tabular-nums:hover,
+html.privacy-on .sensitive:hover {
+  filter: blur(0);
+}
+
