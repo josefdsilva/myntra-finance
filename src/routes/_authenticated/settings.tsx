@@ -249,6 +249,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
         name: b.name,
         target_type: b.target_type,
         target_value: Number(b.target_value),
+        target_deadline: b.target_deadline ?? null,
         color: b.color,
         sort_order: b.sort_order,
       },
