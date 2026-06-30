@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateText, Output } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import {
   createLovableAiGatewayProvider,
@@ -34,6 +34,22 @@ const ParsedExpense = z.object({
 
 const ParsedList = z.object({ items: z.array(ParsedExpense) });
 
+function extractJson(text: string): unknown {
+  const trimmed = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    }
+    throw new Error("AI response was not valid JSON: " + text.slice(0, 200));
+  }
+}
+
+const CATEGORY_LIST = CATEGORIES.join(", ");
+
 /** Parse a text memo into one or more structured expenses. */
 export const parseMemo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -46,17 +62,21 @@ export const parseMemo = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
-      output: Output.object({ schema: ParsedList }),
       system: `You extract household expenses from short text memos in any language.
 Current time: ${now}.
 Currency is EUR. Amounts may be written as "12", "12€", "12 EUR", "12.50", "12,50".
 Always return amount as positive number in EUR.
-Pick the best matching category from the enum.
-If date is not given, use now.
-Multiple expenses in one memo => return multiple items.`,
+Pick the best matching category from this list: ${CATEGORY_LIST}.
+If date is not given, use now (ISO 8601).
+Multiple expenses in one memo => multiple items.
+
+Respond ONLY with a JSON object of the shape:
+{"items":[{"amount":number,"category":"<one of the list>","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+No prose, no markdown fences.`,
       prompt: data.text,
     });
-    return result.output;
+    const parsed = ParsedList.parse(extractJson(result.text));
+    return parsed;
   });
 
 /** Transcribe audio (base64 webm/mp4/wav) and parse to expenses. */
@@ -109,12 +129,16 @@ export const parseVoiceMemo = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const result = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
-      output: Output.object({ schema: ParsedList }),
-      system: `You extract household expenses from short voice memos in any language.
-Current time: ${now}. Currency EUR. Always return positive amounts.`,
+      system: `You extract household expenses from voice memos in any language.
+Current time: ${now}. Currency EUR. Always positive amounts.
+Categories: ${CATEGORY_LIST}.
+
+Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+No prose, no markdown fences.`,
       prompt: transcript,
     });
-    return { transcript, ...result.output };
+    const parsed = ParsedList.parse(extractJson(result.text));
+    return { transcript, ...parsed };
   });
 
 const StatementTx = z.object({
@@ -169,13 +193,15 @@ export const parseBankStatement = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
-      output: Output.object({ schema: StatementList }),
       system: `You extract expense transactions from bank statements.
 Currency is EUR. Return only debits/expenses (skip incoming credits and transfers in).
-Always positive amounts. Categorize using the enum.
-Use the transaction date in ISO 8601 format.`,
+Always positive amounts. Categorize using one of: ${CATEGORY_LIST}.
+Use the transaction date in ISO 8601 format.
+
+Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+No prose, no markdown fences.`,
       messages: userContent,
     });
 
-    return result.output;
+    return StatementList.parse(extractJson(result.text));
   });
