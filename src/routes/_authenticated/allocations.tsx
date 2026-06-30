@@ -48,6 +48,37 @@ function AllocationsPage() {
     },
   });
 
+  const now = new Date();
+  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const { data: confirmations, refetch: refetchConfirmations } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["bucket-allocations", householdId, period],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bucket_allocations")
+        .select("*")
+        .eq("household_id", householdId!)
+        .eq("period", period);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const { data: history } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["bucket-allocations-history", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bucket_allocations")
+        .select("*")
+        .eq("household_id", householdId!)
+        .order("period", { ascending: false })
+        .order("confirmed_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const income = data?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
 
