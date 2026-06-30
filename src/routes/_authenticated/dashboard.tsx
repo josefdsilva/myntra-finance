@@ -34,7 +34,7 @@ function Dashboard() {
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
         supabase
           .from("expenses")
-          .select("id, amount, category, merchant, occurred_at, note, source")
+          .select("id, amount, category, merchant, occurred_at, note, source, kind")
           .eq("household_id", householdId!)
           .gte("occurred_at", start.toISOString())
           .lt("occurred_at", end.toISOString())
@@ -43,11 +43,13 @@ function Dashboard() {
         supabase.from("buckets").select("id, name, target_type, target_value, target_deadline, color").eq("household_id", householdId!).order("sort_order"),
       ]);
       const fixedTotal = (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      const spent = (expenses ?? []).reduce((s, r) => s + Number(r.amount), 0);
+      const spent = (expenses ?? []).filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
+      const received = (expenses ?? []).filter((r) => r.kind === "income").reduce((s, r) => s + Number(r.amount), 0);
       const income = (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       return {
         fixedTotal,
         spent,
+        received,
         income,
         buckets: buckets ?? [],
         recent: (expenses ?? []).slice(0, 10),
@@ -59,16 +61,18 @@ function Dashboard() {
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const variablePool = Math.max(0, baseline - (dashboard?.fixedTotal ?? 0));
   const spent = dashboard?.spent ?? 0;
-  const remaining = Math.max(0, variablePool - spent);
-  const overspent = spent > variablePool;
+  const received = dashboard?.received ?? 0;
+  const netSpent = Math.max(0, spent - received);
+  const remaining = Math.max(0, variablePool - netSpent);
+  const overspent = netSpent > variablePool;
   const daysLeft = daysRemainingInMonth();
   const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
-  const pctSpent = variablePool > 0 ? Math.min(100, (spent / variablePool) * 100) : 0;
+  const pctSpent = variablePool > 0 ? Math.min(100, (netSpent / variablePool) * 100) : 0;
 
   // Bucket jeopardy: any overspend eats into surplus → reduces bucket allocations
   const income = dashboard?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
-  const overspendAmount = Math.max(0, spent - variablePool);
+  const overspendAmount = Math.max(0, netSpent - variablePool);
   const buckets = dashboard?.buckets ?? [];
 
   function monthsUntil(dateStr: string | null): number {
