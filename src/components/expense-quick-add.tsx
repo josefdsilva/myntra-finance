@@ -57,9 +57,9 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     if (!isFinite(n) || n <= 0) return toast.error("Enter a valid amount");
     setLoading(true);
     try {
-      const occurredIso = occurredAt ? new Date(occurredAt).toISOString() : new Date().toISOString();
+      const occurredIso = customDate && occurredAt ? new Date(occurredAt).toISOString() : new Date().toISOString();
       await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind, is_salary: kind === "income" && isSalary, occurred_at: occurredIso } });
-      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false); setOccurredAt(nowLocal());
+      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false); setCustomDate(false); setOccurredAt(nowLocal());
       toast.success(kind === "income" ? (isSalary ? "Salary recorded — pay cycle updated" : "Money received added") : "Expense added");
       onAdded?.();
     } catch (err) {
