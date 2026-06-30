@@ -155,9 +155,14 @@ function Dashboard() {
             {money(safeToday)}
           </p>
           <p className="text-sm text-muted-foreground mt-3 tabular-nums">
-            {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} left ={" "}
+            {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} until {cycle?.source === "salary" ? "next salary" : "month end"} ={" "}
             <span className="font-medium text-foreground">{money(safeToday)}/day</span>
           </p>
+          {cycle?.source === "calendar" && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Tip: when you log your salary as <span className="font-medium">Money received</span>, tick "This is a salary deposit" so the cycle starts on payday instead of the 1st.
+            </p>
+          )}
           <div className="mt-6 space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{money(spent)} spent{received > 0 ? ` · −${money(received)} received` : ""}</span>
