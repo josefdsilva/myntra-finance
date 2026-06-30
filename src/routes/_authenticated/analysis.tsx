@@ -90,6 +90,73 @@ function AnalysisPage() {
   });
   const variablePool = Math.max(0, baseline - fixedTotal);
 
+  // ---- Burndown (current pay cycle) ----
+  const { data: cycleData } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["burndown-cycle", householdId],
+    queryFn: async () => {
+      const [{ data: salaries }, { data: buckets }, { data: incomesRows }] = await Promise.all([
+        supabase.from("expenses").select("occurred_at")
+          .eq("household_id", householdId!).eq("is_salary", true)
+          .order("occurred_at", { ascending: false }).limit(6),
+        supabase.from("buckets").select("*").eq("household_id", householdId!),
+        supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
+      ]);
+      const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
+      const { data: cycleTx } = await supabase
+        .from("expenses")
+        .select("amount, occurred_at, kind, is_salary")
+        .eq("household_id", householdId!)
+        .gte("occurred_at", cycle.start.toISOString())
+        .lt("occurred_at", cycle.end.toISOString())
+        .order("occurred_at", { ascending: true });
+      const monthlyIncome = (incomesRows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      const surplus = Math.max(0, monthlyIncome - baseline);
+      function monthsUntil(dateStr: string | null): number {
+        if (!dateStr) return 0;
+        const target = new Date(dateStr);
+        const n = new Date();
+        const m = (target.getFullYear() - n.getFullYear()) * 12 + (target.getMonth() - n.getMonth()) + (target.getDate() >= n.getDate() ? 0 : -1) + 1;
+        return Math.max(1, m);
+      }
+      const totalAllocated = (buckets ?? []).reduce((s: number, b: any) => {
+        const v = Number(b.target_value);
+        if (b.target_type === "pct_surplus") return s + (surplus * v) / 100;
+        if (b.target_type === "fixed_monthly") return s + v;
+        if (b.target_type === "fixed_yearly") return s + v / 12;
+        return s + v / monthsUntil(b.target_deadline);
+      }, 0);
+      const unallocated = Math.max(0, surplus - totalAllocated);
+      return { cycle, tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>, unallocated };
+    },
+  });
+
+  const burnSeries = useMemo(() => {
+    if (!cycleData) return [];
+    const { cycle, tx } = cycleData;
+    // Starting balance = income entries inside cycle (salaries + receivables count as inflow)
+    // Build chronological events; running balance increments on income, decrements on expense.
+    const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
+    let bal = 0;
+    const out: { label: string; iso: string; balance: number }[] = [];
+    // anchor point at cycle start
+    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0 });
+    for (const ev of events) {
+      const amt = Number(ev.amount);
+      bal += ev.kind === "income" ? amt : -amt;
+      out.push({
+        label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm"),
+        iso: ev.occurred_at,
+        balance: Number(bal.toFixed(2)),
+      });
+    }
+    // anchor point at "now" (or cycle end, whichever is sooner)
+    const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
+    out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)) });
+    return out;
+  }, [cycleData]);
+
+
   // baseline scaled to current granularity (variable pool only — fixed expenses don't show up as daily spend)
   const scale = gran === "day" ? 1 / 30.4375 : gran === "week" ? 12 / 52 : 1;
   const baselineLine = baseline * scale;
