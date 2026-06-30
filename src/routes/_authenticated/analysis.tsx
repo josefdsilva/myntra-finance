@@ -9,9 +9,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { money, fmtDate } from "@/lib/format";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  ReferenceLine, PieChart, Pie, Cell, Legend,
 } from "recharts";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { startOfDay, startOfWeek, startOfMonth, format as fmt, subDays, subMonths } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
