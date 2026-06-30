@@ -60,6 +60,7 @@ export type Database = {
           id: string
           name: string
           sort_order: number
+          target_deadline: string | null
           target_type: Database["public"]["Enums"]["bucket_target_type"]
           target_value: number
           updated_at: string
@@ -71,6 +72,7 @@ export type Database = {
           id?: string
           name: string
           sort_order?: number
+          target_deadline?: string | null
           target_type?: Database["public"]["Enums"]["bucket_target_type"]
           target_value?: number
           updated_at?: string
@@ -82,6 +84,7 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number
+          target_deadline?: string | null
           target_type?: Database["public"]["Enums"]["bucket_target_type"]
           target_value?: number
           updated_at?: string
