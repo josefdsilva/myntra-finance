@@ -148,8 +148,13 @@ function AnalysisPage() {
       .sort((a, b) => b.value - a.value);
   }, [onlySpend]);
 
-  const totalSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
+  const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
   const totalIncome = (expenses ?? []).filter((e) => e.kind === "income").reduce((s, e) => s + Number(e.amount), 0);
+
+  // Prorated fixed expenses across the range
+  const monthsInRange = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
+  const proratedFixed = fixedTotal * monthsInRange;
+  const totalSpend = includeFixed ? totalVariableSpend + proratedFixed : totalVariableSpend;
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
@@ -174,8 +179,20 @@ function AnalysisPage() {
         </div>
       </header>
 
+      {fixedTotal > 0 && (
+        <Label className="flex items-center gap-2 cursor-pointer text-sm w-fit">
+          <Checkbox checked={includeFixed} onCheckedChange={(v) => setIncludeFixed(!!v)} />
+          <span>
+            Include fixed expenses
+            <span className="text-muted-foreground ml-1">
+              (+{money(proratedFixed)} prorated · {money(fixedTotal)}/mo × {monthsInRange.toFixed(1)} mo)
+            </span>
+          </span>
+        </Label>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Stat label="Total spent" value={money(totalSpend)} />
+        <Stat label={includeFixed ? "Total spent (incl. fixed)" : "Total spent"} value={money(totalSpend)} />
         <Stat label="Received" value={money(totalIncome)} />
         <Stat label="Net" value={money(totalIncome - totalSpend)} highlight />
       </div>
