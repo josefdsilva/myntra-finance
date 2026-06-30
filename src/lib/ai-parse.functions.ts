@@ -118,13 +118,13 @@ Current time: ${now}. Currency EUR. Always return positive amounts.`,
   });
 
 const StatementTx = z.object({
-  amount: z.number().describe("Positive number for expenses; ignore income/credits"),
+  amount: z.number(),
   category: z.enum(CATEGORIES),
-  merchant: z.string().nullable(),
-  occurred_at: z.string().describe("ISO 8601 date"),
-  note: z.string().nullable(),
+  merchant: z.string().optional(),
+  occurred_at: z.string().optional(),
+  note: z.string().optional(),
 });
-const StatementList = z.object({ items: z.array(StatementTx).max(200) });
+const StatementList = z.object({ items: z.array(StatementTx) });
 
 /** Parse a bank statement (PDF or CSV) into categorized expense rows. */
 export const parseBankStatement = createServerFn({ method: "POST" })
