@@ -157,74 +157,9 @@ function AnalysisPage() {
     return out;
   }, [cycleData, fixedTotal]);
 
-
-  // baseline scaled to current granularity (variable pool only — fixed expenses don't show up as daily spend)
-  const scale = gran === "day" ? 1 / 30.4375 : gran === "week" ? 12 / 52 : 1;
-  const baselineLine = baseline * scale;
-  const variableLine = variablePool * scale;
-
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
-  const onlyIncome = useMemo(() => (expenses ?? []).filter((e) => e.kind === "income"), [expenses]);
 
-  // Fixed expense amount to add to each time bucket when toggled on
-  const fixedPerBucket = gran === "day" ? fixedTotal / 30.4375
-    : gran === "week" ? fixedTotal * 7 / 30.4375
-    : fixedTotal;
 
-  const series = useMemo(() => {
-    const spendMap = new Map<string, number>();
-    const incomeMap = new Map<string, number>();
-    function bucketKey(dateStr: string): string {
-      const d = new Date(dateStr);
-      const b = gran === "day" ? startOfDay(d)
-        : gran === "week" ? startOfWeek(d, { weekStartsOn: 1 })
-        : startOfMonth(d);
-      return b.toISOString();
-    }
-    for (const e of onlySpend) {
-      const k = bucketKey(e.occurred_at);
-      spendMap.set(k, (spendMap.get(k) ?? 0) + Number(e.amount));
-    }
-    for (const e of onlyIncome) {
-      const k = bucketKey(e.occurred_at);
-      incomeMap.set(k, (incomeMap.get(k) ?? 0) + Number(e.amount));
-    }
-    const now = new Date();
-    const stepMs = gran === "day" ? 86400000 : gran === "week" ? 7 * 86400000 : 0;
-    const out: { label: string; spend: number; income: number; iso: string }[] = [];
-    function pushBucket(date: Date) {
-      const iso = date.toISOString();
-      const label = gran === "month"
-        ? fmt(date, "MMM yyyy")
-        : gran === "week"
-        ? `W${fmt(date, "II")} ${fmt(date, "dd/MM")}`
-        : fmt(date, "dd/MM");
-      const spendVar = spendMap.get(iso) ?? 0;
-      const spend = includeFixed ? spendVar + fixedPerBucket : spendVar;
-      out.push({
-        label,
-        iso,
-        spend: Number(spend.toFixed(2)),
-        income: Number((incomeMap.get(iso) ?? 0).toFixed(2)),
-      });
-    }
-    if (gran === "month") {
-      let cur = startOfMonth(start);
-      const end = startOfMonth(now);
-      while (cur.getTime() <= end.getTime()) {
-        pushBucket(new Date(cur));
-        cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
-      }
-    } else {
-      let cur = gran === "day" ? startOfDay(start) : startOfWeek(start, { weekStartsOn: 1 });
-      const end = gran === "day" ? startOfDay(now) : startOfWeek(now, { weekStartsOn: 1 });
-      while (cur.getTime() <= end.getTime()) {
-        pushBucket(new Date(cur));
-        cur = new Date(cur.getTime() + stepMs);
-      }
-    }
-    return out;
-  }, [onlySpend, onlyIncome, gran, start, includeFixed, fixedPerBucket]);
 
 
   const byCategory = useMemo(() => {
