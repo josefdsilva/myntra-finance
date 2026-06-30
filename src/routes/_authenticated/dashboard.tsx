@@ -230,12 +230,13 @@ function Dashboard() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, highlight, hint }: { label: string; value: string; highlight?: boolean; hint?: string }) {
   return (
-    <Card>
+    <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
       <CardContent className="pt-6">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
         <p className="text-2xl font-display mt-1">{value}</p>
+        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
       </CardContent>
     </Card>
   );
