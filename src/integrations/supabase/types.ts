@@ -107,6 +107,7 @@ export type Database = {
           created_at: string
           household_id: string
           id: string
+          kind: Database["public"]["Enums"]["entry_kind"]
           merchant: string | null
           note: string | null
           occurred_at: string
@@ -120,6 +121,7 @@ export type Database = {
           created_at?: string
           household_id: string
           id?: string
+          kind?: Database["public"]["Enums"]["entry_kind"]
           merchant?: string | null
           note?: string | null
           occurred_at?: string
@@ -133,6 +135,7 @@ export type Database = {
           created_at?: string
           household_id?: string
           id?: string
+          kind?: Database["public"]["Enums"]["entry_kind"]
           merchant?: string | null
           note?: string | null
           occurred_at?: string
@@ -365,6 +368,7 @@ export type Database = {
         | "fixed_monthly"
         | "fixed_yearly"
         | "goal_by_date"
+      entry_kind: "expense" | "income"
       expense_source: "manual" | "ai_memo" | "ai_voice" | "statement"
       import_status: "pending" | "parsed" | "approved" | "failed"
       member_role: "owner" | "member"
@@ -501,6 +505,7 @@ export const Constants = {
         "fixed_yearly",
         "goal_by_date",
       ],
+      entry_kind: ["expense", "income"],
       expense_source: ["manual", "ai_memo", "ai_voice", "statement"],
       import_status: ["pending", "parsed", "approved", "failed"],
       member_role: ["owner", "member"],
