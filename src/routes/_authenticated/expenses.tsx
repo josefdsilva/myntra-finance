@@ -63,7 +63,9 @@ function ExpensesPage() {
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
 
-  const total = (rows ?? []).reduce((s, r) => s + Number(r.amount), 0);
+  const spent = (rows ?? []).filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
+  const received = (rows ?? []).filter((r) => r.kind === "income").reduce((s, r) => s + Number(r.amount), 0);
+  const net = spent - received;
   const monthLabel = new Date(new Date().getFullYear(), new Date().getMonth() + monthOffset, 1)
     .toLocaleString("en-GB", { month: "long", year: "numeric" });
 
@@ -86,7 +88,9 @@ function ExpensesPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle>{monthLabel}</CardTitle>
-              <CardDescription>{rows?.length ?? 0} entries · {money(total)}</CardDescription>
+              <CardDescription>
+                {rows?.length ?? 0} entries · {money(spent)} spent{received > 0 ? ` · ${money(received)} received · net ${money(net)}` : ""}
+              </CardDescription>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setMonthOffset((o) => o - 1)}>Prev</Button>
@@ -104,18 +108,23 @@ function ExpensesPage() {
             <p className="text-sm text-muted-foreground py-8 text-center">No expenses in this period.</p>
           ) : (
             <ul className="divide-y">
-              {rows.map((e) => (
-                <li key={e.id} className="flex items-center justify-between py-3 gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {fmtDateTime(e.occurred_at)} · {e.category} · <span className="capitalize">{e.source.replace("_", " ")}</span>
+              {rows.map((e) => {
+                const isIncome = e.kind === "income";
+                return (
+                  <li key={e.id} className="flex items-center justify-between py-3 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {fmtDateTime(e.occurred_at)} · {e.category}{isIncome ? " · received" : ""} · <span className="capitalize">{e.source.replace("_", " ")}</span>
+                      </p>
+                    </div>
+                    <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
+                      {isIncome ? "+" : "−"}{money(e.amount)}
                     </p>
-                  </div>
-                  <p className="font-medium tabular-nums">{money(e.amount)}</p>
-                  <Button variant="ghost" size="icon" onClick={() => remove(e.id)}><Trash2 className="size-4" /></Button>
-                </li>
-              ))}
+                    <Button variant="ghost" size="icon" onClick={() => remove(e.id)}><Trash2 className="size-4" /></Button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </CardContent>
