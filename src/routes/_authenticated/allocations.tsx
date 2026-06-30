@@ -34,12 +34,13 @@ function AllocationsPage() {
     enabled: !!householdId,
     queryKey: ["allocations", householdId],
     queryFn: async () => {
-      const [{ data: incomes }, { data: buckets }] = await Promise.all([
+      const [{ data: incomes }, { data: buckets }, { data: firstSalary }] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("buckets").select("*").eq("household_id", householdId!).order("sort_order"),
+        supabase.from("expenses").select("occurred_at").eq("household_id", householdId!).eq("is_salary", true).order("occurred_at", { ascending: true }).limit(1),
       ]);
       const income = (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      return { income, buckets: (buckets ?? []) as Bucket[] };
+      return { income, buckets: (buckets ?? []) as Bucket[], firstSalaryAt: firstSalary?.[0]?.occurred_at ?? null };
     },
   });
 
