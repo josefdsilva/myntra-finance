@@ -233,14 +233,18 @@ function AnalysisPage() {
     for (const e of onlySpend) {
       map.set(e.category, (map.get(e.category) ?? 0) + Number(e.amount));
     }
-    const arr = Array.from(map.entries())
-      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }));
-    if (includeFixed && fixedTotal > 0) {
+    if (includeFixed && fixedRows.length) {
       const monthsInRangeLocal = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
-      arr.push({ name: "fixed expenses", value: Number((fixedTotal * monthsInRangeLocal).toFixed(2)) });
+      for (const r of fixedRows) {
+        const cat = (r.category?.trim() || r.label?.trim() || "fixed").toLowerCase();
+        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * monthsInRangeLocal);
+      }
     }
-    return arr.sort((a, b) => b.value - a.value);
-  }, [onlySpend, includeFixed, fixedTotal, start]);
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
+      .sort((a, b) => b.value - a.value);
+  }, [onlySpend, includeFixed, fixedRows, start]);
+
 
 
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
