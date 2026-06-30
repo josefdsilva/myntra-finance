@@ -79,16 +79,18 @@ function AnalysisPage() {
     },
   });
 
-  const { data: fixedTotal = 0 } = useQuery({
+  const { data: fixedRows = [] } = useQuery({
     enabled: !!householdId,
-    queryKey: ["fixed-total", householdId],
+    queryKey: ["fixed-rows", householdId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!);
-      return (data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+        .from("fixed_expenses").select("monthly_amount, category, label").eq("household_id", householdId!);
+      return (data ?? []) as Array<{ monthly_amount: number | string; category: string | null; label: string }>;
     },
   });
+  const fixedTotal = useMemo(() => fixedRows.reduce((s, r) => s + Number(r.monthly_amount), 0), [fixedRows]);
   const variablePool = Math.max(0, baseline - fixedTotal);
+
 
   // ---- Burndown (current pay cycle) ----
   const { data: cycleData } = useQuery({
