@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PiggyBank, Check, Undo2 } from "lucide-react";
+import { PiggyBank, Check, Undo2, AlertTriangle, Target } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
