@@ -81,9 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Top bar mobile */}
       <header className="md:hidden flex items-center justify-between p-4 border-b bg-card">
         <Link to="/" className="flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-            <Wallet className="size-4" />
-          </div>
+          <img src={appIcon.url} alt="App icon" className="size-8 rounded-lg" />
           <span className="font-display text-lg">Budget</span>
         </Link>
         <div className="flex items-center gap-1">
