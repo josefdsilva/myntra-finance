@@ -143,6 +143,21 @@ function AllocationsPage() {
         <Stat label="Surplus" value={money(surplus)} highlight />
       </div>
 
+      {showCloseWarning && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 flex items-start gap-3">
+          <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-900 dark:text-amber-200">
+              {daysLeftInMonth === 0 ? "Month ends today" : `Month ends in ${daysLeftInMonth} day${daysLeftInMonth === 1 ? "" : "s"}`}
+              {" · "}{unconfirmedBuckets.length} bucket{unconfirmedBuckets.length === 1 ? "" : "s"} not yet confirmed
+            </p>
+            <p className="text-muted-foreground mt-0.5">
+              {unconfirmedBuckets.map((b) => b.name).join(", ")}
+            </p>
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>This month's buckets</CardTitle>
@@ -159,6 +174,15 @@ function AllocationsPage() {
                 const amount = monthly(b);
                 const pct = surplus > 0 ? Math.min(100, (amount / surplus) * 100) : 0;
                 const confirmed = confirmations?.find((c) => c.bucket_id === b.id);
+                const isGoal = b.target_type === "goal_by_date";
+                const saved = goalTotals?.[b.id] ?? 0;
+                const goalTarget = Number(b.target_value);
+                const goalPct = isGoal && goalTarget > 0 ? Math.min(100, (saved / goalTarget) * 100) : 0;
+                // On-track check: expected saved by now = monthly * months since bucket started tracking
+                // Approximation: use months elapsed since (deadline - required months).
+                const monthsLeft = isGoal ? monthsUntil(b.target_deadline) : 0;
+                const expectedByNow = isGoal ? Math.max(0, goalTarget - amount * monthsLeft) : 0;
+                const onTrack = isGoal ? saved >= expectedByNow - 0.01 : true;
                 return (
                   <div key={b.id} className="space-y-1.5">
                     <div className="flex justify-between items-baseline gap-3 flex-wrap">
@@ -185,19 +209,49 @@ function AllocationsPage() {
                       </div>
                     </div>
                     <Progress value={pct} />
+                    {isGoal && (
+                      <div className="mt-2 rounded-md bg-muted/40 px-3 py-2 space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <Target className="size-3.5" /> Goal progress
+                          </span>
+                          <span className="tabular-nums">
+                            <span className="font-medium">{money(saved)}</span>
+                            <span className="text-muted-foreground"> / {money(goalTarget)} ({goalPct.toFixed(0)}%)</span>
+                          </span>
+                        </div>
+                        <Progress value={goalPct} />
+                        <p className={`text-xs ${onTrack ? "text-emerald-600" : "text-amber-600"}`}>
+                          {onTrack
+                            ? `On track · ${money(saved - expectedByNow)} ahead of schedule`
+                            : `Behind by ${money(expectedByNow - saved)} · need ${money((goalTarget - saved) / Math.max(1, monthsLeft))}/mo to catch up`}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 );
               })}
-              <div className="pt-3 mt-3 border-t flex justify-between text-sm">
-                <span className="text-muted-foreground">Unallocated</span>
-                <span className={`tabular-nums font-medium ${unallocated < 0 ? "text-destructive" : ""}`}>
-                  {money(unallocated)}
-                </span>
+              <div className="pt-3 mt-3 border-t space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total targeted / month</span>
+                  <span className="tabular-nums font-medium">{money(totalAllocated)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Confirmed this month</span>
+                  <span className="tabular-nums font-medium text-emerald-600">{money(totalConfirmedThisMonth)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Unallocated surplus</span>
+                  <span className={`tabular-nums font-medium ${unallocated < 0 ? "text-destructive" : ""}`}>
+                    {money(unallocated)}
+                  </span>
+                </div>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
 
       <AllocationHistory history={history ?? []} buckets={data?.buckets ?? []} householdId={householdId!} />
 
