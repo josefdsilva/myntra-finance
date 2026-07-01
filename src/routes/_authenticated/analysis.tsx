@@ -126,7 +126,7 @@ function AnalysisPage() {
       const unallocated = Math.max(0, surplus - totalAllocated);
       return {
         cycle,
-        tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>,
+        tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean; category: string; note: string | null; merchant: string | null }>,
         unallocated,
         bucketTargets: totalAllocated,
         surplus,
@@ -134,36 +134,43 @@ function AnalysisPage() {
     },
   });
 
-  const burnSeries = useMemo(() => {
+  type BurnEvent = { kind: "income" | "expense" | "fixed"; label: string; amount: number; delta: number };
+  type BurnPoint = { label: string; iso: string; balance: number; events: BurnEvent[] };
+
+  const burnSeries = useMemo<BurnPoint[]>(() => {
     if (!cycleData) return [];
     const { cycle, tx } = cycleData;
     const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
     let bal = 0;
-    const out: { label: string; iso: string; balance: number }[] = [];
-    // Point 1: cycle start at zero.
-    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0 });
+    const out: BurnPoint[] = [];
+    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0, events: [{ kind: "expense", label: "Cycle start", amount: 0, delta: 0 }] });
     let fixedReserved = false;
     for (const ev of events) {
       const amt = Number(ev.amount);
-      bal += ev.kind === "income" ? amt : -amt;
+      const delta = ev.kind === "income" ? amt : -amt;
+      bal += delta;
+      const evLabel = ev.is_salary
+        ? (ev.note || ev.merchant || "Salary")
+        : (ev.note || ev.merchant || ev.category || (ev.kind === "income" ? "Income" : "Expense"));
       out.push({
         label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm"),
         iso: ev.occurred_at,
         balance: Number(bal.toFixed(2)),
+        events: [{ kind: ev.kind, label: evLabel, amount: amt, delta }],
       });
-      // Right after the first salary lands, reserve fixed expenses in one step.
       if (!fixedReserved && ev.is_salary && fixedTotal > 0) {
         bal -= fixedTotal;
         out.push({
           label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm") + " · fixed",
           iso: ev.occurred_at,
           balance: Number(bal.toFixed(2)),
+          events: [{ kind: "fixed", label: "Fixed expenses reserved", amount: fixedTotal, delta: -fixedTotal }],
         });
         fixedReserved = true;
       }
     }
     const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
-    out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)) });
+    out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)), events: [] });
     return out;
   }, [cycleData, fixedTotal]);
 
