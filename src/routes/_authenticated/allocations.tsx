@@ -10,8 +10,11 @@ import { Progress } from "@/components/ui/progress";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PiggyBank, Check, Undo2, AlertTriangle, Target } from "lucide-react";
-import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { PiggyBank, Check, Undo2, AlertTriangle, Target, TrendingUp, TrendingDown } from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/allocations")({
@@ -219,9 +222,15 @@ function AllocationsPage() {
                         <ConfirmAllocationButton
                           householdId={householdId!}
                           bucketId={b.id}
+                          bucketName={b.name}
                           period={period}
                           suggested={amount}
                           confirmed={confirmed ?? null}
+                          isGoal={isGoal}
+                          goalTarget={isGoal ? goalTarget : 0}
+                          savedSoFar={isGoal ? saved : 0}
+                          monthsLeft={isGoal ? monthsLeft : 0}
+                          unallocatedSurplus={unallocated}
                           onChanged={() => refetchConfirmations()}
                         />
                       </div>
@@ -344,32 +353,58 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
 type Confirmation = { id: string; bucket_id: string; period: string; amount: number | string; note: string | null; confirmed_at: string };
 
 function ConfirmAllocationButton({
-  householdId, bucketId, period, suggested, confirmed, onChanged,
+  householdId, bucketId, bucketName, period, suggested, confirmed,
+  isGoal, goalTarget, savedSoFar, monthsLeft, unallocatedSurplus, onChanged,
 }: {
   householdId: string;
   bucketId: string;
+  bucketName: string;
   period: string;
   suggested: number;
   confirmed: Confirmation | null;
+  isGoal: boolean;
+  goalTarget: number;
+  savedSoFar: number;
+  monthsLeft: number;
+  unallocatedSurplus: number;
   onChanged: () => void;
 }) {
   const qc = useQueryClient();
   const confirmFn = useServerFn(confirmBucketAllocation);
   const undoFn = useServerFn(undoBucketAllocation);
-  const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(suggested.toFixed(2));
+  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function submit() {
+  const parsed = useMemo(() => {
     const n = parseFloat(amount.replace(",", "."));
-    if (!isFinite(n) || n < 0) return toast.error("Invalid amount");
+    return isFinite(n) && n >= 0 ? n : null;
+  }, [amount]);
+
+  const delta = parsed !== null ? parsed - suggested : 0;
+  const newUnallocated = unallocatedSurplus - delta; // surplus goes down if you allocate more
+  const newSaved = savedSoFar + (parsed ?? 0);
+  const remainingToGoal = Math.max(0, goalTarget - newSaved);
+  const newMonthlyNeeded = isGoal && monthsLeft > 1 ? remainingToGoal / Math.max(1, monthsLeft - 1) : 0;
+  const goalPctAfter = isGoal && goalTarget > 0 ? Math.min(100, (newSaved / goalTarget) * 100) : 0;
+
+  function invalidate() {
+    qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] });
+    qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] });
+    qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
+  }
+
+  async function submit() {
+    if (parsed === null) return toast.error("Invalid amount");
     setLoading(true);
     try {
-      await confirmFn({ data: { household_id: householdId, bucket_id: bucketId, period, amount: n } });
+      await confirmFn({ data: { household_id: householdId, bucket_id: bucketId, period, amount: parsed, note: note.trim() || null } });
       toast.success("Allocation confirmed");
-      setEditing(false);
+      setOpen(false);
+      setNote("");
       onChanged();
-      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
+      invalidate();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally { setLoading(false); }
@@ -381,7 +416,7 @@ function ConfirmAllocationButton({
       await undoFn({ data: { id: confirmed.id } });
       toast.success("Confirmation removed");
       onChanged();
-      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
+      invalidate();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally { setLoading(false); }
@@ -399,19 +434,103 @@ function ConfirmAllocationButton({
       </div>
     );
   }
-  if (editing) {
-    return (
-      <div className="flex items-center gap-1">
-        <Input className="h-8 w-24" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-        <Button size="sm" onClick={submit} disabled={loading}><Check className="size-3.5" /></Button>
-        <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>×</Button>
-      </div>
-    );
-  }
+
   return (
-    <Button size="sm" variant="outline" onClick={() => { setAmount(suggested.toFixed(2)); setEditing(true); }}>
-      Mark as allocated
-    </Button>
+    <>
+      <Button size="sm" variant="outline" onClick={() => { setAmount(suggested.toFixed(2)); setNote(""); setOpen(true); }}>
+        Mark as allocated
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Allocate to {bucketName}</DialogTitle>
+            <DialogDescription>How much did you actually move to this bucket?</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-md bg-muted/50 px-3 py-2 flex justify-between text-sm">
+              <span className="text-muted-foreground">Recommended this month</span>
+              <span className="tabular-nums font-medium">{money(suggested)}</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="alloc-amt">Amount moved (€)</Label>
+              <Input id="alloc-amt" inputMode="decimal" autoFocus value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <div className="flex gap-2 pt-1">
+                <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAmount(suggested.toFixed(2))}>Use recommended</Button>
+                {isGoal && (
+                  <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAmount(Math.max(0, goalTarget - savedSoFar).toFixed(2))}>
+                    Fund remainder ({money(Math.max(0, goalTarget - savedSoFar))})
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="alloc-note">Note (optional)</Label>
+              <Textarea id="alloc-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. bonus month, skipped due to travel…" />
+            </div>
+
+            {parsed !== null && (
+              <div className="rounded-md border p-3 space-y-2 text-sm">
+                <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">Impact</p>
+
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    {delta >= 0 ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
+                    vs recommended
+                  </span>
+                  <span className={`tabular-nums font-medium ${Math.abs(delta) < 0.01 ? "" : delta > 0 ? "text-amber-600" : "text-sky-600"}`}>
+                    {delta === 0 ? "on target" : `${delta > 0 ? "+" : ""}${money(delta)}`}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-muted-foreground">Emergency / unallocated surplus after</span>
+                  <span className={`tabular-nums font-medium ${newUnallocated < 0 ? "text-destructive" : "text-emerald-600"}`}>
+                    {money(newUnallocated)}
+                  </span>
+                </div>
+
+                {isGoal && goalTarget > 0 && (
+                  <>
+                    <div className="pt-2 border-t space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="flex items-center gap-1.5 text-muted-foreground"><Target className="size-3.5" /> Goal after this</span>
+                        <span className="tabular-nums">{money(newSaved)} / {money(goalTarget)} ({goalPctAfter.toFixed(0)}%)</span>
+                      </div>
+                      <Progress value={goalPctAfter} />
+                      {monthsLeft > 1 && remainingToGoal > 0 && (
+                        <p className={`text-xs ${newMonthlyNeeded > suggested + 0.01 ? "text-amber-600" : "text-muted-foreground"}`}>
+                          {newMonthlyNeeded > suggested + 0.01
+                            ? `You'll need ${money(newMonthlyNeeded)}/mo (up from ${money(suggested)}) to hit the goal.`
+                            : `On track — ${money(newMonthlyNeeded)}/mo needed for the remaining ${monthsLeft - 1} month(s).`}
+                        </p>
+                      )}
+                      {remainingToGoal === 0 && (
+                        <p className="text-xs text-emerald-600">Goal reached 🎉</p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {newUnallocated < 0 && (
+                  <p className="text-xs text-destructive flex items-start gap-1.5">
+                    <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
+                    This overspends the month's surplus by {money(-newUnallocated)} — it'll come from your emergency pool.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
+            <Button onClick={submit} disabled={loading || parsed === null}>Confirm allocation</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
