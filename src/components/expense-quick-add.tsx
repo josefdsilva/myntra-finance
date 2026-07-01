@@ -41,7 +41,6 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [category, setCategory] = useState("groceries");
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
-  const [isSalary, setIsSalary] = useState(false);
   const [customDate, setCustomDate] = useState(false);
   const nowLocal = () => {
     const d = new Date();
@@ -58,9 +57,9 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     setLoading(true);
     try {
       const occurredIso = customDate && occurredAt ? new Date(occurredAt).toISOString() : new Date().toISOString();
-      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind, is_salary: kind === "income" && isSalary, occurred_at: occurredIso } });
-      setAmount(""); setMerchant(""); setNote(""); setIsSalary(false); setCustomDate(false); setOccurredAt(nowLocal());
-      toast.success(kind === "income" ? (isSalary ? "Salary recorded — pay cycle updated" : "Money received added") : "Expense added");
+      await add({ data: { household_id: householdId, amount: n, category, merchant: merchant || null, note: note || null, source: "manual", kind, is_salary: false, occurred_at: occurredIso } });
+      setAmount(""); setMerchant(""); setNote(""); setCustomDate(false); setOccurredAt(nowLocal());
+      toast.success(kind === "income" ? "Money received added" : "Expense added");
       onAdded?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -70,7 +69,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
-        <button type="button" onClick={() => { setKind("expense"); setCategory("groceries"); setIsSalary(false); }}
+        <button type="button" onClick={() => { setKind("expense"); setCategory("groceries"); }}
           className={`px-3 py-1.5 text-sm rounded ${kind === "expense" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>
           Expense
         </button>
@@ -79,6 +78,11 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           Money received
         </button>
       </div>
+      {kind === "income" && (
+        <p className="text-xs text-muted-foreground">
+          For salary payments, use the <span className="font-medium">Salary received</span> button on the dashboard instead — it starts a new pay cycle.
+        </p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div>
           <Label>Amount (€)</Label>
@@ -100,14 +104,6 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
             {loading ? <Loader2 className="animate-spin" /> : <><Plus /> Add</>}
           </Button>
         </div>
-        {kind === "income" && (
-          <div className="md:col-span-4">
-            <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
-              <input type="checkbox" checked={isSalary} onChange={(e) => setIsSalary(e.target.checked)} className="accent-primary size-4" />
-              <span>This is a salary deposit — start a new pay cycle on this date</span>
-            </label>
-          </div>
-        )}
         <div className="md:col-span-2">
           <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none mb-2">
             <input type="checkbox" checked={customDate} onChange={(e) => setCustomDate(e.target.checked)} className="accent-primary size-4" />

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,9 @@ import { computeCycle } from "@/lib/cycle";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { markSalaryReceived } from "@/lib/budget.functions";
+import { toast } from "sonner";
+import { Wallet, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Household Budget" }] }),
@@ -160,7 +163,7 @@ function Dashboard() {
           </p>
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">
-              Tip: when you log your salary as <span className="font-medium">Money received</span>, tick "This is a salary deposit" so the cycle starts on payday instead of the 1st.
+              Tip: press <span className="font-medium">Salary received</span> below on payday to start a new pay cycle.
             </p>
           )}
           <div className="mt-6 space-y-2">
@@ -169,6 +172,10 @@ function Dashboard() {
               <span>{money(variablePool)} pool</span>
             </div>
             <Progress value={pctSpent} className={overspent ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"} />
+          </div>
+
+          <div className="mt-6 pt-6 border-t">
+            {householdId && <SalaryReceivedButton householdId={householdId} lastSalaryAt={cycle?.source === "salary" ? cycle.start : null} onDone={() => refetch()} />}
           </div>
 
           {/* Bucket impact */}
@@ -262,6 +269,46 @@ function Dashboard() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function SalaryReceivedButton({ householdId, lastSalaryAt, onDone }: { householdId: string; lastSalaryAt: Date | null; onDone: () => void }) {
+  const qc = useQueryClient();
+  const mark = useServerFn(markSalaryReceived);
+  const [loading, setLoading] = useState(false);
+  // Don't re-trigger if a salary was already recorded within the last 5 days
+  const recentlyReceived = lastSalaryAt && (Date.now() - lastSalaryAt.getTime()) < 5 * 86400_000;
+
+  async function onClick() {
+    if (recentlyReceived) {
+      const ok = window.confirm(`Last salary was recorded on ${fmtDate(lastSalaryAt!)}. Record another?`);
+      if (!ok) return;
+    }
+    setLoading(true);
+    try {
+      await mark({ data: { household_id: householdId } });
+      toast.success("Salary recorded — new cycle started");
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["salaries"] });
+      qc.invalidateQueries({ queryKey: ["expenses-list"] });
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <div>
+        <p className="text-sm font-medium">Payday?</p>
+        <p className="text-xs text-muted-foreground">
+          {lastSalaryAt ? `Last salary: ${fmtDate(lastSalaryAt)}` : "No salary recorded yet."} Uses your Settings income total.
+        </p>
+      </div>
+      <Button onClick={onClick} disabled={loading} variant={recentlyReceived ? "outline" : "default"}>
+        {loading ? <Loader2 className="animate-spin" /> : <Wallet />} Salary received — start new cycle
+      </Button>
     </div>
   );
 }

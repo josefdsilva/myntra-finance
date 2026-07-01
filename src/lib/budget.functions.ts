@@ -73,6 +73,53 @@ export const deleteExpense = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Mark a salary as received — starts a new pay cycle without treating salary as a manual expense entry.
+export const markSalaryReceived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        household_id: z.string().uuid(),
+        amount: z.number().positive().max(10_000_000).optional(),
+        occurred_at: z.string().datetime().optional(),
+        note: z.string().max(200).optional().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    let amount = data.amount;
+    if (amount == null) {
+      const { data: incs, error: incErr } = await context.supabase
+        .from("incomes")
+        .select("monthly_amount")
+        .eq("household_id", data.household_id);
+      if (incErr) throw incErr;
+      amount = (incs ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    }
+    if (!amount || amount <= 0) {
+      throw new Error("No salary amount configured. Add a monthly income in Settings first.");
+    }
+    const { data: row, error } = await context.supabase
+      .from("expenses")
+      .insert({
+        household_id: data.household_id,
+        added_by_user_id: context.userId,
+        amount,
+        category: "income",
+        merchant: "Salary",
+        occurred_at: data.occurred_at ?? new Date().toISOString(),
+        note: data.note ?? "Salary received — cycle start",
+        source: "manual",
+        source_meta: {} as never,
+        kind: "income",
+        is_salary: true,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
 // ---- Incomes ----
 export const upsertIncome = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
