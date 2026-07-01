@@ -156,6 +156,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="p-3 border-t hidden md:block space-y-1">
+          <Button variant="ghost" className="w-full justify-start" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}>
+            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {theme === "dark" ? "Light theme" : "Dark theme"}
+          </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={() => setPrivacy((s) => !s)}>
             {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             {privacy ? "Show numbers" : "Hide numbers"}
