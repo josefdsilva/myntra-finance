@@ -10,8 +10,11 @@ import { Progress } from "@/components/ui/progress";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PiggyBank, Check, Undo2, AlertTriangle, Target } from "lucide-react";
-import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { PiggyBank, Check, Undo2, AlertTriangle, Target, TrendingUp, TrendingDown } from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/allocations")({
