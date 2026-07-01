@@ -79,6 +79,22 @@ function AllocationsPage() {
     },
   });
 
+  // Cumulative totals per bucket across all confirmations — for goal progress.
+  const { data: goalTotals } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["bucket-allocations-totals", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bucket_allocations")
+        .select("bucket_id, amount")
+        .eq("household_id", householdId!);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      for (const r of data ?? []) map[r.bucket_id] = (map[r.bucket_id] ?? 0) + Number(r.amount);
+      return map;
+    },
+  });
+
   const income = data?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
 
@@ -103,6 +119,16 @@ function AllocationsPage() {
 
   const totalAllocated = (data?.buckets ?? []).reduce((s, b) => s + monthly(b), 0);
   const unallocated = surplus - totalAllocated;
+
+  // Cycle-close warning (option 4): once we're past the ~last week of the month,
+  // flag buckets that still have no confirmation for the current period.
+  const daysLeftInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  const unconfirmedBuckets = (data?.buckets ?? []).filter(
+    (b) => !confirmations?.some((c) => c.bucket_id === b.id),
+  );
+  const showCloseWarning = daysLeftInMonth <= 7 && unconfirmedBuckets.length > 0;
+  const totalConfirmedThisMonth = (confirmations ?? []).reduce((s, c) => s + Number(c.amount), 0);
+
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
