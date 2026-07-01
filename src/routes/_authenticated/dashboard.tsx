@@ -427,3 +427,25 @@ function StatCard({ label, value, highlight, hint, tone }: { label: string; valu
     </Card>
   );
 }
+
+function Sparkline({ days, max, threshold }: { days: { key: string; label: string; net: number }[]; max: number; threshold: number }) {
+  const w = 280;
+  const h = 44;
+  const pad = 2;
+  const step = (w - pad * 2) / Math.max(1, days.length - 1);
+  const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
+  const pts = days.map((d, i) => `${pad + i * step},${y(d.net)}`).join(" ");
+  const thY = y(threshold);
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-11 overflow-visible" aria-label="Last 7 days spend">
+      <line x1={pad} x2={w - pad} y1={thY} y2={thY} stroke="currentColor" strokeWidth={1} strokeDasharray="3 3" className="text-muted-foreground/50" />
+      <polyline fill="none" stroke="currentColor" strokeWidth={1.5} points={pts} className="text-primary" />
+      {days.map((d, i) => (
+        <g key={d.key}>
+          <circle cx={pad + i * step} cy={y(d.net)} r={2} className={d.net > threshold ? "fill-orange-500" : "fill-primary"} />
+          <title>{d.label} · {new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(d.net)}</title>
+        </g>
+      ))}
+    </svg>
+  );
+}
