@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,9 @@ import { computeCycle } from "@/lib/cycle";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { markSalaryReceived } from "@/lib/budget.functions";
+import { toast } from "sonner";
+import { Wallet, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Household Budget" }] }),
