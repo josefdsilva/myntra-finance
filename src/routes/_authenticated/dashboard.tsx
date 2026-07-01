@@ -74,7 +74,9 @@ function Dashboard() {
   });
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
-  const variablePool = Math.max(0, baseline - (dashboard?.fixedTotal ?? 0));
+  const marginPct = Number(hh?.household?.margin_pct ?? 0);
+  const safetyReserve = (baseline * marginPct) / 100;
+  const variablePool = Math.max(0, baseline - (dashboard?.fixedTotal ?? 0) - safetyReserve);
   const spent = dashboard?.spent ?? 0;
   const received = dashboard?.received ?? 0;
   const netSpent = Math.max(0, spent - received);
