@@ -252,26 +252,26 @@ function AnalysisPage() {
       map.set(e.category, (map.get(e.category) ?? 0) + Number(e.amount));
     }
     if (includeFixed && fixedRows.length) {
-      const monthsInRangeLocal = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
       for (const r of fixedRows) {
         const cat = (r.category?.trim() || r.label?.trim() || "fixed").toLowerCase();
-        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * monthsInRangeLocal);
+        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * cycleCount);
       }
     }
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
       .sort((a, b) => b.value - a.value);
-  }, [onlySpend, includeFixed, fixedRows, start]);
+  }, [onlySpend, includeFixed, fixedRows, cycleCount]);
 
 
 
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
   const totalIncome = (expenses ?? []).filter((e) => e.kind === "income").reduce((s, e) => s + Number(e.amount), 0);
 
-  // Prorated fixed expenses across the range
-  const monthsInRange = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
-  const proratedFixed = fixedTotal * monthsInRange;
+  // Fixed expenses over selected cycles (1 monthly amount per cycle)
+  const proratedFixed = fixedTotal * cycleCount;
   const totalSpend = includeFixed ? totalVariableSpend + proratedFixed : totalVariableSpend;
+
+  const cycleLabel = cycleCount === 1 ? "cycle" : "cycles";
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
@@ -279,18 +279,20 @@ function AnalysisPage() {
         <div>
           <h1 className="text-3xl font-display">Analysis</h1>
           <p className="text-sm text-muted-foreground">
-            From {fmtDate(start)} · {onlySpend.length} expense{onlySpend.length === 1 ? "" : "s"}
+            {cycleCount > 0 ? `Last ${cycleCount} pay ${cycleLabel} · ` : ""}
+            {fmtDate(start)} → {fmtDate(end)} · {onlySpend.length} expense{onlySpend.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="6m">Last 6 months</SelectItem>
-              <SelectItem value="12m">Last 12 months</SelectItem>
-              <SelectItem value="ytd">Year to date</SelectItem>
+              <SelectItem value="1">Last cycle</SelectItem>
+              <SelectItem value="2">Last 2 cycles</SelectItem>
+              <SelectItem value="3">Last 3 cycles</SelectItem>
+              <SelectItem value="6">Last 6 cycles</SelectItem>
+              <SelectItem value="12">Last 12 cycles</SelectItem>
+              <SelectItem value="all">All cycles</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -302,11 +304,12 @@ function AnalysisPage() {
           <span>
             Include fixed expenses
             <span className="text-muted-foreground ml-1">
-              (+{money(proratedFixed)} prorated · {money(fixedTotal)}/mo × {monthsInRange.toFixed(1)} mo)
+              (+{money(proratedFixed)} · {money(fixedTotal)}/mo × {cycleCount} {cycleLabel})
             </span>
           </span>
         </Label>
       )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Stat label={includeFixed ? "Total spent (incl. fixed)" : "Total spent"} value={money(totalSpend)} />
