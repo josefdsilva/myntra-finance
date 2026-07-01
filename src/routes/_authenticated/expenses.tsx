@@ -81,6 +81,24 @@ function ExpensesPage() {
   }, [salaries, cycleOffset]);
 
 
+  const { data: rows, refetch } = useQuery({
+    enabled: !!householdId && !!cycle,
+    queryKey: ["expenses-list", householdId, category, cycle?.start?.toISOString(), cycle?.end?.toISOString()],
+    queryFn: async () => {
+      let q = supabase
+        .from("expenses")
+        .select("*")
+        .eq("household_id", householdId!)
+        .gte("occurred_at", cycle!.start.toISOString())
+        .lt("occurred_at", cycle!.end.toISOString())
+        .order("occurred_at", { ascending: false });
+      if (category !== "all") q = q.eq("category", category);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   async function remove(id: string) {
     await del({ data: { id } });
     toast.success("Removed");
@@ -91,14 +109,15 @@ function ExpensesPage() {
   const spent = (rows ?? []).filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
   const received = (rows ?? []).filter((r) => r.kind === "income").reduce((s, r) => s + Number(r.amount), 0);
   const net = spent - received;
-  const monthLabel = new Date(new Date().getFullYear(), new Date().getMonth() + monthOffset, 1)
-    .toLocaleString("en-GB", { month: "long", year: "numeric" });
+  const cycleLabel = cycle
+    ? `Cycle · ${fmtDate(cycle.start.toISOString())} → ${fmtDate(cycle.end.toISOString())}${cycle.predicted ? " (predicted)" : ""}`
+    : "Cycle";
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
         <h1 className="text-3xl font-display">Expenses</h1>
-        <p className="text-sm text-muted-foreground">Add, review and import.</p>
+        <p className="text-sm text-muted-foreground">Grouped by pay cycle (salary to salary).</p>
       </header>
 
       <Card>
@@ -112,15 +131,15 @@ function ExpensesPage() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle>{monthLabel}</CardTitle>
+              <CardTitle>{cycleLabel}</CardTitle>
               <CardDescription>
                 {rows?.length ?? 0} entries · {money(spent)} spent{received > 0 ? ` · ${money(received)} received · net ${money(net)}` : ""}
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setMonthOffset((o) => o - 1)}>Prev</Button>
-              <Button variant="outline" size="sm" onClick={() => setMonthOffset(0)} disabled={monthOffset === 0}>Current</Button>
-              <Button variant="outline" size="sm" onClick={() => setMonthOffset((o) => o + 1)} disabled={monthOffset >= 0}>Next</Button>
+              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o - 1)}>Prev</Button>
+              <Button variant="outline" size="sm" onClick={() => setCycleOffset(0)} disabled={cycleOffset === 0}>Current</Button>
+              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o + 1)} disabled={cycleOffset >= 0}>Next</Button>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
