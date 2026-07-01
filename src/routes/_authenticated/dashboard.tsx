@@ -167,9 +167,21 @@ function Dashboard() {
             </p>
           )}
           <div className="mt-6 space-y-2">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{money(spent)} spent{received > 0 ? ` · −${money(received)} received` : ""}</span>
-              <span>{money(variablePool)} pool</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-orange-500/15 text-orange-700 dark:text-orange-300 tabular-nums">
+                  Spent {money(spent)}
+                </span>
+                {received > 0 && (
+                  <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-blue-500/15 text-blue-700 dark:text-blue-300 tabular-nums">
+                    Received {money(received)}
+                  </span>
+                )}
+                <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-muted text-foreground tabular-nums">
+                  Balance {money(netSpent)}
+                </span>
+              </div>
+              <span className="text-muted-foreground tabular-nums">{money(variablePool)} pool</span>
             </div>
             <Progress value={pctSpent} className={overspent ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"} />
           </div>
