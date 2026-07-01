@@ -304,7 +304,8 @@ function AnalysisPage() {
               </div>
               <ul className="divide-y">
                 {byCategory.map((c, i) => {
-                  const pct = totalVariableSpend > 0 ? (c.value / totalVariableSpend) * 100 : 0;
+                  const denom = includeFixed ? totalSpend : totalVariableSpend;
+                  const pct = denom > 0 ? (c.value / denom) * 100 : 0;
                   return (
                     <li key={c.name} className="flex items-center justify-between py-2 text-sm">
                       <div className="flex items-center gap-2">
