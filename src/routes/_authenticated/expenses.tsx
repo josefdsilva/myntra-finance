@@ -34,28 +34,53 @@ function ExpensesPage() {
   const householdId = hh?.household?.id;
 
   const [category, setCategory] = useState("all");
-  const [monthOffset, setMonthOffset] = useState(0);
+  const [cycleOffset, setCycleOffset] = useState(0);
 
-  const { data: rows, refetch } = useQuery({
+  // Fetch salary history to derive pay cycles
+  const { data: salaries } = useQuery({
     enabled: !!householdId,
-    queryKey: ["expenses-list", householdId, category, monthOffset],
+    queryKey: ["salaries", householdId],
     queryFn: async () => {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 1);
-      let q = supabase
+      const { data, error } = await supabase
         .from("expenses")
-        .select("*")
+        .select("occurred_at")
         .eq("household_id", householdId!)
-        .gte("occurred_at", start.toISOString())
-        .lt("occurred_at", end.toISOString())
-        .order("occurred_at", { ascending: false });
-      if (category !== "all") q = q.eq("category", category);
-      const { data, error } = await q;
+        .eq("kind", "income")
+        .eq("is_salary", true)
+        .order("occurred_at", { ascending: false })
+        .limit(24);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map((r) => r.occurred_at as string);
     },
   });
+
+  // Compute cycle bounds for the selected offset (0 = current, -1 previous, +1 next predicted)
+  const cycle = useMemo(() => {
+    const list = salaries ?? [];
+    if (cycleOffset === 0) return computeCycle(list);
+    if (cycleOffset < 0) {
+      // Historic cycle: between salary[|offset|] and salary[|offset|-1]
+      const i = -cycleOffset; // 1,2,...
+      const startStr = list[i];
+      const endStr = list[i - 1];
+      if (startStr && endStr) {
+        return computeCycle(list.slice(i)); // treats salary[i] as latest → end predicted, but override end
+          ? undefined as never
+          : undefined as never;
+      }
+      // Fallback: shift current cycle by one month
+      const base = computeCycle(list);
+      const start = new Date(base.start); start.setMonth(start.getMonth() + cycleOffset);
+      const end = new Date(base.end); end.setMonth(end.getMonth() + cycleOffset);
+      return { ...base, start, end };
+    }
+    // Future predicted cycle: shift by +1 month from current
+    const base = computeCycle(list);
+    const start = new Date(base.start); start.setMonth(start.getMonth() + cycleOffset);
+    const end = new Date(base.end); end.setMonth(end.getMonth() + cycleOffset);
+    return { ...base, start, end, predicted: true };
+  }, [salaries, cycleOffset]);
+
 
   async function remove(id: string) {
     await del({ data: { id } });
