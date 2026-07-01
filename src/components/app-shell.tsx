@@ -98,6 +98,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={theme === "dark" ? "Light theme" : "Dark theme"}
+          >
+            {theme === "dark" ? <Sun /> : <Moon />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setPrivacy((s) => !s)}
             aria-label={privacy ? "Show numbers" : "Hide numbers"}
             title={privacy ? "Show numbers" : "Hide numbers"}
