@@ -102,7 +102,7 @@ function AnalysisPage() {
       const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
       const { data: cycleTx } = await supabase
         .from("expenses")
-        .select("amount, occurred_at, kind, is_salary, category, label")
+        .select("amount, occurred_at, kind, is_salary, category, note, merchant")
         .eq("household_id", householdId!)
         .gte("occurred_at", cycle.start.toISOString())
         .lt("occurred_at", cycle.end.toISOString())
