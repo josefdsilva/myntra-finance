@@ -45,7 +45,7 @@ function AnalysisPage() {
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
   const [range, setRange] = useState<RangeKey>("30d");
-  const [includeFixed, setIncludeFixed] = useState(false);
+  const [includeFixed, setIncludeFixed] = useState(true);
 
 
   const { start } = useMemo(() => {
