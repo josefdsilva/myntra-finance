@@ -66,14 +66,14 @@ function HouseholdSection({ household, onChange }: { household: { id: string; na
   const [margin, setMargin] = useState(Number(household.margin_pct));
 
   const { data: fixedRows } = useQuery({
-    queryKey: ["fixed", household.id],
+    queryKey: ["fixed-total", household.id],
     queryFn: async () => {
       const { data } = await supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", household.id);
       return data ?? [];
     },
   });
   const { data: varRows } = useQuery({
-    queryKey: ["variable-estimates", household.id],
+    queryKey: ["variable-estimates-total", household.id],
     queryFn: async () => {
       const { data } = await supabase.from("variable_estimates").select("monthly_amount").eq("household_id", household.id);
       return data ?? [];
@@ -160,11 +160,11 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
     if (!label || !amount) return;
     await upsert({ data: { household_id: householdId, label, category, monthly_amount: parseFloat(amount) || 0 } });
     setLabel(""); setAmount("");
-    refetch(); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
+    refetch(); qc.invalidateQueries({ queryKey: ["variable-estimates-total", householdId] }); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
   async function remove(id: string) {
     await del({ data: { id } });
-    refetch(); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
+    refetch(); qc.invalidateQueries({ queryKey: ["variable-estimates-total", householdId] }); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
 
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
@@ -283,10 +283,10 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
     if (!label || !amount) return;
     await upsert({ data: { household_id: householdId, label, category, monthly_amount: parseFloat(amount) || 0 } });
     setLabel(""); setAmount("");
-    refetch(); qc.invalidateQueries({ queryKey: ["dashboard"] });
+    refetch(); qc.invalidateQueries({ queryKey: ["fixed-total", householdId] }); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
   async function remove(id: string) {
-    await del({ data: { id } }); refetch(); qc.invalidateQueries({ queryKey: ["dashboard"] });
+    await del({ data: { id } }); refetch(); qc.invalidateQueries({ queryKey: ["fixed-total", householdId] }); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
 
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
