@@ -13,7 +13,7 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { markSalaryReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
-import { Wallet, Loader2 } from "lucide-react";
+import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Household Budget" }] }),
@@ -71,10 +71,13 @@ function Dashboard() {
         income,
         buckets: buckets ?? [],
         recent: (expenses ?? []).slice(0, 10),
+        expenses: expenses ?? [],
         totalExpenses: expenses?.length ?? 0,
       };
     },
   });
+
+  const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const variablePool = Math.max(0, baseline - (dashboard?.fixedTotal ?? 0));
@@ -88,11 +91,51 @@ function Dashboard() {
   const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
   const pctSpent = variablePool > 0 ? Math.min(100, (netSpent / variablePool) * 100) : 0;
 
-  // Bucket jeopardy: any overspend eats into surplus → reduces bucket allocations
   const income = dashboard?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
   const overspendAmount = Math.max(0, netSpent - variablePool);
   const buckets = dashboard?.buckets ?? [];
+
+  // Trend: compare with yesterday's safe-to-spend (spent through end of yesterday, days-left as of yesterday)
+  const allExpenses = dashboard?.expenses ?? [];
+  const yesterdayEnd = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const netSpentThroughYesterday = useMemo(() => {
+    const s = allExpenses
+      .filter((r) => r.kind !== "income" && new Date(r.occurred_at) < yesterdayEnd)
+      .reduce((s, r) => s + Number(r.amount), 0);
+    const rc = allExpenses
+      .filter((r) => r.kind === "income" && !r.is_salary && new Date(r.occurred_at) < yesterdayEnd)
+      .reduce((s, r) => s + Number(r.amount), 0);
+    return Math.max(0, s - rc);
+  }, [allExpenses, yesterdayEnd]);
+  const daysLeftYesterday = Math.max(1, daysLeft + 1);
+  const safeYesterday = variablePool > 0 ? Math.max(0, variablePool - netSpentThroughYesterday) / daysLeftYesterday : 0;
+  const trendDelta = safeToday - safeYesterday;
+
+  // 7-day sparkline of daily net spend (spent - non-salary income)
+  const spark = useMemo(() => {
+    const days: { key: string; label: string; net: number }[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+      const spent = allExpenses
+        .filter((r) => r.kind !== "income" && new Date(r.occurred_at) >= d && new Date(r.occurred_at) < next)
+        .reduce((s, r) => s + Number(r.amount), 0);
+      const rc = allExpenses
+        .filter((r) => r.kind === "income" && !r.is_salary && new Date(r.occurred_at) >= d && new Date(r.occurred_at) < next)
+        .reduce((s, r) => s + Number(r.amount), 0);
+      days.push({ key: d.toISOString().slice(0, 10), label: d.toLocaleDateString("en-GB", { weekday: "short" }), net: Math.max(0, spent - rc) });
+    }
+    return days;
+  }, [allExpenses]);
+  const sparkMax = Math.max(safeToday, ...spark.map((d) => d.net), 1);
+  const avgDaily7 = spark.reduce((s, d) => s + d.net, 0) / Math.max(1, spark.length);
+  const projectedBalance = remaining - avgDaily7 * daysLeft;
 
   function monthsUntil(dateStr: string | null): number {
     if (!dateStr) return 1;
@@ -154,9 +197,17 @@ function Dashboard() {
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
           <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Safe to spend per day</p>
-          <p className={`text-5xl md:text-6xl font-display ${overspent ? "text-destructive" : "text-primary"}`}>
-            {money(safeToday)}
-          </p>
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <p className={`text-5xl md:text-6xl font-display ${overspent ? "text-destructive" : "text-primary"}`}>
+              {money(safeToday)}
+            </p>
+            {variablePool > 0 && Math.abs(trendDelta) >= 0.01 && (
+              <span className={`inline-flex items-center gap-1 text-sm font-medium tabular-nums ${trendDelta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}>
+                {trendDelta > 0 ? <TrendingUp className="size-4" /> : trendDelta < 0 ? <TrendingDown className="size-4" /> : <Minus className="size-4" />}
+                {trendDelta > 0 ? "+" : ""}{money(trendDelta)} vs yesterday
+              </span>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground mt-3 tabular-nums">
             {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} until {cycle?.source === "salary" ? "next salary" : "month end"} ={" "}
             <span className="font-medium text-foreground">{money(safeToday)}/day</span>
@@ -166,16 +217,31 @@ function Dashboard() {
               Tip: press <span className="font-medium">Salary received</span> below on payday to start a new pay cycle.
             </p>
           )}
+
+          {/* 7-day sparkline of net daily spend */}
+          <div className="mt-5">
+            <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Last 7 days · dashed line = today's safe-to-spend</p>
+          </div>
+
           <div className="mt-6 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-orange-500/15 text-orange-700 dark:text-orange-300 tabular-nums">
+                <button
+                  type="button"
+                  onClick={() => { setExpenseFilter(expenseFilter === "spent" ? "all" : "spent"); document.getElementById("recent-expenses")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                  className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25 ${expenseFilter === "spent" ? "ring-2 ring-orange-500/50" : ""}`}
+                >
                   Spent {money(spent)}
-                </span>
+                </button>
                 {received > 0 && (
-                  <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-blue-500/15 text-blue-700 dark:text-blue-300 tabular-nums">
+                  <button
+                    type="button"
+                    onClick={() => { setExpenseFilter(expenseFilter === "received" ? "all" : "received"); document.getElementById("recent-expenses")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                    className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25 ${expenseFilter === "received" ? "ring-2 ring-blue-500/50" : ""}`}
+                  >
                     Received {money(received)}
-                  </span>
+                  </button>
                 )}
                 <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-muted text-foreground tabular-nums">
                   Balance {money(netSpent)}
@@ -232,9 +298,14 @@ function Dashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Before baseline limit" value={money(remaining)} highlight />
+        <StatCard
+          label="Projected end of cycle"
+          value={money(projectedBalance)}
+          hint={projectedBalance >= 0 ? `On pace (${money(avgDaily7)}/day avg)` : `At current pace, over by ${money(-projectedBalance)}`}
+          tone={projectedBalance >= 0 ? "good" : "bad"}
+        />
         <StatCard label="Emergency pool" value={money(Math.max(0, surplus - totalAllocated))} hint="Unallocated surplus" />
         <StatCard label="Monthly income" value={money(dashboard?.income ?? 0)} />
-        <StatCard label="Fixed expenses" value={money(dashboard?.fixedTotal ?? 0)} />
       </div>
 
 
@@ -251,34 +322,53 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="recent-expenses">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent expenses</CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CardTitle>Recent expenses</CardTitle>
+            {expenseFilter !== "all" && (
+              <button
+                type="button"
+                onClick={() => setExpenseFilter("all")}
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+              >
+                Showing {expenseFilter} — clear
+              </button>
+            )}
+          </div>
           <Button asChild variant="ghost" size="sm"><Link to="/expenses">View all</Link></Button>
         </CardHeader>
         <CardContent>
-          {!dashboard?.recent?.length ? (
-            <p className="text-sm text-muted-foreground">No expenses yet this month.</p>
-          ) : (
-            <ul className="divide-y">
-              {dashboard.recent.map((e) => {
-                const isIncome = e.kind === "income";
-                return (
-                  <li key={e.id} className="flex items-center justify-between py-3">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {fmtDateTime(e.occurred_at)} · {e.category}{isIncome ? " · received" : ""}
+          {(() => {
+            const list = (dashboard?.recent ?? []).filter((e) =>
+              expenseFilter === "all"
+                ? true
+                : expenseFilter === "received"
+                  ? e.kind === "income" && !e.is_salary
+                  : e.kind !== "income",
+            );
+            if (!list.length) return <p className="text-sm text-muted-foreground">No entries.</p>;
+            return (
+              <ul className="divide-y">
+                {list.map((e) => {
+                  const isIncome = e.kind === "income";
+                  return (
+                    <li key={e.id} className="flex items-center justify-between py-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {fmtDateTime(e.occurred_at)} · {e.category}{isIncome ? " · received" : ""}
+                        </p>
+                      </div>
+                      <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
+                        {isIncome ? "+" : "−"}{money(e.amount)}
                       </p>
-                    </div>
-                    <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
-                      {isIncome ? "+" : "−"}{money(e.amount)}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                    </li>
+                  );
+                })}
+              </ul>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
@@ -325,14 +415,37 @@ function SalaryReceivedButton({ householdId, lastSalaryAt, onDone }: { household
   );
 }
 
-function StatCard({ label, value, highlight, hint }: { label: string; value: string; highlight?: boolean; hint?: string }) {
+function StatCard({ label, value, highlight, hint, tone }: { label: string; value: string; highlight?: boolean; hint?: string; tone?: "good" | "bad" }) {
+  const toneCls = tone === "good" ? "text-emerald-600 dark:text-emerald-400" : tone === "bad" ? "text-destructive" : "";
   return (
     <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
       <CardContent className="pt-6">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
-        <p className="text-2xl font-display mt-1">{value}</p>
+        <p className={`text-2xl font-display mt-1 ${toneCls}`}>{value}</p>
         {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
       </CardContent>
     </Card>
+  );
+}
+
+function Sparkline({ days, max, threshold }: { days: { key: string; label: string; net: number }[]; max: number; threshold: number }) {
+  const w = 280;
+  const h = 44;
+  const pad = 2;
+  const step = (w - pad * 2) / Math.max(1, days.length - 1);
+  const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
+  const pts = days.map((d, i) => `${pad + i * step},${y(d.net)}`).join(" ");
+  const thY = y(threshold);
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-11 overflow-visible" aria-label="Last 7 days spend">
+      <line x1={pad} x2={w - pad} y1={thY} y2={thY} stroke="currentColor" strokeWidth={1} strokeDasharray="3 3" className="text-muted-foreground/50" />
+      <polyline fill="none" stroke="currentColor" strokeWidth={1.5} points={pts} className="text-primary" />
+      {days.map((d, i) => (
+        <g key={d.key}>
+          <circle cx={pad + i * step} cy={y(d.net)} r={2} className={d.net > threshold ? "fill-orange-500" : "fill-primary"} />
+          <title>{d.label} · {new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(d.net)}</title>
+        </g>
+      ))}
+    </svg>
   );
 }
