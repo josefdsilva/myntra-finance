@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { deleteExpense, addExpensesBulk } from "@/lib/budget.functions";
@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { money, fmtDateTime } from "@/lib/format";
+import { money, fmtDateTime, fmtDate } from "@/lib/format";
+import { computeCycle } from "@/lib/cycle";
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2, Sparkles } from "lucide-react";
 
@@ -33,21 +34,63 @@ function ExpensesPage() {
   const householdId = hh?.household?.id;
 
   const [category, setCategory] = useState("all");
-  const [monthOffset, setMonthOffset] = useState(0);
+  const [cycleOffset, setCycleOffset] = useState(0);
+
+  // Fetch salary history to derive pay cycles
+  const { data: salaries } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["salaries", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("occurred_at")
+        .eq("household_id", householdId!)
+        .eq("kind", "income")
+        .eq("is_salary", true)
+        .order("occurred_at", { ascending: false })
+        .limit(24);
+      if (error) throw error;
+      return (data ?? []).map((r) => r.occurred_at as string);
+    },
+  });
+
+  // Compute cycle bounds for the selected offset (0 = current, -1 previous, +1 next predicted)
+  const cycle = useMemo(() => {
+    const list = salaries ?? [];
+    if (cycleOffset === 0) return computeCycle(list);
+    if (cycleOffset < 0) {
+      // Historic cycle: between salary[i] (start) and salary[i-1] (end)
+      const i = -cycleOffset;
+      const startStr = list[i];
+      const endStr = list[i - 1];
+      if (startStr && endStr) {
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        return { start, end, source: "salary" as const, predicted: false };
+      }
+      const base = computeCycle(list);
+      const start = new Date(base.start); start.setMonth(start.getMonth() + cycleOffset);
+      const end = new Date(base.end); end.setMonth(end.getMonth() + cycleOffset);
+      return { start, end, source: base.source, predicted: true };
+    }
+    // Future predicted cycle: shift by +1 month from current
+    const base = computeCycle(list);
+    const start = new Date(base.start); start.setMonth(start.getMonth() + cycleOffset);
+    const end = new Date(base.end); end.setMonth(end.getMonth() + cycleOffset);
+    return { ...base, start, end, predicted: true };
+  }, [salaries, cycleOffset]);
+
 
   const { data: rows, refetch } = useQuery({
-    enabled: !!householdId,
-    queryKey: ["expenses-list", householdId, category, monthOffset],
+    enabled: !!householdId && !!cycle,
+    queryKey: ["expenses-list", householdId, category, cycle?.start?.toISOString(), cycle?.end?.toISOString()],
     queryFn: async () => {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 1);
       let q = supabase
         .from("expenses")
         .select("*")
         .eq("household_id", householdId!)
-        .gte("occurred_at", start.toISOString())
-        .lt("occurred_at", end.toISOString())
+        .gte("occurred_at", cycle!.start.toISOString())
+        .lt("occurred_at", cycle!.end.toISOString())
         .order("occurred_at", { ascending: false });
       if (category !== "all") q = q.eq("category", category);
       const { data, error } = await q;
@@ -66,14 +109,15 @@ function ExpensesPage() {
   const spent = (rows ?? []).filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
   const received = (rows ?? []).filter((r) => r.kind === "income").reduce((s, r) => s + Number(r.amount), 0);
   const net = spent - received;
-  const monthLabel = new Date(new Date().getFullYear(), new Date().getMonth() + monthOffset, 1)
-    .toLocaleString("en-GB", { month: "long", year: "numeric" });
+  const cycleLabel = cycle
+    ? `Cycle · ${fmtDate(cycle.start.toISOString())} → ${fmtDate(cycle.end.toISOString())}${cycle.predicted ? " (predicted)" : ""}`
+    : "Cycle";
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
         <h1 className="text-3xl font-display">Expenses</h1>
-        <p className="text-sm text-muted-foreground">Add, review and import.</p>
+        <p className="text-sm text-muted-foreground">Grouped by pay cycle (salary to salary).</p>
       </header>
 
       <Card>
@@ -87,15 +131,15 @@ function ExpensesPage() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle>{monthLabel}</CardTitle>
+              <CardTitle>{cycleLabel}</CardTitle>
               <CardDescription>
                 {rows?.length ?? 0} entries · {money(spent)} spent{received > 0 ? ` · ${money(received)} received · net ${money(net)}` : ""}
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setMonthOffset((o) => o - 1)}>Prev</Button>
-              <Button variant="outline" size="sm" onClick={() => setMonthOffset(0)} disabled={monthOffset === 0}>Current</Button>
-              <Button variant="outline" size="sm" onClick={() => setMonthOffset((o) => o + 1)} disabled={monthOffset >= 0}>Next</Button>
+              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o - 1)}>Prev</Button>
+              <Button variant="outline" size="sm" onClick={() => setCycleOffset(0)} disabled={cycleOffset === 0}>Current</Button>
+              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o + 1)} disabled={cycleOffset >= 0}>Next</Button>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
