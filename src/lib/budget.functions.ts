@@ -161,6 +161,51 @@ export const deleteFixedExpense = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---- Variable estimates ----
+export const upsertVariableEstimate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid().optional(),
+        household_id: z.string().uuid(),
+        label: z.string().min(1).max(80),
+        category: z.string().max(50).optional().nullable(),
+        monthly_amount: z.number().min(0),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { id, ...payload } = data;
+    if (id) {
+      const { data: row, error } = await context.supabase
+        .from("variable_estimates")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    const { data: row, error } = await context.supabase
+      .from("variable_estimates")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteVariableEstimate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("variable_estimates").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+
 // ---- Buckets ----
 export const upsertBucket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

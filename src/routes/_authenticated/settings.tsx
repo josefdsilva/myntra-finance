@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   getOrCreateHousehold,
@@ -11,8 +12,10 @@ import {
 import {
   upsertIncome, deleteIncome,
   upsertFixedExpense, deleteFixedExpense,
+  upsertVariableEstimate, deleteVariableEstimate,
   upsertBucket, deleteBucket,
 } from "@/lib/budget.functions";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +49,7 @@ function SettingsPage() {
           <HouseholdSection household={hh!.household!} onChange={() => qc.invalidateQueries({ queryKey: ["household"] })} />
           <IncomesSection householdId={householdId} />
           <FixedExpensesSection householdId={householdId} />
+          <VariableEstimatesSection householdId={householdId} />
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
         </>
@@ -54,27 +58,52 @@ function SettingsPage() {
   );
 }
 
+
 function HouseholdSection({ household, onChange }: { household: { id: string; name: string; baseline_budget: number | string; margin_pct: number | string }; onChange: () => void }) {
   const update = useServerFn(updateHousehold);
   const qc = useQueryClient();
   const [name, setName] = useState(household.name);
-  const [baseline, setBaseline] = useState(String(household.baseline_budget));
   const [margin, setMargin] = useState(Number(household.margin_pct));
 
-  async function save() {
-    try {
-      await update({
-        data: {
-          household_id: household.id,
-          name,
-          baseline_budget: parseFloat(baseline) || 0,
-          margin_pct: margin,
-        },
-      });
-      toast.success("Saved");
+  const { data: fixedRows } = useQuery({
+    queryKey: ["fixed", household.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", household.id);
+      return data ?? [];
+    },
+  });
+  const { data: varRows } = useQuery({
+    queryKey: ["variable-estimates", household.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("variable_estimates").select("monthly_amount").eq("household_id", household.id);
+      return data ?? [];
+    },
+  });
+
+  const fixedTotal = (fixedRows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+  const varTotal = (varRows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+  const safetyReserve = ((fixedTotal + varTotal) * margin) / 100;
+  const baseline = fixedTotal + varTotal + safetyReserve;
+  const storedBaseline = Number(household.baseline_budget);
+
+  // Auto-persist computed baseline whenever the inputs change
+  useEffect(() => {
+    if (!fixedRows || !varRows) return;
+    if (Math.abs(baseline - storedBaseline) < 0.005 && margin === Number(household.margin_pct)) return;
+    update({
+      data: { household_id: household.id, baseline_budget: Number(baseline.toFixed(2)), margin_pct: margin },
+    }).then(() => {
       onChange();
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["allocations"] });
+    }).catch(() => {});
+  }, [baseline, margin, storedBaseline, fixedRows, varRows]);
+
+  async function saveName() {
+    try {
+      await update({ data: { household_id: household.id, name } });
+      toast.success("Saved");
+      onChange();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
@@ -84,30 +113,99 @@ function HouseholdSection({ household, onChange }: { household: { id: string; na
     <Card>
       <CardHeader>
         <CardTitle>Household</CardTitle>
-        <CardDescription>The monthly baseline is what you need to live normally — fixed costs + groceries + margin.</CardDescription>
+        <CardDescription>The monthly baseline is calculated from your fixed expenses, variable estimates and safety margin.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Household name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div>
-            <Label>Monthly baseline (€)</Label>
-            <Input inputMode="decimal" value={baseline} onChange={(e) => setBaseline(e.target.value)} />
+            <div className="flex gap-2">
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Button onClick={saveName} variant="outline">Save</Button>
+            </div>
           </div>
           <div>
             <Label>Safety margin: {margin}%</Label>
             <Slider value={[margin]} min={0} max={30} step={1} onValueChange={(v) => setMargin(v[0])} className="mt-3" />
-            <p className="text-xs text-muted-foreground mt-2">Held back from your daily variable pool as a buffer. Reduces safe‑to‑spend by {margin}% of the baseline (surplus & buckets unaffected).</p>
-
           </div>
         </div>
-        <Button onClick={save}>Save household</Button>
+        <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+          <div className="flex justify-between text-sm"><span>Fixed monthly expenses</span><span className="tabular-nums">{money(fixedTotal)}</span></div>
+          <div className="flex justify-between text-sm"><span>Estimated variable costs</span><span className="tabular-nums">{money(varTotal)}</span></div>
+          <div className="flex justify-between text-sm text-muted-foreground"><span>Safety margin ({margin}%)</span><span className="tabular-nums">{money(safetyReserve)}</span></div>
+          <div className="border-t pt-2 flex justify-between font-medium"><span>Monthly baseline</span><span className="tabular-nums text-lg">{money(baseline)}</span></div>
+        </div>
       </CardContent>
     </Card>
   );
 }
+
+function VariableEstimatesSection({ householdId }: { householdId: string }) {
+  const qc = useQueryClient();
+  const upsert = useServerFn(upsertVariableEstimate);
+  const del = useServerFn(deleteVariableEstimate);
+  const { data: rows, refetch } = useQuery({
+    queryKey: ["variable-estimates", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("variable_estimates").select("*").eq("household_id", householdId).order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+  const [label, setLabel] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("groceries");
+
+  async function add() {
+    if (!label || !amount) return;
+    await upsert({ data: { household_id: householdId, label, category, monthly_amount: parseFloat(amount) || 0 } });
+    setLabel(""); setAmount("");
+    refetch(); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
+  }
+  async function remove(id: string) {
+    await del({ data: { id } });
+    refetch(); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
+  }
+
+  const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Estimated variable costs</CardTitle>
+        <CardDescription>Groceries, fuel, transport, goods — what you typically spend per month. Total: <span className="font-medium text-foreground">{money(total)}</span></CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <ul className="divide-y">
+          {(rows ?? []).map((r) => (
+            <li key={r.id} className="flex items-center justify-between py-2">
+              <div>
+                <p>{r.label}</p>
+                <p className="text-xs text-muted-foreground">{r.category}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="tabular-nums font-medium">{money(r.monthly_amount)}</span>
+                <Button variant="ghost" size="icon" onClick={() => remove(r.id)}><Trash2 className="size-4" /></Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-2">
+          <Input placeholder="e.g. Groceries" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {["groceries", "fuel", "transport", "goods", "eating_out", "leisure", "kids", "health", "other"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <Button onClick={add}><Plus /> Add</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function IncomesSection({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
