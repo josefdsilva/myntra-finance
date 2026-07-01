@@ -126,18 +126,20 @@ function AnalysisPage() {
 
   const { data: expenses } = useQuery({
     enabled: !!householdId,
-    queryKey: ["analysis", householdId, start.toISOString()],
+    queryKey: ["analysis", householdId, start.toISOString(), end.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("expenses")
         .select("id, amount, category, occurred_at, kind")
         .eq("household_id", householdId!)
         .gte("occurred_at", start.toISOString())
+        .lt("occurred_at", end.toISOString())
         .order("occurred_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Expense[];
     },
   });
+
 
   const { data: fixedRows = [] } = useQuery({
     enabled: !!householdId,
