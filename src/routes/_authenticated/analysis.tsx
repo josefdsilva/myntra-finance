@@ -38,6 +38,31 @@ const COLORS = [
 
 type RangeKey = "30d" | "90d" | "6m" | "12m" | "ytd";
 
+function BurnTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload as { label: string; balance: number; events?: Array<{ kind: string; label: string; amount: number; delta: number }> };
+  if (!p) return null;
+  return (
+    <div style={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, padding: 8, fontSize: 12, maxWidth: 260 }}>
+      <div style={{ fontWeight: 600 }}>{p.label}</div>
+      <div style={{ marginTop: 2 }}>Balance: {money(p.balance)}</div>
+      {p.events && p.events.length > 0 && p.events.some((e) => e.delta !== 0) && (
+        <div style={{ marginTop: 6, borderTop: "1px solid var(--border)", paddingTop: 6 }}>
+          {p.events.filter((e) => e.delta !== 0).map((e, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+              <span style={{ opacity: 0.85 }}>{e.kind === "income" ? "↑" : e.kind === "fixed" ? "▼" : "↓"} {e.label}</span>
+              <span style={{ color: e.delta >= 0 ? "var(--primary)" : "hsl(var(--destructive))" }}>
+                {e.delta >= 0 ? "+" : ""}{money(e.delta)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function AnalysisPage() {
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
