@@ -69,20 +69,60 @@ function AnalysisPage() {
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
-  const [range, setRange] = useState<RangeKey>("30d");
+  const [range, setRange] = useState<RangeKey>("1");
   const [includeFixed, setIncludeFixed] = useState(true);
 
+  // All salary dates (asc) → cycles
+  const { data: salaryAsc = [] } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["salary-dates-asc", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("expenses")
+        .select("occurred_at")
+        .eq("household_id", householdId!)
+        .eq("is_salary", true)
+        .order("occurred_at", { ascending: true });
+      return (data ?? []).map((r) => r.occurred_at as string);
+    },
+  });
 
-  const { start } = useMemo(() => {
-    const now = new Date();
-    switch (range) {
-      case "30d": return { start: subDays(now, 30) };
-      case "90d": return { start: subDays(now, 90) };
-      case "6m": return { start: subMonths(now, 6) };
-      case "12m": return { start: subMonths(now, 12) };
-      case "ytd": return { start: new Date(now.getFullYear(), 0, 1) };
+  const cycles = useMemo(() => {
+    // Build cycles from consecutive salaries; last cycle end predicted from prior interval
+    const out: { start: Date; end: Date; predicted: boolean }[] = [];
+    if (!salaryAsc.length) return out;
+    for (let i = 0; i < salaryAsc.length; i++) {
+      const start = new Date(salaryAsc[i]);
+      let end: Date;
+      let predicted = false;
+      if (i < salaryAsc.length - 1) {
+        end = new Date(salaryAsc[i + 1]);
+      } else {
+        predicted = true;
+        if (i >= 1) {
+          const prev = new Date(salaryAsc[i - 1]);
+          const diff = start.getTime() - prev.getTime();
+          const days = Math.round(diff / 86400000);
+          end = days >= 20 && days <= 45 ? new Date(start.getTime() + diff) : new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes());
+        } else {
+          end = new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes());
+        }
+      }
+      out.push({ start, end, predicted });
     }
-  }, [range]);
+    return out;
+  }, [salaryAsc]);
+
+  const { start, end, cycleCount } = useMemo(() => {
+    if (!cycles.length) {
+      const now = new Date();
+      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now, cycleCount: 0 };
+    }
+    const n = range === "all" ? cycles.length : Math.min(cycles.length, Number(range));
+    const selected = cycles.slice(-n);
+    return { start: selected[0].start, end: selected[selected.length - 1].end, cycleCount: n };
+  }, [cycles, range]);
+
 
   const { data: expenses } = useQuery({
     enabled: !!householdId,
