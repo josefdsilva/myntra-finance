@@ -59,9 +59,7 @@ function AuthPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-background to-surface-muted">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="size-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center mb-4">
-            <Wallet className="size-6" />
-          </div>
+          <img src={appIcon.url} alt="App icon" className="size-16 rounded-2xl mb-4 shadow-lg" />
           <h1 className="text-3xl font-display">Household Budget</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Plan together. Spend with confidence.
