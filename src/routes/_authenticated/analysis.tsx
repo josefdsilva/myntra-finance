@@ -36,7 +36,7 @@ const COLORS = [
   "#5c7a99", "#99785c", "#7a5c99", "#99995c",
 ];
 
-type RangeKey = "30d" | "90d" | "6m" | "12m" | "ytd";
+type RangeKey = "1" | "2" | "3" | "6" | "12" | "all";
 
 function BurnTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
