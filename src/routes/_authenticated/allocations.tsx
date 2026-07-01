@@ -369,7 +369,7 @@ function ConfirmAllocationButton({
       toast.success("Allocation confirmed");
       setEditing(false);
       onChanged();
-      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] });
+      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally { setLoading(false); }
@@ -381,7 +381,7 @@ function ConfirmAllocationButton({
       await undoFn({ data: { id: confirmed.id } });
       toast.success("Confirmation removed");
       onChanged();
-      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] });
+      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally { setLoading(false); }
@@ -425,7 +425,7 @@ function AllocationHistory({ history, buckets, householdId }: { history: Confirm
     try {
       await undoFn({ data: { id } });
       toast.success("Removed");
-      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] });
+      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
       qc.invalidateQueries({ queryKey: ["bucket-allocations", householdId] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
