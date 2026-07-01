@@ -163,7 +163,7 @@ function Dashboard() {
           </p>
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">
-              Tip: when you log your salary as <span className="font-medium">Money received</span>, tick "This is a salary deposit" so the cycle starts on payday instead of the 1st.
+              Tip: press <span className="font-medium">Salary received</span> below on payday to start a new pay cycle.
             </p>
           )}
           <div className="mt-6 space-y-2">
@@ -172,6 +172,10 @@ function Dashboard() {
               <span>{money(variablePool)} pool</span>
             </div>
             <Progress value={pctSpent} className={overspent ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"} />
+          </div>
+
+          <div className="mt-6 pt-6 border-t">
+            {householdId && <SalaryReceivedButton householdId={householdId} lastSalaryAt={cycle?.source === "salary" ? cycle.start : null} onDone={() => refetch()} />}
           </div>
 
           {/* Bucket impact */}
