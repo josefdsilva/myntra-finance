@@ -177,12 +177,51 @@ function ExpensesPage() {
   );
 }
 
+type ParsedItem = { amount: number; category: string; merchant?: string | null; occurred_at?: string; note?: string | null };
+
 function BankImport({ householdId, onImported }: { householdId: string; onImported: () => void }) {
   const parse = useServerFn(parseBankStatement);
   const bulk = useServerFn(addExpensesBulk);
   const ref = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<Array<{ amount: number; category: string; merchant?: string | null; occurred_at?: string; note?: string | null }> | null>(null);
+  const [items, setItems] = useState<ParsedItem[] | null>(null);
+  const [selected, setSelected] = useState<boolean[]>([]);
+  const [dupFlags, setDupFlags] = useState<boolean[]>([]);
+
+  async function detectDuplicates(parsed: ParsedItem[]) {
+    if (!parsed.length) return { flags: [] as boolean[] };
+    const times = parsed
+      .map((p) => (p.occurred_at ? new Date(p.occurred_at).getTime() : NaN))
+      .filter((t) => !isNaN(t));
+    const minT = times.length ? Math.min(...times) : Date.now();
+    const maxT = times.length ? Math.max(...times) : Date.now();
+    const from = new Date(minT - 2 * 86400_000).toISOString();
+    const to = new Date(maxT + 2 * 86400_000).toISOString();
+    const { data } = await supabase
+      .from("expenses")
+      .select("amount, occurred_at, merchant")
+      .eq("household_id", householdId)
+      .neq("kind", "income")
+      .gte("occurred_at", from)
+      .lte("occurred_at", to);
+    const existing = (data ?? []).map((r) => ({
+      amount: Math.abs(Number(r.amount)),
+      t: new Date(r.occurred_at as string).getTime(),
+      merchant: (r.merchant ?? "").toLowerCase().trim(),
+    }));
+    const flags = parsed.map((p) => {
+      const pt = p.occurred_at ? new Date(p.occurred_at).getTime() : NaN;
+      const pm = (p.merchant ?? "").toLowerCase().trim();
+      const pa = Math.abs(Number(p.amount));
+      return existing.some((e) => {
+        if (Math.abs(e.amount - pa) > 0.01) return false;
+        if (!isNaN(pt) && Math.abs(e.t - pt) > 2 * 86400_000) return false;
+        if (pm && e.merchant && pm !== e.merchant) return false;
+        return true;
+      });
+    });
+    return { flags };
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -195,8 +234,13 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
       const res = await parse({
         data: { file_base64: base64, mime_type: f.type || "application/pdf", file_name: f.name },
       });
-      setItems(res.items);
-      toast.success(`Parsed ${res.items.length} transactions — review below`);
+      const parsed = res.items as ParsedItem[];
+      const { flags } = await detectDuplicates(parsed);
+      setItems(parsed);
+      setDupFlags(flags);
+      setSelected(flags.map((isDup) => !isDup));
+      const dupCount = flags.filter(Boolean).length;
+      toast.success(`Parsed ${parsed.length} transactions${dupCount ? ` — ${dupCount} likely duplicate${dupCount === 1 ? "" : "s"} unchecked` : ""}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Parse failed");
     } finally { setLoading(false); if (ref.current) ref.current.value = ""; }
@@ -204,11 +248,13 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
 
   async function confirmImport() {
     if (!items?.length) return;
+    const toImport = items.filter((_, i) => selected[i]);
+    if (!toImport.length) return toast.error("Nothing selected");
     setLoading(true);
     try {
       await bulk({
         data: {
-          items: items.map((i) => ({
+          items: toImport.map((i) => ({
             household_id: householdId,
             amount: i.amount,
             category: i.category,
@@ -219,19 +265,23 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
           })),
         },
       });
-      toast.success(`Imported ${items.length} transactions`);
-      setItems(null);
+      const skipped = items.length - toImport.length;
+      toast.success(`Imported ${toImport.length}${skipped ? ` · skipped ${skipped}` : ""}`);
+      setItems(null); setSelected([]); setDupFlags([]);
       onImported();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed");
     } finally { setLoading(false); }
   }
 
+  const selectedCount = selected.filter(Boolean).length;
+  const selectedTotal = items ? items.reduce((s, it, i) => s + (selected[i] ? it.amount : 0), 0) : 0;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Sparkles className="size-4" /> Bank statement import</CardTitle>
-        <CardDescription>Upload a CSV or PDF — AI will extract and categorize transactions.</CardDescription>
+        <CardDescription>Upload a CSV or PDF — AI extracts transactions; likely duplicates are pre-unchecked.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-3">
@@ -240,18 +290,29 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
         </div>
         {items && (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">{items.length} transactions ready — total {money(items.reduce((s, i) => s + i.amount, 0))}</p>
-            <div className="max-h-60 overflow-y-auto border rounded-md divide-y">
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>{selectedCount} / {items.length} selected · total {money(selectedTotal)}</span>
+              <div className="flex gap-2">
+                <button className="underline" onClick={() => setSelected(items.map(() => true))}>Select all</button>
+                <button className="underline" onClick={() => setSelected(dupFlags.map((d) => !d))}>Reset dupes</button>
+                <button className="underline" onClick={() => setSelected(items.map(() => false))}>None</button>
+              </div>
+            </div>
+            <div className="max-h-72 overflow-y-auto border rounded-md divide-y">
               {items.map((t, i) => (
-                <div key={i} className="flex justify-between items-center px-3 py-2 text-sm">
-                  <span className="truncate">{t.merchant || t.note || t.category} · <span className="text-muted-foreground">{t.category}</span></span>
+                <label key={i} className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer ${dupFlags[i] ? "bg-amber-500/5" : ""}`}>
+                  <input type="checkbox" checked={!!selected[i]} onChange={(e) => setSelected((s) => s.map((v, j) => j === i ? e.target.checked : v))} />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate">{t.merchant || t.note || t.category} {dupFlags[i] && <span className="text-amber-600 text-xs">· likely duplicate</span>}</p>
+                    <p className="text-xs text-muted-foreground">{t.occurred_at ? fmtDate(t.occurred_at) : "—"} · {t.category}</p>
+                  </div>
                   <span className="tabular-nums">{money(t.amount)}</span>
-                </div>
+                </label>
               ))}
             </div>
             <div className="flex gap-2">
-              <Button onClick={confirmImport} disabled={loading}><FileUp /> Import all</Button>
-              <Button variant="ghost" onClick={() => setItems(null)}>Discard</Button>
+              <Button onClick={confirmImport} disabled={loading || selectedCount === 0}><FileUp /> Import {selectedCount}</Button>
+              <Button variant="ghost" onClick={() => { setItems(null); setSelected([]); setDupFlags([]); }}>Discard</Button>
             </div>
           </div>
         )}
