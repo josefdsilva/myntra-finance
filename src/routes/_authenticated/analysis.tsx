@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { format as fmt, subDays, subMonths } from "date-fns";
+import { format as fmt } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
 
 
@@ -36,7 +36,7 @@ const COLORS = [
   "#5c7a99", "#99785c", "#7a5c99", "#99995c",
 ];
 
-type RangeKey = "30d" | "90d" | "6m" | "12m" | "ytd";
+type RangeKey = "1" | "2" | "3" | "6" | "12" | "all";
 
 function BurnTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
@@ -69,35 +69,77 @@ function AnalysisPage() {
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
-  const [range, setRange] = useState<RangeKey>("30d");
+  const [range, setRange] = useState<RangeKey>("1");
   const [includeFixed, setIncludeFixed] = useState(true);
 
+  // All salary dates (asc) → cycles
+  const { data: salaryAsc = [] } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["salary-dates-asc", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("expenses")
+        .select("occurred_at")
+        .eq("household_id", householdId!)
+        .eq("is_salary", true)
+        .order("occurred_at", { ascending: true });
+      return (data ?? []).map((r) => r.occurred_at as string);
+    },
+  });
 
-  const { start } = useMemo(() => {
-    const now = new Date();
-    switch (range) {
-      case "30d": return { start: subDays(now, 30) };
-      case "90d": return { start: subDays(now, 90) };
-      case "6m": return { start: subMonths(now, 6) };
-      case "12m": return { start: subMonths(now, 12) };
-      case "ytd": return { start: new Date(now.getFullYear(), 0, 1) };
+  const cycles = useMemo(() => {
+    // Build cycles from consecutive salaries; last cycle end predicted from prior interval
+    const out: { start: Date; end: Date; predicted: boolean }[] = [];
+    if (!salaryAsc.length) return out;
+    for (let i = 0; i < salaryAsc.length; i++) {
+      const start = new Date(salaryAsc[i]);
+      let end: Date;
+      let predicted = false;
+      if (i < salaryAsc.length - 1) {
+        end = new Date(salaryAsc[i + 1]);
+      } else {
+        predicted = true;
+        if (i >= 1) {
+          const prev = new Date(salaryAsc[i - 1]);
+          const diff = start.getTime() - prev.getTime();
+          const days = Math.round(diff / 86400000);
+          end = days >= 20 && days <= 45 ? new Date(start.getTime() + diff) : new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes());
+        } else {
+          end = new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes());
+        }
+      }
+      out.push({ start, end, predicted });
     }
-  }, [range]);
+    return out;
+  }, [salaryAsc]);
+
+  const { start, end, cycleCount } = useMemo(() => {
+    if (!cycles.length) {
+      const now = new Date();
+      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now, cycleCount: 0 };
+    }
+    const n = range === "all" ? cycles.length : Math.min(cycles.length, Number(range));
+    const selected = cycles.slice(-n);
+    return { start: selected[0].start, end: selected[selected.length - 1].end, cycleCount: n };
+  }, [cycles, range]);
+
 
   const { data: expenses } = useQuery({
     enabled: !!householdId,
-    queryKey: ["analysis", householdId, start.toISOString()],
+    queryKey: ["analysis", householdId, start.toISOString(), end.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("expenses")
         .select("id, amount, category, occurred_at, kind")
         .eq("household_id", householdId!)
         .gte("occurred_at", start.toISOString())
+        .lt("occurred_at", end.toISOString())
         .order("occurred_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Expense[];
     },
   });
+
 
   const { data: fixedRows = [] } = useQuery({
     enabled: !!householdId,
@@ -210,26 +252,26 @@ function AnalysisPage() {
       map.set(e.category, (map.get(e.category) ?? 0) + Number(e.amount));
     }
     if (includeFixed && fixedRows.length) {
-      const monthsInRangeLocal = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
       for (const r of fixedRows) {
         const cat = (r.category?.trim() || r.label?.trim() || "fixed").toLowerCase();
-        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * monthsInRangeLocal);
+        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * cycleCount);
       }
     }
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
       .sort((a, b) => b.value - a.value);
-  }, [onlySpend, includeFixed, fixedRows, start]);
+  }, [onlySpend, includeFixed, fixedRows, cycleCount]);
 
 
 
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
   const totalIncome = (expenses ?? []).filter((e) => e.kind === "income").reduce((s, e) => s + Number(e.amount), 0);
 
-  // Prorated fixed expenses across the range
-  const monthsInRange = Math.max(0, (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
-  const proratedFixed = fixedTotal * monthsInRange;
+  // Fixed expenses over selected cycles (1 monthly amount per cycle)
+  const proratedFixed = fixedTotal * cycleCount;
   const totalSpend = includeFixed ? totalVariableSpend + proratedFixed : totalVariableSpend;
+
+  const cycleLabel = cycleCount === 1 ? "cycle" : "cycles";
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
@@ -237,18 +279,20 @@ function AnalysisPage() {
         <div>
           <h1 className="text-3xl font-display">Analysis</h1>
           <p className="text-sm text-muted-foreground">
-            From {fmtDate(start)} · {onlySpend.length} expense{onlySpend.length === 1 ? "" : "s"}
+            {cycleCount > 0 ? `Last ${cycleCount} pay ${cycleLabel} · ` : ""}
+            {fmtDate(start)} → {fmtDate(end)} · {onlySpend.length} expense{onlySpend.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="6m">Last 6 months</SelectItem>
-              <SelectItem value="12m">Last 12 months</SelectItem>
-              <SelectItem value="ytd">Year to date</SelectItem>
+              <SelectItem value="1">Last cycle</SelectItem>
+              <SelectItem value="2">Last 2 cycles</SelectItem>
+              <SelectItem value="3">Last 3 cycles</SelectItem>
+              <SelectItem value="6">Last 6 cycles</SelectItem>
+              <SelectItem value="12">Last 12 cycles</SelectItem>
+              <SelectItem value="all">All cycles</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -260,11 +304,12 @@ function AnalysisPage() {
           <span>
             Include fixed expenses
             <span className="text-muted-foreground ml-1">
-              (+{money(proratedFixed)} prorated · {money(fixedTotal)}/mo × {monthsInRange.toFixed(1)} mo)
+              (+{money(proratedFixed)} · {money(fixedTotal)}/mo × {cycleCount} {cycleLabel})
             </span>
           </span>
         </Label>
       )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Stat label={includeFixed ? "Total spent (incl. fixed)" : "Total spent"} value={money(totalSpend)} />
