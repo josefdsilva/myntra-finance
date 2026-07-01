@@ -21,13 +21,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     const stored = localStorage.getItem("privacy-mode") === "1";
     setPrivacy(stored);
+    const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    setTheme(storedTheme ?? (prefersDark ? "dark" : "light"));
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("privacy-on", privacy);
