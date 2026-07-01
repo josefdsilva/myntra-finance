@@ -25,6 +25,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { Plus, Trash2, Mail, Copy, Check } from "lucide-react";
+import { NotificationSettings } from "@/components/notification-settings";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings · Household Budget" }] }),
@@ -52,6 +53,7 @@ function SettingsPage() {
           <VariableEstimatesSection householdId={householdId} />
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
+          <NotificationSettings householdId={householdId} />
         </>
       )}
     </div>
