@@ -66,14 +66,14 @@ function HouseholdSection({ household, onChange }: { household: { id: string; na
   const [margin, setMargin] = useState(Number(household.margin_pct));
 
   const { data: fixedRows } = useQuery({
-    queryKey: ["fixed", household.id],
+    queryKey: ["fixed-total", household.id],
     queryFn: async () => {
       const { data } = await supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", household.id);
       return data ?? [];
     },
   });
   const { data: varRows } = useQuery({
-    queryKey: ["variable-estimates", household.id],
+    queryKey: ["variable-estimates-total", household.id],
     queryFn: async () => {
       const { data } = await supabase.from("variable_estimates").select("monthly_amount").eq("household_id", household.id);
       return data ?? [];
