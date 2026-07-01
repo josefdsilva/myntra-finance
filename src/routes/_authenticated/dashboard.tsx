@@ -273,6 +273,46 @@ function Dashboard() {
   );
 }
 
+function SalaryReceivedButton({ householdId, lastSalaryAt, onDone }: { householdId: string; lastSalaryAt: Date | null; onDone: () => void }) {
+  const qc = useQueryClient();
+  const mark = useServerFn(markSalaryReceived);
+  const [loading, setLoading] = useState(false);
+  // Don't re-trigger if a salary was already recorded within the last 5 days
+  const recentlyReceived = lastSalaryAt && (Date.now() - lastSalaryAt.getTime()) < 5 * 86400_000;
+
+  async function onClick() {
+    if (recentlyReceived) {
+      const ok = window.confirm(`Last salary was recorded on ${fmtDate(lastSalaryAt!)}. Record another?`);
+      if (!ok) return;
+    }
+    setLoading(true);
+    try {
+      await mark({ data: { household_id: householdId } });
+      toast.success("Salary recorded — new cycle started");
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["salaries"] });
+      qc.invalidateQueries({ queryKey: ["expenses-list"] });
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <div>
+        <p className="text-sm font-medium">Payday?</p>
+        <p className="text-xs text-muted-foreground">
+          {lastSalaryAt ? `Last salary: ${fmtDate(lastSalaryAt)}` : "No salary recorded yet."} Uses your Settings income total.
+        </p>
+      </div>
+      <Button onClick={onClick} disabled={loading} variant={recentlyReceived ? "outline" : "default"}>
+        {loading ? <Loader2 className="animate-spin" /> : <Wallet />} Salary received — start new cycle
+      </Button>
+    </div>
+  );
+}
+
 function StatCard({ label, value, highlight, hint }: { label: string; value: string; highlight?: boolean; hint?: string }) {
   return (
     <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
