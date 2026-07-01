@@ -45,7 +45,7 @@ function AnalysisPage() {
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
   const [range, setRange] = useState<RangeKey>("30d");
-  const [includeFixed, setIncludeFixed] = useState(false);
+  const [includeFixed, setIncludeFixed] = useState(true);
 
 
   const { start } = useMemo(() => {
@@ -124,20 +124,25 @@ function AnalysisPage() {
         return s + v / monthsUntil(b.target_deadline);
       }, 0);
       const unallocated = Math.max(0, surplus - totalAllocated);
-      return { cycle, tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>, unallocated };
+      return {
+        cycle,
+        tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>,
+        unallocated,
+        bucketTargets: totalAllocated,
+        surplus,
+      };
     },
   });
 
   const burnSeries = useMemo(() => {
     if (!cycleData) return [];
     const { cycle, tx } = cycleData;
-    // Starting balance = income entries inside cycle (salaries + receivables count as inflow)
-    // Build chronological events; running balance increments on income, decrements on expense.
     const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
-    // Reserve fixed expenses up-front: balance starts at -fixedTotal on day 1 of the cycle.
-    let bal = -fixedTotal;
+    let bal = 0;
     const out: { label: string; iso: string; balance: number }[] = [];
-    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: Number(bal.toFixed(2)) });
+    // Point 1: cycle start at zero.
+    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0 });
+    let fixedReserved = false;
     for (const ev of events) {
       const amt = Number(ev.amount);
       bal += ev.kind === "income" ? amt : -amt;
@@ -146,8 +151,17 @@ function AnalysisPage() {
         iso: ev.occurred_at,
         balance: Number(bal.toFixed(2)),
       });
+      // Right after the first salary lands, reserve fixed expenses in one step.
+      if (!fixedReserved && ev.is_salary && fixedTotal > 0) {
+        bal -= fixedTotal;
+        out.push({
+          label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm") + " · fixed",
+          iso: ev.occurred_at,
+          balance: Number(bal.toFixed(2)),
+        });
+        fixedReserved = true;
+      }
     }
-    // anchor point at "now" (or cycle end, whichever is sooner)
     const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
     out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)) });
     return out;
@@ -232,7 +246,7 @@ function AnalysisPage() {
             <CardTitle>Cycle burndown</CardTitle>
             <CardDescription>
               Pay cycle {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
-              {cycleData.cycle.predicted ? " (predicted)" : ""} · fixed expenses ({money(fixedTotal)}) reserved on day 1
+              {cycleData.cycle.predicted ? " (predicted)" : ""} · starts at 0, jumps with salary, then fixed expenses ({money(fixedTotal)}) are reserved
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -247,11 +261,11 @@ function AnalysisPage() {
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
                     <Tooltip formatter={(v: number) => money(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
                     <Area type="stepAfter" dataKey="balance" name="Balance" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15} strokeWidth={2} />
-                    <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeWidth={1} strokeDasharray="2 2"
-                      label={{ value: "Break-even (variable pool consumed)", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                    {cycleData.unallocated > 0 && (
-                      <ReferenceLine y={cycleData.unallocated} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
-                        label={{ value: `Unallocated floor ${money(cycleData.unallocated)}`, position: "insideTopRight", fontSize: 10, fill: "#b45309" }} />
+                    <ReferenceLine y={0} stroke="hsl(var(--destructive))" strokeWidth={1} strokeDasharray="2 2"
+                      label={{ value: "Empty (overdraft below)", position: "insideBottomRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
+                    {cycleData.bucketTargets > 0 && (
+                      <ReferenceLine y={cycleData.bucketTargets} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
+                        label={{ value: `Bucket funding floor ${money(cycleData.bucketTargets)} (don't spend below)`, position: "insideTopRight", fontSize: 10, fill: "#b45309" }} />
                     )}
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </ComposedChart>
@@ -290,7 +304,8 @@ function AnalysisPage() {
               </div>
               <ul className="divide-y">
                 {byCategory.map((c, i) => {
-                  const pct = totalVariableSpend > 0 ? (c.value / totalVariableSpend) * 100 : 0;
+                  const denom = includeFixed ? totalSpend : totalVariableSpend;
+                  const pct = denom > 0 ? (c.value / denom) * 100 : 0;
                   return (
                     <li key={c.name} className="flex items-center justify-between py-2 text-sm">
                       <div className="flex items-center gap-2">
