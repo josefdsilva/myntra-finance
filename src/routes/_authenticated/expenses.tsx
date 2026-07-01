@@ -59,20 +59,19 @@ function ExpensesPage() {
     const list = salaries ?? [];
     if (cycleOffset === 0) return computeCycle(list);
     if (cycleOffset < 0) {
-      // Historic cycle: between salary[|offset|] and salary[|offset|-1]
-      const i = -cycleOffset; // 1,2,...
+      // Historic cycle: between salary[i] (start) and salary[i-1] (end)
+      const i = -cycleOffset;
       const startStr = list[i];
       const endStr = list[i - 1];
       if (startStr && endStr) {
-        return computeCycle(list.slice(i)); // treats salary[i] as latest → end predicted, but override end
-          ? undefined as never
-          : undefined as never;
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        return { start, end, source: "salary" as const, predicted: false };
       }
-      // Fallback: shift current cycle by one month
       const base = computeCycle(list);
       const start = new Date(base.start); start.setMonth(start.getMonth() + cycleOffset);
       const end = new Date(base.end); end.setMonth(end.getMonth() + cycleOffset);
-      return { ...base, start, end };
+      return { start, end, source: base.source, predicted: true };
     }
     // Future predicted cycle: shift by +1 month from current
     const base = computeCycle(list);
