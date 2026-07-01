@@ -2,7 +2,8 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Wallet, Menu, X, Eye, EyeOff, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, X, Eye, EyeOff, BarChart3 } from "lucide-react";
+import appIcon from "@/assets/app-icon.png.asset.json";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
