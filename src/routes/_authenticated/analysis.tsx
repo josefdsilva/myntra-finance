@@ -124,20 +124,25 @@ function AnalysisPage() {
         return s + v / monthsUntil(b.target_deadline);
       }, 0);
       const unallocated = Math.max(0, surplus - totalAllocated);
-      return { cycle, tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>, unallocated };
+      return {
+        cycle,
+        tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>,
+        unallocated,
+        bucketTargets: totalAllocated,
+        surplus,
+      };
     },
   });
 
   const burnSeries = useMemo(() => {
     if (!cycleData) return [];
     const { cycle, tx } = cycleData;
-    // Starting balance = income entries inside cycle (salaries + receivables count as inflow)
-    // Build chronological events; running balance increments on income, decrements on expense.
     const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
-    // Reserve fixed expenses up-front: balance starts at -fixedTotal on day 1 of the cycle.
-    let bal = -fixedTotal;
+    let bal = 0;
     const out: { label: string; iso: string; balance: number }[] = [];
-    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: Number(bal.toFixed(2)) });
+    // Point 1: cycle start at zero.
+    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0 });
+    let fixedReserved = false;
     for (const ev of events) {
       const amt = Number(ev.amount);
       bal += ev.kind === "income" ? amt : -amt;
@@ -146,8 +151,17 @@ function AnalysisPage() {
         iso: ev.occurred_at,
         balance: Number(bal.toFixed(2)),
       });
+      // Right after the first salary lands, reserve fixed expenses in one step.
+      if (!fixedReserved && ev.is_salary && fixedTotal > 0) {
+        bal -= fixedTotal;
+        out.push({
+          label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm") + " · fixed",
+          iso: ev.occurred_at,
+          balance: Number(bal.toFixed(2)),
+        });
+        fixedReserved = true;
+      }
     }
-    // anchor point at "now" (or cycle end, whichever is sooner)
     const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
     out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)) });
     return out;
