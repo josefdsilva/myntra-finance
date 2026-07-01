@@ -38,6 +38,31 @@ const COLORS = [
 
 type RangeKey = "30d" | "90d" | "6m" | "12m" | "ytd";
 
+function BurnTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload as { label: string; balance: number; events?: Array<{ kind: string; label: string; amount: number; delta: number }> };
+  if (!p) return null;
+  return (
+    <div style={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, padding: 8, fontSize: 12, maxWidth: 260 }}>
+      <div style={{ fontWeight: 600 }}>{p.label}</div>
+      <div style={{ marginTop: 2 }}>Balance: {money(p.balance)}</div>
+      {p.events && p.events.length > 0 && p.events.some((e) => e.delta !== 0) && (
+        <div style={{ marginTop: 6, borderTop: "1px solid var(--border)", paddingTop: 6 }}>
+          {p.events.filter((e) => e.delta !== 0).map((e, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+              <span style={{ opacity: 0.85 }}>{e.kind === "income" ? "↑" : e.kind === "fixed" ? "▼" : "↓"} {e.label}</span>
+              <span style={{ color: e.delta >= 0 ? "var(--primary)" : "hsl(var(--destructive))" }}>
+                {e.delta >= 0 ? "+" : ""}{money(e.delta)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function AnalysisPage() {
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
@@ -102,7 +127,7 @@ function AnalysisPage() {
       const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
       const { data: cycleTx } = await supabase
         .from("expenses")
-        .select("amount, occurred_at, kind, is_salary")
+        .select("amount, occurred_at, kind, is_salary, category, note, merchant")
         .eq("household_id", householdId!)
         .gte("occurred_at", cycle.start.toISOString())
         .lt("occurred_at", cycle.end.toISOString())
@@ -126,7 +151,7 @@ function AnalysisPage() {
       const unallocated = Math.max(0, surplus - totalAllocated);
       return {
         cycle,
-        tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean }>,
+        tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean; category: string; note: string | null; merchant: string | null }>,
         unallocated,
         bucketTargets: totalAllocated,
         surplus,
@@ -134,36 +159,43 @@ function AnalysisPage() {
     },
   });
 
-  const burnSeries = useMemo(() => {
+  type BurnEvent = { kind: "income" | "expense" | "fixed"; label: string; amount: number; delta: number };
+  type BurnPoint = { label: string; iso: string; balance: number; events: BurnEvent[] };
+
+  const burnSeries = useMemo<BurnPoint[]>(() => {
     if (!cycleData) return [];
     const { cycle, tx } = cycleData;
     const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
     let bal = 0;
-    const out: { label: string; iso: string; balance: number }[] = [];
-    // Point 1: cycle start at zero.
-    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0 });
+    const out: BurnPoint[] = [];
+    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0, events: [{ kind: "expense", label: "Cycle start", amount: 0, delta: 0 }] });
     let fixedReserved = false;
     for (const ev of events) {
       const amt = Number(ev.amount);
-      bal += ev.kind === "income" ? amt : -amt;
+      const delta = ev.kind === "income" ? amt : -amt;
+      bal += delta;
+      const evLabel = ev.is_salary
+        ? (ev.note || ev.merchant || "Salary")
+        : (ev.note || ev.merchant || ev.category || (ev.kind === "income" ? "Income" : "Expense"));
       out.push({
         label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm"),
         iso: ev.occurred_at,
         balance: Number(bal.toFixed(2)),
+        events: [{ kind: ev.kind, label: evLabel, amount: amt, delta }],
       });
-      // Right after the first salary lands, reserve fixed expenses in one step.
       if (!fixedReserved && ev.is_salary && fixedTotal > 0) {
         bal -= fixedTotal;
         out.push({
           label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm") + " · fixed",
           iso: ev.occurred_at,
           balance: Number(bal.toFixed(2)),
+          events: [{ kind: "fixed", label: "Fixed expenses reserved", amount: fixedTotal, delta: -fixedTotal }],
         });
         fixedReserved = true;
       }
     }
     const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
-    out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)) });
+    out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)), events: [] });
     return out;
   }, [cycleData, fixedTotal]);
 
@@ -259,7 +291,7 @@ function AnalysisPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={20} />
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
-                    <Tooltip formatter={(v: number) => money(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                    <Tooltip content={<BurnTooltip />} />
                     <Area type="stepAfter" dataKey="balance" name="Balance" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15} strokeWidth={2} />
                     <ReferenceLine y={0} stroke="hsl(var(--destructive))" strokeWidth={1} strokeDasharray="2 2"
                       label={{ value: "Empty (overdraft below)", position: "insideBottomRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
