@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, X, Eye, EyeOff, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, X, Eye, EyeOff, BarChart3, Sun, Moon } from "lucide-react";
 import appIcon from "@/assets/app-icon.png.asset.json";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -21,13 +21,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     const stored = localStorage.getItem("privacy-mode") === "1";
     setPrivacy(stored);
+    const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    setTheme(storedTheme ?? (prefersDark ? "dark" : "light"));
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("privacy-on", privacy);
@@ -89,6 +98,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={theme === "dark" ? "Light theme" : "Dark theme"}
+          >
+            {theme === "dark" ? <Sun /> : <Moon />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setPrivacy((s) => !s)}
             aria-label={privacy ? "Show numbers" : "Hide numbers"}
             title={privacy ? "Show numbers" : "Hide numbers"}
@@ -138,6 +156,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="p-3 border-t hidden md:block space-y-1">
+          <Button variant="ghost" className="w-full justify-start" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}>
+            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {theme === "dark" ? "Light theme" : "Dark theme"}
+          </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={() => setPrivacy((s) => !s)}>
             {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             {privacy ? "Show numbers" : "Hide numbers"}
