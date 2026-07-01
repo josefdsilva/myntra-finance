@@ -2,7 +2,8 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Wallet, Menu, X, Eye, EyeOff, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, X, Eye, EyeOff, BarChart3 } from "lucide-react";
+import appIcon from "@/assets/app-icon.png.asset.json";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
@@ -81,9 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Top bar mobile */}
       <header className="md:hidden flex items-center justify-between p-4 border-b bg-card">
         <Link to="/" className="flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-            <Wallet className="size-4" />
-          </div>
+          <img src={appIcon.url} alt="App icon" className="size-8 rounded-lg" />
           <span className="font-display text-lg">Budget</span>
         </Link>
         <div className="flex items-center gap-1">
@@ -111,9 +110,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       >
         <div className="hidden md:flex items-center gap-2 p-5 border-b">
-          <div className="size-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center">
-            <Wallet className="size-5" />
-          </div>
+          <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
           <div>
             <div className="font-display text-lg leading-tight">Household</div>
             <div className="text-xs text-muted-foreground">Budget & planning</div>
