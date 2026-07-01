@@ -412,6 +412,44 @@ export type Database = {
         }
         Relationships: []
       }
+      variable_estimates: {
+        Row: {
+          category: string | null
+          created_at: string
+          household_id: string
+          id: string
+          label: string
+          monthly_amount: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          household_id: string
+          id?: string
+          label: string
+          monthly_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          label?: string
+          monthly_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variable_estimates_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
