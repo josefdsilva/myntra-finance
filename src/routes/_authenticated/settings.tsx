@@ -283,10 +283,10 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
     if (!label || !amount) return;
     await upsert({ data: { household_id: householdId, label, category, monthly_amount: parseFloat(amount) || 0 } });
     setLabel(""); setAmount("");
-    refetch(); qc.invalidateQueries({ queryKey: ["dashboard"] });
+    refetch(); qc.invalidateQueries({ queryKey: ["fixed-total", householdId] }); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
   async function remove(id: string) {
-    await del({ data: { id } }); refetch(); qc.invalidateQueries({ queryKey: ["dashboard"] });
+    await del({ data: { id } }); refetch(); qc.invalidateQueries({ queryKey: ["fixed-total", householdId] }); qc.invalidateQueries({ queryKey: ["household"] }); qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
 
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
