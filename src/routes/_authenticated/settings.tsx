@@ -99,6 +99,8 @@ function HouseholdSection({ household, onChange }: { household: { id: string; na
           <div>
             <Label>Safety margin: {margin}%</Label>
             <Slider value={[margin]} min={0} max={30} step={1} onValueChange={(v) => setMargin(v[0])} className="mt-3" />
+            <p className="text-xs text-muted-foreground mt-2">Held back from your daily variable pool as a buffer. Reduces safe‑to‑spend by {margin}% of the baseline (surplus & buckets unaffected).</p>
+
           </div>
         </div>
         <Button onClick={save}>Save household</Button>
