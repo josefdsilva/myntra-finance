@@ -278,51 +278,57 @@ function AllocationsPage() {
   );
 }
 
-function YearToDate({ buckets, monthlyFn, firstSalaryAt }: { buckets: Bucket[]; monthlyFn: (b: Bucket) => number; firstSalaryAt: string | null }) {
+function YearToDate({ buckets, monthlyFn, firstSalaryAt, ytdTotals }: { buckets: Bucket[]; monthlyFn: (b: Bucket) => number; firstSalaryAt: string | null; ytdTotals: Record<string, number> }) {
   const now = new Date();
   const year = now.getFullYear();
-  // Start of projection window: first salary (if this year) else Jan 1
   const start = firstSalaryAt && new Date(firstSalaryAt).getFullYear() === year
     ? new Date(firstSalaryAt)
     : new Date(year, 0, 1);
-  // Fractional months elapsed since start (cap at 12)
   const msPerMonth = (365.25 / 12) * 86400000;
   const monthsElapsed = Math.max(0, Math.min(12, (now.getTime() - start.getTime()) / msPerMonth));
-  // Months remaining until Dec 31 of this year
-  const yearEndDate = new Date(year, 11, 31, 23, 59, 59);
-  const monthsInYear = Math.max(0, Math.min(12, (yearEndDate.getTime() - start.getTime()) / msPerMonth));
+  const monthsRemaining = Math.max(0, 12 - (now.getMonth() + now.getDate() / 30));
   const startLabel = start.toLocaleDateString("en-GB");
+  const ytdConfirmedTotal = buckets.reduce((s, b) => s + (ytdTotals[b.id] ?? 0), 0);
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><PiggyBank className="size-5" /> Year-to-date projection</CardTitle>
+        <CardTitle className="flex items-center gap-2"><PiggyBank className="size-5" /> Year-to-date (actuals)</CardTitle>
         <CardDescription>
-          Counted from {startLabel} ({firstSalaryAt && new Date(firstSalaryAt).getFullYear() === year ? "first salary" : "Jan 1"}). If current allocations continue, here's what each bucket reaches by year end.
+          Sum of allocations you confirmed this year (since {startLabel}). Projection assumes current monthly target continues until year end.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {!buckets.length ? <p className="text-sm text-muted-foreground">—</p> : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {buckets.map((b) => {
-              const ytd = monthlyFn(b) * monthsElapsed;
-              const yearEnd = monthlyFn(b) * monthsInYear;
-              return (
-                <div key={b.id} className="rounded-lg border p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="size-2.5 rounded-full" style={{ background: b.color ?? "var(--primary)" }} />
-                    <span className="font-medium text-sm">{b.name}</span>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {buckets.map((b) => {
+                const confirmed = ytdTotals[b.id] ?? 0;
+                const projected = confirmed + monthlyFn(b) * monthsRemaining;
+                return (
+                  <div key={b.id} className="rounded-lg border p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="size-2.5 rounded-full" style={{ background: b.color ?? "var(--primary)" }} />
+                      <span className="font-medium text-sm">{b.name}</span>
+                    </div>
+                    <p className="text-2xl font-display tabular-nums">{money(confirmed)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      On pace for <span className="tabular-nums">{money(projected)}</span> by year end
+                    </p>
                   </div>
-                  <p className="text-2xl font-display">{money(ytd)}</p>
-                  <p className="text-xs text-muted-foreground">{money(yearEnd)} by year end</p>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            <div className="pt-3 border-t flex justify-between text-sm">
+              <span className="text-muted-foreground">Total confirmed YTD ({monthsElapsed.toFixed(1)} mo)</span>
+              <span className="tabular-nums font-medium">{money(ytdConfirmedTotal)}</span>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
   );
 }
+
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
