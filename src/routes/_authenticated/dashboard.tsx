@@ -322,34 +322,53 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="recent-expenses">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent expenses</CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CardTitle>Recent expenses</CardTitle>
+            {expenseFilter !== "all" && (
+              <button
+                type="button"
+                onClick={() => setExpenseFilter("all")}
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+              >
+                Showing {expenseFilter} — clear
+              </button>
+            )}
+          </div>
           <Button asChild variant="ghost" size="sm"><Link to="/expenses">View all</Link></Button>
         </CardHeader>
         <CardContent>
-          {!dashboard?.recent?.length ? (
-            <p className="text-sm text-muted-foreground">No expenses yet this month.</p>
-          ) : (
-            <ul className="divide-y">
-              {dashboard.recent.map((e) => {
-                const isIncome = e.kind === "income";
-                return (
-                  <li key={e.id} className="flex items-center justify-between py-3">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {fmtDateTime(e.occurred_at)} · {e.category}{isIncome ? " · received" : ""}
+          {(() => {
+            const list = (dashboard?.recent ?? []).filter((e) =>
+              expenseFilter === "all"
+                ? true
+                : expenseFilter === "received"
+                  ? e.kind === "income" && !e.is_salary
+                  : e.kind !== "income",
+            );
+            if (!list.length) return <p className="text-sm text-muted-foreground">No entries.</p>;
+            return (
+              <ul className="divide-y">
+                {list.map((e) => {
+                  const isIncome = e.kind === "income";
+                  return (
+                    <li key={e.id} className="flex items-center justify-between py-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {fmtDateTime(e.occurred_at)} · {e.category}{isIncome ? " · received" : ""}
+                        </p>
+                      </div>
+                      <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
+                        {isIncome ? "+" : "−"}{money(e.amount)}
                       </p>
-                    </div>
-                    <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
-                      {isIncome ? "+" : "−"}{money(e.amount)}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                    </li>
+                  );
+                })}
+              </ul>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
