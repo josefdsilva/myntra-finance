@@ -94,6 +94,24 @@ function AllocationsPage() {
       return map;
     },
   });
+  // YTD confirmed allocations (this calendar year) grouped by bucket.
+  const yearStartIso = `${now.getFullYear()}-01-01`;
+  const { data: ytdTotals } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["bucket-allocations-ytd", householdId, now.getFullYear()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bucket_allocations")
+        .select("bucket_id, amount")
+        .eq("household_id", householdId!)
+        .gte("period", yearStartIso);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      for (const r of data ?? []) map[r.bucket_id] = (map[r.bucket_id] ?? 0) + Number(r.amount);
+      return map;
+    },
+  });
+
 
   const income = data?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
