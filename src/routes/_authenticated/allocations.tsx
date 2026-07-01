@@ -222,9 +222,15 @@ function AllocationsPage() {
                         <ConfirmAllocationButton
                           householdId={householdId!}
                           bucketId={b.id}
+                          bucketName={b.name}
                           period={period}
                           suggested={amount}
                           confirmed={confirmed ?? null}
+                          isGoal={isGoal}
+                          goalTarget={isGoal ? goalTarget : 0}
+                          savedSoFar={isGoal ? saved : 0}
+                          monthsLeft={isGoal ? monthsLeft : 0}
+                          unallocatedSurplus={unallocated}
                           onChanged={() => refetchConfirmations()}
                         />
                       </div>
