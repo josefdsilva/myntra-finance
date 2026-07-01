@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { deleteExpense, addExpensesBulk } from "@/lib/budget.functions";
@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { money, fmtDateTime } from "@/lib/format";
+import { money, fmtDateTime, fmtDate } from "@/lib/format";
+import { computeCycle } from "@/lib/cycle";
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2, Sparkles } from "lucide-react";
 
