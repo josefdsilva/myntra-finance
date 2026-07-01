@@ -49,6 +49,7 @@ function SettingsPage() {
           <HouseholdSection household={hh!.household!} onChange={() => qc.invalidateQueries({ queryKey: ["household"] })} />
           <IncomesSection householdId={householdId} />
           <FixedExpensesSection householdId={householdId} />
+          <VariableEstimatesSection householdId={householdId} />
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
         </>
@@ -56,6 +57,7 @@ function SettingsPage() {
     </div>
   );
 }
+
 
 function HouseholdSection({ household, onChange }: { household: { id: string; name: string; baseline_budget: number | string; margin_pct: number | string }; onChange: () => void }) {
   const update = useServerFn(updateHousehold);
