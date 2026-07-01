@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 import { toast } from "sonner";
-import { Wallet } from "lucide-react";
+import appIcon from "@/assets/app-icon.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
