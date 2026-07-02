@@ -127,12 +127,30 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     }
   }
 
-  async function test() {
+  async function test(endpoint?: string) {
     try {
-      const r = await testFn();
-      toast.success(`Test sent to ${r.sent} device(s)`);
+      const r = await testFn({ data: { endpoint: endpoint ?? null } });
+      const failed = r.results.filter((x) => !x.ok);
+      if (failed.length === 0) {
+        toast.success(`Test accepted by push service on ${r.sent}/${r.total} device(s). If you don't see it, check iOS Notification settings for the installed PWA.`);
+      } else {
+        const removed = failed.filter((f) => f.removed).length;
+        const detail = failed.map((f) => `${f.host} → ${f.status}${f.expired ? " (expired, removed)" : ""}`).join("; ");
+        toast.error(`${r.sent}/${r.total} delivered. Failures: ${detail}${removed ? " · stale removed" : ""}`);
+      }
+      refetchDevices();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No devices");
+    }
+  }
+
+  async function removeDevice(id: string) {
+    try {
+      await delDevFn({ data: { id } });
+      refetchDevices();
+      toast.success("Device removed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
 
