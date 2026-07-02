@@ -56,7 +56,7 @@ function SettingsPage() {
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
-          <CreditUsageSection household={hh!.household!} onChange={() => qc.invalidateQueries({ queryKey: ["household"] })} />
+          <CreditUsageSection household={hh!.household!} />
         </>
       )}
     </div>
