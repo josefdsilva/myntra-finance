@@ -56,6 +56,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       if (!reg) return;
       const s = await reg.pushManager.getSubscription();
       setSubscribed(!!s);
+      setCurrentEndpoint(s?.endpoint ?? null);
     });
   }, []);
 
