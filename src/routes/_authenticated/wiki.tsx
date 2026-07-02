@@ -545,8 +545,9 @@ safe_today    = remaining / days_left_in_cycle`}
           </p>
         </Section>
 
-
+        <Section id="faq" icon={Sparkles} title="FAQ">
           <Accordion type="single" collapsible className="w-full">
+
             <AccordionItem value="why-cycles">
               <AccordionTrigger>Why cycles instead of months?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
