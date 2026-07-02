@@ -23,17 +23,20 @@ type Parsed = { amount: number; category: string; merchant?: string | null; occu
 export function ExpenseQuickAdd({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   return (
     <Tabs defaultValue="manual">
-      <TabsList className="mb-4">
+      <TabsList className="mb-4 flex-wrap h-auto">
         <TabsTrigger value="manual">Manual</TabsTrigger>
         <TabsTrigger value="ai"><Sparkles className="size-3.5 mr-1" /> AI memo</TabsTrigger>
         <TabsTrigger value="voice"><Mic className="size-3.5 mr-1" /> Voice</TabsTrigger>
+        <TabsTrigger value="photo"><Camera className="size-3.5 mr-1" /> Photo</TabsTrigger>
       </TabsList>
       <TabsContent value="manual"><ManualForm householdId={householdId} onAdded={onAdded} /></TabsContent>
       <TabsContent value="ai"><AiMemoForm householdId={householdId} onAdded={onAdded} /></TabsContent>
       <TabsContent value="voice"><VoiceForm householdId={householdId} onAdded={onAdded} /></TabsContent>
+      <TabsContent value="photo"><PhotoForm householdId={householdId} onAdded={onAdded} /></TabsContent>
     </Tabs>
   );
 }
+
 
 function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const add = useServerFn(addExpense);
