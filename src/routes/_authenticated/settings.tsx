@@ -119,24 +119,10 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
           <Progress value={pct} className={overCap ? "[&>*]:bg-destructive" : ""} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end rounded-lg border bg-muted/30 p-4">
-          <div>
-            <Label htmlFor="cap">Monthly cap (credits)</Label>
-            <Input
-              id="cap"
-              type="number"
-              min={0}
-              step="0.5"
-              value={cap}
-              onChange={(e) => setCap(e.target.value)}
-              className="max-w-xs mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Default is 10 credits/month — plenty for typical household use. Increase if you use the AI coach heavily or import statements often.
-            </p>
-          </div>
-          <Button onClick={saveCap} variant="outline">Save cap</Button>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Monthly cap is fixed at {HARDWIRED_CAP} credits per household.
+        </p>
+
 
         {data?.breakdown && data.breakdown.length > 0 ? (
           <div>
