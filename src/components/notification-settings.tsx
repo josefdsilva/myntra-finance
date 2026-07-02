@@ -179,8 +179,8 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
             <div className="flex gap-2">
               {subscribed ? (
                 <>
-                  <Button size="sm" variant="outline" onClick={test} disabled={busy}>
-                    Send test
+                  <Button size="sm" variant="outline" onClick={() => test(currentEndpoint ?? undefined)} disabled={busy}>
+                    Send test to this device
                   </Button>
                   <Button size="sm" variant="outline" onClick={disable} disabled={busy}>
                     {busy ? <Loader2 className="animate-spin" /> : <BellOff />} Disable
