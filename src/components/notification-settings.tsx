@@ -34,12 +34,19 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   const getPrefs = useServerFn(getNotificationPrefs);
   const setPrefs = useServerFn(updateNotificationPrefs);
   const testFn = useServerFn(sendTestPush);
+  const listFn = useServerFn(listMyDevices);
+  const delDevFn = useServerFn(deleteDevice);
 
   const [supported, setSupported] = useState<boolean | null>(null);
   const [subscribed, setSubscribed] = useState<boolean>(false);
+  const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const { data: prefs } = useQuery({ queryKey: ["notif-prefs"], queryFn: () => getPrefs() });
+  const { data: devices, refetch: refetchDevices } = useQuery({
+    queryKey: ["notif-devices"],
+    queryFn: () => listFn(),
+  });
 
   useEffect(() => {
     const ok = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
