@@ -88,6 +88,8 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         },
       });
       setSubscribed(true);
+      setCurrentEndpoint(sub.endpoint);
+      refetchDevices();
       toast.success("This device will now receive push notifications.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to enable notifications");
