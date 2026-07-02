@@ -85,7 +85,7 @@ function WikiPage() {
   ];
 
   return (
-    <AppShell>
+    <>
       <div className="mx-auto max-w-4xl p-4 md:p-8 space-y-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -487,6 +487,6 @@ safe_today    = remaining / days_left_in_cycle`}
           </Accordion>
         </Section>
       </div>
-    </AppShell>
+    </>
   );
 }
