@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      analysis_overviews: {
+        Row: {
+          content: string
+          cycle_start: string
+          generated_at: string
+          household_id: string
+          model: string | null
+        }
+        Insert: {
+          content: string
+          cycle_start: string
+          generated_at?: string
+          household_id: string
+          model?: string | null
+        }
+        Update: {
+          content?: string
+          cycle_start?: string
+          generated_at?: string
+          household_id?: string
+          model?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_overviews_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_imports: {
         Row: {
           created_at: string
