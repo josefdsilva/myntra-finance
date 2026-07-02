@@ -51,7 +51,7 @@ export async function logHouseholdCredits(input: {
       credits: Number(input.credits.toFixed(6)),
       input_tokens: input.inputTokens ?? null,
       output_tokens: input.outputTokens ?? null,
-      meta: input.meta ?? {},
+      meta: (input.meta ?? {}) as never,
     });
   } catch (err) {
     // Never let accounting failure break the user-facing operation
