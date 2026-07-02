@@ -8,12 +8,14 @@ import {
   getNotificationPrefs,
   updateNotificationPrefs,
   sendTestPush,
+  listMyDevices,
+  deleteDevice,
 } from "@/lib/push.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Bell, BellOff, Loader2 } from "lucide-react";
+import { Bell, BellOff, Loader2, Trash2 } from "lucide-react";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
