@@ -62,10 +62,10 @@ async function buildContext(
     .from("expenses")
     .select("occurred_at")
     .eq("household_id", householdId)
-    .eq("kind", "income")
-    .eq("category", "salary")
+    .eq("is_salary", true)
     .order("occurred_at", { ascending: false })
     .limit(6);
+
   const salaryDatesDesc = (salaryRows ?? []).map((r: any) => r.occurred_at as string);
   const cycle = computeCycle(salaryDatesDesc);
 
