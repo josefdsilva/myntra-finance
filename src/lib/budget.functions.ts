@@ -9,7 +9,7 @@ const expenseInput = z.object({
   merchant: z.string().max(120).optional().nullable(),
   occurred_at: z.string().datetime().optional(),
   note: z.string().max(500).optional().nullable(),
-  source: z.enum(["manual", "ai_memo", "ai_voice", "statement"]).default("manual"),
+  source: z.enum(["manual", "ai_memo", "ai_voice", "ai_photo", "statement"]).default("manual"),
   source_meta: z.record(z.unknown()).optional(),
   kind: z.enum(["expense", "income"]).default("expense"),
   is_salary: z.boolean().optional().default(false),
