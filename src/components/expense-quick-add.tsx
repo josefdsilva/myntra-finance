@@ -320,3 +320,115 @@ function ParsedReview({
     </div>
   );
 }
+
+function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
+  const parse = useServerFn(parseReceiptPhoto);
+  const bulk = useServerFn(addExpensesBulk);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [mime, setMime] = useState<string>("");
+  const [base64, setBase64] = useState<string>("");
+  const [items, setItems] = useState<Parsed[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  function clear() {
+    setPreview(null); setBase64(""); setMime(""); setItems(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) return toast.error("Please pick an image");
+    if (f.size > 8 * 1024 * 1024) return toast.error("Image too large (max 8MB)");
+    const buf = await f.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    setBase64(b64); setMime(f.type);
+    setPreview(URL.createObjectURL(f));
+    setItems(null);
+  }
+
+  async function doParse() {
+    if (!base64) return;
+    setLoading(true);
+    try {
+      const res = await parse({ data: { image_base64: base64, mime_type: mime, householdId } });
+      setItems(res.items);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo parsing failed");
+    } finally { setLoading(false); }
+  }
+
+  async function confirm() {
+    if (!items?.length) return;
+    setLoading(true);
+    try {
+      await bulk({
+        data: {
+          items: items.map((i) => ({
+            household_id: householdId,
+            amount: i.amount,
+            category: i.category,
+            merchant: i.merchant,
+            occurred_at: i.occurred_at,
+            note: i.note,
+            source: "ai_photo" as const,
+          })),
+        },
+      });
+      toast.success(`Added ${items.length} expense${items.length === 1 ? "" : "s"}`);
+      clear();
+      onAdded?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="space-y-3">
+      {!preview ? (
+        <div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={onFile}
+          />
+          <Button onClick={() => inputRef.current?.click()} variant="outline">
+            <Camera /> Take or upload receipt photo
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            The AI reads the total, merchant and date from a receipt or bill photo. Review before saving.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="relative inline-block">
+            <img src={preview} alt="Receipt preview" className="max-h-64 rounded-md border" />
+            <button
+              type="button"
+              onClick={clear}
+              className="absolute top-1 right-1 rounded-full bg-background/90 border p-1 hover:bg-background"
+              aria-label="Remove"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+          {!items ? (
+            <div className="flex gap-2">
+              <Button onClick={doParse} disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" /> : <Sparkles />} Parse receipt
+              </Button>
+              <Button variant="ghost" onClick={clear} disabled={loading}>Cancel</Button>
+            </div>
+          ) : (
+            <ParsedReview items={items} setItems={setItems} onConfirm={confirm} onCancel={clear} loading={loading} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
