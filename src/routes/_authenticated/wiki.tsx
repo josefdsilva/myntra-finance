@@ -81,6 +81,7 @@ function WikiPage() {
     { id: "settings", label: "Settings" },
     { id: "notifications", label: "Notifications" },
     { id: "privacy", label: "Hidden mode & dark mode" },
+    { id: "credits", label: "Credits & tokens" },
     { id: "faq", label: "FAQ" },
   ];
 
@@ -443,8 +444,110 @@ safe_today    = remaining / days_left_in_cycle`}
           </p>
         </Section>
 
+        <Section id="credits" icon={Sparkles} title="Credits & tokens">
+          <p>
+            Some Myntra features are powered by AI models (the financial
+            coach, voice/text/photo/bank-statement parsing). Every call to
+            those models has a real cost, which we measure in{" "}
+            <strong>credits</strong>. Each household gets a cap of{" "}
+            <strong>10 credits per month</strong>; usage is visible in{" "}
+            <em>Settings → Credit Usage</em>.
+          </p>
+
+          <h3 className="font-medium text-foreground mt-4">What is a token?</h3>
+          <p>
+            AI models don't read characters or words — they read{" "}
+            <strong>tokens</strong>, small chunks of text (roughly ¾ of a
+            word in English, a bit less for other languages). A short memo
+            like <em>"Grocery €42 at Pingo Doce"</em> is ~10 tokens; a full
+            bank statement page can be several thousand. Images count too:
+            a receipt photo is billed as a fixed block of image tokens plus
+            the tokens of any text the model writes back.
+          </p>
+          <p>
+            Every AI call has two sides: <strong>input tokens</strong>{" "}
+            (what we send — your memo, receipt, or the context we build for
+            the coach) and <strong>output tokens</strong> (what the model
+            writes back — the parsed JSON or the coach's answer). Both are
+            billed, and output tokens are usually more expensive per token
+            than input.
+          </p>
+
+          <h3 className="font-medium text-foreground mt-4">
+            How Myntra turns tokens into credits
+          </h3>
+          <p>
+            After every AI call we log the token counts, convert them to a
+            fractional credit cost using the model's pricing, and store
+            that against your household in the <code>credit_usage</code>{" "}
+            table. The Settings page sums the current month and shows a
+            progress bar towards the 10-credit cap. Non-AI features (adding
+            expenses manually, viewing charts, notifications, sync) do{" "}
+            <strong>not</strong> consume credits.
+          </p>
+          <p>Typical costs per action:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>
+              <strong>Text/voice memo parsing</strong> — very small, often
+              well below 0.01 credits per entry.
+            </li>
+            <li>
+              <strong>Receipt photo parsing</strong> — larger, because the
+              image itself is billed; still typically a few hundredths of a
+              credit.
+            </li>
+            <li>
+              <strong>Bank statement import</strong> — the most expensive
+              per call, because full pages of text are sent in.
+            </li>
+            <li>
+              <strong>Financial coach report</strong> — cached for 24h so
+              re-opening the tab is free; only <em>Regenerate</em> and each
+              chat reply cost credits.
+            </li>
+          </ul>
+
+          <h3 className="font-medium text-foreground mt-4">
+            How to save credits
+          </h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>
+              Prefer <strong>text/voice memos</strong> over photos when you
+              already know the amount — much cheaper than image parsing.
+            </li>
+            <li>
+              For photos, crop tightly to the total/merchant area before
+              uploading; smaller images = fewer image tokens.
+            </li>
+            <li>
+              Import bank statements <strong>once per cycle</strong>{" "}
+              instead of after every transaction, and let the deduplication
+              step merge with what you already logged.
+            </li>
+            <li>
+              Reuse the cached coach report during the 24h window instead
+              of clicking <em>Regenerate</em>; only regenerate after a
+              material change (big expense, allocation, new payday).
+            </li>
+            <li>
+              Keep coach chat messages short and specific — long
+              back-and-forths spend both input and output tokens on every
+              turn.
+            </li>
+            <li>
+              Fix obvious things (merchant, category, amount) directly in
+              the form instead of asking the AI to re-parse.
+            </li>
+          </ul>
+          <p className="text-xs text-muted-foreground mt-2">
+            When the 10-credit cap is reached, AI features pause until the
+            next month; everything else keeps working normally.
+          </p>
+        </Section>
+
         <Section id="faq" icon={Sparkles} title="FAQ">
           <Accordion type="single" collapsible className="w-full">
+
             <AccordionItem value="why-cycles">
               <AccordionTrigger>Why cycles instead of months?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
