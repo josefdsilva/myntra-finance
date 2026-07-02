@@ -215,6 +215,49 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
             onChange={(v) => toggle("emergency_warn", v)}
           />
         </div>
+
+        {devices && devices.length > 0 && (
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Registered devices ({devices.length})</p>
+              <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
+                Test all
+              </Button>
+            </div>
+            <ul className="space-y-2">
+              {devices.map((d) => {
+                const host = (() => { try { return new URL(d.endpoint).host; } catch { return "unknown"; } })();
+                const isThis = d.endpoint === currentEndpoint;
+                return (
+                  <li key={d.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium truncate">
+                        {host} {isThis && <span className="text-primary">· this device</span>}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {d.user_agent ?? "unknown UA"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Added {new Date(d.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => test(d.endpoint)}>
+                        Test
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => removeDevice(d.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[11px] text-muted-foreground">
+              On iPhone, push only works from the app installed to the Home Screen (PWA). Regular Safari tabs cannot receive them.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
