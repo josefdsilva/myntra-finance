@@ -105,7 +105,7 @@ export const sendTestPush = createServerFn({ method: "POST" })
     for (const s of list) {
       const r = await sendWebPush(s, {
         title: "Notifications enabled ✓",
-        body: "You'll now receive selected alerts from Household Budget.",
+        body: "You'll now receive selected alerts from Myntra.",
         url: "/dashboard",
         tag: "test",
       });

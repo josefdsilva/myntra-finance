@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { FileUp, Loader2, Trash2, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
-  head: () => ({ meta: [{ title: "Expenses · Household Budget" }] }),
+  head: () => ({ meta: [{ title: "Expenses · Myntra" }] }),
   component: ExpensesPage,
 });
 

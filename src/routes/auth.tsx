@@ -13,7 +13,7 @@ import appIcon from "@/assets/app-icon.png.asset.json";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in · Household Budget" },
+      { title: "Sign in · Myntra" },
       { name: "description", content: "Sign in to your shared household budget" },
     ],
   }),
@@ -60,7 +60,7 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <img src={appIcon.url} alt="App icon" className="size-16 rounded-2xl mb-4 shadow-lg" />
-          <h1 className="text-3xl font-display">Household Budget</h1>
+          <h1 className="text-3xl font-display">Myntra</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Plan together. Spend with confidence.
           </p>

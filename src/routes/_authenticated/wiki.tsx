@@ -25,11 +25,11 @@ import {
 export const Route = createFileRoute("/_authenticated/wiki")({
   head: () => ({
     meta: [
-      { title: "Wiki — Household Budget" },
+      { title: "Wiki — Myntra" },
       {
         name: "description",
         content:
-          "Complete guide to the Household Budget app: pay cycles, safe-to-spend, allocations, analytics, notifications and more.",
+          "Complete guide to the Myntra app: pay cycles, safe-to-spend, allocations, analytics, notifications and more.",
       },
     ],
   }),
@@ -121,7 +121,7 @@ function WikiPage() {
 
         <Section id="overview" icon={BookOpen} title="Overview">
           <p>
-            Household Budget helps a couple (or small family) plan and manage
+            Myntra helps a couple (or small family) plan and manage
             monthly money together. Instead of tracking every cent against a
             calendar month, the app works in <Term>pay cycles</Term> — the
             window between two consecutive salary deposits — and answers one

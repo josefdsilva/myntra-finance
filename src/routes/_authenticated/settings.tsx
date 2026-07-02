@@ -28,7 +28,7 @@ import { Plus, Trash2, Mail, Copy, Check } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings · Household Budget" }] }),
+  head: () => ({ meta: [{ title: "Settings · Myntra" }] }),
   component: SettingsPage,
 });
 
