@@ -1,0 +1,1 @@
+ALTER TYPE public.expense_source ADD VALUE IF NOT EXISTS 'ai_photo';
