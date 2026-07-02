@@ -106,15 +106,15 @@ async function buildContext(
 
   const [{ data: fixed = [] }, { data: varEst = [] }, { data: buckets = [] }, { data: allocs = [] }] =
     await Promise.all([
-      supabase.from("fixed_expenses").select("amount").eq("household_id", householdId),
-      supabase.from("variable_estimates").select("amount").eq("household_id", householdId),
+      supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+      supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
       supabase.from("buckets").select("id, name, target_type, target_value, target_deadline").eq("household_id", householdId),
-      supabase.from("bucket_allocations").select("bucket_id, amount, allocated_at")
-        .eq("household_id", householdId).gte("allocated_at", startISO).lt("allocated_at", endISO),
+      supabase.from("bucket_allocations").select("bucket_id, amount, confirmed_at")
+        .eq("household_id", householdId).gte("confirmed_at", startISO).lt("confirmed_at", endISO),
     ]);
 
-  const fixedMonthly = (fixed ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0);
-  const variableEstimateMonthly = (varEst ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0);
+  const fixedMonthly = (fixed ?? []).reduce((s: number, r: any) => s + Number(r.monthly_amount), 0);
+  const variableEstimateMonthly = (varEst ?? []).reduce((s: number, r: any) => s + Number(r.monthly_amount), 0);
 
   const allocByBucket: Record<string, number> = {};
   for (const a of allocs ?? []) {
