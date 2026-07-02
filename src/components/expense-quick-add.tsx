@@ -133,7 +133,7 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     if (!text.trim()) return;
     setLoading(true);
     try {
-      const res = await parse({ data: { text } });
+      const res = await parse({ data: { text, householdId } });
       setItems(res.items);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Parsing failed");
@@ -209,7 +209,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
         const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
         setLoading(true);
         try {
-          const res = await parseVoice({ data: { audio_base64: base64, mime_type: mime } });
+          const res = await parseVoice({ data: { audio_base64: base64, mime_type: mime, householdId } });
           setTranscript(res.transcript);
           setItems(res.items);
         } catch (err) {

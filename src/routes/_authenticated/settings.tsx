@@ -15,16 +15,18 @@ import {
   upsertVariableEstimate, deleteVariableEstimate,
   upsertBucket, deleteBucket,
 } from "@/lib/budget.functions";
+import { getHouseholdCreditUsage } from "@/lib/credits.functions";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, Trash2, Mail, Copy, Check } from "lucide-react";
+import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -54,11 +56,156 @@ function SettingsPage() {
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
+          <CreditUsageSection household={hh!.household!} onChange={() => qc.invalidateQueries({ queryKey: ["household"] })} />
         </>
       )}
     </div>
   );
 }
+
+const OPERATION_LABELS: Record<string, string> = {
+  ai_coach_overview: "AI coach — cycle overview",
+  ai_coach_chat: "AI coach — chat",
+  ai_parse_memo: "AI expense capture — text",
+  ai_parse_voice: "AI expense capture — voice",
+  ai_parse_statement: "AI bank statement import",
+};
+
+function CreditUsageSection({ household, onChange }: { household: { id: string; credit_cap?: number | string | null }; onChange: () => void }) {
+  const fetchUsage = useServerFn(getHouseholdCreditUsage);
+  const update = useServerFn(updateHousehold);
+  const qc = useQueryClient();
+  const { data, refetch } = useQuery({
+    queryKey: ["credit-usage", household.id],
+    queryFn: () => fetchUsage({ data: { householdId: household.id } }),
+    refetchInterval: 60_000,
+  });
+  const [cap, setCap] = useState<string>(String(Number(household.credit_cap ?? 10)));
+
+  async function saveCap() {
+    const n = parseFloat(cap);
+    if (!Number.isFinite(n) || n < 0) {
+      toast.error("Enter a valid credit cap");
+      return;
+    }
+    try {
+      await update({ data: { household_id: household.id, credit_cap: n } });
+      toast.success("Credit cap updated");
+      onChange();
+      qc.invalidateQueries({ queryKey: ["credit-usage", household.id] });
+      refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  const total = data?.total ?? 0;
+  const capValue = data?.cap ?? Number(household.credit_cap ?? 10);
+  const pct = capValue > 0 ? Math.min(100, (total / capValue) * 100) : 0;
+  const remaining = Math.max(0, capValue - total);
+  const overCap = total > capValue;
+
+  const periodLabel = data?.periodStart
+    ? new Date(data.periodStart).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+    : "";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="size-5 text-primary" />
+          Credit usage {periodLabel && <span className="text-sm font-normal text-muted-foreground">· {periodLabel}</span>}
+        </CardTitle>
+        <CardDescription>
+          AI features (coach, voice/text/statement parsing) and Cloud infrastructure consume credits. Each household has its own monthly cap.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div>
+          <div className="flex items-baseline justify-between mb-2">
+            <div>
+              <span className="text-3xl font-display tabular-nums" data-lovable-blur-currency>
+                {total.toFixed(3)}
+              </span>
+              <span className="text-sm text-muted-foreground ml-2">/ {capValue.toFixed(2)} credits</span>
+            </div>
+            <div className={`text-sm tabular-nums ${overCap ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+              {overCap ? `Over by ${(total - capValue).toFixed(3)}` : `${remaining.toFixed(3)} remaining`}
+            </div>
+          </div>
+          <Progress value={pct} className={overCap ? "[&>*]:bg-destructive" : ""} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end rounded-lg border bg-muted/30 p-4">
+          <div>
+            <Label htmlFor="cap">Monthly cap (credits)</Label>
+            <Input
+              id="cap"
+              type="number"
+              min={0}
+              step="0.5"
+              value={cap}
+              onChange={(e) => setCap(e.target.value)}
+              className="max-w-xs mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Default is 10 credits/month — plenty for typical household use. Increase if you use the AI coach heavily or import statements often.
+            </p>
+          </div>
+          <Button onClick={saveCap} variant="outline">Save cap</Button>
+        </div>
+
+        {data?.breakdown && data.breakdown.length > 0 ? (
+          <div>
+            <div className="text-sm font-medium mb-2">This month by feature</div>
+            <div className="space-y-1.5">
+              {data.breakdown.map((b) => (
+                <div key={b.operation} className="flex items-center justify-between text-sm rounded-md px-3 py-2 bg-muted/40">
+                  <div>
+                    <div>{OPERATION_LABELS[b.operation] ?? b.operation}</div>
+                    <div className="text-xs text-muted-foreground">{b.count} call{b.count === 1 ? "" : "s"}</div>
+                  </div>
+                  <div className="tabular-nums font-medium">{b.credits.toFixed(3)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No AI or Cloud activity recorded yet this month.</p>
+        )}
+
+        {data?.recent && data.recent.length > 0 && (
+          <details className="text-sm">
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Recent activity ({data.recent.length})</summary>
+            <div className="mt-2 space-y-1">
+              {data.recent.map((r, i) => (
+                <div key={i} className="flex justify-between text-xs py-1 border-b last:border-b-0">
+                  <span className="text-muted-foreground">
+                    {new Date(r.created_at).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {" · "}
+                    {OPERATION_LABELS[r.operation] ?? r.operation}
+                  </span>
+                  <span className="tabular-nums">
+                    {r.credits.toFixed(4)}
+                    {r.input_tokens || r.output_tokens ? (
+                      <span className="text-muted-foreground ml-2">({r.input_tokens ?? 0}→{r.output_tokens ?? 0} tok)</span>
+                    ) : null}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+
+        <p className="text-xs text-muted-foreground">
+          Credit costs are calculated from actual token counts (Gemini 3 Flash) and per-call transcription rates.
+          These are estimates aligned with Lovable's AI Gateway pricing; final billing is settled at the workspace level.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 
 function HouseholdSection({ household, onChange }: { household: { id: string; name: string; baseline_budget: number | string; margin_pct: number | string }; onChange: () => void }) {

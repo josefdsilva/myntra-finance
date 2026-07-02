@@ -185,6 +185,50 @@ export type Database = {
           },
         ]
       }
+      credit_usage: {
+        Row: {
+          created_at: string
+          credits: number
+          household_id: string
+          id: string
+          input_tokens: number | null
+          meta: Json
+          operation: string
+          output_tokens: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          household_id: string
+          id?: string
+          input_tokens?: number | null
+          meta?: Json
+          operation: string
+          output_tokens?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          household_id?: string
+          id?: string
+          input_tokens?: number | null
+          meta?: Json
+          operation?: string
+          output_tokens?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_usage_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           added_by_user_id: string | null
@@ -354,6 +398,7 @@ export type Database = {
           baseline_budget: number
           created_at: string
           created_by: string
+          credit_cap: number
           currency: string
           id: string
           margin_pct: number
@@ -364,6 +409,7 @@ export type Database = {
           baseline_budget?: number
           created_at?: string
           created_by: string
+          credit_cap?: number
           currency?: string
           id?: string
           margin_pct?: number
@@ -374,6 +420,7 @@ export type Database = {
           baseline_budget?: number
           created_at?: string
           created_by?: string
+          credit_cap?: number
           currency?: string
           id?: string
           margin_pct?: number

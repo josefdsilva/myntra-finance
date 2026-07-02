@@ -7,6 +7,7 @@ import {
   createLovableAiGatewayProvider,
   requireLovableApiKey,
 } from "./ai-gateway.server";
+import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
@@ -226,6 +227,16 @@ export const generateOverview = createServerFn({ method: "POST" })
       prompt: `Household snapshot (JSON):\n${JSON.stringify(ctx)}\n\n${OVERVIEW_PROMPT}`,
     });
 
+    const est = estimateTextCredits(MODEL, result.usage as never);
+    await logHouseholdCredits({
+      householdId: data.householdId,
+      userId,
+      operation: "ai_coach_overview",
+      credits: est.credits,
+      inputTokens: est.input,
+      outputTokens: est.output,
+    });
+
     // Upsert via admin (RLS blocks writes from client role)
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const generated_at = new Date().toISOString();
@@ -284,6 +295,16 @@ Answer the user's questions grounded in this snapshot. Be brief (usually 2–5 s
         ...data.history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: data.message },
       ],
+    });
+
+    const est = estimateTextCredits(MODEL, result.usage as never);
+    await logHouseholdCredits({
+      householdId: data.householdId,
+      userId,
+      operation: "ai_coach_chat",
+      credits: est.credits,
+      inputTokens: est.input,
+      outputTokens: est.output,
     });
 
     return { reply: result.text };

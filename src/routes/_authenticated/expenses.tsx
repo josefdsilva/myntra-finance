@@ -232,7 +232,7 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
       const buf = await f.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
       const res = await parse({
-        data: { file_base64: base64, mime_type: f.type || "application/pdf", file_name: f.name },
+        data: { file_base64: base64, mime_type: f.type || "application/pdf", file_name: f.name, householdId },
       });
       const parsed = res.items as ParsedItem[];
       const { flags } = await detectDuplicates(parsed);
