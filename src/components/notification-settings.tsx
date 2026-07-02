@@ -146,6 +146,25 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     }
   }
 
+  async function removeAllDevices() {
+    if (!confirm("Remove ALL registered devices for your account? You'll need to re-enable push on each one.")) return;
+    setBusy(true);
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration("/sw.js");
+      const sub = await reg?.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+      const r = await delAllFn();
+      setSubscribed(false);
+      setCurrentEndpoint(null);
+      refetchDevices();
+      toast.success(`Removed ${r.removed} device(s). Click Enable to register this one again.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeDevice(id: string) {
     try {
       await delDevFn({ data: { id } });
