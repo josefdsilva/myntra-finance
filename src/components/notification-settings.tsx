@@ -108,6 +108,8 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         await sub.unsubscribe();
       }
       setSubscribed(false);
+      setCurrentEndpoint(null);
+      refetchDevices();
       toast.success("Notifications disabled on this device.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to disable");
