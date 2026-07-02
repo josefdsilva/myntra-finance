@@ -81,6 +81,7 @@ function WikiPage() {
     { id: "settings", label: "Settings" },
     { id: "notifications", label: "Notifications" },
     { id: "privacy", label: "Hidden mode & dark mode" },
+    { id: "credits", label: "Credits & tokens" },
     { id: "faq", label: "FAQ" },
   ];
 
