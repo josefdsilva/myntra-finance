@@ -37,6 +37,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   const testFn = useServerFn(sendTestPush);
   const listFn = useServerFn(listMyDevices);
   const delDevFn = useServerFn(deleteDevice);
+  const delAllFn = useServerFn(deleteAllMyDevices);
 
   const [supported, setSupported] = useState<boolean | null>(null);
   const [subscribed, setSubscribed] = useState<boolean>(false);
