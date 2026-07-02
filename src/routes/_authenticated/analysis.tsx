@@ -15,6 +15,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { format as fmt } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
+import { CoachPanel } from "@/components/coach-panel";
+
 
 
 export const Route = createFileRoute("/_authenticated/analysis")({
@@ -297,6 +299,10 @@ function AnalysisPage() {
           </Select>
         </div>
       </header>
+
+      {householdId && <CoachPanel householdId={householdId} />}
+
+
 
       {fixedTotal > 0 && (
         <Label className="flex items-center gap-2 cursor-pointer text-sm w-fit">
