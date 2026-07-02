@@ -256,3 +256,64 @@ No prose, no markdown fences.`,
 
     return StatementList.parse(extractJson(result.text));
   });
+
+/** Parse a photo of a receipt / bill into one or more expense rows. */
+export const parseReceiptPhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        image_base64: z.string().min(10),
+        mime_type: z.string().min(3),
+        householdId: z.string().uuid().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const apiKey = requireLovableApiKey();
+    const gateway = createLovableAiGatewayProvider(apiKey);
+    const now = new Date().toISOString();
+
+    const result = await generateText({
+      model: gateway(PARSE_MODEL),
+      system: `You extract expense line items from a photo of a receipt or bill.
+Current time: ${now}. Currency EUR. Always positive amounts.
+Prefer ONE row with the receipt total when the receipt is from a single merchant;
+only split into multiple rows when the receipt clearly covers different categories
+(e.g. groceries + fuel on the same ticket).
+Pick the best matching category from: ${CATEGORY_LIST}.
+Use the receipt/bill date in ISO 8601 when visible, otherwise use now.
+Merchant = shop / issuer name on the receipt.
+
+Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+No prose, no markdown fences.`,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Extract the expense(s) from this receipt or bill photo." },
+            {
+              type: "image",
+              image: `data:${data.mime_type};base64,${data.image_base64}`,
+            },
+          ],
+        },
+      ],
+    });
+
+    const parsed = ParsedList.parse(extractJson(result.text));
+    if (data.householdId) {
+      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      await logHouseholdCredits({
+        householdId: data.householdId,
+        userId: context.userId,
+        operation: "ai_parse_photo",
+        credits: est.credits,
+        inputTokens: est.input,
+        outputTokens: est.output,
+        meta: { mime_type: data.mime_type },
+      });
+    }
+    return parsed;
+  });
+
