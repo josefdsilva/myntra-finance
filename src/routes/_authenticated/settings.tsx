@@ -56,7 +56,7 @@ function SettingsPage() {
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
-          <CreditUsageSection household={hh!.household!} onChange={() => qc.invalidateQueries({ queryKey: ["household"] })} />
+          <CreditUsageSection household={hh!.household!} />
         </>
       )}
     </div>
@@ -71,39 +71,22 @@ const OPERATION_LABELS: Record<string, string> = {
   ai_parse_statement: "AI bank statement import",
 };
 
-function CreditUsageSection({ household, onChange }: { household: { id: string; credit_cap?: number | string | null }; onChange: () => void }) {
+const HARDWIRED_CAP = 10;
+
+function CreditUsageSection({ household }: { household: { id: string } }) {
   const fetchUsage = useServerFn(getHouseholdCreditUsage);
-  const update = useServerFn(updateHousehold);
-  const qc = useQueryClient();
-  const { data, refetch } = useQuery({
+  const { data } = useQuery({
     queryKey: ["credit-usage", household.id],
     queryFn: () => fetchUsage({ data: { householdId: household.id } }),
     refetchInterval: 60_000,
   });
-  const [cap, setCap] = useState<string>(String(Number(household.credit_cap ?? 10)));
-
-  async function saveCap() {
-    const n = parseFloat(cap);
-    if (!Number.isFinite(n) || n < 0) {
-      toast.error("Enter a valid credit cap");
-      return;
-    }
-    try {
-      await update({ data: { household_id: household.id, credit_cap: n } });
-      toast.success("Credit cap updated");
-      onChange();
-      qc.invalidateQueries({ queryKey: ["credit-usage", household.id] });
-      refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
-    }
-  }
 
   const total = data?.total ?? 0;
-  const capValue = data?.cap ?? Number(household.credit_cap ?? 10);
-  const pct = capValue > 0 ? Math.min(100, (total / capValue) * 100) : 0;
+  const capValue = HARDWIRED_CAP;
+  const pct = Math.min(100, (total / capValue) * 100);
   const remaining = Math.max(0, capValue - total);
   const overCap = total > capValue;
+
 
   const periodLabel = data?.periodStart
     ? new Date(data.periodStart).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
@@ -136,24 +119,10 @@ function CreditUsageSection({ household, onChange }: { household: { id: string; 
           <Progress value={pct} className={overCap ? "[&>*]:bg-destructive" : ""} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end rounded-lg border bg-muted/30 p-4">
-          <div>
-            <Label htmlFor="cap">Monthly cap (credits)</Label>
-            <Input
-              id="cap"
-              type="number"
-              min={0}
-              step="0.5"
-              value={cap}
-              onChange={(e) => setCap(e.target.value)}
-              className="max-w-xs mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Default is 10 credits/month — plenty for typical household use. Increase if you use the AI coach heavily or import statements often.
-            </p>
-          </div>
-          <Button onClick={saveCap} variant="outline">Save cap</Button>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Monthly cap is fixed at {HARDWIRED_CAP} credits per household.
+        </p>
+
 
         {data?.breakdown && data.breakdown.length > 0 ? (
           <div>
