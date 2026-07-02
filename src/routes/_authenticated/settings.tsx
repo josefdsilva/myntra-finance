@@ -71,39 +71,22 @@ const OPERATION_LABELS: Record<string, string> = {
   ai_parse_statement: "AI bank statement import",
 };
 
-function CreditUsageSection({ household, onChange }: { household: { id: string; credit_cap?: number | string | null }; onChange: () => void }) {
+const HARDWIRED_CAP = 10;
+
+function CreditUsageSection({ household }: { household: { id: string } }) {
   const fetchUsage = useServerFn(getHouseholdCreditUsage);
-  const update = useServerFn(updateHousehold);
-  const qc = useQueryClient();
-  const { data, refetch } = useQuery({
+  const { data } = useQuery({
     queryKey: ["credit-usage", household.id],
     queryFn: () => fetchUsage({ data: { householdId: household.id } }),
     refetchInterval: 60_000,
   });
-  const [cap, setCap] = useState<string>(String(Number(household.credit_cap ?? 10)));
-
-  async function saveCap() {
-    const n = parseFloat(cap);
-    if (!Number.isFinite(n) || n < 0) {
-      toast.error("Enter a valid credit cap");
-      return;
-    }
-    try {
-      await update({ data: { household_id: household.id, credit_cap: n } });
-      toast.success("Credit cap updated");
-      onChange();
-      qc.invalidateQueries({ queryKey: ["credit-usage", household.id] });
-      refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
-    }
-  }
 
   const total = data?.total ?? 0;
-  const capValue = data?.cap ?? Number(household.credit_cap ?? 10);
-  const pct = capValue > 0 ? Math.min(100, (total / capValue) * 100) : 0;
+  const capValue = HARDWIRED_CAP;
+  const pct = Math.min(100, (total / capValue) * 100);
   const remaining = Math.max(0, capValue - total);
   const overCap = total > capValue;
+
 
   const periodLabel = data?.periodStart
     ? new Date(data.periodStart).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
