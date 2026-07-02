@@ -6,6 +6,13 @@ import {
   createLovableAiGatewayProvider,
   requireLovableApiKey,
 } from "./ai-gateway.server";
+import {
+  estimateTextCredits,
+  estimateTranscribeCredits,
+  logHouseholdCredits,
+} from "./credits.server";
+
+const PARSE_MODEL = "google/gemini-3-flash-preview";
 
 const CATEGORIES = [
   "groceries",
@@ -54,14 +61,19 @@ const CATEGORY_LIST = CATEGORIES.join(", ");
 export const parseMemo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ text: z.string().min(1).max(2000) }).parse(input),
+    z
+      .object({
+        text: z.string().min(1).max(2000),
+        householdId: z.string().uuid().optional(),
+      })
+      .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
     const now = new Date().toISOString();
 
     const result = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: gateway(PARSE_MODEL),
       system: `You extract household expenses from short text memos in any language.
 Current time: ${now}.
 Currency is EUR. Amounts may be written as "12", "12€", "12 EUR", "12.50", "12,50".
@@ -76,6 +88,17 @@ No prose, no markdown fences.`,
       prompt: data.text,
     });
     const parsed = ParsedList.parse(extractJson(result.text));
+    if (data.householdId) {
+      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      await logHouseholdCredits({
+        householdId: data.householdId,
+        userId: context.userId,
+        operation: "ai_parse_memo",
+        credits: est.credits,
+        inputTokens: est.input,
+        outputTokens: est.output,
+      });
+    }
     return parsed;
   });
 
@@ -87,10 +110,11 @@ export const parseVoiceMemo = createServerFn({ method: "POST" })
       .object({
         audio_base64: z.string().min(10),
         mime_type: z.string().min(3),
+        householdId: z.string().uuid().optional(),
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const apiKey = requireLovableApiKey();
 
     // 1. Transcribe via OpenAI-compatible transcription endpoint
