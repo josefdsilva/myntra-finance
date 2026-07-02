@@ -20,7 +20,7 @@ import { CoachPanel } from "@/components/coach-panel";
 
 
 export const Route = createFileRoute("/_authenticated/analysis")({
-  head: () => ({ meta: [{ title: "Analysis · Household Budget" }] }),
+  head: () => ({ meta: [{ title: "Analysis · Myntra" }] }),
   component: AnalysisPage,
 });
 

@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard · Household Budget" }] }),
+  head: () => ({ meta: [{ title: "Dashboard · Myntra" }] }),
   component: Dashboard,
 });
 
