@@ -113,6 +113,17 @@ export const deleteDevice = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteAllMyDevices = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { error, count } = await context.supabase
+      .from("push_subscriptions" as never)
+      .delete({ count: "exact" })
+      .eq("user_id", context.userId);
+    if (error) throw error;
+    return { removed: count ?? 0 };
+  });
+
 export const sendTestPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
