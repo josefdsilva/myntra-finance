@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Mic, MicOff, Sparkles, Plus, Loader2 } from "lucide-react";
-import { parseMemo, parseVoiceMemo } from "@/lib/ai-parse.functions";
+import { Mic, MicOff, Sparkles, Plus, Loader2, Camera, X } from "lucide-react";
+import { parseMemo, parseVoiceMemo, parseReceiptPhoto } from "@/lib/ai-parse.functions";
 import { addExpense, addExpensesBulk } from "@/lib/budget.functions";
+
 import { money, fmtDateTime } from "@/lib/format";
 
 const CATEGORIES = [
