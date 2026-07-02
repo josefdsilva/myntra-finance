@@ -8,12 +8,14 @@ import {
   getNotificationPrefs,
   updateNotificationPrefs,
   sendTestPush,
+  listMyDevices,
+  deleteDevice,
 } from "@/lib/push.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Bell, BellOff, Loader2 } from "lucide-react";
+import { Bell, BellOff, Loader2, Trash2 } from "lucide-react";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -32,12 +34,19 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   const getPrefs = useServerFn(getNotificationPrefs);
   const setPrefs = useServerFn(updateNotificationPrefs);
   const testFn = useServerFn(sendTestPush);
+  const listFn = useServerFn(listMyDevices);
+  const delDevFn = useServerFn(deleteDevice);
 
   const [supported, setSupported] = useState<boolean | null>(null);
   const [subscribed, setSubscribed] = useState<boolean>(false);
+  const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const { data: prefs } = useQuery({ queryKey: ["notif-prefs"], queryFn: () => getPrefs() });
+  const { data: devices, refetch: refetchDevices } = useQuery({
+    queryKey: ["notif-devices"],
+    queryFn: () => listFn(),
+  });
 
   useEffect(() => {
     const ok = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
@@ -47,6 +56,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       if (!reg) return;
       const s = await reg.pushManager.getSubscription();
       setSubscribed(!!s);
+      setCurrentEndpoint(s?.endpoint ?? null);
     });
   }, []);
 
@@ -78,6 +88,8 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         },
       });
       setSubscribed(true);
+      setCurrentEndpoint(sub.endpoint);
+      refetchDevices();
       toast.success("This device will now receive push notifications.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to enable notifications");
@@ -96,6 +108,8 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         await sub.unsubscribe();
       }
       setSubscribed(false);
+      setCurrentEndpoint(null);
+      refetchDevices();
       toast.success("Notifications disabled on this device.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to disable");
@@ -113,12 +127,30 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     }
   }
 
-  async function test() {
+  async function test(endpoint?: string) {
     try {
-      const r = await testFn();
-      toast.success(`Test sent to ${r.sent} device(s)`);
+      const r = await testFn({ data: { endpoint: endpoint ?? null } });
+      const failed = r.results.filter((x) => !x.ok);
+      if (failed.length === 0) {
+        toast.success(`Test accepted by push service on ${r.sent}/${r.total} device(s). If you don't see it, check iOS Notification settings for the installed PWA.`);
+      } else {
+        const removed = failed.filter((f) => f.removed).length;
+        const detail = failed.map((f) => `${f.host} → ${f.status}${f.expired ? " (expired, removed)" : ""}`).join("; ");
+        toast.error(`${r.sent}/${r.total} delivered. Failures: ${detail}${removed ? " · stale removed" : ""}`);
+      }
+      refetchDevices();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No devices");
+    }
+  }
+
+  async function removeDevice(id: string) {
+    try {
+      await delDevFn({ data: { id } });
+      refetchDevices();
+      toast.success("Device removed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
 
@@ -147,8 +179,8 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
             <div className="flex gap-2">
               {subscribed ? (
                 <>
-                  <Button size="sm" variant="outline" onClick={test} disabled={busy}>
-                    Send test
+                  <Button size="sm" variant="outline" onClick={() => test(currentEndpoint ?? undefined)} disabled={busy}>
+                    Send test to this device
                   </Button>
                   <Button size="sm" variant="outline" onClick={disable} disabled={busy}>
                     {busy ? <Loader2 className="animate-spin" /> : <BellOff />} Disable
@@ -183,6 +215,49 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
             onChange={(v) => toggle("emergency_warn", v)}
           />
         </div>
+
+        {devices && devices.length > 0 && (
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Registered devices ({devices.length})</p>
+              <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
+                Test all
+              </Button>
+            </div>
+            <ul className="space-y-2">
+              {devices.map((d) => {
+                const host = (() => { try { return new URL(d.endpoint).host; } catch { return "unknown"; } })();
+                const isThis = d.endpoint === currentEndpoint;
+                return (
+                  <li key={d.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium truncate">
+                        {host} {isThis && <span className="text-primary">· this device</span>}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {d.user_agent ?? "unknown UA"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Added {new Date(d.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => test(d.endpoint)}>
+                        Test
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => removeDevice(d.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[11px] text-muted-foreground">
+              On iPhone, push only works from the app installed to the Home Screen (PWA). Regular Safari tabs cannot receive them.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

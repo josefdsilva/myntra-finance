@@ -90,27 +90,69 @@ export const updateNotificationPrefs = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const sendTestPush = createServerFn({ method: "POST" })
+export const listMyDevices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: subs } = await context.supabase
+    const { data } = await context.supabase
+      .from("push_subscriptions" as never)
+      .select("id, endpoint, user_agent, created_at")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    return (data as Array<{ id: string; endpoint: string; user_agent: string | null; created_at: string }> | null) ?? [];
+  });
+
+export const deleteDevice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    await context.supabase
+      .from("push_subscriptions" as never)
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    return { ok: true };
+  });
+
+export const sendTestPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ endpoint: z.string().optional().nullable() }).optional().parse(input ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    let q = context.supabase
       .from("push_subscriptions" as never)
       .select("*")
       .eq("user_id", context.userId);
-    const list = (subs as Array<{ id: string; endpoint: string; p256dh: string; auth: string }> | null) ?? [];
+    if (data?.endpoint) q = q.eq("endpoint", data.endpoint);
+    const { data: subs } = await q;
+    const list = (subs as Array<{ id: string; endpoint: string; p256dh: string; auth: string; user_agent: string | null }> | null) ?? [];
     if (!list.length) throw new Error("No subscribed devices for this account.");
     const { sendWebPush } = await import("./webpush.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let sent = 0;
+    const results: Array<{ id: string; host: string; ua: string | null; ok: boolean; status: number; expired: boolean; removed: boolean; error?: string }> = [];
     for (const s of list) {
+      const host = (() => { try { return new URL(s.endpoint).host; } catch { return "unknown"; } })();
       const r = await sendWebPush(s, {
         title: "Notifications enabled ✓",
         body: "You'll now receive selected alerts from Myntra.",
         url: "/dashboard",
         tag: "test",
       });
-      if (r.ok) sent++;
-      else if (r.expired) await supabaseAdmin.from("push_subscriptions" as never).delete().eq("id", s.id);
+      let removed = false;
+      if (!r.ok && r.expired) {
+        await supabaseAdmin.from("push_subscriptions" as never).delete().eq("id", s.id);
+        removed = true;
+      }
+      results.push({
+        id: s.id,
+        host,
+        ua: s.user_agent,
+        ok: r.ok,
+        status: r.ok ? 201 : r.status,
+        expired: r.ok ? false : r.expired,
+        removed,
+        error: r.ok ? undefined : r.error,
+      });
     }
-    return { sent };
+    return { sent: results.filter((r) => r.ok).length, total: results.length, results };
   });
