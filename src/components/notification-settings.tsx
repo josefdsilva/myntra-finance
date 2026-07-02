@@ -241,9 +241,14 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
           <div className="border-t pt-4 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Registered devices ({devices.length})</p>
-              <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
-                Test all
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
+                  Test all
+                </Button>
+                <Button size="sm" variant="destructive" onClick={removeAllDevices} disabled={busy}>
+                  Remove all
+                </Button>
+              </div>
             </div>
             <ul className="space-y-2">
               {devices.map((d) => {
