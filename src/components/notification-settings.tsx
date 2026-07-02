@@ -10,6 +10,7 @@ import {
   sendTestPush,
   listMyDevices,
   deleteDevice,
+  deleteAllMyDevices,
 } from "@/lib/push.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   const testFn = useServerFn(sendTestPush);
   const listFn = useServerFn(listMyDevices);
   const delDevFn = useServerFn(deleteDevice);
+  const delAllFn = useServerFn(deleteAllMyDevices);
 
   const [supported, setSupported] = useState<boolean | null>(null);
   const [subscribed, setSubscribed] = useState<boolean>(false);
@@ -144,6 +146,25 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     }
   }
 
+  async function removeAllDevices() {
+    if (!confirm("Remove ALL registered devices for your account? You'll need to re-enable push on each one.")) return;
+    setBusy(true);
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration("/sw.js");
+      const sub = await reg?.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+      const r = await delAllFn();
+      setSubscribed(false);
+      setCurrentEndpoint(null);
+      refetchDevices();
+      toast.success(`Removed ${r.removed} device(s). Click Enable to register this one again.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeDevice(id: string) {
     try {
       await delDevFn({ data: { id } });
@@ -220,9 +241,14 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
           <div className="border-t pt-4 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Registered devices ({devices.length})</p>
-              <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
-                Test all
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
+                  Test all
+                </Button>
+                <Button size="sm" variant="destructive" onClick={removeAllDevices} disabled={busy}>
+                  Remove all
+                </Button>
+              </div>
             </div>
             <ul className="space-y-2">
               {devices.map((d) => {
