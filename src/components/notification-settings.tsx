@@ -10,6 +10,7 @@ import {
   sendTestPush,
   listMyDevices,
   deleteDevice,
+  deleteAllMyDevices,
 } from "@/lib/push.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
