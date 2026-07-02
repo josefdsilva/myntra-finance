@@ -68,7 +68,9 @@ const OPERATION_LABELS: Record<string, string> = {
   ai_coach_chat: "AI coach — chat",
   ai_parse_memo: "AI expense capture — text",
   ai_parse_voice: "AI expense capture — voice",
+  ai_parse_photo: "AI expense capture — photo",
   ai_parse_statement: "AI bank statement import",
+
 };
 
 const HARDWIRED_CAP = 10;
