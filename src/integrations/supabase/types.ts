@@ -632,7 +632,12 @@ export type Database = {
         | "fixed_yearly"
         | "goal_by_date"
       entry_kind: "expense" | "income"
-      expense_source: "manual" | "ai_memo" | "ai_voice" | "statement"
+      expense_source:
+        | "manual"
+        | "ai_memo"
+        | "ai_voice"
+        | "statement"
+        | "ai_photo"
       import_status: "pending" | "parsed" | "approved" | "failed"
       member_role: "owner" | "member"
     }
@@ -769,7 +774,13 @@ export const Constants = {
         "goal_by_date",
       ],
       entry_kind: ["expense", "income"],
-      expense_source: ["manual", "ai_memo", "ai_voice", "statement"],
+      expense_source: [
+        "manual",
+        "ai_memo",
+        "ai_voice",
+        "statement",
+        "ai_photo",
+      ],
       import_status: ["pending", "parsed", "approved", "failed"],
       member_role: ["owner", "member"],
     },
