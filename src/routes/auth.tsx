@@ -269,3 +269,12 @@ function MiniTag({ label, value, tone }: { label: string; value: string; tone: "
     </div>
   );
 }
+
+function MobileFeature({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return (
+    <div className="rounded-xl border bg-surface-muted p-3">
+      <div className="flex items-center gap-1.5 text-primary">{icon}<span className="text-xs font-semibold text-foreground">{title}</span></div>
+      <p className="mt-0.5 text-[11px] text-muted-foreground leading-snug">{body}</p>
+    </div>
+  );
+}
