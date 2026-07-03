@@ -155,12 +155,44 @@ function AuthPage() {
       {/* Right: sign in */}
       <div className="flex items-center justify-center px-4 py-12 sm:px-8">
         <div className="w-full max-w-md">
-          <div className="flex flex-col items-center mb-8 lg:hidden">
+          <div className="flex flex-col items-center mb-6 lg:hidden">
             <img src={appIcon.url} alt="Myntra" className="size-14 rounded-2xl mb-3 shadow-lg" />
-            <h1 className="text-2xl font-display">Myntra</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="font-display text-3xl tracking-tight">Myntra</h1>
+            <p className="text-sm text-muted-foreground mt-1.5 text-center">
               Plan together. Spend with confidence.
             </p>
+          </div>
+
+          {/* Mobile promo */}
+          <div className="lg:hidden mb-6 space-y-4">
+            <div className="rounded-2xl bg-gradient-to-br from-primary via-primary to-[oklch(0.28_0.06_195)] text-primary-foreground p-5 shadow-lg">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-primary-foreground/60">
+                <span>Safe to spend today</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-accent animate-pulse" />
+                  Live
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-2">
+                <span className="font-display text-4xl">€42.80</span>
+                <span className="text-xs text-primary-foreground/60">/ day · 11 days left</span>
+              </div>
+              <div className="mt-3 h-1.5 rounded-full bg-primary-foreground/10 overflow-hidden">
+                <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-accent to-[oklch(0.85_0.14_150)]" />
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                <MiniTag label="Spent" value="€648" tone="orange" />
+                <MiniTag label="Received" value="€312" tone="blue" />
+                <MiniTag label="Balance" value="€336" tone="muted" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <MobileFeature icon={<Wallet className="size-4" />} title="Safe-to-spend" body="Daily budget, auto-calculated." />
+              <MobileFeature icon={<PiggyBank className="size-4" />} title="Smart buckets" body="ETFs, savings, goals." />
+              <MobileFeature icon={<Sparkles className="size-4" />} title="AI capture" body="Voice, text, receipts." />
+              <MobileFeature icon={<LineChart className="size-4" />} title="Analytics" body="Cycle burndown & coach." />
+            </div>
           </div>
 
           <div className="mb-6 hidden lg:block">
@@ -234,6 +266,15 @@ function MiniTag({ label, value, tone }: { label: string; value: string; tone: "
     <div className={`rounded-lg px-2.5 py-1.5 ${toneClass}`}>
       <div className="text-[10px] uppercase tracking-wider opacity-70">{label}</div>
       <div className="font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function MobileFeature({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return (
+    <div className="rounded-xl border bg-surface-muted p-3">
+      <div className="flex items-center gap-1.5 text-primary">{icon}<span className="text-xs font-semibold text-foreground">{title}</span></div>
+      <p className="mt-0.5 text-[11px] text-muted-foreground leading-snug">{body}</p>
     </div>
   );
 }
