@@ -146,7 +146,7 @@ function ExpensesPage() {
             <div>
               <CardTitle>{cycleLabel}</CardTitle>
               <CardDescription>
-                {rows?.length ?? 0} entries · {money(spent)} spent{received > 0 ? ` · ${money(received)} received · net ${money(net)}` : ""}
+                {rows?.length ?? 0} entries · {money(spent)} spent{received > 0 ? ` · ${money(received)} received` : ""}{fixedTotal > 0 ? ` · fixed-costs: ${money(fixedTotal)} spent` : ""}{received > 0 ? ` · net ${money(net)}` : ""}
               </CardDescription>
             </div>
             <div className="flex gap-2">
