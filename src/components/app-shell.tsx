@@ -25,6 +25,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const fetchHousehold = useServerFn(getOrCreateHousehold);
+  const { data: hh } = useQuery({
+    queryKey: ["household"],
+    queryFn: () => fetchHousehold(),
+  });
+  const householdName = hh?.household?.name?.trim() || "Household";
 
   useEffect(() => setOpen(false), [pathname]);
 
