@@ -139,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="hidden md:flex items-center gap-2 p-5 border-b">
           <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
           <div>
-            <div className="font-display text-lg leading-tight">Household</div>
+            <div className="font-display text-lg leading-tight">{householdName}</div>
             <div className="text-xs text-muted-foreground">Budget & planning</div>
           </div>
         </div>
