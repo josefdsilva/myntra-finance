@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, X, Eye, EyeOff, BarChart3, Sun, Moon, BookOpen } from "lucide-react";
 import appIcon from "@/assets/app-icon.png.asset.json";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getOrCreateHousehold } from "@/lib/household.functions";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -23,6 +25,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const fetchHousehold = useServerFn(getOrCreateHousehold);
+  const { data: hh } = useQuery({
+    queryKey: ["household"],
+    queryFn: () => fetchHousehold(),
+  });
+  const householdName = hh?.household?.name?.trim() || "Household";
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -131,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="hidden md:flex items-center gap-2 p-5 border-b">
           <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
           <div>
-            <div className="font-display text-lg leading-tight">Household</div>
+            <div className="font-display text-lg leading-tight">{householdName}</div>
             <div className="text-xs text-muted-foreground">Budget & planning</div>
           </div>
         </div>
