@@ -99,6 +99,19 @@ function ExpensesPage() {
     },
   });
 
+  const { data: fixedTotal = 0 } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["fixed-total", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fixed_expenses")
+        .select("monthly_amount")
+        .eq("household_id", householdId!);
+      if (error) throw error;
+      return (data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    },
+  });
+
   async function remove(id: string) {
     await del({ data: { id } });
     toast.success("Removed");
@@ -108,7 +121,7 @@ function ExpensesPage() {
 
   const spent = (rows ?? []).filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
   const received = (rows ?? []).filter((r) => r.kind === "income").reduce((s, r) => s + Number(r.amount), 0);
-  const net = spent - received;
+  const net = received - spent - fixedTotal;
   const cycleLabel = cycle
     ? `Cycle · ${fmtDate(cycle.start.toISOString())} → ${fmtDate(cycle.end.toISOString())}${cycle.predicted ? " (predicted)" : ""}`
     : "Cycle";
