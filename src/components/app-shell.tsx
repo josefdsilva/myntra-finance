@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, X, Eye, EyeOff, BarChart3, Sun, Moon, BookOpen } from "lucide-react";
 import appIcon from "@/assets/app-icon.png.asset.json";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getOrCreateHousehold } from "@/lib/household.functions";
 import { cn } from "@/lib/utils";
 
 const NAV = [
