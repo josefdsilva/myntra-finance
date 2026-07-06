@@ -258,7 +258,7 @@ function AllocationsPage() {
                         />
                       </div>
                     </div>
-                    <Progress value={pct} />
+                    
                     {isGoal && (
                       <div className="mt-2 rounded-md bg-muted/40 px-3 py-2 space-y-1">
                         <div className="flex justify-between text-xs">
