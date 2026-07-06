@@ -217,7 +217,6 @@ function AllocationsPage() {
               )}
               {data.buckets.map((b) => {
                 const amount = monthly(b);
-                const pct = surplus > 0 ? Math.min(100, (amount / surplus) * 100) : 0;
                 const confirmed = confirmations?.find((c) => c.bucket_id === b.id);
                 const isGoal = b.target_type === "goal_by_date";
                 const saved = goalTotals?.[b.id] ?? 0;
