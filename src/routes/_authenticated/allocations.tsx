@@ -191,6 +191,30 @@ function AllocationsPage() {
             <p className="text-sm text-muted-foreground py-6 text-center">No buckets configured yet.</p>
           ) : (
             <div className="space-y-4">
+              {surplus > 0 && (
+                <div className="space-y-2">
+                  <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+                    {data.buckets.map((b) => {
+                      const amt = monthly(b);
+                      const w = Math.max(0, Math.min(100, (amt / surplus) * 100));
+                      if (w <= 0) return null;
+                      return (
+                        <div
+                          key={b.id}
+                          style={{ width: `${w}%`, background: b.color ?? "var(--primary)" }}
+                          title={`${b.name} · ${money(amt)}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Allocated {money(Math.min(totalAllocated, surplus))} of {money(surplus)} surplus</span>
+                    <span className={unallocated < 0 ? "text-destructive" : ""}>
+                      {unallocated < 0 ? `Over by ${money(-unallocated)}` : `${money(unallocated)} unallocated`}
+                    </span>
+                  </div>
+                </div>
+              )}
               {data.buckets.map((b) => {
                 const amount = monthly(b);
                 const pct = surplus > 0 ? Math.min(100, (amount / surplus) * 100) : 0;
