@@ -354,7 +354,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
     if (!f.type.startsWith("image/")) return toast.error("Please pick an image");
     if (f.size > 8 * 1024 * 1024) return toast.error("Image too large (max 8MB)");
     const buf = await f.arrayBuffer();
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const b64 = bufferToBase64(buf);
     setBase64(b64); setMime(f.type);
     setPreview(URL.createObjectURL(f));
     setItems(null);
