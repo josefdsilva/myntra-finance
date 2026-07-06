@@ -13,6 +13,18 @@ import { addExpense, addExpensesBulk } from "@/lib/budget.functions";
 
 import { money, fmtDateTime } from "@/lib/format";
 
+// Encode a large ArrayBuffer to base64 without blowing the call stack.
+// Spreading a multi-MB Uint8Array into String.fromCharCode hangs the tab.
+function bufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  const CHUNK = 0x8000; // 32KB
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK) as unknown as number[]);
+  }
+  return btoa(bin);
+}
+
 const CATEGORIES = [
   "groceries", "dining", "transport", "fuel", "utilities", "housing",
   "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "income", "other",
