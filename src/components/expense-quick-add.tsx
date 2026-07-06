@@ -13,6 +13,18 @@ import { addExpense, addExpensesBulk } from "@/lib/budget.functions";
 
 import { money, fmtDateTime } from "@/lib/format";
 
+// Encode a large ArrayBuffer to base64 without blowing the call stack.
+// Spreading a multi-MB Uint8Array into String.fromCharCode hangs the tab.
+function bufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  const CHUNK = 0x8000; // 32KB
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK) as unknown as number[]);
+  }
+  return btoa(bin);
+}
+
 const CATEGORIES = [
   "groceries", "dining", "transport", "fuel", "utilities", "housing",
   "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "income", "other",
@@ -210,7 +222,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunksRef.current, { type: mime });
         const buf = await blob.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const base64 = bufferToBase64(buf);
         setLoading(true);
         try {
           const res = await parseVoice({ data: { audio_base64: base64, mime_type: mime, householdId } });
@@ -342,7 +354,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
     if (!f.type.startsWith("image/")) return toast.error("Please pick an image");
     if (f.size > 8 * 1024 * 1024) return toast.error("Image too large (max 8MB)");
     const buf = await f.arrayBuffer();
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const b64 = bufferToBase64(buf);
     setBase64(b64); setMime(f.type);
     setPreview(URL.createObjectURL(f));
     setItems(null);
