@@ -222,7 +222,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunksRef.current, { type: mime });
         const buf = await blob.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const base64 = bufferToBase64(buf);
         setLoading(true);
         try {
           const res = await parseVoice({ data: { audio_base64: base64, mime_type: mime, householdId } });
