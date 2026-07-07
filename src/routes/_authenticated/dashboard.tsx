@@ -194,18 +194,6 @@ function Dashboard() {
         </Card>
       ) : null}
 
-      {householdId && (
-        <DashboardTips
-          householdId={householdId}
-          baseline={baseline}
-          income={income}
-          surplus={surplus}
-          variablePool={variablePool}
-          netSpent={netSpent}
-          daysLeft={daysLeft}
-          avgDaily7={avgDaily7}
-        />
-      )}
 
       {/* Hero: safe to spend today */}
       <Card className="overflow-hidden">
@@ -324,8 +312,24 @@ function Dashboard() {
 
 
 
+
+
+      {householdId && (
+        <DashboardTips
+          householdId={householdId}
+          baseline={baseline}
+          income={income}
+          surplus={surplus}
+          variablePool={variablePool}
+          netSpent={netSpent}
+          daysLeft={daysLeft}
+          avgDaily7={avgDaily7}
+        />
+      )}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
+
           <div>
             <CardTitle>Quick add</CardTitle>
             <CardDescription>Type or say what you spent — we'll parse it.</CardDescription>
