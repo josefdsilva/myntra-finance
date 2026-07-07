@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -256,7 +257,7 @@ export function DashboardTips({
 }
 
 function TipRow({ tip }: { tip: Tip }) {
-  const styles: Record<Severity, { border: string; bg: string; icon: JSX.Element; iconWrap: string }> = {
+  const styles: Record<Severity, { border: string; bg: string; icon: React.ReactNode; iconWrap: string }> = {
     critical: {
       border: "border-destructive/40",
       bg: "bg-destructive/5",
