@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { markSalaryReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { DashboardTips } from "@/components/dashboard-tips";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Myntra" }] }),
@@ -181,7 +182,7 @@ function Dashboard() {
       </header>
 
 
-      {setupIncomplete && (
+      {setupIncomplete ? (
         <Card className="border-warning/40 bg-warning/5">
           <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-6">
             <div>
@@ -191,6 +192,19 @@ function Dashboard() {
             <Button asChild><Link to="/settings">Go to settings</Link></Button>
           </CardContent>
         </Card>
+      ) : null}
+
+      {householdId && (
+        <DashboardTips
+          householdId={householdId}
+          baseline={baseline}
+          income={income}
+          surplus={surplus}
+          variablePool={variablePool}
+          netSpent={netSpent}
+          daysLeft={daysLeft}
+          avgDaily7={avgDaily7}
+        />
       )}
 
       {/* Hero: safe to spend today */}
