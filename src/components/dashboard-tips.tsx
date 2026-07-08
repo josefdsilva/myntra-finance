@@ -77,7 +77,7 @@ export function DashboardTips({
     queryFn: async () => {
       const [{ data: buckets }, { data: incomes }, { data: fixed }, { data: variables }, { data: confirmations }, { count: expenseCount }] = await Promise.all([
         supabase.from("buckets").select("id, name, target_type, target_value, target_deadline").eq("household_id", householdId),
-        supabase.from("incomes").select("id, source, monthly_amount").eq("household_id", householdId),
+        supabase.from("incomes").select("id, label, monthly_amount").eq("household_id", householdId),
         supabase.from("fixed_expenses").select("id, monthly_amount").eq("household_id", householdId),
         supabase.from("variable_estimates").select("id, monthly_amount").eq("household_id", householdId),
         supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId).eq("period", period),
@@ -137,7 +137,7 @@ export function DashboardTips({
       id: "single-income-source",
       severity: "warning",
       title: "All your income comes from a single source",
-      detail: `"${only.source ?? "Your only income stream"}" covers 100% of household income (${money(income)}/mo). A job loss or reduction would eliminate all cash flow — building a larger emergency fund and diversifying income reduces this risk.`,
+      detail: `"${only.label ?? "Your only income stream"}" covers 100% of household income (${money(income)}/mo). A job loss or reduction would eliminate all cash flow — building a larger emergency fund and diversifying income reduces this risk.`,
       chatPrompt: "My household depends on a single income source. What's a reasonable emergency fund target for that situation, and what are realistic ways for a family of four in Portugal to diversify income?",
     });
   } else if (data.incomes.length > 1 && income > 0) {
@@ -148,7 +148,7 @@ export function DashboardTips({
         id: "income-concentration",
         severity: "info",
         title: "Income is concentrated in one source",
-        detail: `"${sorted[0].source ?? "Your largest income"}" accounts for ${Math.round((top / income) * 100)}% of household income. Losing it would leave only ${money(income - top)}/mo.`,
+        detail: `"${sorted[0].label ?? "Your largest income"}" accounts for ${Math.round((top / income) * 100)}% of household income. Losing it would leave only ${money(income - top)}/mo.`,
         chatPrompt: "Most of my household income comes from a single source. How exposed am I, and what should I do to reduce that risk?",
       });
     }
