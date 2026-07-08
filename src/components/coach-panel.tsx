@@ -55,6 +55,16 @@ export function CoachPanel({ householdId, initialPrompt }: { householdId: string
     chatMut.mutate({ message: msg, history: history.slice(-10) });
   }
 
+  useEffect(() => {
+    if (!initialPrompt) return;
+    if (autoSentRef.current === initialPrompt) return;
+    autoSentRef.current = initialPrompt;
+    setChatOpen(true);
+    setHistory((h) => [...h, { role: "user", content: initialPrompt }]);
+    chatMut.mutate({ message: initialPrompt, history: [] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt]);
+
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
