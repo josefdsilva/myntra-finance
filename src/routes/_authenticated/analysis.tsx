@@ -21,6 +21,9 @@ import { CoachPanel } from "@/components/coach-panel";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Myntra" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    ask: typeof search.ask === "string" ? search.ask : undefined,
+  }),
   component: AnalysisPage,
 });
 
