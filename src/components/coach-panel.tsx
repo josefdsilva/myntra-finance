@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
@@ -11,13 +11,14 @@ import { toast } from "sonner";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
-export function CoachPanel({ householdId }: { householdId: string }) {
+export function CoachPanel({ householdId, initialPrompt }: { householdId: string; initialPrompt?: string }) {
   const qc = useQueryClient();
   const genFn = useServerFn(generateOverview);
   const chatFn = useServerFn(chatWithCoach);
   const [chatOpen, setChatOpen] = useState(false);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMsg[]>([]);
+  const autoSentRef = useRef<string | null>(null);
 
   const overviewQ = useQuery({
     queryKey: ["coach-overview", householdId],
@@ -53,6 +54,16 @@ export function CoachPanel({ householdId }: { householdId: string }) {
     setInput("");
     chatMut.mutate({ message: msg, history: history.slice(-10) });
   }
+
+  useEffect(() => {
+    if (!initialPrompt) return;
+    if (autoSentRef.current === initialPrompt) return;
+    autoSentRef.current = initialPrompt;
+    setChatOpen(true);
+    setHistory((h) => [...h, { role: "user", content: initialPrompt }]);
+    chatMut.mutate({ message: initialPrompt, history: [] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt]);
 
   return (
     <Card className="border-primary/20">
