@@ -11,13 +11,14 @@ import { toast } from "sonner";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
-export function CoachPanel({ householdId }: { householdId: string }) {
+export function CoachPanel({ householdId, initialPrompt }: { householdId: string; initialPrompt?: string }) {
   const qc = useQueryClient();
   const genFn = useServerFn(generateOverview);
   const chatFn = useServerFn(chatWithCoach);
   const [chatOpen, setChatOpen] = useState(false);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMsg[]>([]);
+  const autoSentRef = useRef<string | null>(null);
 
   const overviewQ = useQuery({
     queryKey: ["coach-overview", householdId],
