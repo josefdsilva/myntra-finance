@@ -173,6 +173,7 @@ function Dashboard() {
     : monthName;
 
   const setupIncomplete = baseline === 0;
+  const isLoading = !hh || dashboardLoading || !dashboard;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
