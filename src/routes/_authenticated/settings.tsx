@@ -37,7 +37,11 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsPage() {
   const qc = useQueryClient();
   const fetchHh = useServerFn(getOrCreateHousehold);
-  const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
+  const { data: hh, isLoading: hhLoading, error: hhError, refetch: refetchHh } = useQuery({
+    queryKey: ["household"],
+    queryFn: () => fetchHh(),
+    retry: 1,
+  });
   const householdId = hh?.household?.id;
 
   return (
@@ -46,6 +50,27 @@ function SettingsPage() {
         <h1 className="text-3xl font-display">Settings</h1>
         <p className="text-sm text-muted-foreground">Configure your household budget.</p>
       </header>
+
+      {hhLoading && !hh && (
+        <div className="space-y-3">
+          <div className="h-32 rounded-lg bg-muted animate-pulse" />
+          <div className="h-32 rounded-lg bg-muted animate-pulse" />
+        </div>
+      )}
+
+      {hhError && !hh && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
+          <p className="font-medium text-destructive">Couldn't load your household.</p>
+          <p className="text-muted-foreground mt-1">{(hhError as Error).message}</p>
+          <button
+            type="button"
+            onClick={() => refetchHh()}
+            className="mt-3 inline-flex items-center rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {householdId && (
         <>

@@ -30,7 +30,7 @@ function Dashboard() {
 
   const householdId = hh?.household?.id;
 
-  const { data: dashboard, refetch } = useQuery({
+  const { data: dashboard, refetch, isLoading: dashboardLoading } = useQuery({
     enabled: !!householdId,
     queryKey: ["dashboard", householdId],
     queryFn: async () => {
@@ -173,6 +173,7 @@ function Dashboard() {
     : monthName;
 
   const setupIncomplete = baseline === 0;
+  const isLoading = !hh || dashboardLoading || !dashboard;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
@@ -201,9 +202,9 @@ function Dashboard() {
           <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Safe to spend per day</p>
           <div className="flex items-baseline gap-3 flex-wrap">
             <p className={`text-5xl md:text-6xl font-display ${overspent ? "text-destructive" : "text-primary"}`}>
-              {money(safeToday)}
+              {isLoading ? <span className="inline-block h-12 w-40 rounded-md bg-muted animate-pulse align-middle" /> : money(safeToday)}
             </p>
-            {variablePool > 0 && Math.abs(trendDelta) >= 0.01 && (
+            {!isLoading && variablePool > 0 && Math.abs(trendDelta) >= 0.01 && (
               <span className={`inline-flex items-center gap-1 text-sm font-medium tabular-nums ${trendDelta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}>
                 {trendDelta > 0 ? <TrendingUp className="size-4" /> : trendDelta < 0 ? <TrendingDown className="size-4" /> : <Minus className="size-4" />}
                 {trendDelta > 0 ? "+" : ""}{money(trendDelta)} vs yesterday
@@ -211,8 +212,14 @@ function Dashboard() {
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-3 tabular-nums">
-            {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} until {cycle?.source === "salary" ? "next salary" : "month end"} ={" "}
-            <span className="font-medium text-foreground">{money(safeToday)}/day</span>
+            {isLoading ? (
+              <span className="inline-block h-4 w-64 rounded bg-muted animate-pulse align-middle" />
+            ) : (
+              <>
+                {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} until {cycle?.source === "salary" ? "next salary" : "month end"} ={" "}
+                <span className="font-medium text-foreground">{money(safeToday)}/day</span>
+              </>
+            )}
           </p>
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">
