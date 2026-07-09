@@ -100,6 +100,10 @@ const OPERATION_LABELS: Record<string, string> = {
 
 const HARDWIRED_CAP = 10;
 
+function rowsOrEmpty<T>(rows: T[] | null | undefined): T[] {
+  return Array.isArray(rows) ? rows : [];
+}
+
 function CreditUsageSection({ household }: { household: { id: string } }) {
   const fetchUsage = useServerFn(getHouseholdCreditUsage);
   const { data } = useQuery({
@@ -213,27 +217,29 @@ function HouseholdSection({ household, onChange }: { household: { id: string; na
   const { data: fixedRows } = useQuery({
     queryKey: ["fixed-total", household.id],
     queryFn: async () => {
-      const { data } = await supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", household.id);
-      return data ?? [];
+      const { data, error } = await supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", household.id);
+      if (error) throw error;
+      return rowsOrEmpty(data);
     },
   });
   const { data: varRows } = useQuery({
     queryKey: ["variable-estimates-total", household.id],
     queryFn: async () => {
-      const { data } = await supabase.from("variable_estimates").select("monthly_amount").eq("household_id", household.id);
-      return data ?? [];
+      const { data, error } = await supabase.from("variable_estimates").select("monthly_amount").eq("household_id", household.id);
+      if (error) throw error;
+      return rowsOrEmpty(data);
     },
   });
 
-  const fixedTotal = (fixedRows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-  const varTotal = (varRows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+  const fixedTotal = rowsOrEmpty(fixedRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
+  const varTotal = rowsOrEmpty(varRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
   const safetyReserve = ((fixedTotal + varTotal) * margin) / 100;
   const baseline = fixedTotal + varTotal + safetyReserve;
   const storedBaseline = Number(household.baseline_budget);
 
   // Auto-persist computed baseline whenever the inputs change
   useEffect(() => {
-    if (!fixedRows || !varRows) return;
+    if (!Array.isArray(fixedRows) || !Array.isArray(varRows)) return;
     if (Math.abs(baseline - storedBaseline) < 0.005 && margin === Number(household.margin_pct)) return;
     update({
       data: { household_id: household.id, baseline_budget: Number(baseline.toFixed(2)), margin_pct: margin },
