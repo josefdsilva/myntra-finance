@@ -30,7 +30,7 @@ function Dashboard() {
 
   const householdId = hh?.household?.id;
 
-  const { data: dashboard, refetch } = useQuery({
+  const { data: dashboard, refetch, isLoading: dashboardLoading } = useQuery({
     enabled: !!householdId,
     queryKey: ["dashboard", householdId],
     queryFn: async () => {
