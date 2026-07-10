@@ -36,6 +36,8 @@ import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
 import { LanguageSettings } from "@/components/language-settings";
+import { CategoryManager } from "@/components/category-manager";
+import { useCategoryNames } from "@/hooks/use-categories";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/settings")({
