@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { format as fmt } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Myntra" }] }),
@@ -116,6 +117,7 @@ function BurnTooltip({ active, payload }: { active?: boolean; payload?: BurnPayl
 }
 
 function AnalysisPage() {
+  const t = useT();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
   const householdId = hh?.household?.id;
@@ -390,11 +392,16 @@ function AnalysisPage() {
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display">Analysis</h1>
+          <h1 className="text-3xl font-display">{t("ana.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            {cycleCount > 0 ? `Last ${cycleCount} pay ${cycleLabel} · ` : ""}
-            {fmtDate(start)} → {fmtDate(end)} · {onlySpend.length} expense
-            {onlySpend.length === 1 ? "" : "s"}
+            {cycleCount > 0
+              ? t(cycleCount === 1 ? "ana.subtitle.cycle" : "ana.subtitle.cycles", { n: cycleCount })
+              : ""}
+            {t("ana.subtitle.range", {
+              start: fmtDate(start),
+              end: fmtDate(end),
+              n: onlySpend.length,
+            })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -403,12 +410,12 @@ function AnalysisPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Last cycle</SelectItem>
-              <SelectItem value="2">Last 2 cycles</SelectItem>
-              <SelectItem value="3">Last 3 cycles</SelectItem>
-              <SelectItem value="6">Last 6 cycles</SelectItem>
-              <SelectItem value="12">Last 12 cycles</SelectItem>
-              <SelectItem value="all">All cycles</SelectItem>
+              <SelectItem value="1">{t("ana.range.1")}</SelectItem>
+              <SelectItem value="2">{t("ana.range.2")}</SelectItem>
+              <SelectItem value="3">{t("ana.range.3")}</SelectItem>
+              <SelectItem value="6">{t("ana.range.6")}</SelectItem>
+              <SelectItem value="12">{t("ana.range.12")}</SelectItem>
+              <SelectItem value="all">{t("ana.range.all")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -420,7 +427,7 @@ function AnalysisPage() {
         <Label className="flex items-center gap-2 cursor-pointer text-sm w-fit">
           <Checkbox checked={includeFixed} onCheckedChange={(v) => setIncludeFixed(!!v)} />
           <span>
-            Include fixed expenses
+            {t("ana.includeFixed")}
             <span className="text-muted-foreground ml-1">
               (+{money(proratedFixed)} · {money(fixedTotal)}/mo × {cycleCount} {cycleLabel})
             </span>
@@ -430,17 +437,17 @@ function AnalysisPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Stat
-          label={includeFixed ? "Total spent (incl. fixed)" : "Total spent"}
+          label={includeFixed ? t("ana.stat.spentIncl") : t("ana.stat.spent")}
           value={money(totalSpend)}
         />
-        <Stat label="Received" value={money(totalIncome)} />
-        <Stat label="Net" value={money(totalIncome - totalSpend)} highlight />
+        <Stat label={t("ana.stat.received")} value={money(totalIncome)} />
+        <Stat label={t("ana.stat.net")} value={money(totalIncome - totalSpend)} highlight />
       </div>
 
       {cycleData && (
         <Card>
           <CardHeader>
-            <CardTitle>Cycle burndown</CardTitle>
+            <CardTitle>{t("ana.burndown.title")}</CardTitle>
             <CardDescription>
               Pay cycle {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
               {cycleData.cycle.predicted ? " (predicted)" : ""} · starts at 0, jumps with salary,

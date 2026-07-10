@@ -21,6 +21,7 @@ import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2, Sparkles } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses · Myntra" }] }),
@@ -46,6 +47,7 @@ const CATEGORIES = [
 ];
 
 function ExpensesPage() {
+  const t = useT();
   const qc = useQueryClient();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const del = useServerFn(deleteExpense);
@@ -155,19 +157,22 @@ function ExpensesPage() {
     .reduce((s, r) => s + Number(r.amount), 0);
   const net = received - spent - fixedTotal;
   const cycleLabel = cycle
-    ? `Cycle · ${fmtDate(cycle.start.toISOString())} → ${fmtDate(cycle.end.toISOString())}${cycle.predicted ? " (predicted)" : ""}`
-    : "Cycle";
+    ? t("exp.cycleLabel", {
+        start: fmtDate(cycle.start.toISOString()),
+        end: fmtDate(cycle.end.toISOString()),
+      }) + (cycle.predicted ? t("dashboard.cycle.predicted") : "")
+    : t("exp.cycleLabel", { start: "", end: "" });
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
-        <h1 className="text-3xl font-display">Expenses</h1>
-        <p className="text-sm text-muted-foreground">Grouped by pay cycle (salary to salary).</p>
+        <h1 className="text-3xl font-display">{t("exp.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("exp.subtitle")}</p>
       </header>
 
       <Card>
         <CardHeader>
-          <CardTitle>Add expense</CardTitle>
+          <CardTitle>{t("exp.addTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           {householdId && (
@@ -198,15 +203,18 @@ function ExpensesPage() {
             <div>
               <CardTitle>{cycleLabel}</CardTitle>
               <CardDescription>
-                {rows?.length ?? 0} entries · {money(spent)} spent
-                {received > 0 ? ` · ${money(received)} received` : ""}
-                {fixedTotal > 0 ? ` · fixed-costs: ${money(fixedTotal)} spent` : ""}
-                {received > 0 ? ` · net ${money(net)}` : ""}
+                {t("exp.subtitle.entries", { count: rows?.length ?? 0 })} ·{" "}
+                {t("exp.subtitle.spent", { value: money(spent) })}
+                {received > 0 ? ` · ${t("exp.subtitle.received", { value: money(received) })}` : ""}
+                {fixedTotal > 0
+                  ? ` · ${t("exp.subtitle.fixed", { value: money(fixedTotal) })}`
+                  : ""}
+                {received > 0 ? ` · ${t("exp.subtitle.net", { value: money(net) })}` : ""}
               </CardDescription>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o - 1)}>
-                Prev
+                {t("exp.prev")}
               </Button>
               <Button
                 variant="outline"
@@ -214,7 +222,7 @@ function ExpensesPage() {
                 onClick={() => setCycleOffset(0)}
                 disabled={cycleOffset === 0}
               >
-                Current
+                {t("exp.current")}
               </Button>
               <Button
                 variant="outline"
@@ -222,7 +230,7 @@ function ExpensesPage() {
                 onClick={() => setCycleOffset((o) => o + 1)}
                 disabled={cycleOffset >= 0}
               >
-                Next
+                {t("exp.next")}
               </Button>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-40">
@@ -242,7 +250,7 @@ function ExpensesPage() {
         <CardContent>
           {!rows?.length ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
-              No expenses in this period.
+              {t("exp.empty")}
             </p>
           ) : (
             <ul className="divide-y">

@@ -15,6 +15,7 @@ import { markSalaryReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Myntra" }] }),
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const t = useT();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({
     queryKey: ["household"],
@@ -200,8 +202,9 @@ function Dashboard() {
   );
   const cycleLabel = cycle
     ? cycle.source === "salary"
-      ? `Pay cycle · ${fmtDate(cycle.start)} → ${fmtDate(cycle.end)}${cycle.predicted ? " (predicted)" : ""}`
-      : `Calendar month · ${monthName} (no salary recorded yet)`
+      ? t("dashboard.cycle.pay", { start: fmtDate(cycle.start), end: fmtDate(cycle.end) }) +
+        (cycle.predicted ? t("dashboard.cycle.predicted") : "")
+      : t("dashboard.cycle.calendar", { month: monthName })
     : monthName;
 
   const setupIncomplete = baseline === 0;
@@ -211,22 +214,18 @@ function Dashboard() {
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
         <p className="text-sm text-muted-foreground">{cycleLabel}</p>
-        <h1 className="text-3xl md:text-4xl font-display">Daily overview</h1>
+        <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
       </header>
 
       {setupIncomplete ? (
         <Card className="border-warning/40 bg-warning/5">
           <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-6">
             <div>
-              <p className="font-medium">
-                Set up your monthly baseline to see your daily safe-to-spend.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Add income, fixed expenses and your baseline budget in Settings.
-              </p>
+              <p className="font-medium">{t("dashboard.setup.title")}</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.setup.body")}</p>
             </div>
             <Button asChild>
-              <Link to="/settings">Go to settings</Link>
+              <Link to="/settings">{t("dashboard.setup.action")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -236,7 +235,7 @@ function Dashboard() {
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
           <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Safe to spend per day
+            {t("dashboard.safe.label")}
           </p>
           <div className="flex items-baseline gap-3 flex-wrap">
             <p
@@ -259,8 +258,9 @@ function Dashboard() {
                 ) : (
                   <Minus className="size-4" />
                 )}
-                {trendDelta > 0 ? "+" : ""}
-                {money(trendDelta)} vs yesterday
+                {t("dashboard.safe.vsYesterday", {
+                  value: `${trendDelta > 0 ? "+" : ""}${money(trendDelta)}`,
+                })}
               </span>
             )}
           </div>
@@ -268,17 +268,17 @@ function Dashboard() {
             {isLoading ? (
               <span className="inline-block h-4 w-64 rounded bg-muted animate-pulse align-middle" />
             ) : (
-              <>
-                {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} until{" "}
-                {cycle?.source === "salary" ? "next salary" : "month end"} ={" "}
-                <span className="font-medium text-foreground">{money(safeToday)}/day</span>
-              </>
+              t(
+                cycle?.source === "salary"
+                  ? "dashboard.safe.remainingSalary"
+                  : "dashboard.safe.remainingMonth",
+                { remaining: money(remaining), days: daysLeft, perDay: money(safeToday) },
+              )
             )}
           </p>
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">
-              Tip: press <span className="font-medium">Salary received</span> below on payday to
-              start a new pay cycle.
+              {t("dashboard.safe.calendarTip")}
             </p>
           )}
 
@@ -286,9 +286,10 @@ function Dashboard() {
           <div className="mt-5">
             <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-              Last 7 days · dashed line = today's safe-to-spend
+              {t("dashboard.spark.caption")}
             </p>
           </div>
+
 
           <div className="mt-6 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -303,7 +304,7 @@ function Dashboard() {
                   }}
                   className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25 ${expenseFilter === "spent" ? "ring-2 ring-orange-500/50" : ""}`}
                 >
-                  Spent {money(spent)}
+                  {t("dashboard.chip.spent", { value: money(spent) })}
                 </button>
                 {received > 0 && (
                   <button
@@ -316,14 +317,14 @@ function Dashboard() {
                     }}
                     className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25 ${expenseFilter === "received" ? "ring-2 ring-blue-500/50" : ""}`}
                   >
-                    Received {money(received)}
+                    {t("dashboard.chip.received", { value: money(received) })}
                   </button>
                 )}
                 <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-muted text-foreground tabular-nums">
-                  Balance {money(netSpent)}
+                  {t("dashboard.chip.balance", { value: money(netSpent) })}
                 </span>
               </div>
-              <span className="text-muted-foreground tabular-nums">{money(variablePool)} pool</span>
+              <span className="text-muted-foreground tabular-nums">{t("dashboard.chip.pool", { value: money(variablePool) })}</span>
             </div>
             <Progress
               value={pctSpent}
@@ -345,21 +346,19 @@ function Dashboard() {
           <div className="mt-6 pt-6 border-t">
             {!buckets.length ? (
               <p className="text-xs text-muted-foreground">
-                No savings buckets configured — set targets in{" "}
-                <Link to="/settings" className="underline">
-                  Settings
-                </Link>{" "}
-                to see impact.
+                {t("dashboard.buckets.none")}
               </p>
             ) : !inJeopardy ? (
               <div className="flex items-start gap-3">
                 <span className="mt-1 size-2.5 rounded-full bg-primary shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Buckets on track</p>
+                  <p className="text-sm font-medium text-foreground">{t("dashboard.buckets.onTrack")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Spending up to {money(safeToday)}/day keeps all {buckets.length} bucket
-                    {buckets.length === 1 ? "" : "s"} fully funded this month (
-                    {money(totalAllocated)} total).
+                    {t("dashboard.buckets.onTrackBody", {
+                      perDay: money(safeToday),
+                      count: buckets.length,
+                      total: money(totalAllocated),
+                    })}
                   </p>
                 </div>
               </div>
@@ -368,7 +367,7 @@ function Dashboard() {
                 <span className="mt-1 size-2.5 rounded-full bg-destructive shrink-0" />
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-destructive">
-                    Overspent by {money(overspendAmount)} — buckets at risk
+                    {t("dashboard.buckets.overspent", { value: money(overspendAmount) })}
                   </p>
                   <ul className="text-xs text-muted-foreground space-y-1">
                     {jeopardizedBuckets.map((b) => (
@@ -378,7 +377,7 @@ function Dashboard() {
                           style={{ background: b.color ?? "var(--primary)" }}
                         />
                         <span className="font-medium text-foreground">{b.name}</span>
-                        <span>−{money(b.loss)} this month</span>
+                        <span>−{t("dashboard.buckets.loss", { value: money(b.loss) })}</span>
                       </li>
                     ))}
                   </ul>
@@ -390,24 +389,25 @@ function Dashboard() {
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Before baseline limit" value={money(remaining)} highlight />
+        <StatCard label={t("dashboard.stat.beforeLimit")} value={money(remaining)} highlight />
         <StatCard
-          label="Projected end of cycle"
+          label={t("dashboard.stat.projected")}
           value={money(projectedBalance)}
           hint={
             projectedBalance >= 0
-              ? `On pace (${money(avgDaily7)}/day avg)`
-              : `At current pace, over by ${money(-projectedBalance)}`
+              ? t("dashboard.stat.projectedOnPace", { value: money(avgDaily7) })
+              : t("dashboard.stat.projectedOver", { value: money(-projectedBalance) })
           }
           tone={projectedBalance >= 0 ? "good" : "bad"}
         />
         <StatCard
-          label="Emergency pool"
+          label={t("dashboard.stat.emergency")}
           value={money(Math.max(0, surplus - totalAllocated))}
-          hint="Unallocated surplus"
+          hint={t("dashboard.stat.emergencyHint")}
         />
-        <StatCard label="Monthly income" value={money(dashboard?.income ?? 0)} />
+        <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
+
 
       {householdId && (
         <DashboardTips
@@ -425,8 +425,8 @@ function Dashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Quick add</CardTitle>
-            <CardDescription>Type or say what you spent — we'll parse it.</CardDescription>
+            <CardTitle>{t("dashboard.quickAdd.title")}</CardTitle>
+            <CardDescription>{t("dashboard.quickAdd.desc")}</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -437,19 +437,19 @@ function Dashboard() {
       <Card id="recent-expenses">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            <CardTitle>Recent expenses</CardTitle>
+            <CardTitle>{t("dashboard.recent.title")}</CardTitle>
             {expenseFilter !== "all" && (
               <button
                 type="button"
                 onClick={() => setExpenseFilter("all")}
                 className="text-xs text-muted-foreground underline hover:text-foreground"
               >
-                Showing {expenseFilter} — clear
+                {t("dashboard.recent.showing", { filter: t(`dashboard.filter.${expenseFilter}`) })}
               </button>
             )}
           </div>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/expenses">View all</Link>
+            <Link to="/expenses">{t("dashboard.recent.viewAll")}</Link>
           </Button>
         </CardHeader>
         <CardContent>
@@ -461,7 +461,7 @@ function Dashboard() {
                   ? e.kind === "income" && !e.is_salary
                   : e.kind !== "income",
             );
-            if (!list.length) return <p className="text-sm text-muted-foreground">No entries.</p>;
+            if (!list.length) return <p className="text-sm text-muted-foreground">{t("dashboard.recent.none")}</p>;
             return (
               <ul className="divide-y">
                 {list.map((e) => {
@@ -472,7 +472,7 @@ function Dashboard() {
                         <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
                         <p className="text-xs text-muted-foreground">
                           {fmtDateTime(e.occurred_at)} · {e.category}
-                          {isIncome ? " · received" : ""}
+                          {isIncome ? ` · ${t("dashboard.recent.received")}` : ""}
                         </p>
                       </div>
                       <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
@@ -500,6 +500,7 @@ function SalaryReceivedButton({
   lastSalaryAt: Date | null;
   onDone: () => void;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const mark = useServerFn(markSalaryReceived);
   const [loading, setLoading] = useState(false);
@@ -531,10 +532,12 @@ function SalaryReceivedButton({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
       <div>
-        <p className="text-sm font-medium">Payday?</p>
+        <p className="text-sm font-medium">{t("dashboard.salary.payday")}</p>
         <p className="text-xs text-muted-foreground">
-          {lastSalaryAt ? `Last salary: ${fmtDate(lastSalaryAt)}` : "No salary recorded yet."} Uses
-          your Settings income total.
+          {lastSalaryAt
+            ? t("dashboard.salary.last", { date: fmtDate(lastSalaryAt) })
+            : t("dashboard.salary.none")}{" "}
+          {t("dashboard.salary.usesSettings")}
         </p>
       </div>
       <Button
@@ -542,8 +545,7 @@ function SalaryReceivedButton({
         disabled={loading}
         variant={recentlyReceived ? "outline" : "default"}
       >
-        {loading ? <Loader2 className="animate-spin" /> : <Wallet />} Salary received — start new
-        cycle
+        {loading ? <Loader2 className="animate-spin" /> : <Wallet />} {t("dashboard.salary.button")}
       </Button>
     </div>
   );

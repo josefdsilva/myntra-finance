@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/allocations")({
   head: () => ({ meta: [{ title: "Allocations · Myntra" }] }),
@@ -47,6 +48,7 @@ type Bucket = {
 };
 
 function AllocationsPage() {
+  const t = useT();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
   const householdId = hh?.household?.id;
@@ -179,14 +181,14 @@ function AllocationsPage() {
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
-        <h1 className="text-3xl font-display">Allocations</h1>
-        <p className="text-sm text-muted-foreground">Where this month's surplus goes.</p>
+        <h1 className="text-3xl font-display">{t("alloc.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("alloc.subtitle")}</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Stat label="Monthly income" value={money(income)} />
-        <Stat label="Baseline budget" value={money(baseline)} />
-        <Stat label="Surplus" value={money(surplus)} highlight />
+        <Stat label={t("alloc.stat.income")} value={money(income)} />
+        <Stat label={t("alloc.stat.baseline")} value={money(baseline)} />
+        <Stat label={t("alloc.stat.surplus")} value={money(surplus)} highlight />
       </div>
 
       {showCloseWarning && (
@@ -195,11 +197,10 @@ function AllocationsPage() {
           <div className="text-sm">
             <p className="font-medium text-amber-900 dark:text-amber-200">
               {daysLeftInMonth === 0
-                ? "Month ends today"
-                : `Month ends in ${daysLeftInMonth} day${daysLeftInMonth === 1 ? "" : "s"}`}
+                ? t("alloc.close.endsToday")
+                : t("alloc.close.endsIn", { days: daysLeftInMonth })}
               {" · "}
-              {unconfirmedBuckets.length} bucket{unconfirmedBuckets.length === 1 ? "" : "s"} not yet
-              confirmed
+              {t("alloc.close.unconfirmed", { count: unconfirmedBuckets.length })}
             </p>
             <p className="text-muted-foreground mt-0.5">
               {unconfirmedBuckets.map((b) => b.name).join(", ")}
@@ -210,20 +211,15 @@ function AllocationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>This month's buckets</CardTitle>
-          <CardDescription>
-            Configure targets in{" "}
-            <Link to="/settings" className="underline">
-              Settings
-            </Link>
-            .
-          </CardDescription>
+          <CardTitle>{t("alloc.thisMonth.title")}</CardTitle>
+          <CardDescription>{t("alloc.thisMonth.desc")}</CardDescription>
         </CardHeader>
         <CardContent>
           {!data?.buckets?.length ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
-              No buckets configured yet.
+              {t("alloc.thisMonth.empty")}
             </p>
+
           ) : (
             <div className="space-y-4">
               {surplus > 0 && (
@@ -244,13 +240,15 @@ function AllocationsPage() {
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
-                      Allocated {money(Math.min(totalAllocated, surplus))} of {money(surplus)}{" "}
-                      surplus
+                      {t("alloc.summary.allocated", {
+                        allocated: money(Math.min(totalAllocated, surplus)),
+                        surplus: money(surplus),
+                      })}
                     </span>
                     <span className={unallocated < 0 ? "text-destructive" : ""}>
                       {unallocated < 0
-                        ? `Over by ${money(-unallocated)}`
-                        : `${money(unallocated)} unallocated`}
+                        ? t("alloc.summary.overBy", { value: money(-unallocated) })
+                        : t("alloc.summary.unallocated", { value: money(unallocated) })}
                     </span>
                   </div>
                 </div>
@@ -333,17 +331,17 @@ function AllocationsPage() {
               })}
               <div className="pt-3 mt-3 border-t space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total targeted / month</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.monthly")}</span>
                   <span className="tabular-nums font-medium">{money(totalAllocated)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Confirmed this month</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.confirmed")}</span>
                   <span className="tabular-nums font-medium text-emerald-600">
                     {money(totalConfirmedThisMonth)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Unallocated surplus</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.emergency")}</span>
                   <span
                     className={`tabular-nums font-medium ${unallocated < 0 ? "text-destructive" : ""}`}
                   >
