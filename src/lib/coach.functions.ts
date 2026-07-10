@@ -233,6 +233,28 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   // Conservative: leave 25% of surplus as buffer for savings / unexpected.
   const safeNewMonthlyCommitment = Math.round(monthlySurplus * 0.75 * 100) / 100;
 
+  // Normalize this cycle's category spend to a monthly footing so we can
+  // compare against national category shares fairly.
+  const cycleDays = Math.max(1, cycle.daysTotal || 30);
+  const monthScale = 30 / cycleDays;
+  const monthlySpendByCategory: Record<string, number> = {};
+  for (const [k, v] of Object.entries(byCategory)) {
+    monthlySpendByCategory[k] = Math.round(v * monthScale * 100) / 100;
+  }
+  const totalMonthlySpend =
+    Math.round((spent * monthScale + fixedMonthly + variableEstimateMonthly) * 100) / 100;
+  const benchmark =
+    estimatedMonthlyIncome > 0
+      ? computeBenchmarkComparison({
+          country: hh?.country ?? "PT",
+          adults: Number(hh?.adults ?? 2),
+          children: Number(hh?.children ?? 0),
+          monthlyIncome: estimatedMonthlyIncome,
+          monthlySpend: totalMonthlySpend,
+          spendByCategory: monthlySpendByCategory,
+        })
+      : null;
+
   return {
     today: new Date().toISOString(),
     currency: hh?.currency ?? "EUR",
@@ -263,6 +285,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       totalSaved: totalByBucket[b.id] ?? 0,
     })),
     topSpends: spendsForTop.slice(0, 8),
+    benchmark,
     cycleStartKey: cycle.start.toISOString().slice(0, 10),
   };
 }
