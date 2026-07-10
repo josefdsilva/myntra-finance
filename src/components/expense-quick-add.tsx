@@ -436,6 +436,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
             setTranscript("");
           }}
           loading={loading}
+          householdId={householdId}
         />
       )}
     </div>
