@@ -1,0 +1,42 @@
+{
+  "country": "PT",
+  "countryName": "Portugal",
+  "currency": "EUR",
+  "sourceYear": 2023,
+  "sources": [
+    "Eurostat ilc_di01 (equivalised disposable income by decile, PT, 2023)",
+    "Eurostat hbs_str_t223 (mean consumption expenditure by COICOP, PT, latest)",
+    "INE Portugal - Inquérito às Despesas das Famílias",
+    "Eurostat tec00131 (household saving rate, PT)"
+  ],
+  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale: 1 first adult + 0.5 per extra adult + 0.3 per child). Compare a household by dividing its net monthly income by its equivalence factor then multiplying by 12. Category shares are % of total household consumption expenditure and are then remapped from COICOP divisions to the app's expense categories.",
+  "incomeDecilesAnnualEquivalised": {
+    "d1": 5700,
+    "d2": 8300,
+    "d3": 10200,
+    "d4": 12000,
+    "d5": 13900,
+    "d6": 15900,
+    "d7": 18400,
+    "d8": 21700,
+    "d9": 27900
+  },
+  "avgMonthlyHouseholdExpenditure": 2150,
+  "householdSavingRatePct": 8.0,
+  "categoryShares": {
+    "groceries": 17.0,
+    "dining": 9.0,
+    "transport": 7.0,
+    "fuel": 4.0,
+    "utilities": 10.0,
+    "housing": 20.0,
+    "subscriptions": 3.0,
+    "health": 7.0,
+    "kids": 3.0,
+    "shopping": 9.0,
+    "entertainment": 5.0,
+    "travel": 2.0,
+    "gifts": 2.0,
+    "other": 2.0
+  }
+}
