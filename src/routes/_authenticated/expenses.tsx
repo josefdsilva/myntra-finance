@@ -281,6 +281,21 @@ function ExpensesPage() {
                           {e.note}
                         </p>
                       )}
+                      {Array.isArray(e.labels) && e.labels.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {e.labels.map((l) => (
+                            <button
+                              key={l}
+                              type="button"
+                              onClick={() => setLabelFilter(l)}
+                              className="text-[10px] rounded-full bg-primary/10 text-primary px-2 py-0.5 hover:bg-primary/20"
+                              title={`Filter by "${l}"`}
+                            >
+                              {l}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
                       {isIncome ? "+" : "−"}
