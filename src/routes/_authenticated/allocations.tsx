@@ -50,6 +50,7 @@ type Bucket = {
 
 function AllocationsPage() {
   const t = useT();
+  const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],

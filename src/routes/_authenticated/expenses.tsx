@@ -36,6 +36,7 @@ import { useRecentLabels } from "@/hooks/use-labels";
 function ExpensesPage() {
   const t = useT();
   const qc = useQueryClient();
+  const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const del = useServerFn(deleteExpense);
   const { data: hh } = useQuery({

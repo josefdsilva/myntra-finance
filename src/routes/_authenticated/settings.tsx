@@ -49,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsPage() {
   const qc = useQueryClient();
   const t = useT();
+  const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const {
     data: hh,

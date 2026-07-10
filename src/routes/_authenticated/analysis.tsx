@@ -119,6 +119,7 @@ function BurnTooltip({ active, payload }: { active?: boolean; payload?: BurnPayl
 
 function AnalysisPage() {
   const t = useT();
+  const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],

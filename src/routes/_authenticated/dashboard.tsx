@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const t = useT();
+  const activeHouseholdId = useActiveHouseholdId();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],
