@@ -151,9 +151,11 @@ export function CoachPanel({
                     {[
                       "We're thinking of moving. What monthly rent can we comfortably afford?",
                       "Our car broke. Should we buy used with savings or take a loan? What price range?",
+                      "Compare two loan offers: €15,000 at 8.5% TAEG over 60 months vs 7.9% TAEG over 72 months. Which is cheaper overall and which fits our budget?",
+                      "Help me compare an iPhone 15 (€899) vs a Pixel 8 (€699) for our needs — which is the better buy?",
+                      "Should we switch to a cheaper energy plan? What should I compare?",
                       "Can we afford a €300 weekend trip this cycle?",
                       "When could we realistically reach €20,000 in savings?",
-                      "Which category should we cut first to free €200/month?",
                     ].map((s) => (
                       <button
                         key={s}
