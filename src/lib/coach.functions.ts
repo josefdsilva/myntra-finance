@@ -179,11 +179,24 @@ const OVERVIEW_PROMPT = `Write a friendly financial overview in markdown with th
 3 concrete, actionable suggestions for the rest of this cycle.
 Keep the whole thing under ~220 words. No preamble.`;
 
+const LANG_NAMES: Record<string, string> = {
+  en: "English", pt: "Portuguese", es: "Spanish", de: "German", fr: "French",
+};
+
+function langInstruction(locale?: string) {
+  if (!locale || !LANG_NAMES[locale] || locale === "en") return "";
+  return `\n\nRespond entirely in ${LANG_NAMES[locale]}. Translate all headings, bullets, and money labels naturally into ${LANG_NAMES[locale]}. Keep the currency symbol € and numeric values as-is.`;
+}
+
 /** Get cached overview or generate. Pass refresh=true to force regenerate. */
 export const generateOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ householdId: z.string().uuid(), refresh: z.boolean().optional() }).parse(input),
+    z.object({
+      householdId: z.string().uuid(),
+      refresh: z.boolean().optional(),
+      locale: z.string().optional(),
+    }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -198,9 +211,10 @@ export const generateOverview = createServerFn({ method: "POST" })
     if (!mem) throw new Error("Not a member of this household");
 
     const ctx = await buildContext(supabase, data.householdId);
+    const useCache = !data.locale || data.locale === "en";
 
-    // Cache check
-    if (!data.refresh) {
+    // Cache check (English only — cached content is stored in English)
+    if (!data.refresh && useCache) {
       const { data: cached } = await supabase
         .from("analysis_overviews")
         .select("content, generated_at, model")
@@ -223,7 +237,7 @@ export const generateOverview = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
     const result = await generateText({
       model: gateway(MODEL),
-      system: SYSTEM_BASE,
+      system: SYSTEM_BASE + langInstruction(data.locale),
       prompt: `Household snapshot (JSON):\n${JSON.stringify(ctx)}\n\n${OVERVIEW_PROMPT}`,
     });
 
@@ -237,18 +251,20 @@ export const generateOverview = createServerFn({ method: "POST" })
       outputTokens: est.output,
     });
 
-    // Upsert via admin (RLS blocks writes from client role)
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const generated_at = new Date().toISOString();
-    await supabaseAdmin
-      .from("analysis_overviews")
-      .upsert({
-        household_id: data.householdId,
-        cycle_start: ctx.cycleStartKey,
-        content: result.text,
-        model: MODEL,
-        generated_at,
-      });
+    if (useCache) {
+      // Upsert via admin (RLS blocks writes from client role)
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin
+        .from("analysis_overviews")
+        .upsert({
+          household_id: data.householdId,
+          cycle_start: ctx.cycleStartKey,
+          content: result.text,
+          model: MODEL,
+          generated_at,
+        });
+    }
 
     return { content: result.text, generated_at, model: MODEL, cached: false };
   });
