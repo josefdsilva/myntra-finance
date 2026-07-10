@@ -776,13 +776,23 @@ function BucketsSection({ householdId }: { householdId: string }) {
   );
 }
 
+type BucketRowShape = {
+  id: string;
+  name: string;
+  color?: string | null;
+  target_type: string;
+  target_value: number | string;
+  target_deadline: string | null;
+  priority?: number | null;
+};
+
 function BucketRow({
   bucket,
   onSave,
   onRemove,
 }: {
-  bucket: any;
-  onSave: (b: any) => void;
+  bucket: BucketRowShape;
+  onSave: (b: BucketRowShape) => void;
   onRemove: () => void;
 }) {
   const t = useT();
