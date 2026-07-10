@@ -596,7 +596,16 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
   });
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
+  const { names: catNames } = useCategoryNames(householdId);
+  const categoryOptions = catNames.length ? catNames : ["housing", "other"];
   const [category, setCategory] = useState("housing");
+
+  useEffect(() => {
+    if (categoryOptions.length && !categoryOptions.includes(category)) {
+      setCategory(categoryOptions[0]);
+    }
+  }, [categoryOptions, category]);
+
 
   async function add() {
     if (!label || !amount) return;
