@@ -31,6 +31,7 @@ type BucketRow = {
   target_deadline: string | null;
 };
 type AllocRow = { bucket_id: string; amount: number | string; confirmed_at: string };
+type AllAllocRow = { bucket_id: string; amount: number | string };
 
 type CoachContext = {
   today: string;
@@ -47,6 +48,14 @@ type CoachContext = {
   };
   fixedMonthly: number;
   variableEstimateMonthly: number;
+  /** Rough recurring income per month, averaged from up to 6 recent salary events. */
+  estimatedMonthlyIncome: number;
+  /** estimatedMonthlyIncome - fixedMonthly - variableEstimateMonthly. Room for new commitments. */
+  monthlySurplus: number;
+  /** Conservative safe monthly payment for a new recurring commitment (rent, loan, lease). */
+  safeNewMonthlyCommitment: number;
+  /** Lifetime savings across all buckets (sum of confirmed allocations). */
+  totalSavings: number;
   cycleTotals: {
     spent: number;
     received: number;
@@ -64,10 +73,12 @@ type CoachContext = {
     target_value: number;
     target_deadline: string | null;
     allocatedThisCycle: number;
+    totalSaved: number;
   }>;
   topSpends: Array<{ amount: number; category: string; note: string | null; occurred_at: string }>;
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
+
 
 async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
@@ -123,7 +134,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     previousCycleTotals = { spent: s, received: r, net: s - r };
   }
 
-  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }] =
+  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }, { data: allAllocs }] =
     await Promise.all([
       supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
       supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
@@ -137,6 +148,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
         .eq("household_id", householdId)
         .gte("confirmed_at", startISO)
         .lt("confirmed_at", endISO),
+      supabase
+        .from("bucket_allocations")
+        .select("bucket_id, amount")
+        .eq("household_id", householdId),
     ]);
 
   const sumMonthly = (rows: unknown): number =>
@@ -150,6 +165,13 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const allocByBucket: Record<string, number> = {};
   for (const a of rowsOrEmpty<AllocRow>(allocs)) {
     allocByBucket[a.bucket_id] = (allocByBucket[a.bucket_id] ?? 0) + Number(a.amount);
+  }
+  const totalByBucket: Record<string, number> = {};
+  let totalSavings = 0;
+  for (const a of rowsOrEmpty<AllAllocRow>(allAllocs)) {
+    const amt = Number(a.amount);
+    totalByBucket[a.bucket_id] = (totalByBucket[a.bucket_id] ?? 0) + amt;
+    totalSavings += amt;
   }
 
   let spent = 0,
@@ -177,6 +199,38 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   }
   spendsForTop.sort((a, b) => b.amount - a.amount);
 
+  // Estimate monthly income from recent salary events (avg gap between events).
+  let estimatedMonthlyIncome = 0;
+  if (salaryDatesDesc.length >= 2) {
+    // Pull matching salary amounts to average magnitude.
+    const { data: salaryAmts } = await supabase
+      .from("expenses")
+      .select("amount, occurred_at")
+      .eq("household_id", householdId)
+      .eq("is_salary", true)
+      .order("occurred_at", { ascending: false })
+      .limit(6);
+    const amts = rowsOrEmpty<{ amount: number | string }>(salaryAmts).map((r) => Number(r.amount));
+    if (amts.length) {
+      const avg = amts.reduce((s, n) => s + n, 0) / amts.length;
+      // If gap between latest two salaries is ~28-31d assume monthly.
+      const gapDays =
+        (new Date(salaryDatesDesc[0]).getTime() - new Date(salaryDatesDesc[1]).getTime()) /
+        86400000;
+      const perMonth = gapDays > 0 ? avg * (30 / gapDays) : avg;
+      estimatedMonthlyIncome = Math.round(perMonth * 100) / 100;
+    }
+  } else if (received > 0) {
+    estimatedMonthlyIncome = received;
+  }
+
+  const monthlySurplus = Math.max(
+    0,
+    estimatedMonthlyIncome - fixedMonthly - variableEstimateMonthly,
+  );
+  // Conservative: leave 25% of surplus as buffer for savings / unexpected.
+  const safeNewMonthlyCommitment = Math.round(monthlySurplus * 0.75 * 100) / 100;
+
   return {
     today: new Date().toISOString(),
     currency: hh?.currency ?? "EUR",
@@ -192,6 +246,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     },
     fixedMonthly,
     variableEstimateMonthly,
+    estimatedMonthlyIncome,
+    monthlySurplus,
+    safeNewMonthlyCommitment,
+    totalSavings,
     cycleTotals: { spent, received, net: spent - received, byCategory },
     previousCycleTotals,
     buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
@@ -200,16 +258,26 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       target_value: Number(b.target_value),
       target_deadline: b.target_deadline,
       allocatedThisCycle: allocByBucket[b.id] ?? 0,
+      totalSaved: totalByBucket[b.id] ?? 0,
     })),
     topSpends: spendsForTop.slice(0, 8),
     cycleStartKey: cycle.start.toISOString().slice(0, 10),
   };
 }
 
-const SYSTEM_BASE = `You are a warm, concise household financial coach for a family of four in Portugal. Currency EUR.
-You give practical, non-judgmental guidance based ONLY on the JSON snapshot the user provides.
-Never invent figures — if data is missing say so.
-Format money as €X,XXX.XX. Keep answers short, skimmable, and grounded in the data.`;
+
+const SYSTEM_BASE = `You are a warm, practical household financial coach for a family of four in Portugal. Currency EUR.
+Ground every answer in the JSON snapshot the user provides — never invent numbers. If a number is missing say so and explain what you'd need.
+Format money as €X,XXX.XX. Use markdown. Be concrete: give ranges, not vague advice.
+
+You help with big life decisions as well as day-to-day budgeting. Common questions:
+- Housing: "how much rent/mortgage can we afford?" — anchor on \`safeNewMonthlyCommitment\` and \`monthlySurplus\`; mention the 28/36 rule (housing ≤ ~28% of gross monthly income, total debt ≤ ~36%). Give a comfortable range and a stretch range. Flag if emergency savings are thin.
+- Buying vs financing (car, appliance, etc.): compare (a) paying cash from savings (name the bucket, show remaining after purchase, note the emergency-fund impact), (b) a loan at a reasonable market rate (assume typical Portugal auto loan 7–10% APR, personal loan 8–12% APR, mortgage 3.5–5% — always caveat "typical, check current offers"), (c) leasing. Show approximate monthly payment ranges and total interest.
+- Credit / debt: never encourage taking on debt that pushes total monthly commitments above \`safeNewMonthlyCommitment\`. Suggest concrete steps to free room (reduce a category, pause a bucket, delay purchase N months).
+- Savings goals: use bucket \`totalSaved\` and \`allocatedThisCycle\` to project when a goal is reachable.
+
+When giving rate/market figures, always label them as typical benchmarks and remind the user to compare live quotes. Keep answers scannable: short intro, 2–4 bullet points or a small table, one clear recommendation. Prefer 4–8 sentences unless the question genuinely needs more.`;
+
 
 const OVERVIEW_PROMPT = `Write a friendly financial overview in markdown with these sections:
 ### What's going well
@@ -339,7 +407,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(ctx)}
 
-Answer the user's questions grounded in this snapshot. Be brief (usually 2–5 sentences). Use markdown when helpful.`,
+Answer the user's questions grounded in this snapshot. Use markdown when helpful. For quick questions stay short (2–5 sentences); for life-decision questions (housing, buying vs financing, taking on debt, big savings goals) give a more thorough answer with a range, an assumption line, and a clear recommendation.`,
       messages: [
         ...data.history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: data.message },
