@@ -407,7 +407,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(ctx)}
 
-Answer the user's questions grounded in this snapshot. Be brief (usually 2–5 sentences). Use markdown when helpful.`,
+Answer the user's questions grounded in this snapshot. Use markdown when helpful. For quick questions stay short (2–5 sentences); for life-decision questions (housing, buying vs financing, taking on debt, big savings goals) give a more thorough answer with a range, an assumption line, and a clear recommendation.`,
       messages: [
         ...data.history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: data.message },
