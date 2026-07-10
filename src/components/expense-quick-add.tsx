@@ -646,6 +646,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
               onConfirm={confirm}
               onCancel={clear}
               loading={loading}
+              householdId={householdId}
             />
           )}
         </div>
