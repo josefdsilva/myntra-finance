@@ -527,6 +527,17 @@ function AnalysisPage() {
         </Card>
       )}
 
+      {householdId && cycleCount > 0 && (
+        <BenchmarksCard
+          householdId={householdId}
+          monthlyIncome={totalIncome / cycleCount}
+          monthlySpend={totalSpend / cycleCount}
+          spendByCategory={Object.fromEntries(
+            byCategory.map((c) => [c.name, c.value / cycleCount]),
+          )}
+        />
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>By category</CardTitle>
