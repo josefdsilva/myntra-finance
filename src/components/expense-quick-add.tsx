@@ -196,7 +196,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
                 </SelectItem>
