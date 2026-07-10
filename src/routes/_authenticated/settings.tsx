@@ -53,6 +53,9 @@ function SettingsPage() {
         <p className="text-sm text-muted-foreground">Configure your household budget.</p>
       </header>
 
+      <LanguageSettings />
+
+
       {hhLoading && !hh && (
         <div className="space-y-3">
           <div className="h-32 rounded-lg bg-muted animate-pulse" />
