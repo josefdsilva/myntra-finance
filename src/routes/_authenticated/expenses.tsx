@@ -28,23 +28,8 @@ export const Route = createFileRoute("/_authenticated/expenses")({
   component: ExpensesPage,
 });
 
-const CATEGORIES = [
-  "all",
-  "groceries",
-  "dining",
-  "transport",
-  "fuel",
-  "utilities",
-  "housing",
-  "subscriptions",
-  "health",
-  "kids",
-  "shopping",
-  "entertainment",
-  "travel",
-  "gifts",
-  "other",
-];
+import { useCategoryNames } from "@/hooks/use-categories";
+
 
 function ExpensesPage() {
   const t = useT();
