@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
+import { useActiveHouseholdId } from "@/lib/active-household";
 import { deleteExpense, addExpensesBulk } from "@/lib/budget.functions";
 import { parseBankStatement } from "@/lib/ai-parse.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,7 +38,10 @@ function ExpensesPage() {
   const qc = useQueryClient();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const del = useServerFn(deleteExpense);
-  const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
+  const { data: hh } = useQuery({
+    queryKey: ["household", activeHouseholdId],
+    queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
+  });
   const householdId = hh?.household?.id;
 
   const { names: catNames } = useCategoryNames(householdId);

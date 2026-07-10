@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
+import { useActiveHouseholdId } from "@/lib/active-household";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Select,
@@ -119,7 +120,10 @@ function BurnTooltip({ active, payload }: { active?: boolean; payload?: BurnPayl
 function AnalysisPage() {
   const t = useT();
   const fetchHh = useServerFn(getOrCreateHousehold);
-  const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
+  const { data: hh } = useQuery({
+    queryKey: ["household", activeHouseholdId],
+    queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
+  });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const { ask: initialAsk } = Route.useSearch();

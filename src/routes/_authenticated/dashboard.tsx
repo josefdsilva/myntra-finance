@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
+import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -26,8 +27,9 @@ function Dashboard() {
   const t = useT();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({
-    queryKey: ["household"],
-    queryFn: () => fetchHousehold(),
+    queryKey: ["household", activeHouseholdId],
+    queryFn: () =>
+      fetchHousehold({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
 
   const householdId = hh?.household?.id;

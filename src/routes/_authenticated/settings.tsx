@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold, updateHousehold, inviteMember } from "@/lib/household.functions";
+import { useActiveHouseholdId } from "@/lib/active-household";
 import {
   upsertIncome,
   deleteIncome,
@@ -55,8 +56,8 @@ function SettingsPage() {
     error: hhError,
     refetch: refetchHh,
   } = useQuery({
-    queryKey: ["household"],
-    queryFn: () => fetchHh(),
+    queryKey: ["household", activeHouseholdId],
+    queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
     retry: 1,
   });
   const householdId = hh?.household?.id;
