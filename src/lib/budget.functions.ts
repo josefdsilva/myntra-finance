@@ -13,7 +13,9 @@ const expenseInput = z.object({
   source_meta: z.record(z.unknown()).optional(),
   kind: z.enum(["expense", "income"]).default("expense"),
   is_salary: z.boolean().optional().default(false),
+  labels: z.array(z.string().min(1).max(40)).max(20).optional().default([]),
 });
+
 
 export const addExpense = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
