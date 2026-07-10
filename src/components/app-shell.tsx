@@ -18,7 +18,7 @@ import {
   BookOpen,
   ShieldCheck,
 } from "lucide-react";
-import appIcon from "@/assets/app-icon.png.asset.json";
+import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold } from "@/lib/household.functions";
