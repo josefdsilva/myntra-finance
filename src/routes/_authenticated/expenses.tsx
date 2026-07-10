@@ -240,6 +240,21 @@ function ExpensesPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {recentLabels.length > 0 && (
+                <Select value={labelFilter} onValueChange={setLabelFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All labels" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All labels</SelectItem>
+                    {recentLabels.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         </CardHeader>
