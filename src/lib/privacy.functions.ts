@@ -3,6 +3,70 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 /**
+ * Export ALL data the caller can see, across every household they are a
+ * member of, as a JSON-serializable object. GDPR right to data portability.
+ * Uses the RLS-scoped client on purpose so the export can never leak rows
+ * from households the caller isn't in.
+ */
+export const exportMyData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId, claims } = context;
+
+    const { data: profile } = await supabase
+      .from("profiles").select("*").eq("user_id", userId).maybeSingle();
+
+    const { data: memberships } = await supabase
+      .from("household_members").select("*").eq("user_id", userId);
+
+    const householdIds = (memberships ?? []).map((m) => m.household_id);
+
+    async function fetchAll(table:
+      | "households" | "household_members" | "household_invitations"
+      | "incomes" | "fixed_expenses" | "variable_estimates"
+      | "buckets" | "bucket_allocations" | "expenses"
+      | "bank_imports" | "analysis_overviews" | "credit_usage"
+      | "notification_prefs" | "notification_log") {
+      if (householdIds.length === 0) return [];
+      const idCol = table === "households" ? "id" : "household_id";
+      const { data } = await supabase.from(table).select("*").in(idCol, householdIds);
+      return data ?? [];
+    }
+
+    const [
+      households, householdMembers, invitations,
+      incomes, fixedExpenses, variableEstimates,
+      buckets, bucketAllocations, expenses,
+      bankImports, analysisOverviews, creditUsage,
+      notificationPrefs, notificationLog,
+    ] = await Promise.all([
+      fetchAll("households"), fetchAll("household_members"), fetchAll("household_invitations"),
+      fetchAll("incomes"), fetchAll("fixed_expenses"), fetchAll("variable_estimates"),
+      fetchAll("buckets"), fetchAll("bucket_allocations"), fetchAll("expenses"),
+      fetchAll("bank_imports"), fetchAll("analysis_overviews"), fetchAll("credit_usage"),
+      fetchAll("notification_prefs"), fetchAll("notification_log"),
+    ]);
+
+    return {
+      exportedAt: new Date().toISOString(),
+      format: "myntra.export.v1",
+      account: {
+        userId,
+        email: (claims as { email?: string } | undefined)?.email ?? null,
+        profile: profile ?? null,
+      },
+      memberships: memberships ?? [],
+      households: {
+        households, householdMembers, invitations,
+        incomes, fixedExpenses, variableEstimates,
+        buckets, bucketAllocations, expenses,
+        bankImports, analysisOverviews, creditUsage,
+        notificationPrefs, notificationLog,
+      },
+    };
+  });
+
+/**
  * Delete an entire household and every row that references it.
  * Only an owner of that household may call it.
  * Cascade deletes handle members/buckets/expenses/incomes/allocations/etc.

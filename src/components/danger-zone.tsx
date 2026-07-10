@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import {
   deleteHousehold,
   deleteMyAccount,
+  exportMyData,
   leaveHousehold,
 } from "@/lib/privacy.functions";
 
@@ -52,6 +53,7 @@ export function DangerZone({ householdId, householdName, role }: Props) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <ExportDataRow />
         <LeaveHouseholdRow householdId={householdId} householdName={householdName} />
         {isOwner && (
           <DeleteHouseholdRow householdId={householdId} householdName={householdName} />
@@ -59,6 +61,44 @@ export function DangerZone({ householdId, householdName, role }: Props) {
         <DeleteAccountRow />
       </CardContent>
     </Card>
+  );
+}
+
+function ExportDataRow() {
+  const doExport = useServerFn(exportMyData);
+  const [busy, setBusy] = useState(false);
+
+  async function onExport() {
+    setBusy(true);
+    try {
+      const payload = await doExport();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const ts = new Date().toISOString().slice(0, 10);
+      a.download = `myntra-export-${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Export downloaded.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <RowShell
+      title="Export my data"
+      body="Download a JSON file containing your profile, memberships, and every record from the households you belong to (incomes, fixed costs, buckets, expenses, allocations, notifications). GDPR right to data portability."
+    >
+      <Button variant="outline" size="sm" onClick={onExport} disabled={busy}>
+        <Download className="size-4" /> {busy ? "Preparing…" : "Download JSON"}
+      </Button>
+    </RowShell>
   );
 }
 
