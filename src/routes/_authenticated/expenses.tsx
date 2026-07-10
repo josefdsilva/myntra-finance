@@ -42,10 +42,13 @@ function ExpensesPage() {
 
   const { names: catNames } = useCategoryNames(householdId);
   const categoryOptions = ["all", ...catNames];
+  const { data: recentLabels = [] } = useRecentLabels(householdId);
 
   const [category, setCategory] = useState("all");
+  const [labelFilter, setLabelFilter] = useState<string>("all");
 
   const [cycleOffset, setCycleOffset] = useState(0);
+
 
   // Fetch salary history to derive pay cycles
   const { data: salaries } = useQuery({
