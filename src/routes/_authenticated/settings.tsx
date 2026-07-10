@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold, updateHousehold, inviteMember } from "@/lib/household.functions";
+import { useActiveHouseholdId } from "@/lib/active-household";
 import {
   upsertIncome,
   deleteIncome,
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsPage() {
   const qc = useQueryClient();
   const t = useT();
+  const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const {
     data: hh,
@@ -55,8 +57,8 @@ function SettingsPage() {
     error: hhError,
     refetch: refetchHh,
   } = useQuery({
-    queryKey: ["household"],
-    queryFn: () => fetchHh(),
+    queryKey: ["household", activeHouseholdId],
+    queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
     retry: 1,
   });
   const householdId = hh?.household?.id;
@@ -412,7 +414,6 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
     }
   }, [categoryOptions, category]);
 
-
   async function add() {
     if (!label || !amount) return;
     await upsert({
@@ -605,7 +606,6 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
       setCategory(categoryOptions[0]);
     }
   }, [categoryOptions, category]);
-
 
   async function add() {
     if (!label || !amount) return;

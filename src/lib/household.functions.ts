@@ -33,11 +33,29 @@ const DEFAULT_BUCKETS = [
   },
 ];
 
-/** Returns the current user's household (creates one on first call). */
+/**
+ * Returns the current user's household. If `household_id` is provided and the
+ * caller is a member, that specific household is returned. Otherwise the
+ * caller's default household is returned (creating one on very first call).
+ */
 export const getOrCreateHousehold = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input: unknown) =>
+    z.object({ household_id: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+
+    // If a specific household was requested and the caller is a member, return it.
+    if (data?.household_id) {
+      const { data: mem } = await supabase
+        .from("household_members")
+        .select("role, households(*)")
+        .eq("household_id", data.household_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (mem?.households) return { household: mem.households, role: mem.role };
+    }
 
     // Prefer a shared household (member role) over a self-created empty one.
     const { data: memberships } = await supabase
@@ -170,4 +188,50 @@ export const acceptInvite = createServerFn({ method: "POST" })
       .eq("id", invite.id);
 
     return { household_id: invite.household_id };
+  });
+
+/** All households the current user belongs to, oldest membership first. */
+export const listMyHouseholds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("household_members")
+      .select("role, joined_at, households(*)")
+      .eq("user_id", context.userId)
+      .order("joined_at", { ascending: true });
+    if (error) throw error;
+    return (data ?? [])
+      .filter((m): m is typeof m & { households: NonNullable<typeof m.households> } =>
+        Boolean(m.households),
+      )
+      .map((m) => ({ household: m.households, role: m.role, joined_at: m.joined_at }));
+  });
+
+/** Create an additional household owned by the caller and seed its buckets. */
+export const createHousehold = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ name: z.string().trim().min(1).max(100) }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: household, error } = await supabaseAdmin
+      .from("households")
+      .insert({ name: data.name, created_by: userId, baseline_budget: 0, margin_pct: 10 })
+      .select()
+      .single();
+    if (error || !household) throw error ?? new Error("Failed to create household");
+
+    const { error: mErr } = await supabaseAdmin
+      .from("household_members")
+      .insert({ household_id: household.id, user_id: userId, role: "owner" });
+    if (mErr) throw mErr;
+
+    await supabaseAdmin
+      .from("buckets")
+      .insert(DEFAULT_BUCKETS.map((b) => ({ ...b, household_id: household.id })));
+
+    return { household, role: "owner" as const };
   });

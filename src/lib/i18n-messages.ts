@@ -27,6 +27,7 @@ const en = {
   "nav.settings": "Settings",
   "nav.wiki": "Wiki",
   "nav.privacy": "Privacy",
+  "nav.households": "Households",
 
   // Sidebar / top bar
   "shell.subtitle": "Budget & planning",
@@ -307,6 +308,7 @@ const pt: Record<MessageKey, string> = {
   "nav.settings": "Definições",
   "nav.wiki": "Wiki",
   "nav.privacy": "Privacidade",
+  "nav.households": "Agregados",
 
   "shell.subtitle": "Orçamento e planeamento",
   "shell.lightTheme": "Tema claro",
@@ -571,6 +573,7 @@ const es: Record<MessageKey, string> = {
   "nav.settings": "Ajustes",
   "nav.wiki": "Wiki",
   "nav.privacy": "Privacidad",
+  "nav.households": "Hogares",
 
   "shell.subtitle": "Presupuesto y planificación",
   "shell.lightTheme": "Tema claro",
@@ -834,6 +837,7 @@ const de: Record<MessageKey, string> = {
   "nav.settings": "Einstellungen",
   "nav.wiki": "Wiki",
   "nav.privacy": "Datenschutz",
+  "nav.households": "Haushalte",
 
   "shell.subtitle": "Budget & Planung",
   "shell.lightTheme": "Helles Design",
@@ -1099,6 +1103,7 @@ const fr: Record<MessageKey, string> = {
   "nav.settings": "Paramètres",
   "nav.wiki": "Wiki",
   "nav.privacy": "Confidentialité",
+  "nav.households": "Foyers",
 
   "shell.subtitle": "Budget et planification",
   "shell.lightTheme": "Thème clair",

@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalysisRouteImport } from './routes/_authenticated/analysis'
@@ -55,6 +56,11 @@ const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHouseholdsRoute = AuthenticatedHouseholdsRouteImport.update({
+  id: '/households',
+  path: '/households',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/analysis': typeof AuthenticatedAnalysisRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/households': typeof AuthenticatedHouseholdsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/analysis': typeof AuthenticatedAnalysisRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/households': typeof AuthenticatedHouseholdsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_authenticated/analysis': typeof AuthenticatedAnalysisRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
+  '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/dashboard'
     | '/expenses'
+    | '/households'
     | '/settings'
     | '/wiki'
     | '/invite/$token'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/dashboard'
     | '/expenses'
+    | '/households'
     | '/settings'
     | '/wiki'
     | '/invite/$token'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analysis'
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
+    | '/_authenticated/households'
     | '/_authenticated/settings'
     | '/_authenticated/wiki'
     | '/invite/$token'
@@ -242,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/households': {
+      id: '/_authenticated/households'
+      path: '/households'
+      fullPath: '/households'
+      preLoaderRoute: typeof AuthenticatedHouseholdsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/expenses': {
       id: '/_authenticated/expenses'
       path: '/expenses'
@@ -292,6 +311,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalysisRoute: typeof AuthenticatedAnalysisRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
+  AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
 }
@@ -301,6 +321,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalysisRoute: AuthenticatedAnalysisRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
+  AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
 }

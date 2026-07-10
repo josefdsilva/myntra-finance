@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
+import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -24,10 +25,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const t = useT();
+  const activeHouseholdId = useActiveHouseholdId();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({
-    queryKey: ["household"],
-    queryFn: () => fetchHousehold(),
+    queryKey: ["household", activeHouseholdId],
+    queryFn: () =>
+      fetchHousehold({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
 
   const householdId = hh?.household?.id;
@@ -277,9 +280,7 @@ function Dashboard() {
             )}
           </p>
           {cycle?.source === "calendar" && (
-            <p className="text-xs text-muted-foreground mt-2">
-              {t("dashboard.safe.calendarTip")}
-            </p>
+            <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
           )}
 
           {/* 7-day sparkline of net daily spend */}
@@ -289,7 +290,6 @@ function Dashboard() {
               {t("dashboard.spark.caption")}
             </p>
           </div>
-
 
           <div className="mt-6 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -324,7 +324,9 @@ function Dashboard() {
                   {t("dashboard.chip.balance", { value: money(netSpent) })}
                 </span>
               </div>
-              <span className="text-muted-foreground tabular-nums">{t("dashboard.chip.pool", { value: money(variablePool) })}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {t("dashboard.chip.pool", { value: money(variablePool) })}
+              </span>
             </div>
             <Progress
               value={pctSpent}
@@ -345,14 +347,14 @@ function Dashboard() {
           {/* Bucket impact */}
           <div className="mt-6 pt-6 border-t">
             {!buckets.length ? (
-              <p className="text-xs text-muted-foreground">
-                {t("dashboard.buckets.none")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("dashboard.buckets.none")}</p>
             ) : !inJeopardy ? (
               <div className="flex items-start gap-3">
                 <span className="mt-1 size-2.5 rounded-full bg-primary shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">{t("dashboard.buckets.onTrack")}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("dashboard.buckets.onTrack")}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {t("dashboard.buckets.onTrackBody", {
                       perDay: money(safeToday),
@@ -408,7 +410,6 @@ function Dashboard() {
         <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
 
-
       {householdId && (
         <DashboardTips
           householdId={householdId}
@@ -461,7 +462,8 @@ function Dashboard() {
                   ? e.kind === "income" && !e.is_salary
                   : e.kind !== "income",
             );
-            if (!list.length) return <p className="text-sm text-muted-foreground">{t("dashboard.recent.none")}</p>;
+            if (!list.length)
+              return <p className="text-sm text-muted-foreground">{t("dashboard.recent.none")}</p>;
             return (
               <ul className="divide-y">
                 {list.map((e) => {

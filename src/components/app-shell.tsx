@@ -17,19 +17,33 @@ import {
   Moon,
   BookOpen,
   ShieldCheck,
+  Users,
+  Check,
+  ChevronsUpDown,
+  Plus,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getOrCreateHousehold } from "@/lib/household.functions";
+import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.functions";
+import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const NAV = [
   { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
   { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
   { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+  { to: "/households", labelKey: "nav.households", icon: Users },
   { to: "/settings", labelKey: "nav.settings", icon: Settings },
   { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
   { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
@@ -43,12 +57,38 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  const activeId = useActiveHouseholdId();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
+  const fetchList = useServerFn(listMyHouseholds);
   const { data: hh } = useQuery({
-    queryKey: ["household"],
-    queryFn: () => fetchHousehold(),
+    queryKey: ["household", activeId],
+    queryFn: () => fetchHousehold({ data: activeId ? { household_id: activeId } : {} }),
+  });
+  const { data: households } = useQuery({
+    queryKey: ["my-households"],
+    queryFn: () => fetchList(),
   });
   const householdName = hh?.household?.name?.trim() || "Household";
+  const resolvedId = hh?.household?.id ?? null;
+
+  // If the stored active id no longer points at a household we belong to,
+  // sync it to whatever the server picked so future queries stay consistent.
+  useEffect(() => {
+    if (resolvedId && activeId && resolvedId !== activeId) {
+      setActiveHouseholdId(resolvedId);
+    } else if (resolvedId && !activeId) {
+      setActiveHouseholdId(resolvedId);
+    }
+  }, [resolvedId, activeId]);
+
+  function switchHousehold(id: string) {
+    if (id === resolvedId) return;
+    setActiveHouseholdId(id);
+    // Everything downstream is keyed by household id — nuke the cache so
+    // no stale rows from the previous household leak into the new one.
+    queryClient.clear();
+  }
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -115,6 +155,57 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
+  const hasMultiple = (households?.length ?? 0) > 1;
+
+  const HouseholdSwitcher = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-left group rounded-md px-1 -mx-1 hover:bg-muted/60 transition-colors"
+          aria-label="Switch household"
+        >
+          <div className="min-w-0">
+            <div className="font-display text-lg leading-tight truncate max-w-[140px]">
+              {householdName}
+            </div>
+            <div className="text-xs text-muted-foreground">{t("shell.subtitle")}</div>
+          </div>
+          <ChevronsUpDown className="size-4 text-muted-foreground opacity-70 group-hover:opacity-100" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuLabel>Your households</DropdownMenuLabel>
+        {(households ?? []).map((h) => (
+          <DropdownMenuItem
+            key={h.household.id}
+            onSelect={() => switchHousehold(h.household.id)}
+            className="flex items-center gap-2"
+          >
+            <Check
+              className={cn("size-4", h.household.id === resolvedId ? "opacity-100" : "opacity-0")}
+            />
+            <span className="flex-1 truncate">{h.household.name || "Untitled"}</span>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              {h.role}
+            </span>
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/households" className="flex items-center gap-2">
+            <Users className="size-4" /> Manage households
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/households" className="flex items-center gap-2">
+            <Plus className="size-4" /> New household
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Top bar mobile */}
@@ -148,6 +239,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      {/* Mobile household switcher row (visible under the top bar) */}
+      {open || hasMultiple ? (
+        <div className="md:hidden px-4 py-2 border-b bg-card">{HouseholdSwitcher}</div>
+      ) : null}
+
       {/* Sidebar */}
       <aside
         className={cn(
@@ -157,15 +253,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className="hidden md:flex items-center gap-2 p-5 border-b">
           <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
-          <div>
-            <div className="font-display text-lg leading-tight">{householdName}</div>
-            <div className="text-xs text-muted-foreground">{t("shell.subtitle")}</div>
-          </div>
+          {HouseholdSwitcher}
         </div>
         <nav className="flex md:flex-col gap-1 p-3 flex-1 overflow-x-auto">
           {NAV.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.to;
+            const label = t(item.labelKey);
             return (
               <Link
                 key={item.to}
@@ -178,7 +272,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
               >
                 <Icon className="size-4" />
-                {t(item.labelKey)}
+                {label}
               </Link>
             );
           })}
