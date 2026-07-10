@@ -181,14 +181,14 @@ function AllocationsPage() {
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
-        <h1 className="text-3xl font-display">Allocations</h1>
-        <p className="text-sm text-muted-foreground">Where this month's surplus goes.</p>
+        <h1 className="text-3xl font-display">{t("alloc.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("alloc.subtitle")}</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Stat label="Monthly income" value={money(income)} />
-        <Stat label="Baseline budget" value={money(baseline)} />
-        <Stat label="Surplus" value={money(surplus)} highlight />
+        <Stat label={t("alloc.stat.income")} value={money(income)} />
+        <Stat label={t("alloc.stat.baseline")} value={money(baseline)} />
+        <Stat label={t("alloc.stat.surplus")} value={money(surplus)} highlight />
       </div>
 
       {showCloseWarning && (
@@ -197,11 +197,10 @@ function AllocationsPage() {
           <div className="text-sm">
             <p className="font-medium text-amber-900 dark:text-amber-200">
               {daysLeftInMonth === 0
-                ? "Month ends today"
-                : `Month ends in ${daysLeftInMonth} day${daysLeftInMonth === 1 ? "" : "s"}`}
+                ? t("alloc.close.endsToday")
+                : t("alloc.close.endsIn", { days: daysLeftInMonth })}
               {" · "}
-              {unconfirmedBuckets.length} bucket{unconfirmedBuckets.length === 1 ? "" : "s"} not yet
-              confirmed
+              {t("alloc.close.unconfirmed", { count: unconfirmedBuckets.length })}
             </p>
             <p className="text-muted-foreground mt-0.5">
               {unconfirmedBuckets.map((b) => b.name).join(", ")}
@@ -212,20 +211,15 @@ function AllocationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>This month's buckets</CardTitle>
-          <CardDescription>
-            Configure targets in{" "}
-            <Link to="/settings" className="underline">
-              Settings
-            </Link>
-            .
-          </CardDescription>
+          <CardTitle>{t("alloc.thisMonth.title")}</CardTitle>
+          <CardDescription>{t("alloc.thisMonth.desc")}</CardDescription>
         </CardHeader>
         <CardContent>
           {!data?.buckets?.length ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
-              No buckets configured yet.
+              {t("alloc.thisMonth.empty")}
             </p>
+
           ) : (
             <div className="space-y-4">
               {surplus > 0 && (
