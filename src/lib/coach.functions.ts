@@ -77,6 +77,7 @@ type CoachContext = {
     totalSaved: number;
   }>;
   topSpends: Array<{ amount: number; category: string; note: string | null; occurred_at: string }>;
+  benchmark: BenchmarkComparison | null;
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
 
