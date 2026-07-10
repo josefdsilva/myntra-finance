@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, RefreshCw, MessageSquare, Send, Loader2 } from "lucide-react";
 import { generateOverview, chatWithCoach } from "@/lib/coach.functions";
+import { useLocale } from "@/lib/i18n";
 import { toast } from "sonner";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
