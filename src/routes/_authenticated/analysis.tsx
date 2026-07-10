@@ -270,7 +270,12 @@ function AnalysisPage() {
           1;
         return Math.max(1, m);
       }
-      const totalAllocated = (buckets ?? []).reduce((s: number, b: any) => {
+      type BucketAlloc = {
+        target_type: string;
+        target_value: number | string;
+        target_deadline: string | null;
+      };
+      const totalAllocated = ((buckets ?? []) as BucketAlloc[]).reduce((s, b) => {
         const v = Number(b.target_value);
         if (b.target_type === "pct_surplus") return s + (surplus * v) / 100;
         if (b.target_type === "fixed_monthly") return s + v;
