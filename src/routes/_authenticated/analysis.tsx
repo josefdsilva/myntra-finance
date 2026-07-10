@@ -304,7 +304,7 @@ function AnalysisPage() {
         </div>
       </header>
 
-      {householdId && <CoachPanel householdId={householdId} initialPrompt={Route.useSearch().ask} />}
+      {householdId && <CoachPanel householdId={householdId} initialPrompt={initialAsk} />}
 
 
 
