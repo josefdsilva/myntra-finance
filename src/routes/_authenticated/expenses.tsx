@@ -265,6 +265,11 @@ function ExpensesPage() {
                         {isIncome ? " · received" : ""} ·{" "}
                         <span className="capitalize">{e.source.replace("_", " ")}</span>
                       </p>
+                      {e.note && (e.merchant || e.category) && e.note !== e.merchant && (
+                        <p className="text-xs text-muted-foreground/80 italic truncate mt-0.5">
+                          {e.note}
+                        </p>
+                      )}
                     </div>
                     <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
                       {isIncome ? "+" : "−"}
