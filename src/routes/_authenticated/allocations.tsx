@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/allocations")({
   head: () => ({ meta: [{ title: "Allocations · Myntra" }] }),

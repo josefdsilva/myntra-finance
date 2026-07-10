@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { format as fmt } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Myntra" }] }),

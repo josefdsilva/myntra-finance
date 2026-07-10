@@ -21,6 +21,7 @@ import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2, Sparkles } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses · Myntra" }] }),
