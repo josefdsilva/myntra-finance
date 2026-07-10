@@ -313,6 +313,9 @@ function HouseholdSection({
         qc.invalidateQueries({ queryKey: ["allocations"] });
       })
       .catch(() => {});
+    // Intentionally excludes stable refs (update, onChange, qc, household.*) to
+    // avoid write loops; recomputes only when the derived baseline inputs change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseline, margin, storedBaseline, fixedRows, varRows]);
 
   async function saveName() {
