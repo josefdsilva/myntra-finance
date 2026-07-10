@@ -16,6 +16,7 @@ export function CoachPanel({ householdId, initialPrompt }: { householdId: string
   const qc = useQueryClient();
   const genFn = useServerFn(generateOverview);
   const chatFn = useServerFn(chatWithCoach);
+  const locale = useLocale();
   const [chatOpen, setChatOpen] = useState(false);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMsg[]>([]);
