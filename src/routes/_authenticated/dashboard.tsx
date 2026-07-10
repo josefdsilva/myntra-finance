@@ -214,22 +214,18 @@ function Dashboard() {
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <header>
         <p className="text-sm text-muted-foreground">{cycleLabel}</p>
-        <h1 className="text-3xl md:text-4xl font-display">Daily overview</h1>
+        <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
       </header>
 
       {setupIncomplete ? (
         <Card className="border-warning/40 bg-warning/5">
           <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-6">
             <div>
-              <p className="font-medium">
-                Set up your monthly baseline to see your daily safe-to-spend.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Add income, fixed expenses and your baseline budget in Settings.
-              </p>
+              <p className="font-medium">{t("dashboard.setup.title")}</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.setup.body")}</p>
             </div>
             <Button asChild>
-              <Link to="/settings">Go to settings</Link>
+              <Link to="/settings">{t("dashboard.setup.action")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -239,7 +235,7 @@ function Dashboard() {
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
           <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Safe to spend per day
+            {t("dashboard.safe.label")}
           </p>
           <div className="flex items-baseline gap-3 flex-wrap">
             <p
@@ -262,8 +258,9 @@ function Dashboard() {
                 ) : (
                   <Minus className="size-4" />
                 )}
-                {trendDelta > 0 ? "+" : ""}
-                {money(trendDelta)} vs yesterday
+                {t("dashboard.safe.vsYesterday", {
+                  value: `${trendDelta > 0 ? "+" : ""}${money(trendDelta)}`,
+                })}
               </span>
             )}
           </div>
@@ -271,17 +268,17 @@ function Dashboard() {
             {isLoading ? (
               <span className="inline-block h-4 w-64 rounded bg-muted animate-pulse align-middle" />
             ) : (
-              <>
-                {money(remaining)} remaining ÷ {daysLeft} day{daysLeft === 1 ? "" : "s"} until{" "}
-                {cycle?.source === "salary" ? "next salary" : "month end"} ={" "}
-                <span className="font-medium text-foreground">{money(safeToday)}/day</span>
-              </>
+              t(
+                cycle?.source === "salary"
+                  ? "dashboard.safe.remainingSalary"
+                  : "dashboard.safe.remainingMonth",
+                { remaining: money(remaining), days: daysLeft, perDay: money(safeToday) },
+              )
             )}
           </p>
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">
-              Tip: press <span className="font-medium">Salary received</span> below on payday to
-              start a new pay cycle.
+              {t("dashboard.safe.calendarTip")}
             </p>
           )}
 
@@ -289,9 +286,10 @@ function Dashboard() {
           <div className="mt-5">
             <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-              Last 7 days · dashed line = today's safe-to-spend
+              {t("dashboard.spark.caption")}
             </p>
           </div>
+
 
           <div className="mt-6 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
