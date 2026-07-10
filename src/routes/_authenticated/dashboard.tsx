@@ -202,8 +202,9 @@ function Dashboard() {
   );
   const cycleLabel = cycle
     ? cycle.source === "salary"
-      ? `Pay cycle · ${fmtDate(cycle.start)} → ${fmtDate(cycle.end)}${cycle.predicted ? " (predicted)" : ""}`
-      : `Calendar month · ${monthName} (no salary recorded yet)`
+      ? t("dashboard.cycle.pay", { start: fmtDate(cycle.start), end: fmtDate(cycle.end) }) +
+        (cycle.predicted ? t("dashboard.cycle.predicted") : "")
+      : t("dashboard.cycle.calendar", { month: monthName })
     : monthName;
 
   const setupIncomplete = baseline === 0;
