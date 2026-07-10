@@ -319,6 +319,7 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           setItems={setItems}
           onConfirm={confirm}
           onCancel={() => setItems(null)}
+          householdId={householdId}
           loading={loading}
         />
       )}
@@ -489,7 +490,7 @@ function ParsedReview({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => (
+                {catOptions.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
                   </SelectItem>
