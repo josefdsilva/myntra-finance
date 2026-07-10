@@ -472,17 +472,7 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[
-                "groceries",
-                "fuel",
-                "transport",
-                "goods",
-                "eating_out",
-                "leisure",
-                "kids",
-                "health",
-                "other",
-              ].map((c) => (
+              {categoryOptions.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
                 </SelectItem>
