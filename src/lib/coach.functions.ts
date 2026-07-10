@@ -3,10 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { computeCycle } from "@/lib/cycle";
-import {
-  createLovableAiGatewayProvider,
-  requireLovableApiKey,
-} from "./ai-gateway.server";
+import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
@@ -49,10 +46,7 @@ type CoachContext = {
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
 
-async function buildContext(
-  supabase: any,
-  householdId: string,
-): Promise<CoachContext> {
+async function buildContext(supabase: any, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
     .from("households")
     .select("currency, baseline_budget, margin_pct")
@@ -96,7 +90,8 @@ async function buildContext(
       .eq("household_id", householdId)
       .gte("occurred_at", prevStart.toISOString())
       .lt("occurred_at", prevEnd.toISOString());
-    let s = 0, r = 0;
+    let s = 0,
+      r = 0;
     for (const e of prevExp ?? []) {
       const a = Number(e.amount);
       if (e.kind === "income") r += a;
@@ -105,33 +100,58 @@ async function buildContext(
     previousCycleTotals = { spent: s, received: r, net: s - r };
   }
 
-  const [{ data: fixed = [] }, { data: varEst = [] }, { data: buckets = [] }, { data: allocs = [] }] =
-    await Promise.all([
-      supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
-      supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
-      supabase.from("buckets").select("id, name, target_type, target_value, target_deadline").eq("household_id", householdId),
-      supabase.from("bucket_allocations").select("bucket_id, amount, confirmed_at")
-        .eq("household_id", householdId).gte("confirmed_at", startISO).lt("confirmed_at", endISO),
-    ]);
+  const [
+    { data: fixed = [] },
+    { data: varEst = [] },
+    { data: buckets = [] },
+    { data: allocs = [] },
+  ] = await Promise.all([
+    supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+    supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("buckets")
+      .select("id, name, target_type, target_value, target_deadline")
+      .eq("household_id", householdId),
+    supabase
+      .from("bucket_allocations")
+      .select("bucket_id, amount, confirmed_at")
+      .eq("household_id", householdId)
+      .gte("confirmed_at", startISO)
+      .lt("confirmed_at", endISO),
+  ]);
 
   const fixedMonthly = (fixed ?? []).reduce((s: number, r: any) => s + Number(r.monthly_amount), 0);
-  const variableEstimateMonthly = (varEst ?? []).reduce((s: number, r: any) => s + Number(r.monthly_amount), 0);
+  const variableEstimateMonthly = (varEst ?? []).reduce(
+    (s: number, r: any) => s + Number(r.monthly_amount),
+    0,
+  );
 
   const allocByBucket: Record<string, number> = {};
   for (const a of allocs ?? []) {
     allocByBucket[a.bucket_id] = (allocByBucket[a.bucket_id] ?? 0) + Number(a.amount);
   }
 
-  let spent = 0, received = 0;
+  let spent = 0,
+    received = 0;
   const byCategory: Record<string, number> = {};
-  const spendsForTop: Array<{ amount: number; category: string; note: string | null; occurred_at: string }> = [];
+  const spendsForTop: Array<{
+    amount: number;
+    category: string;
+    note: string | null;
+    occurred_at: string;
+  }> = [];
   for (const e of cycleExp ?? []) {
     const a = Number(e.amount);
     if (e.kind === "income") received += a;
     else {
       spent += a;
       byCategory[e.category] = (byCategory[e.category] ?? 0) + a;
-      spendsForTop.push({ amount: a, category: e.category, note: e.note, occurred_at: e.occurred_at });
+      spendsForTop.push({
+        amount: a,
+        category: e.category,
+        note: e.note,
+        occurred_at: e.occurred_at,
+      });
     }
   }
   spendsForTop.sort((a, b) => b.amount - a.amount);
@@ -180,7 +200,11 @@ const OVERVIEW_PROMPT = `Write a friendly financial overview in markdown with th
 Keep the whole thing under ~220 words. No preamble.`;
 
 const LANG_NAMES: Record<string, string> = {
-  en: "English", pt: "Portuguese", es: "Spanish", de: "German", fr: "French",
+  en: "English",
+  pt: "Portuguese",
+  es: "Spanish",
+  de: "German",
+  fr: "French",
 };
 
 function langInstruction(locale?: string) {
@@ -192,11 +216,13 @@ function langInstruction(locale?: string) {
 export const generateOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      householdId: z.string().uuid(),
-      refresh: z.boolean().optional(),
-      locale: z.string().optional(),
-    }).parse(input),
+    z
+      .object({
+        householdId: z.string().uuid(),
+        refresh: z.boolean().optional(),
+        locale: z.string().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -255,15 +281,13 @@ export const generateOverview = createServerFn({ method: "POST" })
     if (useCache) {
       // Upsert via admin (RLS blocks writes from client role)
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin
-        .from("analysis_overviews")
-        .upsert({
-          household_id: data.householdId,
-          cycle_start: ctx.cycleStartKey,
-          content: result.text,
-          model: MODEL,
-          generated_at,
-        });
+      await supabaseAdmin.from("analysis_overviews").upsert({
+        household_id: data.householdId,
+        cycle_start: ctx.cycleStartKey,
+        content: result.text,
+        model: MODEL,
+        generated_at,
+      });
     }
 
     return { content: result.text, generated_at, model: MODEL, cached: false };

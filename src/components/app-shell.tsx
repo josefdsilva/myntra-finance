@@ -2,7 +2,22 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, X, Eye, EyeOff, BarChart3, Sun, Moon, BookOpen, ShieldCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  Receipt,
+  PiggyBank,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Eye,
+  EyeOff,
+  BarChart3,
+  Sun,
+  Moon,
+  BookOpen,
+  ShieldCheck,
+} from "lucide-react";
 import appIcon from "@/assets/app-icon.png.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -73,7 +88,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       for (const m of muts) {
         m.addedNodes.forEach((node) => {
           if (node.nodeType === 1 || node.nodeType === 11) mark(node);
-          else if (node.nodeType === 3 && node.parentElement && CURRENCY.test(node.nodeValue ?? "")) {
+          else if (
+            node.nodeType === 3 &&
+            node.parentElement &&
+            CURRENCY.test(node.nodeValue ?? "")
+          ) {
             node.parentElement.classList.add("sensitive");
           }
         });
@@ -88,8 +107,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
     return () => obs.disconnect();
   }, [privacy]);
-
-
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -131,7 +148,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-
       {/* Sidebar */}
       <aside
         className={cn(
@@ -168,24 +184,29 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="p-3 border-t hidden md:block space-y-1">
-          <Button variant="ghost" className="w-full justify-start" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+          >
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             {theme === "dark" ? t("shell.lightTheme") : t("shell.darkTheme")}
           </Button>
-          <Button variant="ghost" className="w-full justify-start" onClick={() => setPrivacy((s) => !s)}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={() => setPrivacy((s) => !s)}
+          >
             {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             {privacy ? t("shell.showNumbers") : t("shell.hideNumbers")}
           </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" /> {t("shell.signOut")}
           </Button>
-
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0">
-        {children}
-      </main>
+      <main className="flex-1 min-w-0">{children}</main>
     </div>
   );
 }

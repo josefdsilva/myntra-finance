@@ -5,19 +5,33 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { money, fmtDate } from "@/lib/format";
 import {
-  ResponsiveContainer, ComposedChart, XAxis, YAxis, Tooltip, CartesianGrid,
-  ReferenceLine, PieChart, Pie, Cell, Legend, Area,
+  ResponsiveContainer,
+  ComposedChart,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceLine,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  Area,
 } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { format as fmt } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
-
-
 
 export const Route = createFileRoute("/_authenticated/analysis")({
   head: () => ({ meta: [{ title: "Analysis · Myntra" }] }),
@@ -36,37 +50,67 @@ type Expense = {
 };
 
 const COLORS = [
-  "#2c6e6b", "#c89b6c", "#a05c4a", "#3d7d8a", "#8a6b3d",
-  "#6b8a3d", "#5a4a8a", "#8a3d6b", "#3d5a8a", "#8a8a3d",
-  "#5c7a99", "#99785c", "#7a5c99", "#99995c",
+  "#2c6e6b",
+  "#c89b6c",
+  "#a05c4a",
+  "#3d7d8a",
+  "#8a6b3d",
+  "#6b8a3d",
+  "#5a4a8a",
+  "#8a3d6b",
+  "#3d5a8a",
+  "#8a8a3d",
+  "#5c7a99",
+  "#99785c",
+  "#7a5c99",
+  "#99995c",
 ];
 
 type RangeKey = "1" | "2" | "3" | "6" | "12" | "all";
 
 function BurnTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
-  const p = payload[0]?.payload as { label: string; balance: number; events?: Array<{ kind: string; label: string; amount: number; delta: number }> };
+  const p = payload[0]?.payload as {
+    label: string;
+    balance: number;
+    events?: Array<{ kind: string; label: string; amount: number; delta: number }>;
+  };
   if (!p) return null;
   return (
-    <div style={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, padding: 8, fontSize: 12, maxWidth: 260 }}>
+    <div
+      style={{
+        background: "var(--popover)",
+        border: "1px solid var(--border)",
+        borderRadius: 8,
+        padding: 8,
+        fontSize: 12,
+        maxWidth: 260,
+      }}
+    >
       <div style={{ fontWeight: 600 }}>{p.label}</div>
       <div style={{ marginTop: 2 }}>Balance: {money(p.balance)}</div>
       {p.events && p.events.length > 0 && p.events.some((e) => e.delta !== 0) && (
         <div style={{ marginTop: 6, borderTop: "1px solid var(--border)", paddingTop: 6 }}>
-          {p.events.filter((e) => e.delta !== 0).map((e, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <span style={{ opacity: 0.85 }}>{e.kind === "income" ? "↑" : e.kind === "fixed" ? "▼" : "↓"} {e.label}</span>
-              <span style={{ color: e.delta >= 0 ? "var(--primary)" : "hsl(var(--destructive))" }}>
-                {e.delta >= 0 ? "+" : ""}{money(e.delta)}
-              </span>
-            </div>
-          ))}
+          {p.events
+            .filter((e) => e.delta !== 0)
+            .map((e, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ opacity: 0.85 }}>
+                  {e.kind === "income" ? "↑" : e.kind === "fixed" ? "▼" : "↓"} {e.label}
+                </span>
+                <span
+                  style={{ color: e.delta >= 0 ? "var(--primary)" : "hsl(var(--destructive))" }}
+                >
+                  {e.delta >= 0 ? "+" : ""}
+                  {money(e.delta)}
+                </span>
+              </div>
+            ))}
         </div>
       )}
     </div>
   );
 }
-
 
 function AnalysisPage() {
   const fetchHh = useServerFn(getOrCreateHousehold);
@@ -109,9 +153,24 @@ function AnalysisPage() {
           const prev = new Date(salaryAsc[i - 1]);
           const diff = start.getTime() - prev.getTime();
           const days = Math.round(diff / 86400000);
-          end = days >= 20 && days <= 45 ? new Date(start.getTime() + diff) : new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes());
+          end =
+            days >= 20 && days <= 45
+              ? new Date(start.getTime() + diff)
+              : new Date(
+                  start.getFullYear(),
+                  start.getMonth() + 1,
+                  start.getDate(),
+                  start.getHours(),
+                  start.getMinutes(),
+                );
         } else {
-          end = new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes());
+          end = new Date(
+            start.getFullYear(),
+            start.getMonth() + 1,
+            start.getDate(),
+            start.getHours(),
+            start.getMinutes(),
+          );
         }
       }
       out.push({ start, end, predicted });
@@ -129,7 +188,6 @@ function AnalysisPage() {
     return { start: selected[0].start, end: selected[selected.length - 1].end, cycleCount: n };
   }, [cycles, range]);
 
-
   const { data: expenses } = useQuery({
     enabled: !!householdId,
     queryKey: ["analysis", householdId, start.toISOString(), end.toISOString()],
@@ -146,19 +204,25 @@ function AnalysisPage() {
     },
   });
 
-
   const { data: fixedRows = [] } = useQuery({
     enabled: !!householdId,
     queryKey: ["fixed-rows", householdId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("fixed_expenses").select("monthly_amount, category, label").eq("household_id", householdId!);
-      return (data ?? []) as Array<{ monthly_amount: number | string; category: string | null; label: string }>;
+        .from("fixed_expenses")
+        .select("monthly_amount, category, label")
+        .eq("household_id", householdId!);
+      return (data ?? []) as Array<{
+        monthly_amount: number | string;
+        category: string | null;
+        label: string;
+      }>;
     },
   });
-  const fixedTotal = useMemo(() => fixedRows.reduce((s, r) => s + Number(r.monthly_amount), 0), [fixedRows]);
-  
-
+  const fixedTotal = useMemo(
+    () => fixedRows.reduce((s, r) => s + Number(r.monthly_amount), 0),
+    [fixedRows],
+  );
 
   // ---- Burndown (current pay cycle) ----
   const { data: cycleData } = useQuery({
@@ -166,9 +230,13 @@ function AnalysisPage() {
     queryKey: ["burndown-cycle", householdId],
     queryFn: async () => {
       const [{ data: salaries }, { data: buckets }, { data: incomesRows }] = await Promise.all([
-        supabase.from("expenses").select("occurred_at")
-          .eq("household_id", householdId!).eq("is_salary", true)
-          .order("occurred_at", { ascending: false }).limit(6),
+        supabase
+          .from("expenses")
+          .select("occurred_at")
+          .eq("household_id", householdId!)
+          .eq("is_salary", true)
+          .order("occurred_at", { ascending: false })
+          .limit(6),
         supabase.from("buckets").select("*").eq("household_id", householdId!),
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
       ]);
@@ -186,7 +254,11 @@ function AnalysisPage() {
         if (!dateStr) return 0;
         const target = new Date(dateStr);
         const n = new Date();
-        const m = (target.getFullYear() - n.getFullYear()) * 12 + (target.getMonth() - n.getMonth()) + (target.getDate() >= n.getDate() ? 0 : -1) + 1;
+        const m =
+          (target.getFullYear() - n.getFullYear()) * 12 +
+          (target.getMonth() - n.getMonth()) +
+          (target.getDate() >= n.getDate() ? 0 : -1) +
+          1;
         return Math.max(1, m);
       }
       const totalAllocated = (buckets ?? []).reduce((s: number, b: any) => {
@@ -199,7 +271,15 @@ function AnalysisPage() {
       const unallocated = Math.max(0, surplus - totalAllocated);
       return {
         cycle,
-        tx: (cycleTx ?? []) as Array<{ amount: string | number; occurred_at: string; kind: "expense" | "income"; is_salary: boolean; category: string; note: string | null; merchant: string | null }>,
+        tx: (cycleTx ?? []) as Array<{
+          amount: string | number;
+          occurred_at: string;
+          kind: "expense" | "income";
+          is_salary: boolean;
+          category: string;
+          note: string | null;
+          merchant: string | null;
+        }>,
         unallocated,
         bucketTargets: totalAllocated,
         surplus,
@@ -207,7 +287,12 @@ function AnalysisPage() {
     },
   });
 
-  type BurnEvent = { kind: "income" | "expense" | "fixed"; label: string; amount: number; delta: number };
+  type BurnEvent = {
+    kind: "income" | "expense" | "fixed";
+    label: string;
+    amount: number;
+    delta: number;
+  };
   type BurnPoint = { label: string; iso: string; balance: number; events: BurnEvent[] };
 
   const burnSeries = useMemo<BurnPoint[]>(() => {
@@ -216,15 +301,20 @@ function AnalysisPage() {
     const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
     let bal = 0;
     const out: BurnPoint[] = [];
-    out.push({ label: fmt(cycle.start, "dd/MM"), iso: cycle.start.toISOString(), balance: 0, events: [{ kind: "expense", label: "Cycle start", amount: 0, delta: 0 }] });
+    out.push({
+      label: fmt(cycle.start, "dd/MM"),
+      iso: cycle.start.toISOString(),
+      balance: 0,
+      events: [{ kind: "expense", label: "Cycle start", amount: 0, delta: 0 }],
+    });
     let fixedReserved = false;
     for (const ev of events) {
       const amt = Number(ev.amount);
       const delta = ev.kind === "income" ? amt : -amt;
       bal += delta;
       const evLabel = ev.is_salary
-        ? (ev.note || ev.merchant || "Salary")
-        : (ev.note || ev.merchant || ev.category || (ev.kind === "income" ? "Income" : "Expense"));
+        ? ev.note || ev.merchant || "Salary"
+        : ev.note || ev.merchant || ev.category || (ev.kind === "income" ? "Income" : "Expense");
       out.push({
         label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm"),
         iso: ev.occurred_at,
@@ -237,20 +327,29 @@ function AnalysisPage() {
           label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm") + " · fixed",
           iso: ev.occurred_at,
           balance: Number(bal.toFixed(2)),
-          events: [{ kind: "fixed", label: "Fixed expenses reserved", amount: fixedTotal, delta: -fixedTotal }],
+          events: [
+            {
+              kind: "fixed",
+              label: "Fixed expenses reserved",
+              amount: fixedTotal,
+              delta: -fixedTotal,
+            },
+          ],
         });
         fixedReserved = true;
       }
     }
     const nowOrEnd = new Date(Math.min(Date.now(), cycle.end.getTime()));
-    out.push({ label: fmt(nowOrEnd, "dd/MM"), iso: nowOrEnd.toISOString(), balance: Number(bal.toFixed(2)), events: [] });
+    out.push({
+      label: fmt(nowOrEnd, "dd/MM"),
+      iso: nowOrEnd.toISOString(),
+      balance: Number(bal.toFixed(2)),
+      events: [],
+    });
     return out;
   }, [cycleData, fixedTotal]);
 
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
-
-
-
 
   const byCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -268,10 +367,10 @@ function AnalysisPage() {
       .sort((a, b) => b.value - a.value);
   }, [onlySpend, includeFixed, fixedRows, cycleCount]);
 
-
-
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
-  const totalIncome = (expenses ?? []).filter((e) => e.kind === "income").reduce((s, e) => s + Number(e.amount), 0);
+  const totalIncome = (expenses ?? [])
+    .filter((e) => e.kind === "income")
+    .reduce((s, e) => s + Number(e.amount), 0);
 
   // Fixed expenses over selected cycles (1 monthly amount per cycle)
   const proratedFixed = fixedTotal * cycleCount;
@@ -286,12 +385,15 @@ function AnalysisPage() {
           <h1 className="text-3xl font-display">Analysis</h1>
           <p className="text-sm text-muted-foreground">
             {cycleCount > 0 ? `Last ${cycleCount} pay ${cycleLabel} · ` : ""}
-            {fmtDate(start)} → {fmtDate(end)} · {onlySpend.length} expense{onlySpend.length === 1 ? "" : "s"}
+            {fmtDate(start)} → {fmtDate(end)} · {onlySpend.length} expense
+            {onlySpend.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="1">Last cycle</SelectItem>
               <SelectItem value="2">Last 2 cycles</SelectItem>
@@ -306,8 +408,6 @@ function AnalysisPage() {
 
       {householdId && <CoachPanel householdId={householdId} initialPrompt={initialAsk} />}
 
-
-
       {fixedTotal > 0 && (
         <Label className="flex items-center gap-2 cursor-pointer text-sm w-fit">
           <Checkbox checked={includeFixed} onCheckedChange={(v) => setIncludeFixed(!!v)} />
@@ -320,9 +420,11 @@ function AnalysisPage() {
         </Label>
       )}
 
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Stat label={includeFixed ? "Total spent (incl. fixed)" : "Total spent"} value={money(totalSpend)} />
+        <Stat
+          label={includeFixed ? "Total spent (incl. fixed)" : "Total spent"}
+          value={money(totalSpend)}
+        />
         <Stat label="Received" value={money(totalIncome)} />
         <Stat label="Net" value={money(totalIncome - totalSpend)} highlight />
       </div>
@@ -333,26 +435,65 @@ function AnalysisPage() {
             <CardTitle>Cycle burndown</CardTitle>
             <CardDescription>
               Pay cycle {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
-              {cycleData.cycle.predicted ? " (predicted)" : ""} · starts at 0, jumps with salary, then fixed expenses ({money(fixedTotal)}) are reserved
+              {cycleData.cycle.predicted ? " (predicted)" : ""} · starts at 0, jumps with salary,
+              then fixed expenses ({money(fixedTotal)}) are reserved
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!burnSeries.length ? (
-              <p className="text-sm text-muted-foreground py-10 text-center">No activity in this cycle yet.</p>
+              <p className="text-sm text-muted-foreground py-10 text-center">
+                No activity in this cycle yet.
+              </p>
             ) : (
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={burnSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <ComposedChart
+                    data={burnSeries}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={20} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11 }}
+                      interval="preserveStartEnd"
+                      minTickGap={20}
+                    />
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
                     <Tooltip content={<BurnTooltip />} />
-                    <Area type="stepAfter" dataKey="balance" name="Balance" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15} strokeWidth={2} />
-                    <ReferenceLine y={0} stroke="hsl(var(--destructive))" strokeWidth={1} strokeDasharray="2 2"
-                      label={{ value: "Empty (overdraft below)", position: "insideBottomRight", fontSize: 10, fill: "hsl(var(--destructive))" }} />
+                    <Area
+                      type="stepAfter"
+                      dataKey="balance"
+                      name="Balance"
+                      stroke="var(--primary)"
+                      fill="var(--primary)"
+                      fillOpacity={0.15}
+                      strokeWidth={2}
+                    />
+                    <ReferenceLine
+                      y={0}
+                      stroke="hsl(var(--destructive))"
+                      strokeWidth={1}
+                      strokeDasharray="2 2"
+                      label={{
+                        value: "Empty (overdraft below)",
+                        position: "insideBottomRight",
+                        fontSize: 10,
+                        fill: "hsl(var(--destructive))",
+                      }}
+                    />
                     {cycleData.bucketTargets > 0 && (
-                      <ReferenceLine y={cycleData.bucketTargets} stroke="#b45309" strokeWidth={1.5} strokeDasharray="6 4"
-                        label={{ value: `Bucket funding floor ${money(cycleData.bucketTargets)} (don't spend below)`, position: "insideTopRight", fontSize: 10, fill: "#b45309" }} />
+                      <ReferenceLine
+                        y={cycleData.bucketTargets}
+                        stroke="#b45309"
+                        strokeWidth={1.5}
+                        strokeDasharray="6 4"
+                        label={{
+                          value: `Bucket funding floor ${money(cycleData.bucketTargets)} (don't spend below)`,
+                          position: "insideTopRight",
+                          fontSize: 10,
+                          fill: "#b45309",
+                        }}
+                      />
                     )}
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </ComposedChart>
@@ -363,11 +504,6 @@ function AnalysisPage() {
         </Card>
       )}
 
-
-
-
-
-
       <Card>
         <CardHeader>
           <CardTitle>By category</CardTitle>
@@ -375,16 +511,34 @@ function AnalysisPage() {
         </CardHeader>
         <CardContent>
           {!byCategory.length ? (
-            <p className="text-sm text-muted-foreground py-10 text-center">No expenses in this range.</p>
+            <p className="text-sm text-muted-foreground py-10 text-center">
+              No expenses in this range.
+            </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={byCategory} dataKey="value" nameKey="name" innerRadius={50} outerRadius={100} paddingAngle={1}>
-                      {byCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    <Pie
+                      data={byCategory}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={50}
+                      outerRadius={100}
+                      paddingAngle={1}
+                    >
+                      {byCategory.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
                     </Pie>
-                    <Tooltip formatter={(v: number, n) => [money(v), n as string]} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                    <Tooltip
+                      formatter={(v: number, n) => [money(v), n as string]}
+                      contentStyle={{
+                        background: "var(--popover)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                      }}
+                    />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -396,7 +550,10 @@ function AnalysisPage() {
                   return (
                     <li key={c.name} className="flex items-center justify-between py-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="size-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                        <span
+                          className="size-2.5 rounded-full"
+                          style={{ background: COLORS[i % COLORS.length] }}
+                        />
                         <span className="capitalize">{c.name}</span>
                         <span className="text-xs text-muted-foreground">{pct.toFixed(1)}%</span>
                       </div>

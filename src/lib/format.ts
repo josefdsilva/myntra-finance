@@ -34,7 +34,9 @@ function buildCurrencyFormatter(l: LocaleCode) {
 
 /** Called by the i18n provider (and once at module init) to keep non-hook formatters in sync. */
 export function setCurrentLocale(l: string) {
-  const safe = (["en", "pt", "es", "de", "fr"] as const).includes(l as LocaleCode) ? (l as LocaleCode) : "en";
+  const safe = (["en", "pt", "es", "de", "fr"] as const).includes(l as LocaleCode)
+    ? (l as LocaleCode)
+    : "en";
   if (safe === currentLocale) return;
   currentLocale = safe;
   currencyFormatter = buildCurrencyFormatter(safe);
@@ -44,25 +46,31 @@ export function setCurrentLocale(l: string) {
 export const EUR = new Proxy({} as Intl.NumberFormat, {
   get(_t, prop) {
     const v = (currencyFormatter as unknown as Record<string, unknown>)[prop as string];
-    return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(currencyFormatter) : v;
+    return typeof v === "function"
+      ? (v as (...a: unknown[]) => unknown).bind(currencyFormatter)
+      : v;
   },
 });
 
 export function money(n: number | string | null | undefined): string {
-  const v = typeof n === "string" ? parseFloat(n) : n ?? 0;
+  const v = typeof n === "string" ? parseFloat(n) : (n ?? 0);
   return currencyFormatter.format(isFinite(v as number) ? (v as number) : 0);
 }
 
 export function fmtDateTime(d: Date | string | null | undefined): string {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;
-  return fnsFormat(date, DATE_PATTERNS[currentLocale].dateTime, { locale: DATE_FNS_MAP[currentLocale] });
+  return fnsFormat(date, DATE_PATTERNS[currentLocale].dateTime, {
+    locale: DATE_FNS_MAP[currentLocale],
+  });
 }
 
 export function fmtDate(d: Date | string | null | undefined): string {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;
-  return fnsFormat(date, DATE_PATTERNS[currentLocale].date, { locale: DATE_FNS_MAP[currentLocale] });
+  return fnsFormat(date, DATE_PATTERNS[currentLocale].date, {
+    locale: DATE_FNS_MAP[currentLocale],
+  });
 }
 
 export function daysRemainingInMonth(now = new Date()): number {

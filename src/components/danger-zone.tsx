@@ -56,9 +56,7 @@ export function DangerZone({ householdId, householdName, role }: Props) {
       <CardContent className="space-y-4">
         <ExportDataRow />
         <LeaveHouseholdRow householdId={householdId} householdName={householdName} />
-        {isOwner && (
-          <DeleteHouseholdRow householdId={householdId} householdName={householdName} />
-        )}
+        {isOwner && <DeleteHouseholdRow householdId={householdId} householdName={householdName} />}
         <DeleteAccountRow />
       </CardContent>
     </Card>
@@ -132,14 +130,16 @@ function LeaveHouseholdRow({
     >
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm">{t("danger.leave.button")}</Button>
+          <Button variant="outline" size="sm">
+            {t("danger.leave.button")}
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("danger.leave.confirmTitle", { name: householdName })}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("danger.leave.confirmBody")}
-            </AlertDialogDescription>
+            <AlertDialogTitle>
+              {t("danger.leave.confirmTitle", { name: householdName })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("danger.leave.confirmBody")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
@@ -186,14 +186,16 @@ function DeleteHouseholdRow({
     >
       <AlertDialog onOpenChange={() => setConfirm("")}>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm">{t("danger.deleteHh.button")}</Button>
+          <Button variant="destructive" size="sm">
+            {t("danger.deleteHh.button")}
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("danger.deleteHh.confirmTitle", { name: householdName })}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("danger.deleteHh.confirmBody")}
-            </AlertDialogDescription>
+            <AlertDialogTitle>
+              {t("danger.deleteHh.confirmTitle", { name: householdName })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("danger.deleteHh.confirmBody")}</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1">
             <Label htmlFor="confirm-hh">{t("danger.confirmLabel")}</Label>
@@ -243,21 +245,17 @@ function DeleteAccountRow() {
   }
 
   return (
-    <RowShell
-      title={t("danger.deleteAcc.title")}
-      body={t("danger.deleteAcc.body")}
-      danger
-    >
+    <RowShell title={t("danger.deleteAcc.title")} body={t("danger.deleteAcc.body")} danger>
       <AlertDialog onOpenChange={() => setConfirm("")}>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm">{t("danger.deleteAcc.button")}</Button>
+          <Button variant="destructive" size="sm">
+            {t("danger.deleteAcc.button")}
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("danger.deleteAcc.confirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("danger.deleteAcc.confirmBody")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("danger.deleteAcc.confirmBody")}</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1">
             <Label htmlFor="confirm-acc">{t("danger.confirmLabel")}</Label>

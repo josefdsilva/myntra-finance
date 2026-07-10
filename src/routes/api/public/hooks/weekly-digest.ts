@@ -15,7 +15,9 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
           hour: "2-digit",
           hour12: false,
         });
-        const parts = Object.fromEntries(fmt.formatToParts(new Date()).map((p) => [p.type, p.value]));
+        const parts = Object.fromEntries(
+          fmt.formatToParts(new Date()).map((p) => [p.type, p.value]),
+        );
         const isMonday = parts.weekday?.startsWith("Mon");
         const isEight = parts.hour === "08";
         if (!force && (!isMonday || !isEight)) {
@@ -66,9 +68,18 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             .gte("occurred_at", prevStart.toISOString())
             .lt("occurred_at", now.toISOString());
 
-          type Row = { amount: number | string; merchant: string | null; note: string | null; category: string | null; kind: string; is_salary: boolean; occurred_at: string };
+          type Row = {
+            amount: number | string;
+            merchant: string | null;
+            note: string | null;
+            category: string | null;
+            kind: string;
+            is_salary: boolean;
+            occurred_at: string;
+          };
           const all = (rows as Row[] | null) ?? [];
-          const inRange = (r: Row, s: Date, e: Date) => new Date(r.occurred_at) >= s && new Date(r.occurred_at) < e;
+          const inRange = (r: Row, s: Date, e: Date) =>
+            new Date(r.occurred_at) >= s && new Date(r.occurred_at) < e;
           const last = all.filter((r) => inRange(r, weekStart, now) && !r.is_salary);
           const prev = all.filter((r) => inRange(r, prevStart, weekStart) && !r.is_salary);
           const sumBy = (arr: Row[], pred: (r: Row) => boolean) =>
@@ -88,20 +99,18 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             .from("fixed_expenses")
             .select("monthly_amount")
             .eq("household_id", hhId);
-          const fixedTotal = ((fixed as Array<{ monthly_amount: number | string }> | null) ?? []).reduce(
-            (s, r) => s + Number(r.monthly_amount),
-            0,
-          );
+          const fixedTotal = (
+            (fixed as Array<{ monthly_amount: number | string }> | null) ?? []
+          ).reduce((s, r) => s + Number(r.monthly_amount), 0);
           const variablePool = Math.max(0, baseline - fixedTotal);
 
           const { data: incomes } = await supabaseAdmin
             .from("incomes")
             .select("monthly_amount")
             .eq("household_id", hhId);
-          const income = ((incomes as Array<{ monthly_amount: number | string }> | null) ?? []).reduce(
-            (s, r) => s + Number(r.monthly_amount),
-            0,
-          );
+          const income = (
+            (incomes as Array<{ monthly_amount: number | string }> | null) ?? []
+          ).reduce((s, r) => s + Number(r.monthly_amount), 0);
           const surplus = Math.max(0, income - baseline);
 
           // AI outlook
@@ -116,8 +125,14 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
                 receivedPrev: Math.round(receivedPrev),
                 variablePool: Math.round(variablePool),
                 surplus: Math.round(surplus),
-                topSpent: topSpent.map((x) => ({ m: x.merchant || x.note || x.category, a: Math.round(Number(x.amount)) })),
-                topReceived: topReceived.map((x) => ({ m: x.merchant || x.note || x.category, a: Math.round(Number(x.amount)) })),
+                topSpent: topSpent.map((x) => ({
+                  m: x.merchant || x.note || x.category,
+                  a: Math.round(Number(x.amount)),
+                })),
+                topReceived: topReceived.map((x) => ({
+                  m: x.merchant || x.note || x.category,
+                  a: Math.round(Number(x.amount)),
+                })),
               };
               const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
                 method: "POST",
@@ -141,7 +156,9 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
                   ],
                 }),
               });
-              const j = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+              const j = (await res.json()) as {
+                choices?: Array<{ message?: { content?: string } }>;
+              };
               aiText = j?.choices?.[0]?.message?.content?.toString().trim() ?? "";
             }
           } catch (e) {
@@ -162,7 +179,13 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             .from("push_subscriptions" as never)
             .select("*")
             .eq("user_id", p.user_id);
-          const list = (subs as Array<{ id: string; endpoint: string; p256dh: string; auth: string }> | null) ?? [];
+          const list =
+            (subs as Array<{
+              id: string;
+              endpoint: string;
+              p256dh: string;
+              auth: string;
+            }> | null) ?? [];
           for (const s of list) {
             const r = await sendWebPush(s, {
               title: "Weekly overview",
@@ -172,17 +195,18 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             });
             if (r.ok) sent++;
             else if (r.expired) {
-              await supabaseAdmin.from("push_subscriptions" as never).delete().eq("id", s.id);
+              await supabaseAdmin
+                .from("push_subscriptions" as never)
+                .delete()
+                .eq("id", s.id);
             }
           }
 
-          await supabaseAdmin
-            .from("notification_log" as never)
-            .insert({
-              user_id: p.user_id,
-              kind: "weekly_digest",
-              payload_hash: `weekly:${weekStart.toISOString().slice(0, 10)}`,
-            } as never);
+          await supabaseAdmin.from("notification_log" as never).insert({
+            user_id: p.user_id,
+            kind: "weekly_digest",
+            payload_hash: `weekly:${weekStart.toISOString().slice(0, 10)}`,
+          } as never);
 
           details.push({ user_id: p.user_id, devices: list.length, spentLast, receivedLast });
         }

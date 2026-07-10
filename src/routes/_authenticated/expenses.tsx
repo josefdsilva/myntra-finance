@@ -10,7 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
 import { toast } from "sonner";
@@ -22,8 +28,21 @@ export const Route = createFileRoute("/_authenticated/expenses")({
 });
 
 const CATEGORIES = [
-  "all", "groceries", "dining", "transport", "fuel", "utilities", "housing",
-  "subscriptions", "health", "kids", "shopping", "entertainment", "travel", "gifts", "other",
+  "all",
+  "groceries",
+  "dining",
+  "transport",
+  "fuel",
+  "utilities",
+  "housing",
+  "subscriptions",
+  "health",
+  "kids",
+  "shopping",
+  "entertainment",
+  "travel",
+  "gifts",
+  "other",
 ];
 
 function ExpensesPage() {
@@ -69,21 +88,30 @@ function ExpensesPage() {
         return { start, end, source: "salary" as const, predicted: false };
       }
       const base = computeCycle(list);
-      const start = new Date(base.start); start.setMonth(start.getMonth() + cycleOffset);
-      const end = new Date(base.end); end.setMonth(end.getMonth() + cycleOffset);
+      const start = new Date(base.start);
+      start.setMonth(start.getMonth() + cycleOffset);
+      const end = new Date(base.end);
+      end.setMonth(end.getMonth() + cycleOffset);
       return { start, end, source: base.source, predicted: true };
     }
     // Future predicted cycle: shift by +1 month from current
     const base = computeCycle(list);
-    const start = new Date(base.start); start.setMonth(start.getMonth() + cycleOffset);
-    const end = new Date(base.end); end.setMonth(end.getMonth() + cycleOffset);
+    const start = new Date(base.start);
+    start.setMonth(start.getMonth() + cycleOffset);
+    const end = new Date(base.end);
+    end.setMonth(end.getMonth() + cycleOffset);
     return { ...base, start, end, predicted: true };
   }, [salaries, cycleOffset]);
 
-
   const { data: rows, refetch } = useQuery({
     enabled: !!householdId && !!cycle,
-    queryKey: ["expenses-list", householdId, category, cycle?.start?.toISOString(), cycle?.end?.toISOString()],
+    queryKey: [
+      "expenses-list",
+      householdId,
+      category,
+      cycle?.start?.toISOString(),
+      cycle?.end?.toISOString(),
+    ],
     queryFn: async () => {
       let q = supabase
         .from("expenses")
@@ -119,8 +147,12 @@ function ExpensesPage() {
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
 
-  const spent = (rows ?? []).filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
-  const received = (rows ?? []).filter((r) => r.kind === "income").reduce((s, r) => s + Number(r.amount), 0);
+  const spent = (rows ?? [])
+    .filter((r) => r.kind !== "income")
+    .reduce((s, r) => s + Number(r.amount), 0);
+  const received = (rows ?? [])
+    .filter((r) => r.kind === "income")
+    .reduce((s, r) => s + Number(r.amount), 0);
   const net = received - spent - fixedTotal;
   const cycleLabel = cycle
     ? `Cycle · ${fmtDate(cycle.start.toISOString())} → ${fmtDate(cycle.end.toISOString())}${cycle.predicted ? " (predicted)" : ""}`
@@ -134,11 +166,31 @@ function ExpensesPage() {
       </header>
 
       <Card>
-        <CardHeader><CardTitle>Add expense</CardTitle></CardHeader>
-        <CardContent>{householdId && <ExpenseQuickAdd householdId={householdId} onAdded={() => { refetch(); qc.invalidateQueries({ queryKey: ["dashboard"] }); }} />}</CardContent>
+        <CardHeader>
+          <CardTitle>Add expense</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {householdId && (
+            <ExpenseQuickAdd
+              householdId={householdId}
+              onAdded={() => {
+                refetch();
+                qc.invalidateQueries({ queryKey: ["dashboard"] });
+              }}
+            />
+          )}
+        </CardContent>
       </Card>
 
-      {householdId && <BankImport householdId={householdId} onImported={() => { refetch(); qc.invalidateQueries({ queryKey: ["dashboard"] }); }} />}
+      {householdId && (
+        <BankImport
+          householdId={householdId}
+          onImported={() => {
+            refetch();
+            qc.invalidateQueries({ queryKey: ["dashboard"] });
+          }}
+        />
+      )}
 
       <Card>
         <CardHeader>
@@ -146,23 +198,52 @@ function ExpensesPage() {
             <div>
               <CardTitle>{cycleLabel}</CardTitle>
               <CardDescription>
-                {rows?.length ?? 0} entries · {money(spent)} spent{received > 0 ? ` · ${money(received)} received` : ""}{fixedTotal > 0 ? ` · fixed-costs: ${money(fixedTotal)} spent` : ""}{received > 0 ? ` · net ${money(net)}` : ""}
+                {rows?.length ?? 0} entries · {money(spent)} spent
+                {received > 0 ? ` · ${money(received)} received` : ""}
+                {fixedTotal > 0 ? ` · fixed-costs: ${money(fixedTotal)} spent` : ""}
+                {received > 0 ? ` · net ${money(net)}` : ""}
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o - 1)}>Prev</Button>
-              <Button variant="outline" size="sm" onClick={() => setCycleOffset(0)} disabled={cycleOffset === 0}>Current</Button>
-              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o + 1)} disabled={cycleOffset >= 0}>Next</Button>
+              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o - 1)}>
+                Prev
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCycleOffset(0)}
+                disabled={cycleOffset === 0}
+              >
+                Current
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCycleOffset((o) => o + 1)}
+                disabled={cycleOffset >= 0}
+              >
+                Next
+              </Button>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {!rows?.length ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">No expenses in this period.</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              No expenses in this period.
+            </p>
           ) : (
             <ul className="divide-y">
               {rows.map((e) => {
@@ -172,13 +253,18 @@ function ExpensesPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
                       <p className="text-xs text-muted-foreground">
-                        {fmtDateTime(e.occurred_at)} · {e.category}{isIncome ? " · received" : ""} · <span className="capitalize">{e.source.replace("_", " ")}</span>
+                        {fmtDateTime(e.occurred_at)} · {e.category}
+                        {isIncome ? " · received" : ""} ·{" "}
+                        <span className="capitalize">{e.source.replace("_", " ")}</span>
                       </p>
                     </div>
                     <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
-                      {isIncome ? "+" : "−"}{money(e.amount)}
+                      {isIncome ? "+" : "−"}
+                      {money(e.amount)}
                     </p>
-                    <Button variant="ghost" size="icon" onClick={() => remove(e.id)}><Trash2 className="size-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => remove(e.id)}>
+                      <Trash2 className="size-4" />
+                    </Button>
                   </li>
                 );
               })}
@@ -190,7 +276,13 @@ function ExpensesPage() {
   );
 }
 
-type ParsedItem = { amount: number; category: string; merchant?: string | null; occurred_at?: string; note?: string | null };
+type ParsedItem = {
+  amount: number;
+  category: string;
+  merchant?: string | null;
+  occurred_at?: string;
+  note?: string | null;
+};
 
 function BankImport({ householdId, onImported }: { householdId: string; onImported: () => void }) {
   const parse = useServerFn(parseBankStatement);
@@ -245,7 +337,12 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
       const buf = await f.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
       const res = await parse({
-        data: { file_base64: base64, mime_type: f.type || "application/pdf", file_name: f.name, householdId },
+        data: {
+          file_base64: base64,
+          mime_type: f.type || "application/pdf",
+          file_name: f.name,
+          householdId,
+        },
       });
       const parsed = res.items as ParsedItem[];
       const { flags } = await detectDuplicates(parsed);
@@ -253,10 +350,15 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
       setDupFlags(flags);
       setSelected(flags.map((isDup) => !isDup));
       const dupCount = flags.filter(Boolean).length;
-      toast.success(`Parsed ${parsed.length} transactions${dupCount ? ` — ${dupCount} likely duplicate${dupCount === 1 ? "" : "s"} unchecked` : ""}`);
+      toast.success(
+        `Parsed ${parsed.length} transactions${dupCount ? ` — ${dupCount} likely duplicate${dupCount === 1 ? "" : "s"} unchecked` : ""}`,
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Parse failed");
-    } finally { setLoading(false); if (ref.current) ref.current.value = ""; }
+    } finally {
+      setLoading(false);
+      if (ref.current) ref.current.value = "";
+    }
   }
 
   async function confirmImport() {
@@ -280,52 +382,103 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
       });
       const skipped = items.length - toImport.length;
       toast.success(`Imported ${toImport.length}${skipped ? ` · skipped ${skipped}` : ""}`);
-      setItems(null); setSelected([]); setDupFlags([]);
+      setItems(null);
+      setSelected([]);
+      setDupFlags([]);
       onImported();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   const selectedCount = selected.filter(Boolean).length;
-  const selectedTotal = items ? items.reduce((s, it, i) => s + (selected[i] ? it.amount : 0), 0) : 0;
+  const selectedTotal = items
+    ? items.reduce((s, it, i) => s + (selected[i] ? it.amount : 0), 0)
+    : 0;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Sparkles className="size-4" /> Bank statement import</CardTitle>
-        <CardDescription>Upload a CSV or PDF — AI extracts transactions; likely duplicates are pre-unchecked.</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="size-4" /> Bank statement import
+        </CardTitle>
+        <CardDescription>
+          Upload a CSV or PDF — AI extracts transactions; likely duplicates are pre-unchecked.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-3">
-          <Input ref={ref} type="file" accept=".csv,.pdf,text/csv,application/pdf" onChange={onFile} disabled={loading} />
+          <Input
+            ref={ref}
+            type="file"
+            accept=".csv,.pdf,text/csv,application/pdf"
+            onChange={onFile}
+            disabled={loading}
+          />
           {loading && <Loader2 className="animate-spin text-muted-foreground" />}
         </div>
         {items && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{selectedCount} / {items.length} selected · total {money(selectedTotal)}</span>
+              <span>
+                {selectedCount} / {items.length} selected · total {money(selectedTotal)}
+              </span>
               <div className="flex gap-2">
-                <button className="underline" onClick={() => setSelected(items.map(() => true))}>Select all</button>
-                <button className="underline" onClick={() => setSelected(dupFlags.map((d) => !d))}>Reset dupes</button>
-                <button className="underline" onClick={() => setSelected(items.map(() => false))}>None</button>
+                <button className="underline" onClick={() => setSelected(items.map(() => true))}>
+                  Select all
+                </button>
+                <button className="underline" onClick={() => setSelected(dupFlags.map((d) => !d))}>
+                  Reset dupes
+                </button>
+                <button className="underline" onClick={() => setSelected(items.map(() => false))}>
+                  None
+                </button>
               </div>
             </div>
             <div className="max-h-72 overflow-y-auto border rounded-md divide-y">
               {items.map((t, i) => (
-                <label key={i} className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer ${dupFlags[i] ? "bg-amber-500/5" : ""}`}>
-                  <input type="checkbox" checked={!!selected[i]} onChange={(e) => setSelected((s) => s.map((v, j) => j === i ? e.target.checked : v))} />
+                <label
+                  key={i}
+                  className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer ${dupFlags[i] ? "bg-amber-500/5" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!selected[i]}
+                    onChange={(e) =>
+                      setSelected((s) => s.map((v, j) => (j === i ? e.target.checked : v)))
+                    }
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="truncate">{t.merchant || t.note || t.category} {dupFlags[i] && <span className="text-amber-600 text-xs">· likely duplicate</span>}</p>
-                    <p className="text-xs text-muted-foreground">{t.occurred_at ? fmtDate(t.occurred_at) : "—"} · {t.category}</p>
+                    <p className="truncate">
+                      {t.merchant || t.note || t.category}{" "}
+                      {dupFlags[i] && (
+                        <span className="text-amber-600 text-xs">· likely duplicate</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t.occurred_at ? fmtDate(t.occurred_at) : "—"} · {t.category}
+                    </p>
                   </div>
                   <span className="tabular-nums">{money(t.amount)}</span>
                 </label>
               ))}
             </div>
             <div className="flex gap-2">
-              <Button onClick={confirmImport} disabled={loading || selectedCount === 0}><FileUp /> Import {selectedCount}</Button>
-              <Button variant="ghost" onClick={() => { setItems(null); setSelected([]); setDupFlags([]); }}>Discard</Button>
+              <Button onClick={confirmImport} disabled={loading || selectedCount === 0}>
+                <FileUp /> Import {selectedCount}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setItems(null);
+                  setSelected([]);
+                  setDupFlags([]);
+                }}
+              >
+                Discard
+              </Button>
             </div>
           </div>
         )}

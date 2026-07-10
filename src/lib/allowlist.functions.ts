@@ -1,10 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ALLOWED_EMAILS = new Set([
-  "eng.nandomoreira@gmail.com",
-  "rosa.am.martins88@gmail.com",
-]);
+const ALLOWED_EMAILS = new Set(["eng.nandomoreira@gmail.com", "rosa.am.martins88@gmail.com"]);
 
 export const enforceAllowlist = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
