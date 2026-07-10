@@ -46,7 +46,7 @@ const NAV = [
   { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
   { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
   { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
-  { to: "/households", labelKey: "nav.households", icon: Users, fallbackLabel: "Households" },
+  { to: "/households", labelKey: "nav.households", icon: Users },
   { to: "/settings", labelKey: "nav.settings", icon: Settings },
   { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
   { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
