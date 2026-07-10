@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
           <div>
             <div className="font-display text-lg leading-tight">{householdName}</div>
-            <div className="text-xs text-muted-foreground">Budget & planning</div>
+            <div className="text-xs text-muted-foreground">{t("shell.subtitle")}</div>
           </div>
         </div>
         <nav className="flex md:flex-col gap-1 p-3 flex-1 overflow-x-auto">
@@ -162,7 +162,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
               >
                 <Icon className="size-4" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
@@ -170,14 +170,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-3 border-t hidden md:block space-y-1">
           <Button variant="ghost" className="w-full justify-start" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}>
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            {theme === "dark" ? "Light theme" : "Dark theme"}
+            {theme === "dark" ? t("shell.lightTheme") : t("shell.darkTheme")}
           </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={() => setPrivacy((s) => !s)}>
             {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            {privacy ? "Show numbers" : "Hide numbers"}
+            {privacy ? t("shell.showNumbers") : t("shell.hideNumbers")}
           </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
-            <LogOut className="size-4" /> Sign out
+            <LogOut className="size-4" /> {t("shell.signOut")}
           </Button>
 
         </div>
