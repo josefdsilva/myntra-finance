@@ -23,16 +23,16 @@ export function CoachPanel({ householdId, initialPrompt }: { householdId: string
   const autoSentRef = useRef<string | null>(null);
 
   const overviewQ = useQuery({
-    queryKey: ["coach-overview", householdId],
-    queryFn: () => genFn({ data: { householdId } }),
+    queryKey: ["coach-overview", householdId, locale],
+    queryFn: () => genFn({ data: { householdId, locale } }),
     enabled: false, // on-demand only
     staleTime: 60 * 60 * 1000,
   });
 
   const refreshMut = useMutation({
-    mutationFn: () => genFn({ data: { householdId, refresh: true } }),
+    mutationFn: () => genFn({ data: { householdId, refresh: true, locale } }),
     onSuccess: (d) => {
-      qc.setQueryData(["coach-overview", householdId], d);
+      qc.setQueryData(["coach-overview", householdId, locale], d);
       toast.success("Overview refreshed");
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed"),
@@ -40,7 +40,7 @@ export function CoachPanel({ householdId, initialPrompt }: { householdId: string
 
   const chatMut = useMutation({
     mutationFn: (payload: { message: string; history: ChatMsg[] }) =>
-      chatFn({ data: { householdId, message: payload.message, history: payload.history } }),
+      chatFn({ data: { householdId, message: payload.message, history: payload.history, locale } }),
     onSuccess: (d) => setHistory((h) => [...h, { role: "assistant", content: d.reply }]),
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Chat failed"),
   });
