@@ -265,12 +265,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {NAV.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.to;
-            const label =
-              "fallbackLabel" in item && item.fallbackLabel
-                ? t(item.labelKey as never) === item.labelKey
-                  ? item.fallbackLabel
-                  : t(item.labelKey as never)
-                : t(item.labelKey as never);
+            const label = t(item.labelKey);
             return (
               <Link
                 key={item.to}
