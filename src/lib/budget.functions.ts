@@ -17,7 +17,23 @@ const expenseInput = z.object({
 });
 
 
+function normalizeLabels(labels: string[] | undefined | null): string[] {
+  if (!labels?.length) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of labels) {
+    const s = String(raw ?? "").trim().toLowerCase();
+    if (!s) continue;
+    if (seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
 export const addExpense = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => expenseInput.parse(input))
   .handler(async ({ context, data }) => {
