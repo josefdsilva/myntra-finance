@@ -339,6 +339,25 @@ function HouseholdSection({
     }
   }
 
+  async function saveProfile() {
+    try {
+      await update({
+        data: {
+          household_id: household.id,
+          country: country.toUpperCase().slice(0, 2),
+          adults: Math.max(1, Math.round(adults)),
+          children: Math.max(0, Math.round(children)),
+        },
+      });
+      toast.success("Saved");
+      onChange();
+      qc.invalidateQueries({ queryKey: ["household-demographics", household.id] });
+      qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
