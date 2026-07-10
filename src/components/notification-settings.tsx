@@ -12,6 +12,7 @@ import {
   deleteDevice,
   deleteAllMyDevices,
 } from "@/lib/push.functions";
+import { useT } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -28,6 +29,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export function NotificationSettings({ householdId }: { householdId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const getKey = useServerFn(getVapidPublicKey);
   const subFn = useServerFn(subscribePush);
@@ -178,38 +180,38 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notifications</CardTitle>
+        <CardTitle>{t("notif.title")}</CardTitle>
         <CardDescription>
-          Web push alerts about your budget. Each type is opt-in per member.
+          {t("notif.description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {supported === false && (
           <p className="text-sm text-muted-foreground">
-            This browser doesn't support web push. On iPhone, add the app to the home screen first.
+            {t("notif.unsupported")}
           </p>
         )}
         {supported && (
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium">This device</p>
+              <p className="text-sm font-medium">{t("notif.thisDevice")}</p>
               <p className="text-xs text-muted-foreground">
-                {subscribed ? "Registered for push." : "Not registered yet."}
+                {subscribed ? t("notif.registered") : t("notif.notRegistered")}
               </p>
             </div>
             <div className="flex gap-2">
               {subscribed ? (
                 <>
                   <Button size="sm" variant="outline" onClick={() => test(currentEndpoint ?? undefined)} disabled={busy}>
-                    Send test to this device
+                    {t("notif.testThis")}
                   </Button>
                   <Button size="sm" variant="outline" onClick={disable} disabled={busy}>
-                    {busy ? <Loader2 className="animate-spin" /> : <BellOff />} Disable
+                    {busy ? <Loader2 className="animate-spin" /> : <BellOff />} {t("notif.disable")}
                   </Button>
                 </>
               ) : (
                 <Button size="sm" onClick={enable} disabled={busy}>
-                  {busy ? <Loader2 className="animate-spin" /> : <Bell />} Enable
+                  {busy ? <Loader2 className="animate-spin" /> : <Bell />} {t("notif.enable")}
                 </Button>
               )}
             </div>
@@ -218,20 +220,20 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
 
         <div className="border-t pt-4 space-y-3">
           <PrefRow
-            label="Weekly digest"
-            desc="Monday 08:00 (Porto): last-week spending, top items, WoW change, AI outlook."
+            label={t("notif.weeklyDigest")}
+            desc={t("notif.weeklyDigestDesc")}
             checked={!!prefs?.weekly_digest}
             onChange={(v) => toggle("weekly_digest", v)}
           />
           <PrefRow
-            label="Baseline limit warnings"
-            desc="Alert when the variable pool is at 80% and when it's fully consumed."
+            label={t("notif.baselineWarn")}
+            desc={t("notif.baselineWarnDesc")}
             checked={!!prefs?.baseline_warn}
             onChange={(v) => toggle("baseline_warn", v)}
           />
           <PrefRow
-            label="Emergency pool warnings"
-            desc="Alert when overspend starts eating the monthly surplus (80% & 100%)."
+            label={t("notif.emergencyWarn")}
+            desc={t("notif.emergencyWarnDesc")}
             checked={!!prefs?.emergency_warn}
             onChange={(v) => toggle("emergency_warn", v)}
           />
@@ -240,13 +242,13 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         {devices && devices.length > 0 && (
           <div className="border-t pt-4 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Registered devices ({devices.length})</p>
+              <p className="text-sm font-medium">{t("notif.registeredDevices", { count: devices.length })}</p>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
-                  Test all
+                  {t("notif.testAll")}
                 </Button>
                 <Button size="sm" variant="destructive" onClick={removeAllDevices} disabled={busy}>
-                  Remove all
+                  {t("notif.removeAll")}
                 </Button>
               </div>
             </div>
@@ -258,18 +260,18 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
                   <li key={d.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
                     <div className="min-w-0">
                       <p className="text-xs font-medium truncate">
-                        {host} {isThis && <span className="text-primary">· this device</span>}
+                        {host} {isThis && <span className="text-primary">· {t("notif.thisDevice").toLowerCase()}</span>}
                       </p>
                       <p className="text-[11px] text-muted-foreground truncate">
                         {d.user_agent ?? "unknown UA"}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        Added {new Date(d.created_at).toLocaleString()}
+                        {new Date(d.created_at).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <Button size="sm" variant="ghost" onClick={() => test(d.endpoint)}>
-                        Test
+                        {t("notif.testThis")}
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => removeDevice(d.id)}>
                         <Trash2 className="h-4 w-4" />
@@ -280,7 +282,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
               })}
             </ul>
             <p className="text-[11px] text-muted-foreground">
-              On iPhone, push only works from the app installed to the Home Screen (PWA). Regular Safari tabs cannot receive them.
+              {t("notif.iosHint")}
             </p>
           </div>
         )}
