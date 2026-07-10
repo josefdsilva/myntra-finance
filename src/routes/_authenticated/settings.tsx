@@ -784,15 +784,16 @@ type BucketRowShape = {
   target_value: number | string;
   target_deadline: string | null;
   priority?: number | null;
+  [key: string]: unknown;
 };
 
-function BucketRow({
+function BucketRow<T extends BucketRowShape>({
   bucket,
   onSave,
   onRemove,
 }: {
-  bucket: BucketRowShape;
-  onSave: (b: BucketRowShape) => void;
+  bucket: T;
+  onSave: (b: T) => void;
   onRemove: () => void;
 }) {
   const t = useT();
