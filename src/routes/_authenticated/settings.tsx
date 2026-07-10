@@ -666,15 +666,7 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[
-                "housing",
-                "utilities",
-                "subscriptions",
-                "transport",
-                "health",
-                "kids",
-                "other",
-              ].map((c) => (
+              {categoryOptions.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
                 </SelectItem>
