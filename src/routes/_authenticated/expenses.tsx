@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/expenses")({
 });
 
 import { useCategoryNames } from "@/hooks/use-categories";
+import { useRecentLabels } from "@/hooks/use-labels";
 
 
 function ExpensesPage() {
