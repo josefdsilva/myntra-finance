@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const t = useT();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({
     queryKey: ["household"],
