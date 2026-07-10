@@ -68,7 +68,20 @@ const COLORS = [
 
 type RangeKey = "1" | "2" | "3" | "6" | "12" | "all";
 
-function BurnTooltip({ active, payload }: any) {
+type BurnPayloadItem = {
+  payload?: {
+    label: string;
+    balance: number;
+    events?: Array<{ kind: string; label: string; amount: number; delta: number }>;
+  };
+};
+function BurnTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: BurnPayloadItem[];
+}) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload as {
     label: string;
