@@ -69,14 +69,14 @@ type CoachContext = {
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
 
-async function buildContext(supabase: any, householdId: string): Promise<CoachContext> {
+async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
     .from("households")
     .select("currency, baseline_budget, margin_pct")
     .eq("id", householdId)
     .maybeSingle();
 
-  const { data: salaryRows = [] } = await supabase
+  const { data: salaryRows } = await supabase
     .from("expenses")
     .select("occurred_at")
     .eq("household_id", householdId)
@@ -84,7 +84,7 @@ async function buildContext(supabase: any, householdId: string): Promise<CoachCo
     .order("occurred_at", { ascending: false })
     .limit(6);
 
-  const salaryDatesDesc = (salaryRows ?? []).map((r: any) => r.occurred_at as string);
+  const salaryDatesDesc = rowsOrEmpty<SalaryRow>(salaryRows).map((r) => r.occurred_at);
   const cycle = computeCycle(salaryDatesDesc);
 
   // Previous cycle bounds
@@ -98,7 +98,7 @@ async function buildContext(supabase: any, householdId: string): Promise<CoachCo
   const startISO = cycle.start.toISOString();
   const endISO = cycle.end.toISOString();
 
-  const { data: cycleExp = [] } = await supabase
+  const { data: cycleExp } = await supabase
     .from("expenses")
     .select("amount, category, kind, note, occurred_at")
     .eq("household_id", householdId)
@@ -107,7 +107,7 @@ async function buildContext(supabase: any, householdId: string): Promise<CoachCo
 
   let previousCycleTotals: CoachContext["previousCycleTotals"] = null;
   if (prevStart && prevEnd) {
-    const { data: prevExp = [] } = await supabase
+    const { data: prevExp } = await supabase
       .from("expenses")
       .select("amount, kind, category")
       .eq("household_id", householdId)
@@ -115,7 +115,7 @@ async function buildContext(supabase: any, householdId: string): Promise<CoachCo
       .lt("occurred_at", prevEnd.toISOString());
     let s = 0,
       r = 0;
-    for (const e of prevExp ?? []) {
+    for (const e of rowsOrEmpty<PrevExpenseRow>(prevExp)) {
       const a = Number(e.amount);
       if (e.kind === "income") r += a;
       else s += a;
@@ -123,34 +123,32 @@ async function buildContext(supabase: any, householdId: string): Promise<CoachCo
     previousCycleTotals = { spent: s, received: r, net: s - r };
   }
 
-  const [
-    { data: fixed = [] },
-    { data: varEst = [] },
-    { data: buckets = [] },
-    { data: allocs = [] },
-  ] = await Promise.all([
-    supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
-    supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
-    supabase
-      .from("buckets")
-      .select("id, name, target_type, target_value, target_deadline")
-      .eq("household_id", householdId),
-    supabase
-      .from("bucket_allocations")
-      .select("bucket_id, amount, confirmed_at")
-      .eq("household_id", householdId)
-      .gte("confirmed_at", startISO)
-      .lt("confirmed_at", endISO),
-  ]);
+  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }] =
+    await Promise.all([
+      supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+      supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
+      supabase
+        .from("buckets")
+        .select("id, name, target_type, target_value, target_deadline")
+        .eq("household_id", householdId),
+      supabase
+        .from("bucket_allocations")
+        .select("bucket_id, amount, confirmed_at")
+        .eq("household_id", householdId)
+        .gte("confirmed_at", startISO)
+        .lt("confirmed_at", endISO),
+    ]);
 
-  const fixedMonthly = (fixed ?? []).reduce((s: number, r: any) => s + Number(r.monthly_amount), 0);
-  const variableEstimateMonthly = (varEst ?? []).reduce(
-    (s: number, r: any) => s + Number(r.monthly_amount),
-    0,
-  );
+  const sumMonthly = (rows: unknown): number =>
+    rowsOrEmpty<MonthlyRow>(rows as MonthlyRow[] | null).reduce(
+      (s, r) => s + Number(r.monthly_amount),
+      0,
+    );
+  const fixedMonthly = sumMonthly(fixed);
+  const variableEstimateMonthly = sumMonthly(varEst);
 
   const allocByBucket: Record<string, number> = {};
-  for (const a of allocs ?? []) {
+  for (const a of rowsOrEmpty<AllocRow>(allocs)) {
     allocByBucket[a.bucket_id] = (allocByBucket[a.bucket_id] ?? 0) + Number(a.amount);
   }
 
@@ -163,7 +161,7 @@ async function buildContext(supabase: any, householdId: string): Promise<CoachCo
     note: string | null;
     occurred_at: string;
   }> = [];
-  for (const e of cycleExp ?? []) {
+  for (const e of rowsOrEmpty<ExpenseRow>(cycleExp)) {
     const a = Number(e.amount);
     if (e.kind === "income") received += a;
     else {
@@ -196,7 +194,7 @@ async function buildContext(supabase: any, householdId: string): Promise<CoachCo
     variableEstimateMonthly,
     cycleTotals: { spent, received, net: spent - received, byCategory },
     previousCycleTotals,
-    buckets: (buckets ?? []).map((b: any) => ({
+    buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
       name: b.name,
       target_type: b.target_type,
       target_value: Number(b.target_value),
