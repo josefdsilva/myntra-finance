@@ -104,6 +104,7 @@ function ExpensesPage() {
       "expenses-list",
       householdId,
       category,
+      labelFilter,
       cycle?.start?.toISOString(),
       cycle?.end?.toISOString(),
     ],
@@ -116,11 +117,13 @@ function ExpensesPage() {
         .lt("occurred_at", cycle!.end.toISOString())
         .order("occurred_at", { ascending: false });
       if (category !== "all") q = q.eq("category", category);
+      if (labelFilter !== "all") q = q.contains("labels", [labelFilter]);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const { data: fixedTotal = 0 } = useQuery({
     enabled: !!householdId,
