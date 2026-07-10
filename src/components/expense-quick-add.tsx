@@ -139,11 +139,13 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           kind,
           is_salary: false,
           occurred_at: occurredIso,
+          labels,
         },
       });
       setAmount("");
       setMerchant("");
       setNote("");
+      setLabels([]);
       setCustomDate(false);
       setOccurredAt(nowLocal());
       toast.success(kind === "income" ? "Money received added" : "Expense added");
@@ -154,6 +156,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       setLoading(false);
     }
   }
+
 
   return (
     <form onSubmit={submit} className="space-y-3">
