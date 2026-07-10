@@ -447,13 +447,17 @@ function ParsedReview({
   onConfirm,
   onCancel,
   loading,
+  householdId,
 }: {
   items: Parsed[];
   setItems: (v: Parsed[]) => void;
   onConfirm: () => void;
   onCancel: () => void;
   loading: boolean;
+  householdId: string;
 }) {
+  const { names: hhCats } = useCategoryNames(householdId);
+  const catOptions = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
   function update(idx: number, patch: Partial<Parsed>) {
     setItems(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
@@ -463,6 +467,7 @@ function ParsedReview({
 
   if (!items.length)
     return <p className="text-sm text-muted-foreground">Nothing detected. Try rephrasing.</p>;
+
 
   return (
     <div className="space-y-3">
