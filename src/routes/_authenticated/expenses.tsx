@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/expenses")({
 });
 
 import { useCategoryNames } from "@/hooks/use-categories";
+import { useRecentLabels } from "@/hooks/use-labels";
 
 
 function ExpensesPage() {
@@ -41,10 +42,13 @@ function ExpensesPage() {
 
   const { names: catNames } = useCategoryNames(householdId);
   const categoryOptions = ["all", ...catNames];
+  const { data: recentLabels = [] } = useRecentLabels(householdId);
 
   const [category, setCategory] = useState("all");
+  const [labelFilter, setLabelFilter] = useState<string>("all");
 
   const [cycleOffset, setCycleOffset] = useState(0);
+
 
   // Fetch salary history to derive pay cycles
   const { data: salaries } = useQuery({
@@ -100,6 +104,7 @@ function ExpensesPage() {
       "expenses-list",
       householdId,
       category,
+      labelFilter,
       cycle?.start?.toISOString(),
       cycle?.end?.toISOString(),
     ],
@@ -112,11 +117,13 @@ function ExpensesPage() {
         .lt("occurred_at", cycle!.end.toISOString())
         .order("occurred_at", { ascending: false });
       if (category !== "all") q = q.eq("category", category);
+      if (labelFilter !== "all") q = q.contains("labels", [labelFilter]);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const { data: fixedTotal = 0 } = useQuery({
     enabled: !!householdId,
@@ -233,6 +240,21 @@ function ExpensesPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {recentLabels.length > 0 && (
+                <Select value={labelFilter} onValueChange={setLabelFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All labels" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All labels</SelectItem>
+                    {recentLabels.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -258,6 +280,21 @@ function ExpensesPage() {
                         <p className="text-xs text-muted-foreground/80 italic truncate mt-0.5">
                           {e.note}
                         </p>
+                      )}
+                      {Array.isArray(e.labels) && e.labels.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {e.labels.map((l) => (
+                            <button
+                              key={l}
+                              type="button"
+                              onClick={() => setLabelFilter(l)}
+                              className="text-[10px] rounded-full bg-primary/10 text-primary px-2 py-0.5 hover:bg-primary/20"
+                              title={`Filter by "${l}"`}
+                            >
+                              {l}
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>

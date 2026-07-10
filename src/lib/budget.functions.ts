@@ -13,9 +13,27 @@ const expenseInput = z.object({
   source_meta: z.record(z.unknown()).optional(),
   kind: z.enum(["expense", "income"]).default("expense"),
   is_salary: z.boolean().optional().default(false),
+  labels: z.array(z.string().min(1).max(40)).max(20).optional().default([]),
 });
 
+
+function normalizeLabels(labels: string[] | undefined | null): string[] {
+  if (!labels?.length) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of labels) {
+    const s = String(raw ?? "").trim().toLowerCase();
+    if (!s) continue;
+    if (seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
 export const addExpense = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => expenseInput.parse(input))
   .handler(async ({ context, data }) => {
@@ -33,12 +51,14 @@ export const addExpense = createServerFn({ method: "POST" })
         source_meta: (data.source_meta ?? {}) as never,
         kind: data.kind,
         is_salary: data.kind === "income" ? !!data.is_salary : false,
+        labels: normalizeLabels(data.labels),
       })
       .select()
       .single();
     if (error) throw error;
     return row;
   });
+
 
 export const addExpensesBulk = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -58,6 +78,8 @@ export const addExpensesBulk = createServerFn({ method: "POST" })
       source_meta: (d.source_meta ?? {}) as never,
       kind: d.kind,
       is_salary: d.kind === "income" ? !!d.is_salary : false,
+      labels: normalizeLabels(d.labels),
+
     }));
     const { data: inserted, error } = await context.supabase.from("expenses").insert(rows).select();
     if (error) throw error;

@@ -274,6 +274,7 @@ export type Database = {
           id: string
           is_salary: boolean
           kind: Database["public"]["Enums"]["entry_kind"]
+          labels: string[]
           merchant: string | null
           note: string | null
           occurred_at: string
@@ -289,6 +290,7 @@ export type Database = {
           id?: string
           is_salary?: boolean
           kind?: Database["public"]["Enums"]["entry_kind"]
+          labels?: string[]
           merchant?: string | null
           note?: string | null
           occurred_at?: string
@@ -304,6 +306,7 @@ export type Database = {
           id?: string
           is_salary?: boolean
           kind?: Database["public"]["Enums"]["entry_kind"]
+          labels?: string[]
           merchant?: string | null
           note?: string | null
           occurred_at?: string

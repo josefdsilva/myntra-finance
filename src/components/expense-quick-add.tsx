@@ -32,6 +32,9 @@ function bufferToBase64(buf: ArrayBuffer): string {
 }
 
 import { useCategoryNames } from "@/hooks/use-categories";
+import { LabelsInput } from "@/components/labels-input";
+import { useRecentLabels } from "@/hooks/use-labels";
+
 
 const DEFAULT_CATEGORIES = [
   "groceries",
@@ -99,12 +102,14 @@ export function ExpenseQuickAdd({
 function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const add = useServerFn(addExpense);
   const { names: hhCats } = useCategoryNames(householdId);
+  const { data: recentLabels = [] } = useRecentLabels(householdId);
   const categories = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
   const [kind, setKind] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(categories[0] ?? "other");
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
+  const [labels, setLabels] = useState<string[]>([]);
   const [customDate, setCustomDate] = useState(false);
   const nowLocal = () => {
     const d = new Date();
@@ -113,6 +118,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   };
   const [occurredAt, setOccurredAt] = useState<string>(nowLocal);
   const [loading, setLoading] = useState(false);
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -133,11 +139,13 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           kind,
           is_salary: false,
           occurred_at: occurredIso,
+          labels,
         },
       });
       setAmount("");
       setMerchant("");
       setNote("");
+      setLabels([]);
       setCustomDate(false);
       setOccurredAt(nowLocal());
       toast.success(kind === "income" ? "Money received added" : "Expense added");
@@ -148,6 +156,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       setLoading(false);
     }
   }
+
 
   return (
     <form onSubmit={submit} className="space-y-3">
@@ -247,6 +256,10 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
         <div className="md:col-span-2">
           <Label>Note (optional)</Label>
           <Input value={note} onChange={(e) => setNote(e.target.value)} />
+        </div>
+        <div className="md:col-span-4">
+          <Label>Labels (optional)</Label>
+          <LabelsInput value={labels} onChange={setLabels} suggestions={recentLabels} />
         </div>
       </div>
     </form>
