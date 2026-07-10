@@ -75,13 +75,7 @@ type BurnPayloadItem = {
     events?: Array<{ kind: string; label: string; amount: number; delta: number }>;
   };
 };
-function BurnTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: BurnPayloadItem[];
-}) {
+function BurnTooltip({ active, payload }: { active?: boolean; payload?: BurnPayloadItem[] }) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload;
   if (!p) return null;
