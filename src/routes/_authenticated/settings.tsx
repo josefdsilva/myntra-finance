@@ -387,6 +387,49 @@ function HouseholdSection({
             />
           </div>
         </div>
+        <div className="rounded-lg border p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-sm">Household profile</div>
+              <div className="text-xs text-muted-foreground">
+                Used to compare your finances against national benchmarks (public reference data,
+                never other users&apos; data).
+              </div>
+            </div>
+            <Button onClick={saveProfile} variant="outline" size="sm">
+              {t("common.save")}
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <Label>Country (ISO)</Label>
+              <Input
+                value={country}
+                maxLength={2}
+                onChange={(e) => setCountry(e.target.value.toUpperCase())}
+                placeholder="PT"
+              />
+            </div>
+            <div>
+              <Label>Adults</Label>
+              <Input
+                type="number"
+                min={1}
+                value={adults}
+                onChange={(e) => setAdults(Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <Label>Children (under 14)</Label>
+              <Input
+                type="number"
+                min={0}
+                value={children}
+                onChange={(e) => setChildren(Number(e.target.value))}
+              />
+            </div>
+          </div>
+        </div>
         <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span>{t("hh.fixedMonthly")}</span>
