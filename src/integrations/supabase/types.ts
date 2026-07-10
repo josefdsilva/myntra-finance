@@ -433,7 +433,10 @@ export type Database = {
       }
       households: {
         Row: {
+          adults: number
           baseline_budget: number
+          children: number
+          country: string
           created_at: string
           created_by: string
           credit_cap: number
@@ -444,7 +447,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          adults?: number
           baseline_budget?: number
+          children?: number
+          country?: string
           created_at?: string
           created_by: string
           credit_cap?: number
@@ -455,7 +461,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          adults?: number
           baseline_budget?: number
+          children?: number
+          country?: string
           created_at?: string
           created_by?: string
           credit_cap?: number

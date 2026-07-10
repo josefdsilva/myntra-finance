@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { format as fmt } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
+import { BenchmarksCard } from "@/components/benchmarks-card";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
@@ -524,6 +525,17 @@ function AnalysisPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {householdId && cycleCount > 0 && (
+        <BenchmarksCard
+          householdId={householdId}
+          monthlyIncome={totalIncome / cycleCount}
+          monthlySpend={totalSpend / cycleCount}
+          spendByCategory={Object.fromEntries(
+            byCategory.map((c) => [c.name, c.value / cycleCount]),
+          )}
+        />
       )}
 
       <Card>

@@ -262,6 +262,9 @@ function HouseholdSection({
     name: string;
     baseline_budget: number | string;
     margin_pct: number | string;
+    country?: string | null;
+    adults?: number | null;
+    children?: number | null;
   };
   onChange: () => void;
 }) {
@@ -270,6 +273,9 @@ function HouseholdSection({
   const qc = useQueryClient();
   const [name, setName] = useState(household.name);
   const [margin, setMargin] = useState(Number(household.margin_pct));
+  const [country, setCountry] = useState((household.country ?? "PT").toUpperCase());
+  const [adults, setAdults] = useState(Number(household.adults ?? 2));
+  const [children, setChildren] = useState(Number(household.children ?? 0));
 
   const { data: fixedRows } = useQuery({
     queryKey: ["fixed-total", household.id],
@@ -333,6 +339,25 @@ function HouseholdSection({
     }
   }
 
+  async function saveProfile() {
+    try {
+      await update({
+        data: {
+          household_id: household.id,
+          country: country.toUpperCase().slice(0, 2),
+          adults: Math.max(1, Math.round(adults)),
+          children: Math.max(0, Math.round(children)),
+        },
+      });
+      toast.success("Saved");
+      onChange();
+      qc.invalidateQueries({ queryKey: ["household-demographics", household.id] });
+      qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -360,6 +385,49 @@ function HouseholdSection({
               onValueChange={(v) => setMargin(v[0])}
               className="mt-3"
             />
+          </div>
+        </div>
+        <div className="rounded-lg border p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-sm">Household profile</div>
+              <div className="text-xs text-muted-foreground">
+                Used to compare your finances against national benchmarks (public reference data,
+                never other users&apos; data).
+              </div>
+            </div>
+            <Button onClick={saveProfile} variant="outline" size="sm">
+              {t("common.save")}
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <Label>Country (ISO)</Label>
+              <Input
+                value={country}
+                maxLength={2}
+                onChange={(e) => setCountry(e.target.value.toUpperCase())}
+                placeholder="PT"
+              />
+            </div>
+            <div>
+              <Label>Adults</Label>
+              <Input
+                type="number"
+                min={1}
+                value={adults}
+                onChange={(e) => setAdults(Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <Label>Children (under 14)</Label>
+              <Input
+                type="number"
+                min={0}
+                value={children}
+                onChange={(e) => setChildren(Number(e.target.value))}
+              />
+            </div>
           </div>
         </div>
         <div className="rounded-lg border bg-muted/30 p-4 space-y-2">

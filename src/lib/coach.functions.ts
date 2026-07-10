@@ -6,6 +6,7 @@ import { computeCycle } from "@/lib/cycle";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
+import { computeBenchmarkComparison, type BenchmarkComparison } from "./benchmarks";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
@@ -76,6 +77,7 @@ type CoachContext = {
     totalSaved: number;
   }>;
   topSpends: Array<{ amount: number; category: string; note: string | null; occurred_at: string }>;
+  benchmark: BenchmarkComparison | null;
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
 
@@ -83,7 +85,7 @@ type CoachContext = {
 async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
     .from("households")
-    .select("currency, baseline_budget, margin_pct")
+    .select("currency, baseline_budget, margin_pct, country, adults, children")
     .eq("id", householdId)
     .maybeSingle();
 
@@ -231,6 +233,28 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   // Conservative: leave 25% of surplus as buffer for savings / unexpected.
   const safeNewMonthlyCommitment = Math.round(monthlySurplus * 0.75 * 100) / 100;
 
+  // Normalize this cycle's category spend to a monthly footing so we can
+  // compare against national category shares fairly.
+  const cycleDays = Math.max(1, cycle.daysTotal || 30);
+  const monthScale = 30 / cycleDays;
+  const monthlySpendByCategory: Record<string, number> = {};
+  for (const [k, v] of Object.entries(byCategory)) {
+    monthlySpendByCategory[k] = Math.round(v * monthScale * 100) / 100;
+  }
+  const totalMonthlySpend =
+    Math.round((spent * monthScale + fixedMonthly + variableEstimateMonthly) * 100) / 100;
+  const benchmark =
+    estimatedMonthlyIncome > 0
+      ? computeBenchmarkComparison({
+          country: hh?.country ?? "PT",
+          adults: Number(hh?.adults ?? 2),
+          children: Number(hh?.children ?? 0),
+          monthlyIncome: estimatedMonthlyIncome,
+          monthlySpend: totalMonthlySpend,
+          spendByCategory: monthlySpendByCategory,
+        })
+      : null;
+
   return {
     today: new Date().toISOString(),
     currency: hh?.currency ?? "EUR",
@@ -261,6 +285,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       totalSaved: totalByBucket[b.id] ?? 0,
     })),
     topSpends: spendsForTop.slice(0, 8),
+    benchmark,
     cycleStartKey: cycle.start.toISOString().slice(0, 10),
   };
 }
@@ -277,6 +302,7 @@ You help with big life decisions as well as day-to-day budgeting. Common questio
 - Comparing credit / loan offers: when the user shares two or more offers (or asks you to size one up), always compare on the same footing. Show a small markdown table with columns: Offer, APR (TAEG in Portugal), monthly payment, total interest, total cost, term. Compute monthly payment with the standard amortization formula P = L · r / (1 − (1+r)^-n) where r = APR/12 and n = months; total cost = monthly · n. Call out fees, insurance requirements, early-repayment penalties, and variable-vs-fixed rate risk. Flag the "spread + Euribor" structure for Portuguese mortgages. Recommend the offer with the lowest total cost that still fits \`safeNewMonthlyCommitment\`, and remind the user that TAEG is the fair comparison metric (not the nominal rate).
 - Comparing products / purchases (phones, appliances, cars, subscriptions, insurance, energy plans, etc.): put options side-by-side in a markdown table with price, key specs the user cares about, expected lifespan or contract length, and cost per year / per use. Include running costs (fuel/energy, subscription, maintenance) when they matter. End with one clear recommendation tied to the household's budget room and goals; suggest a "good enough" pick if the top option strains \`safeNewMonthlyCommitment\`. If the user hasn't shared numbers, ask for the 2–3 fields that would most change the answer.
 - Savings goals: use bucket \`totalSaved\` and \`allocatedThisCycle\` to project when a goal is reachable.
+- National benchmarks (\`benchmark\` in the snapshot, sourced from Eurostat/INE, NOT other households): when relevant, compare the household to its country's average. Use \`benchmark.incomePercentile\` to describe income position ("around the Xth percentile for a household your size in {countryName}"), \`benchmark.savingsRatePct\` vs \`benchmark.nationalSavingsRatePct\` for savings comparison, and \`benchmark.categories\` (flagged items first) for category deviations — e.g. "your dining is 2× the {countryName} average, cutting to average would free ~€X/mo". Always attribute to the country name and note it's a public reference average, never other users' data. Do not invent benchmark numbers; if \`benchmark\` is null, say so.
 
 When giving rate/market figures, always label them as typical benchmarks and remind the user to compare live quotes. Keep answers scannable: short intro, a small table when comparing 2+ options, 2–4 bullet points, one clear recommendation. Prefer 4–8 sentences for simple questions; go longer only when a comparison genuinely needs it.`;
 
