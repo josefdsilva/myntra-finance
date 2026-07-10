@@ -143,11 +143,31 @@ export function CoachPanel({
           <div className="border-t pt-3 space-y-3">
             <div className="max-h-72 overflow-y-auto space-y-3 pr-1">
               {history.length === 0 && (
-                <div className="text-xs text-muted-foreground">
-                  Ask anything, e.g. "Can we afford a €300 weekend trip this cycle?" or "Which
-                  category should we cut first?"
+                <div className="space-y-2">
+                  <div className="text-xs text-muted-foreground">
+                    Ask anything — day-to-day budgeting or bigger life decisions. Try:
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      "We're thinking of moving. What monthly rent can we comfortably afford?",
+                      "Our car broke. Should we buy used with savings or take a loan? What price range?",
+                      "Can we afford a €300 weekend trip this cycle?",
+                      "When could we realistically reach €20,000 in savings?",
+                      "Which category should we cut first to free €200/month?",
+                    ].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className="text-xs rounded-full border border-border/60 bg-muted/50 hover:bg-muted px-2.5 py-1 text-left"
+                        onClick={() => setInput(s)}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
+
               {history.map((m, i) => (
                 <div
                   key={i}
