@@ -53,6 +53,7 @@ export function DangerZone({ householdId, householdName, role }: Props) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <ExportDataRow />
         <LeaveHouseholdRow householdId={householdId} householdName={householdName} />
         {isOwner && (
           <DeleteHouseholdRow householdId={householdId} householdName={householdName} />
