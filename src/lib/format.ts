@@ -1,26 +1,68 @@
 import { format as fnsFormat } from "date-fns";
+import { enGB, pt, es, de, fr } from "date-fns/locale";
 
-export const EUR = new Intl.NumberFormat("en-IE", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
+type LocaleCode = "en" | "pt" | "es" | "de" | "fr";
+
+const INTL_MAP: Record<LocaleCode, string> = {
+  en: "en-IE",
+  pt: "pt-PT",
+  es: "es-ES",
+  de: "de-DE",
+  fr: "fr-FR",
+};
+
+const DATE_FNS_MAP = { en: enGB, pt, es, de, fr } as const;
+
+const DATE_PATTERNS: Record<LocaleCode, { date: string; dateTime: string }> = {
+  en: { date: "dd/MM/yyyy", dateTime: "dd/MM/yyyy HH:mm:ss" },
+  pt: { date: "dd/MM/yyyy", dateTime: "dd/MM/yyyy HH:mm:ss" },
+  es: { date: "dd/MM/yyyy", dateTime: "dd/MM/yyyy HH:mm:ss" },
+  de: { date: "dd.MM.yyyy", dateTime: "dd.MM.yyyy HH:mm:ss" },
+  fr: { date: "dd/MM/yyyy", dateTime: "dd/MM/yyyy HH:mm:ss" },
+};
+
+let currentLocale: LocaleCode = "en";
+let currencyFormatter: Intl.NumberFormat = buildCurrencyFormatter(currentLocale);
+
+function buildCurrencyFormatter(l: LocaleCode) {
+  return new Intl.NumberFormat(INTL_MAP[l], {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Called by the i18n provider (and once at module init) to keep non-hook formatters in sync. */
+export function setCurrentLocale(l: string) {
+  const safe = (["en", "pt", "es", "de", "fr"] as const).includes(l as LocaleCode) ? (l as LocaleCode) : "en";
+  if (safe === currentLocale) return;
+  currentLocale = safe;
+  currencyFormatter = buildCurrencyFormatter(safe);
+}
+
+// Kept for compatibility with existing imports.
+export const EUR = new Proxy({} as Intl.NumberFormat, {
+  get(_t, prop) {
+    const v = (currencyFormatter as unknown as Record<string, unknown>)[prop as string];
+    return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(currencyFormatter) : v;
+  },
 });
 
 export function money(n: number | string | null | undefined): string {
   const v = typeof n === "string" ? parseFloat(n) : n ?? 0;
-  return EUR.format(isFinite(v as number) ? (v as number) : 0);
+  return currencyFormatter.format(isFinite(v as number) ? (v as number) : 0);
 }
 
 export function fmtDateTime(d: Date | string | null | undefined): string {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;
-  return fnsFormat(date, "dd/MM/yyyy HH:mm:ss");
+  return fnsFormat(date, DATE_PATTERNS[currentLocale].dateTime, { locale: DATE_FNS_MAP[currentLocale] });
 }
 
 export function fmtDate(d: Date | string | null | undefined): string {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;
-  return fnsFormat(date, "dd/MM/yyyy");
+  return fnsFormat(date, DATE_PATTERNS[currentLocale].date, { locale: DATE_FNS_MAP[currentLocale] });
 }
 
 export function daysRemainingInMonth(now = new Date()): number {
