@@ -85,7 +85,7 @@ type CoachContext = {
 async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
     .from("households")
-    .select("currency, baseline_budget, margin_pct")
+    .select("currency, baseline_budget, margin_pct, country, adults, children")
     .eq("id", householdId)
     .maybeSingle();
 
