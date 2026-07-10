@@ -21,16 +21,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import {
-  createHousehold,
-  listMyHouseholds,
-  updateHousehold,
-} from "@/lib/household.functions";
+import { createHousehold, listMyHouseholds, updateHousehold } from "@/lib/household.functions";
 import { deleteHousehold, leaveHousehold } from "@/lib/privacy.functions";
-import {
-  setActiveHouseholdId,
-  useActiveHouseholdId,
-} from "@/lib/active-household";
+import { setActiveHouseholdId, useActiveHouseholdId } from "@/lib/active-household";
 
 export const Route = createFileRoute("/_authenticated/households")({
   head: () => ({ meta: [{ title: "Households · Myntra" }] }),
@@ -78,8 +71,8 @@ function HouseholdsPage() {
           <Users className="size-6" /> Households
         </h1>
         <p className="text-sm text-muted-foreground">
-          You can belong to multiple households — for example your personal budget and a
-          shared family budget. Data never crosses between them.
+          You can belong to multiple households — for example your personal budget and a shared
+          family budget. Data never crosses between them.
         </p>
       </header>
 
@@ -167,8 +160,8 @@ function HouseholdsPage() {
         Need to invite someone to a household you own? Open{" "}
         <Link to="/settings" className="underline">
           Settings
-        </Link>
-        {" "}→ Members while that household is active.
+        </Link>{" "}
+        → Members while that household is active.
       </p>
     </div>
   );
@@ -276,11 +269,7 @@ function LeaveOrDelete(props: {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-destructive hover:text-destructive"
-        >
+        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
           {props.isOwner ? (
             <>
               <Trash2 className="size-4" /> Delete

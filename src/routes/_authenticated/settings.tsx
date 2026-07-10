@@ -414,7 +414,6 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
     }
   }, [categoryOptions, category]);
 
-
   async function add() {
     if (!label || !amount) return;
     await upsert({
@@ -607,7 +606,6 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
       setCategory(categoryOptions[0]);
     }
   }, [categoryOptions, category]);
-
 
   async function add() {
     if (!label || !amount) return;

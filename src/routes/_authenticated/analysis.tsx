@@ -400,7 +400,9 @@ function AnalysisPage() {
           <h1 className="text-3xl font-display">{t("ana.title")}</h1>
           <p className="text-sm text-muted-foreground">
             {cycleCount > 0
-              ? t(cycleCount === 1 ? "ana.subtitle.cycle" : "ana.subtitle.cycles", { n: cycleCount })
+              ? t(cycleCount === 1 ? "ana.subtitle.cycle" : "ana.subtitle.cycles", {
+                  n: cycleCount,
+                })
               : ""}
             {t("ana.subtitle.range", {
               start: fmtDate(start),

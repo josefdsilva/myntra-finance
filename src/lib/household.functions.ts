@@ -235,4 +235,3 @@ export const createHousehold = createServerFn({ method: "POST" })
 
     return { household, role: "owner" as const };
   });
-

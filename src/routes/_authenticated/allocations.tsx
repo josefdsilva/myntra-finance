@@ -224,7 +224,6 @@ function AllocationsPage() {
             <p className="text-sm text-muted-foreground py-6 text-center">
               {t("alloc.thisMonth.empty")}
             </p>
-
           ) : (
             <div className="space-y-4">
               {surplus > 0 && (

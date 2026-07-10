@@ -26,10 +26,7 @@ import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.functions";
-import {
-  useActiveHouseholdId,
-  setActiveHouseholdId,
-} from "@/lib/active-household";
+import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import {
@@ -186,10 +183,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex items-center gap-2"
           >
             <Check
-              className={cn(
-                "size-4",
-                h.household.id === resolvedId ? "opacity-100" : "opacity-0",
-              )}
+              className={cn("size-4", h.household.id === resolvedId ? "opacity-100" : "opacity-0")}
             />
             <span className="flex-1 truncate">{h.household.name || "Untitled"}</span>
             <span className="text-[10px] uppercase tracking-wide text-muted-foreground">

@@ -32,7 +32,6 @@ export const Route = createFileRoute("/_authenticated/expenses")({
 import { useCategoryNames } from "@/hooks/use-categories";
 import { useRecentLabels } from "@/hooks/use-labels";
 
-
 function ExpensesPage() {
   const t = useT();
   const qc = useQueryClient();
@@ -53,7 +52,6 @@ function ExpensesPage() {
   const [labelFilter, setLabelFilter] = useState<string>("all");
 
   const [cycleOffset, setCycleOffset] = useState(0);
-
 
   // Fetch salary history to derive pay cycles
   const { data: salaries } = useQuery({
@@ -128,7 +126,6 @@ function ExpensesPage() {
       return data ?? [];
     },
   });
-
 
   const { data: fixedTotal = 0 } = useQuery({
     enabled: !!householdId,
@@ -265,9 +262,7 @@ function ExpensesPage() {
         </CardHeader>
         <CardContent>
           {!rows?.length ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              {t("exp.empty")}
-            </p>
+            <p className="text-sm text-muted-foreground py-8 text-center">{t("exp.empty")}</p>
           ) : (
             <ul className="divide-y">
               {rows.map((e) => {
