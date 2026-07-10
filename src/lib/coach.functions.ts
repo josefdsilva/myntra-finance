@@ -31,6 +31,7 @@ type BucketRow = {
   target_deadline: string | null;
 };
 type AllocRow = { bucket_id: string; amount: number | string; confirmed_at: string };
+type AllAllocRow = { bucket_id: string; amount: number | string };
 
 type CoachContext = {
   today: string;
@@ -47,6 +48,14 @@ type CoachContext = {
   };
   fixedMonthly: number;
   variableEstimateMonthly: number;
+  /** Rough recurring income per month, averaged from up to 6 recent salary events. */
+  estimatedMonthlyIncome: number;
+  /** estimatedMonthlyIncome - fixedMonthly - variableEstimateMonthly. Room for new commitments. */
+  monthlySurplus: number;
+  /** Conservative safe monthly payment for a new recurring commitment (rent, loan, lease). */
+  safeNewMonthlyCommitment: number;
+  /** Lifetime savings across all buckets (sum of confirmed allocations). */
+  totalSavings: number;
   cycleTotals: {
     spent: number;
     received: number;
@@ -64,10 +73,12 @@ type CoachContext = {
     target_value: number;
     target_deadline: string | null;
     allocatedThisCycle: number;
+    totalSaved: number;
   }>;
   topSpends: Array<{ amount: number; category: string; note: string | null; occurred_at: string }>;
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
+
 
 async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
