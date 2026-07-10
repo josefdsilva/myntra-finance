@@ -28,23 +28,8 @@ export const Route = createFileRoute("/_authenticated/expenses")({
   component: ExpensesPage,
 });
 
-const CATEGORIES = [
-  "all",
-  "groceries",
-  "dining",
-  "transport",
-  "fuel",
-  "utilities",
-  "housing",
-  "subscriptions",
-  "health",
-  "kids",
-  "shopping",
-  "entertainment",
-  "travel",
-  "gifts",
-  "other",
-];
+import { useCategoryNames } from "@/hooks/use-categories";
+
 
 function ExpensesPage() {
   const t = useT();
@@ -54,7 +39,11 @@ function ExpensesPage() {
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
   const householdId = hh?.household?.id;
 
+  const { names: catNames } = useCategoryNames(householdId);
+  const categoryOptions = ["all", ...catNames];
+
   const [category, setCategory] = useState("all");
+
   const [cycleOffset, setCycleOffset] = useState(0);
 
   // Fetch salary history to derive pay cycles
@@ -237,7 +226,7 @@ function ExpensesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
+                  {categoryOptions.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>

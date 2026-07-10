@@ -36,6 +36,8 @@ import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
 import { LanguageSettings } from "@/components/language-settings";
+import { CategoryManager } from "@/components/category-manager";
+import { useCategoryNames } from "@/hooks/use-categories";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -98,6 +100,7 @@ function SettingsPage() {
           <IncomesSection householdId={householdId} />
           <FixedExpensesSection householdId={householdId} />
           <VariableEstimatesSection householdId={householdId} />
+          <CategoryManager householdId={householdId} />
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
@@ -399,7 +402,16 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
   });
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
+  const { names: catNames } = useCategoryNames(householdId);
+  const categoryOptions = catNames.length ? catNames : ["groceries", "other"];
   const [category, setCategory] = useState("groceries");
+
+  useEffect(() => {
+    if (categoryOptions.length && !categoryOptions.includes(category)) {
+      setCategory(categoryOptions[0]);
+    }
+  }, [categoryOptions, category]);
+
 
   async function add() {
     if (!label || !amount) return;
@@ -460,17 +472,7 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[
-                "groceries",
-                "fuel",
-                "transport",
-                "goods",
-                "eating_out",
-                "leisure",
-                "kids",
-                "health",
-                "other",
-              ].map((c) => (
+              {categoryOptions.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
                 </SelectItem>
@@ -594,7 +596,16 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
   });
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
+  const { names: catNames } = useCategoryNames(householdId);
+  const categoryOptions = catNames.length ? catNames : ["housing", "other"];
   const [category, setCategory] = useState("housing");
+
+  useEffect(() => {
+    if (categoryOptions.length && !categoryOptions.includes(category)) {
+      setCategory(categoryOptions[0]);
+    }
+  }, [categoryOptions, category]);
+
 
   async function add() {
     if (!label || !amount) return;
@@ -655,15 +666,7 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[
-                "housing",
-                "utilities",
-                "subscriptions",
-                "transport",
-                "health",
-                "kids",
-                "other",
-              ].map((c) => (
+              {categoryOptions.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
                 </SelectItem>
