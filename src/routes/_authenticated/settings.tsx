@@ -28,6 +28,7 @@ import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
+import { DangerZone } from "@/components/danger-zone";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings · Myntra" }] }),
@@ -82,6 +83,11 @@ function SettingsPage() {
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
           <CreditUsageSection household={hh!.household!} />
+          <DangerZone
+            householdId={householdId}
+            householdName={hh!.household!.name ?? "this household"}
+            role={hh!.role}
+          />
         </>
       )}
     </div>

@@ -241,6 +241,11 @@ function AuthPage() {
           <p className="text-center text-xs text-muted-foreground mt-6">
             Built for families. Private by design. €·EUR.
           </p>
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            <a href="/privacy" className="underline hover:text-foreground">
+              Privacy &amp; data
+            </a>
+          </p>
         </div>
       </div>
     </div>
