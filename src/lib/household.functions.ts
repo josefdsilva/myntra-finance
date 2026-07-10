@@ -189,3 +189,50 @@ export const acceptInvite = createServerFn({ method: "POST" })
 
     return { household_id: invite.household_id };
   });
+
+/** All households the current user belongs to, oldest membership first. */
+export const listMyHouseholds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("household_members")
+      .select("role, joined_at, households(*)")
+      .eq("user_id", context.userId)
+      .order("joined_at", { ascending: true });
+    if (error) throw error;
+    return (data ?? [])
+      .filter((m): m is typeof m & { households: NonNullable<typeof m.households> } =>
+        Boolean(m.households),
+      )
+      .map((m) => ({ household: m.households, role: m.role, joined_at: m.joined_at }));
+  });
+
+/** Create an additional household owned by the caller and seed its buckets. */
+export const createHousehold = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ name: z.string().trim().min(1).max(100) }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: household, error } = await supabaseAdmin
+      .from("households")
+      .insert({ name: data.name, created_by: userId, baseline_budget: 0, margin_pct: 10 })
+      .select()
+      .single();
+    if (error || !household) throw error ?? new Error("Failed to create household");
+
+    const { error: mErr } = await supabaseAdmin
+      .from("household_members")
+      .insert({ household_id: household.id, user_id: userId, role: "owner" });
+    if (mErr) throw mErr;
+
+    await supabaseAdmin
+      .from("buckets")
+      .insert(DEFAULT_BUCKETS.map((b) => ({ ...b, household_id: household.id })));
+
+    return { household, role: "owner" as const };
+  });
+
