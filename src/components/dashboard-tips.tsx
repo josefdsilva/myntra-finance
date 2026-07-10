@@ -6,7 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
-import { AlertTriangle, Info, Lightbulb, CheckCircle2, ArrowRight, MessageSquare, X, Undo2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Info,
+  Lightbulb,
+  CheckCircle2,
+  ArrowRight,
+  MessageSquare,
+  X,
+  Undo2,
+} from "lucide-react";
 
 type Severity = "critical" | "warning" | "info" | "success";
 
@@ -34,7 +43,14 @@ type Props = {
 const EMERGENCY_HINTS = ["emergency", "buffer", "safety", "rainy", "reserve"];
 
 export function DashboardTips({
-  householdId, baseline, income, surplus, variablePool, netSpent, daysLeft, avgDaily7,
+  householdId,
+  baseline,
+  income,
+  surplus,
+  variablePool,
+  netSpent,
+  daysLeft,
+  avgDaily7,
 }: Props) {
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -59,7 +75,9 @@ export function DashboardTips({
     setDismissed(new Set(next));
     try {
       localStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   function dismiss(id: string) {
     const next = new Set(dismissed);
@@ -75,13 +93,40 @@ export function DashboardTips({
   const { data } = useQuery({
     queryKey: ["dashboard-tips", householdId, period],
     queryFn: async () => {
-      const [{ data: buckets }, { data: incomes }, { data: fixed }, { data: variables }, { data: confirmations }, { count: expenseCount }] = await Promise.all([
-        supabase.from("buckets").select("id, name, target_type, target_value, target_deadline").eq("household_id", householdId),
-        supabase.from("incomes").select("id, label, monthly_amount").eq("household_id", householdId),
-        supabase.from("fixed_expenses").select("id, monthly_amount").eq("household_id", householdId),
-        supabase.from("variable_estimates").select("id, monthly_amount").eq("household_id", householdId),
-        supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId).eq("period", period),
-        supabase.from("expenses").select("id", { count: "exact", head: true }).eq("household_id", householdId).eq("kind", "expense"),
+      const [
+        { data: buckets },
+        { data: incomes },
+        { data: fixed },
+        { data: variables },
+        { data: confirmations },
+        { count: expenseCount },
+      ] = await Promise.all([
+        supabase
+          .from("buckets")
+          .select("id, name, target_type, target_value, target_deadline")
+          .eq("household_id", householdId),
+        supabase
+          .from("incomes")
+          .select("id, label, monthly_amount")
+          .eq("household_id", householdId),
+        supabase
+          .from("fixed_expenses")
+          .select("id, monthly_amount")
+          .eq("household_id", householdId),
+        supabase
+          .from("variable_estimates")
+          .select("id, monthly_amount")
+          .eq("household_id", householdId),
+        supabase
+          .from("bucket_allocations")
+          .select("bucket_id, amount")
+          .eq("household_id", householdId)
+          .eq("period", period),
+        supabase
+          .from("expenses")
+          .select("id", { count: "exact", head: true })
+          .eq("household_id", householdId)
+          .eq("kind", "expense"),
       ]);
       return {
         buckets: buckets ?? [],
@@ -106,7 +151,8 @@ export function DashboardTips({
       title: "Set your monthly baseline budget",
       detail: "Without a baseline we can't compute your safe-to-spend or surplus.",
       cta: { label: "Open settings", to: "/settings" },
-      chatPrompt: "I haven't set a baseline monthly budget yet. How should I decide on a reasonable baseline given my income and fixed costs?",
+      chatPrompt:
+        "I haven't set a baseline monthly budget yet. How should I decide on a reasonable baseline given my income and fixed costs?",
     });
   }
   if (!data.incomes.length) {
@@ -116,7 +162,8 @@ export function DashboardTips({
       title: "Add your monthly income",
       detail: "Income powers surplus, salary detection and bucket allocations.",
       cta: { label: "Add income", to: "/settings" },
-      chatPrompt: "I haven't recorded any income sources. What should I include and how do I estimate monthly amounts for variable income?",
+      chatPrompt:
+        "I haven't recorded any income sources. What should I include and how do I estimate monthly amounts for variable income?",
     });
   }
   if (!data.buckets.length) {
@@ -124,9 +171,11 @@ export function DashboardTips({
       id: "no-buckets",
       severity: "critical",
       title: "Create your first savings bucket",
-      detail: "Buckets turn surplus into concrete goals (emergency fund, holiday, house…). The earlier the better.",
+      detail:
+        "Buckets turn surplus into concrete goals (emergency fund, holiday, house…). The earlier the better.",
       cta: { label: "Create bucket", to: "/settings" },
-      chatPrompt: "I have no savings buckets yet. Given my situation, which buckets should I create first and how much should I aim for in each?",
+      chatPrompt:
+        "I have no savings buckets yet. Given my situation, which buckets should I create first and how much should I aim for in each?",
     });
   }
 
@@ -138,10 +187,13 @@ export function DashboardTips({
       severity: "warning",
       title: "All your income comes from a single source",
       detail: `"${only.label ?? "Your only income stream"}" covers 100% of household income (${money(income)}/mo). A job loss or reduction would eliminate all cash flow — building a larger emergency fund and diversifying income reduces this risk.`,
-      chatPrompt: "My household depends on a single income source. What's a reasonable emergency fund target for that situation, and what are realistic ways for a family of four in Portugal to diversify income?",
+      chatPrompt:
+        "My household depends on a single income source. What's a reasonable emergency fund target for that situation, and what are realistic ways for a family of four in Portugal to diversify income?",
     });
   } else if (data.incomes.length > 1 && income > 0) {
-    const sorted = [...data.incomes].sort((a, b) => Number(b.monthly_amount) - Number(a.monthly_amount));
+    const sorted = [...data.incomes].sort(
+      (a, b) => Number(b.monthly_amount) - Number(a.monthly_amount),
+    );
     const top = Number(sorted[0].monthly_amount);
     if (top / income >= 0.8) {
       tips.push({
@@ -149,7 +201,8 @@ export function DashboardTips({
         severity: "info",
         title: "Income is concentrated in one source",
         detail: `"${sorted[0].label ?? "Your largest income"}" accounts for ${Math.round((top / income) * 100)}% of household income. Losing it would leave only ${money(income - top)}/mo.`,
-        chatPrompt: "Most of my household income comes from a single source. How exposed am I, and what should I do to reduce that risk?",
+        chatPrompt:
+          "Most of my household income comes from a single source. How exposed am I, and what should I do to reduce that risk?",
       });
     }
   }
@@ -173,7 +226,8 @@ export function DashboardTips({
       title: "Your baseline leaves no surplus",
       detail: `Baseline (${money(baseline)}) meets or exceeds income (${money(income)}). Nothing is being saved — this is unsustainable.`,
       cta: { label: "Review baseline", to: "/settings" },
-      chatPrompt: "My baseline budget leaves me with no surplus each month. Where should I look first to bring spending down?",
+      chatPrompt:
+        "My baseline budget leaves me with no surplus each month. Where should I look first to bring spending down?",
     });
   }
 
@@ -181,7 +235,11 @@ export function DashboardTips({
   function monthsUntil(dateStr: string | null): number {
     if (!dateStr) return 1;
     const t = new Date(dateStr);
-    const m = (t.getFullYear() - now.getFullYear()) * 12 + (t.getMonth() - now.getMonth()) + (t.getDate() >= now.getDate() ? 0 : -1) + 1;
+    const m =
+      (t.getFullYear() - now.getFullYear()) * 12 +
+      (t.getMonth() - now.getMonth()) +
+      (t.getDate() >= now.getDate() ? 0 : -1) +
+      1;
     return Math.max(1, m);
   }
   const totalAllocated = data.buckets.reduce((s, b) => {
@@ -198,7 +256,8 @@ export function DashboardTips({
       id: "over-allocated",
       severity: "warning",
       title: `Bucket targets exceed surplus by ${money(totalAllocated - surplus)}`,
-      detail: "Your monthly bucket targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
+      detail:
+        "Your monthly bucket targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
       cta: { label: "Rebalance", to: "/allocations" },
       chatPrompt: `My bucket targets add up to ${money(totalAllocated)} but my surplus is only ${money(surplus)}. Which buckets should I trim first?`,
     });
@@ -207,21 +266,28 @@ export function DashboardTips({
       id: "unallocated-surplus",
       severity: "warning",
       title: `${money(unallocated)} of surplus is unallocated`,
-      detail: "Assign it to an existing bucket or create a new one — idle surplus tends to leak into everyday spending.",
+      detail:
+        "Assign it to an existing bucket or create a new one — idle surplus tends to leak into everyday spending.",
       cta: { label: "Allocate", to: "/allocations" },
       chatPrompt: `I have ${money(unallocated)} of unallocated monthly surplus. What are good uses for it given my current buckets and goals?`,
     });
   }
 
   // ---- Cycle confirmations near month end ----
-  const daysToMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
-  const unconfirmed = data.buckets.filter((b) => !data.confirmations.some((c) => c.bucket_id === b.id));
+  const daysToMonthEnd =
+    new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  const unconfirmed = data.buckets.filter(
+    (b) => !data.confirmations.some((c) => c.bucket_id === b.id),
+  );
   if (data.buckets.length && daysToMonthEnd <= 7 && unconfirmed.length) {
     tips.push({
       id: "confirm-allocations",
       severity: "warning",
       title: `Confirm this month's allocations (${unconfirmed.length} pending)`,
-      detail: `Month ends in ${daysToMonthEnd} day${daysToMonthEnd === 1 ? "" : "s"} — lock in ${unconfirmed.map((b) => b.name).slice(0, 3).join(", ")}${unconfirmed.length > 3 ? "…" : ""}.`,
+      detail: `Month ends in ${daysToMonthEnd} day${daysToMonthEnd === 1 ? "" : "s"} — lock in ${unconfirmed
+        .map((b) => b.name)
+        .slice(0, 3)
+        .join(", ")}${unconfirmed.length > 3 ? "…" : ""}.`,
       cta: { label: "Go to allocations", to: "/allocations" },
     });
   }
@@ -232,7 +298,8 @@ export function DashboardTips({
       id: "no-fixed",
       severity: "info",
       title: "Track your fixed expenses",
-      detail: "Recording rent, utilities and subscriptions makes the baseline realistic and the burndown chart accurate.",
+      detail:
+        "Recording rent, utilities and subscriptions makes the baseline realistic and the burndown chart accurate.",
       cta: { label: "Add fixed expenses", to: "/settings" },
     });
   }
@@ -241,7 +308,11 @@ export function DashboardTips({
   const variableEstTotal = data.variables.reduce((s, r) => s + Number(r.monthly_amount), 0);
   if (baseline > 0 && data.variables.length && variablePool > 0) {
     const projectedMonthly = avgDaily7 * 30;
-    if (variableEstTotal > 0 && projectedMonthly > variableEstTotal * 1.3 && projectedMonthly - variableEstTotal > 50) {
+    if (
+      variableEstTotal > 0 &&
+      projectedMonthly > variableEstTotal * 1.3 &&
+      projectedMonthly - variableEstTotal > 50
+    ) {
       tips.push({
         id: "estimates-too-low",
         severity: "warning",
@@ -250,7 +321,12 @@ export function DashboardTips({
         cta: { label: "Review estimates", to: "/settings" },
         chatPrompt: `My variable spending pace (${money(projectedMonthly)}/mo) is much higher than my planned estimate (${money(variableEstTotal)}/mo). Which categories usually drive that gap and how do I close it?`,
       });
-    } else if (variableEstTotal > 0 && variableEstTotal > projectedMonthly * 1.5 && data.expenseCount > 10 && variableEstTotal - projectedMonthly > 100) {
+    } else if (
+      variableEstTotal > 0 &&
+      variableEstTotal > projectedMonthly * 1.5 &&
+      data.expenseCount > 10 &&
+      variableEstTotal - projectedMonthly > 100
+    ) {
       tips.push({
         id: "estimates-too-high",
         severity: "info",
@@ -265,7 +341,8 @@ export function DashboardTips({
       id: "no-variable-estimates",
       severity: "info",
       title: "Add variable expense estimates",
-      detail: "Estimating groceries, transport, etc. sharpens your baseline and improves the analysis view.",
+      detail:
+        "Estimating groceries, transport, etc. sharpens your baseline and improves the analysis view.",
       cta: { label: "Add estimates", to: "/settings" },
     });
   }
@@ -334,7 +411,9 @@ export function DashboardTips({
           <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-medium">
-              {tips.length === 0 ? "All good — no issues detected" : "All tips acknowledged this cycle"}
+              {tips.length === 0
+                ? "All good — no issues detected"
+                : "All tips acknowledged this cycle"}
             </p>
             <p className="text-sm text-muted-foreground">
               {tips.length === 0
@@ -351,7 +430,13 @@ export function DashboardTips({
         {showDismissed && hidden.length > 0 && (
           <CardContent className="space-y-2 pt-0">
             {hidden.map((t) => (
-              <TipRow key={t.id} tip={t} dismissed onRestore={() => restore(t.id)} onChat={openChat} />
+              <TipRow
+                key={t.id}
+                tip={t}
+                dismissed
+                onRestore={() => restore(t.id)}
+                onChat={openChat}
+              />
             ))}
           </CardContent>
         )}
@@ -367,7 +452,9 @@ export function DashboardTips({
           <span className="text-xs font-normal text-muted-foreground">({active.length})</span>
         </CardTitle>
         <CardDescription>
-          Rule-based suggestions computed from your data. Use <span className="font-medium">Chat</span> to explore any of them with the AI coach, or <span className="font-medium">Dismiss</span> to hide it for this cycle.
+          Rule-based suggestions computed from your data. Use{" "}
+          <span className="font-medium">Chat</span> to explore any of them with the AI coach, or{" "}
+          <span className="font-medium">Dismiss</span> to hide it for this cycle.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -381,16 +468,27 @@ export function DashboardTips({
             </Button>
           </div>
         )}
-        {showDismissed && hidden.map((t) => (
-          <TipRow key={`d-${t.id}`} tip={t} dismissed onRestore={() => restore(t.id)} onChat={openChat} />
-        ))}
+        {showDismissed &&
+          hidden.map((t) => (
+            <TipRow
+              key={`d-${t.id}`}
+              tip={t}
+              dismissed
+              onRestore={() => restore(t.id)}
+              onChat={openChat}
+            />
+          ))}
       </CardContent>
     </Card>
   );
 }
 
 function TipRow({
-  tip, dismissed, onDismiss, onRestore, onChat,
+  tip,
+  dismissed,
+  onDismiss,
+  onRestore,
+  onChat,
 }: {
   tip: Tip;
   dismissed?: boolean;
@@ -398,15 +496,40 @@ function TipRow({
   onRestore?: () => void;
   onChat?: (prompt: string) => void;
 }) {
-  const styles: Record<Severity, { border: string; bg: string; icon: React.ReactNode; iconWrap: string }> = {
-    critical: { border: "border-destructive/40", bg: "bg-destructive/5", icon: <AlertTriangle className="size-4" />, iconWrap: "text-destructive" },
-    warning: { border: "border-amber-500/40", bg: "bg-amber-500/5", icon: <AlertTriangle className="size-4" />, iconWrap: "text-amber-600 dark:text-amber-400" },
-    info: { border: "border-sky-500/30", bg: "bg-sky-500/5", icon: <Info className="size-4" />, iconWrap: "text-sky-600 dark:text-sky-400" },
-    success: { border: "border-emerald-500/30", bg: "bg-emerald-500/5", icon: <CheckCircle2 className="size-4" />, iconWrap: "text-emerald-600 dark:text-emerald-400" },
+  const styles: Record<
+    Severity,
+    { border: string; bg: string; icon: React.ReactNode; iconWrap: string }
+  > = {
+    critical: {
+      border: "border-destructive/40",
+      bg: "bg-destructive/5",
+      icon: <AlertTriangle className="size-4" />,
+      iconWrap: "text-destructive",
+    },
+    warning: {
+      border: "border-amber-500/40",
+      bg: "bg-amber-500/5",
+      icon: <AlertTriangle className="size-4" />,
+      iconWrap: "text-amber-600 dark:text-amber-400",
+    },
+    info: {
+      border: "border-sky-500/30",
+      bg: "bg-sky-500/5",
+      icon: <Info className="size-4" />,
+      iconWrap: "text-sky-600 dark:text-sky-400",
+    },
+    success: {
+      border: "border-emerald-500/30",
+      bg: "bg-emerald-500/5",
+      icon: <CheckCircle2 className="size-4" />,
+      iconWrap: "text-emerald-600 dark:text-emerald-400",
+    },
   };
   const s = styles[tip.severity];
   return (
-    <div className={`flex items-start gap-3 rounded-lg border ${s.border} ${s.bg} p-3 ${dismissed ? "opacity-60" : ""}`}>
+    <div
+      className={`flex items-start gap-3 rounded-lg border ${s.border} ${s.bg} p-3 ${dismissed ? "opacity-60" : ""}`}
+    >
       <div className={`mt-0.5 shrink-0 ${s.iconWrap}`}>{s.icon}</div>
       <div className="min-w-0 flex-1">
         <p className="font-medium text-sm">{tip.title}</p>

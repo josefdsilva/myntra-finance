@@ -12,8 +12,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { PiggyBank, Check, Undo2, AlertTriangle, Target, TrendingUp, TrendingDown } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  PiggyBank,
+  Check,
+  Undo2,
+  AlertTriangle,
+  Target,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
@@ -44,10 +59,20 @@ function AllocationsPage() {
       const [{ data: incomes }, { data: buckets }, { data: firstSalary }] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("buckets").select("*").eq("household_id", householdId!).order("sort_order"),
-        supabase.from("expenses").select("occurred_at").eq("household_id", householdId!).eq("is_salary", true).order("occurred_at", { ascending: true }).limit(1),
+        supabase
+          .from("expenses")
+          .select("occurred_at")
+          .eq("household_id", householdId!)
+          .eq("is_salary", true)
+          .order("occurred_at", { ascending: true })
+          .limit(1),
       ]);
       const income = (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      return { income, buckets: (buckets ?? []) as Bucket[], firstSalaryAt: firstSalary?.[0]?.occurred_at ?? null };
+      return {
+        income,
+        buckets: (buckets ?? []) as Bucket[],
+        firstSalaryAt: firstSalary?.[0]?.occurred_at ?? null,
+      };
     },
   });
 
@@ -115,7 +140,6 @@ function AllocationsPage() {
     },
   });
 
-
   const income = data?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
 
@@ -126,7 +150,8 @@ function AllocationsPage() {
     const months =
       (target.getFullYear() - now.getFullYear()) * 12 +
       (target.getMonth() - now.getMonth()) +
-      (target.getDate() >= now.getDate() ? 0 : -1) + 1;
+      (target.getDate() >= now.getDate() ? 0 : -1) +
+      1;
     return Math.max(1, months);
   }
 
@@ -143,13 +168,13 @@ function AllocationsPage() {
 
   // Cycle-close warning (option 4): once we're past the ~last week of the month,
   // flag buckets that still have no confirmation for the current period.
-  const daysLeftInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  const daysLeftInMonth =
+    new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
   const unconfirmedBuckets = (data?.buckets ?? []).filter(
     (b) => !confirmations?.some((c) => c.bucket_id === b.id),
   );
   const showCloseWarning = daysLeftInMonth <= 7 && unconfirmedBuckets.length > 0;
   const totalConfirmedThisMonth = (confirmations ?? []).reduce((s, c) => s + Number(c.amount), 0);
-
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
@@ -169,8 +194,12 @@ function AllocationsPage() {
           <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-amber-900 dark:text-amber-200">
-              {daysLeftInMonth === 0 ? "Month ends today" : `Month ends in ${daysLeftInMonth} day${daysLeftInMonth === 1 ? "" : "s"}`}
-              {" · "}{unconfirmedBuckets.length} bucket{unconfirmedBuckets.length === 1 ? "" : "s"} not yet confirmed
+              {daysLeftInMonth === 0
+                ? "Month ends today"
+                : `Month ends in ${daysLeftInMonth} day${daysLeftInMonth === 1 ? "" : "s"}`}
+              {" · "}
+              {unconfirmedBuckets.length} bucket{unconfirmedBuckets.length === 1 ? "" : "s"} not yet
+              confirmed
             </p>
             <p className="text-muted-foreground mt-0.5">
               {unconfirmedBuckets.map((b) => b.name).join(", ")}
@@ -183,12 +212,18 @@ function AllocationsPage() {
         <CardHeader>
           <CardTitle>This month's buckets</CardTitle>
           <CardDescription>
-            Configure targets in <Link to="/settings" className="underline">Settings</Link>.
+            Configure targets in{" "}
+            <Link to="/settings" className="underline">
+              Settings
+            </Link>
+            .
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!data?.buckets?.length ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">No buckets configured yet.</p>
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              No buckets configured yet.
+            </p>
           ) : (
             <div className="space-y-4">
               {surplus > 0 && (
@@ -208,9 +243,14 @@ function AllocationsPage() {
                     })}
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Allocated {money(Math.min(totalAllocated, surplus))} of {money(surplus)} surplus</span>
+                    <span>
+                      Allocated {money(Math.min(totalAllocated, surplus))} of {money(surplus)}{" "}
+                      surplus
+                    </span>
                     <span className={unallocated < 0 ? "text-destructive" : ""}>
-                      {unallocated < 0 ? `Over by ${money(-unallocated)}` : `${money(unallocated)} unallocated`}
+                      {unallocated < 0
+                        ? `Over by ${money(-unallocated)}`
+                        : `${money(unallocated)} unallocated`}
                     </span>
                   </div>
                 </div>
@@ -221,7 +261,8 @@ function AllocationsPage() {
                 const isGoal = b.target_type === "goal_by_date";
                 const saved = goalTotals?.[b.id] ?? 0;
                 const goalTarget = Number(b.target_value);
-                const goalPct = isGoal && goalTarget > 0 ? Math.min(100, (saved / goalTarget) * 100) : 0;
+                const goalPct =
+                  isGoal && goalTarget > 0 ? Math.min(100, (saved / goalTarget) * 100) : 0;
                 // On-track check: expected saved by now = monthly * months since bucket started tracking
                 // Approximation: use months elapsed since (deadline - required months).
                 const monthsLeft = isGoal ? monthsUntil(b.target_deadline) : 0;
@@ -231,13 +272,19 @@ function AllocationsPage() {
                   <div key={b.id} className="space-y-1.5">
                     <div className="flex justify-between items-baseline gap-3 flex-wrap">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="size-2.5 rounded-full shrink-0" style={{ background: b.color ?? "var(--primary)" }} />
+                        <span
+                          className="size-2.5 rounded-full shrink-0"
+                          style={{ background: b.color ?? "var(--primary)" }}
+                        />
                         <span className="font-medium">{b.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {b.target_type === "pct_surplus" ? `${b.target_value}% of surplus`
-                           : b.target_type === "fixed_monthly" ? `${money(b.target_value)} / month`
-                           : b.target_type === "fixed_yearly" ? `${money(b.target_value)} / year`
-                           : `${money(b.target_value)} by ${b.target_deadline ?? "—"} (${monthsUntil(b.target_deadline)} mo left)`}
+                          {b.target_type === "pct_surplus"
+                            ? `${b.target_value}% of surplus`
+                            : b.target_type === "fixed_monthly"
+                              ? `${money(b.target_value)} / month`
+                              : b.target_type === "fixed_yearly"
+                                ? `${money(b.target_value)} / year`
+                                : `${money(b.target_value)} by ${b.target_deadline ?? "—"} (${monthsUntil(b.target_deadline)} mo left)`}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -258,7 +305,7 @@ function AllocationsPage() {
                         />
                       </div>
                     </div>
-                    
+
                     {isGoal && (
                       <div className="mt-2 rounded-md bg-muted/40 px-3 py-2 space-y-1">
                         <div className="flex justify-between text-xs">
@@ -267,7 +314,10 @@ function AllocationsPage() {
                           </span>
                           <span className="tabular-nums">
                             <span className="font-medium">{money(saved)}</span>
-                            <span className="text-muted-foreground"> / {money(goalTarget)} ({goalPct.toFixed(0)}%)</span>
+                            <span className="text-muted-foreground">
+                              {" "}
+                              / {money(goalTarget)} ({goalPct.toFixed(0)}%)
+                            </span>
                           </span>
                         </div>
                         <Progress value={goalPct} />
@@ -288,11 +338,15 @@ function AllocationsPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Confirmed this month</span>
-                  <span className="tabular-nums font-medium text-emerald-600">{money(totalConfirmedThisMonth)}</span>
+                  <span className="tabular-nums font-medium text-emerald-600">
+                    {money(totalConfirmedThisMonth)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Unallocated surplus</span>
-                  <span className={`tabular-nums font-medium ${unallocated < 0 ? "text-destructive" : ""}`}>
+                  <span
+                    className={`tabular-nums font-medium ${unallocated < 0 ? "text-destructive" : ""}`}
+                  >
                     {money(unallocated)}
                   </span>
                 </div>
@@ -302,20 +356,39 @@ function AllocationsPage() {
         </CardContent>
       </Card>
 
+      <AllocationHistory
+        history={history ?? []}
+        buckets={data?.buckets ?? []}
+        householdId={householdId!}
+      />
 
-      <AllocationHistory history={history ?? []} buckets={data?.buckets ?? []} householdId={householdId!} />
-
-      <YearToDate buckets={data?.buckets ?? []} monthlyFn={monthly} firstSalaryAt={data?.firstSalaryAt ?? null} ytdTotals={ytdTotals ?? {}} />
+      <YearToDate
+        buckets={data?.buckets ?? []}
+        monthlyFn={monthly}
+        firstSalaryAt={data?.firstSalaryAt ?? null}
+        ytdTotals={ytdTotals ?? {}}
+      />
     </div>
   );
 }
 
-function YearToDate({ buckets, monthlyFn, firstSalaryAt, ytdTotals }: { buckets: Bucket[]; monthlyFn: (b: Bucket) => number; firstSalaryAt: string | null; ytdTotals: Record<string, number> }) {
+function YearToDate({
+  buckets,
+  monthlyFn,
+  firstSalaryAt,
+  ytdTotals,
+}: {
+  buckets: Bucket[];
+  monthlyFn: (b: Bucket) => number;
+  firstSalaryAt: string | null;
+  ytdTotals: Record<string, number>;
+}) {
   const now = new Date();
   const year = now.getFullYear();
-  const start = firstSalaryAt && new Date(firstSalaryAt).getFullYear() === year
-    ? new Date(firstSalaryAt)
-    : new Date(year, 0, 1);
+  const start =
+    firstSalaryAt && new Date(firstSalaryAt).getFullYear() === year
+      ? new Date(firstSalaryAt)
+      : new Date(year, 0, 1);
   const msPerMonth = (365.25 / 12) * 86400000;
   const monthsElapsed = Math.max(0, Math.min(12, (now.getTime() - start.getTime()) / msPerMonth));
   const monthsRemaining = Math.max(0, 12 - (now.getMonth() + now.getDate() / 30));
@@ -324,13 +397,18 @@ function YearToDate({ buckets, monthlyFn, firstSalaryAt, ytdTotals }: { buckets:
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><PiggyBank className="size-5" /> Year-to-date (actuals)</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <PiggyBank className="size-5" /> Year-to-date (actuals)
+        </CardTitle>
         <CardDescription>
-          Sum of allocations you confirmed this year (since {startLabel}). Projection assumes current monthly target continues until year end.
+          Sum of allocations you confirmed this year (since {startLabel}). Projection assumes
+          current monthly target continues until year end.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!buckets.length ? <p className="text-sm text-muted-foreground">—</p> : (
+        {!buckets.length ? (
+          <p className="text-sm text-muted-foreground">—</p>
+        ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {buckets.map((b) => {
@@ -339,19 +417,25 @@ function YearToDate({ buckets, monthlyFn, firstSalaryAt, ytdTotals }: { buckets:
                 return (
                   <div key={b.id} className="rounded-lg border p-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="size-2.5 rounded-full" style={{ background: b.color ?? "var(--primary)" }} />
+                      <span
+                        className="size-2.5 rounded-full"
+                        style={{ background: b.color ?? "var(--primary)" }}
+                      />
                       <span className="font-medium text-sm">{b.name}</span>
                     </div>
                     <p className="text-2xl font-display tabular-nums">{money(confirmed)}</p>
                     <p className="text-xs text-muted-foreground">
-                      On pace for <span className="tabular-nums">{money(projected)}</span> by year end
+                      On pace for <span className="tabular-nums">{money(projected)}</span> by year
+                      end
                     </p>
                   </div>
                 );
               })}
             </div>
             <div className="pt-3 border-t flex justify-between text-sm">
-              <span className="text-muted-foreground">Total confirmed YTD ({monthsElapsed.toFixed(1)} mo)</span>
+              <span className="text-muted-foreground">
+                Total confirmed YTD ({monthsElapsed.toFixed(1)} mo)
+              </span>
               <span className="tabular-nums font-medium">{money(ytdConfirmedTotal)}</span>
             </div>
           </>
@@ -360,7 +444,6 @@ function YearToDate({ buckets, monthlyFn, firstSalaryAt, ytdTotals }: { buckets:
     </Card>
   );
 }
-
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
@@ -373,11 +456,28 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
   );
 }
 
-type Confirmation = { id: string; bucket_id: string; period: string; amount: number | string; note: string | null; confirmed_at: string };
+type Confirmation = {
+  id: string;
+  bucket_id: string;
+  period: string;
+  amount: number | string;
+  note: string | null;
+  confirmed_at: string;
+};
 
 function ConfirmAllocationButton({
-  householdId, bucketId, bucketName, period, suggested, confirmed,
-  isGoal, goalTarget, savedSoFar, monthsLeft, unallocatedSurplus, onChanged,
+  householdId,
+  bucketId,
+  bucketName,
+  period,
+  suggested,
+  confirmed,
+  isGoal,
+  goalTarget,
+  savedSoFar,
+  monthsLeft,
+  unallocatedSurplus,
+  onChanged,
 }: {
   householdId: string;
   bucketId: string;
@@ -409,20 +509,31 @@ function ConfirmAllocationButton({
   const newUnallocated = unallocatedSurplus - delta; // surplus goes down if you allocate more
   const newSaved = savedSoFar + (parsed ?? 0);
   const remainingToGoal = Math.max(0, goalTarget - newSaved);
-  const newMonthlyNeeded = isGoal && monthsLeft > 1 ? remainingToGoal / Math.max(1, monthsLeft - 1) : 0;
+  const newMonthlyNeeded =
+    isGoal && monthsLeft > 1 ? remainingToGoal / Math.max(1, monthsLeft - 1) : 0;
   const goalPctAfter = isGoal && goalTarget > 0 ? Math.min(100, (newSaved / goalTarget) * 100) : 0;
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] });
     qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] });
-    qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
+    qc.invalidateQueries({
+      queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()],
+    });
   }
 
   async function submit() {
     if (parsed === null) return toast.error("Invalid amount");
     setLoading(true);
     try {
-      await confirmFn({ data: { household_id: householdId, bucket_id: bucketId, period, amount: parsed, note: note.trim() || null } });
+      await confirmFn({
+        data: {
+          household_id: householdId,
+          bucket_id: bucketId,
+          period,
+          amount: parsed,
+          note: note.trim() || null,
+        },
+      });
       toast.success("Allocation confirmed");
       setOpen(false);
       setNote("");
@@ -430,7 +541,9 @@ function ConfirmAllocationButton({
       invalidate();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
   async function undo() {
     if (!confirmed) return;
@@ -442,7 +555,9 @@ function ConfirmAllocationButton({
       invalidate();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (confirmed) {
@@ -460,7 +575,15 @@ function ConfirmAllocationButton({
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => { setAmount(suggested.toFixed(2)); setNote(""); setOpen(true); }}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          setAmount(suggested.toFixed(2));
+          setNote("");
+          setOpen(true);
+        }}
+      >
         Mark as allocated
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -478,11 +601,31 @@ function ConfirmAllocationButton({
 
             <div className="space-y-1.5">
               <Label htmlFor="alloc-amt">Amount moved (€)</Label>
-              <Input id="alloc-amt" inputMode="decimal" autoFocus value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <Input
+                id="alloc-amt"
+                inputMode="decimal"
+                autoFocus
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
               <div className="flex gap-2 pt-1">
-                <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAmount(suggested.toFixed(2))}>Use recommended</Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => setAmount(suggested.toFixed(2))}
+                >
+                  Use recommended
+                </Button>
                 {isGoal && (
-                  <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAmount(Math.max(0, goalTarget - savedSoFar).toFixed(2))}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs"
+                    onClick={() => setAmount(Math.max(0, goalTarget - savedSoFar).toFixed(2))}
+                  >
                     Fund remainder ({money(Math.max(0, goalTarget - savedSoFar))})
                   </Button>
                 )}
@@ -491,26 +634,44 @@ function ConfirmAllocationButton({
 
             <div className="space-y-1.5">
               <Label htmlFor="alloc-note">Note (optional)</Label>
-              <Textarea id="alloc-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. bonus month, skipped due to travel…" />
+              <Textarea
+                id="alloc-note"
+                rows={2}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="e.g. bonus month, skipped due to travel…"
+              />
             </div>
 
             {parsed !== null && (
               <div className="rounded-md border p-3 space-y-2 text-sm">
-                <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">Impact</p>
+                <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">
+                  Impact
+                </p>
 
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-muted-foreground flex items-center gap-1.5">
-                    {delta >= 0 ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
+                    {delta >= 0 ? (
+                      <TrendingUp className="size-3.5" />
+                    ) : (
+                      <TrendingDown className="size-3.5" />
+                    )}
                     vs recommended
                   </span>
-                  <span className={`tabular-nums font-medium ${Math.abs(delta) < 0.01 ? "" : delta > 0 ? "text-amber-600" : "text-sky-600"}`}>
+                  <span
+                    className={`tabular-nums font-medium ${Math.abs(delta) < 0.01 ? "" : delta > 0 ? "text-amber-600" : "text-sky-600"}`}
+                  >
                     {delta === 0 ? "on target" : `${delta > 0 ? "+" : ""}${money(delta)}`}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center gap-2">
-                  <span className="text-muted-foreground">Emergency / unallocated surplus after</span>
-                  <span className={`tabular-nums font-medium ${newUnallocated < 0 ? "text-destructive" : "text-emerald-600"}`}>
+                  <span className="text-muted-foreground">
+                    Emergency / unallocated surplus after
+                  </span>
+                  <span
+                    className={`tabular-nums font-medium ${newUnallocated < 0 ? "text-destructive" : "text-emerald-600"}`}
+                  >
                     {money(newUnallocated)}
                   </span>
                 </div>
@@ -519,12 +680,18 @@ function ConfirmAllocationButton({
                   <>
                     <div className="pt-2 border-t space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="flex items-center gap-1.5 text-muted-foreground"><Target className="size-3.5" /> Goal after this</span>
-                        <span className="tabular-nums">{money(newSaved)} / {money(goalTarget)} ({goalPctAfter.toFixed(0)}%)</span>
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <Target className="size-3.5" /> Goal after this
+                        </span>
+                        <span className="tabular-nums">
+                          {money(newSaved)} / {money(goalTarget)} ({goalPctAfter.toFixed(0)}%)
+                        </span>
                       </div>
                       <Progress value={goalPctAfter} />
                       {monthsLeft > 1 && remainingToGoal > 0 && (
-                        <p className={`text-xs ${newMonthlyNeeded > suggested + 0.01 ? "text-amber-600" : "text-muted-foreground"}`}>
+                        <p
+                          className={`text-xs ${newMonthlyNeeded > suggested + 0.01 ? "text-amber-600" : "text-muted-foreground"}`}
+                        >
                           {newMonthlyNeeded > suggested + 0.01
                             ? `You'll need ${money(newMonthlyNeeded)}/mo (up from ${money(suggested)}) to hit the goal.`
                             : `On track — ${money(newMonthlyNeeded)}/mo needed for the remaining ${monthsLeft - 1} month(s).`}
@@ -540,7 +707,8 @@ function ConfirmAllocationButton({
                 {newUnallocated < 0 && (
                   <p className="text-xs text-destructive flex items-start gap-1.5">
                     <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
-                    This overspends the month's surplus by {money(-newUnallocated)} — it'll come from your emergency pool.
+                    This overspends the month's surplus by {money(-newUnallocated)} — it'll come
+                    from your emergency pool.
                   </p>
                 )}
               </div>
@@ -548,8 +716,12 @@ function ConfirmAllocationButton({
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
-            <Button onClick={submit} disabled={loading || parsed === null}>Confirm allocation</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button onClick={submit} disabled={loading || parsed === null}>
+              Confirm allocation
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -557,7 +729,15 @@ function ConfirmAllocationButton({
   );
 }
 
-function AllocationHistory({ history, buckets, householdId }: { history: Confirmation[]; buckets: Bucket[]; householdId: string }) {
+function AllocationHistory({
+  history,
+  buckets,
+  householdId,
+}: {
+  history: Confirmation[];
+  buckets: Bucket[];
+  householdId: string;
+}) {
   const qc = useQueryClient();
   const undoFn = useServerFn(undoBucketAllocation);
   const nameOf = (id: string) => buckets.find((b) => b.id === id)?.name ?? "—";
@@ -567,7 +747,11 @@ function AllocationHistory({ history, buckets, householdId }: { history: Confirm
     try {
       await undoFn({ data: { id } });
       toast.success("Removed");
-      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] }); qc.invalidateQueries({ queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()] });
+      qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] });
+      qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] });
+      qc.invalidateQueries({
+        queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()],
+      });
       qc.invalidateQueries({ queryKey: ["bucket-allocations", householdId] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -585,7 +769,9 @@ function AllocationHistory({ history, buckets, householdId }: { history: Confirm
     <Card>
       <CardHeader>
         <CardTitle>Confirmation history</CardTitle>
-        <CardDescription>Track which bucket allocations you actually moved each month.</CardDescription>
+        <CardDescription>
+          Track which bucket allocations you actually moved each month.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {!periods.length ? (
@@ -594,7 +780,10 @@ function AllocationHistory({ history, buckets, householdId }: { history: Confirm
           <div className="space-y-4">
             {periods.map((p) => {
               const total = grouped[p].reduce((s, c) => s + Number(c.amount), 0);
-              const label = new Date(p).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+              const label = new Date(p).toLocaleDateString("en-GB", {
+                month: "long",
+                year: "numeric",
+              });
               return (
                 <div key={p}>
                   <div className="flex justify-between text-sm font-medium mb-2">
@@ -603,15 +792,25 @@ function AllocationHistory({ history, buckets, householdId }: { history: Confirm
                   </div>
                   <ul className="divide-y rounded-md border">
                     {grouped[p].map((c) => (
-                      <li key={c.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                      <li
+                        key={c.id}
+                        className="flex items-center justify-between px-3 py-2 text-sm"
+                      >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="size-2 rounded-full shrink-0" style={{ background: colorOf(c.bucket_id) }} />
+                          <span
+                            className="size-2 rounded-full shrink-0"
+                            style={{ background: colorOf(c.bucket_id) }}
+                          />
                           <span className="truncate">{nameOf(c.bucket_id)}</span>
-                          <span className="text-xs text-muted-foreground">· {fmtDate(c.confirmed_at)}</span>
+                          <span className="text-xs text-muted-foreground">
+                            · {fmtDate(c.confirmed_at)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="tabular-nums font-medium">{money(c.amount)}</span>
-                          <Button size="sm" variant="ghost" onClick={() => undo(c.id)}><Undo2 className="size-3.5" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => undo(c.id)}>
+                            <Undo2 className="size-3.5" />
+                          </Button>
                         </div>
                       </li>
                     ))}

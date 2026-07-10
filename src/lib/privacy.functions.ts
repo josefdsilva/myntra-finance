@@ -14,19 +14,35 @@ export const exportMyData = createServerFn({ method: "POST" })
     const { supabase, userId, claims } = context;
 
     const { data: profile } = await supabase
-      .from("profiles").select("*").eq("user_id", userId).maybeSingle();
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
 
     const { data: memberships } = await supabase
-      .from("household_members").select("*").eq("user_id", userId);
+      .from("household_members")
+      .select("*")
+      .eq("user_id", userId);
 
     const householdIds = (memberships ?? []).map((m) => m.household_id);
 
-    async function fetchAll(table:
-      | "households" | "household_members" | "household_invitations"
-      | "incomes" | "fixed_expenses" | "variable_estimates"
-      | "buckets" | "bucket_allocations" | "expenses"
-      | "bank_imports" | "analysis_overviews" | "credit_usage"
-      | "notification_prefs" | "notification_log") {
+    async function fetchAll(
+      table:
+        | "households"
+        | "household_members"
+        | "household_invitations"
+        | "incomes"
+        | "fixed_expenses"
+        | "variable_estimates"
+        | "buckets"
+        | "bucket_allocations"
+        | "expenses"
+        | "bank_imports"
+        | "analysis_overviews"
+        | "credit_usage"
+        | "notification_prefs"
+        | "notification_log",
+    ) {
       if (householdIds.length === 0) return [];
       const idCol = table === "households" ? "id" : "household_id";
       const { data } = await supabase.from(table).select("*").in(idCol, householdIds);
@@ -34,17 +50,35 @@ export const exportMyData = createServerFn({ method: "POST" })
     }
 
     const [
-      households, householdMembers, invitations,
-      incomes, fixedExpenses, variableEstimates,
-      buckets, bucketAllocations, expenses,
-      bankImports, analysisOverviews, creditUsage,
-      notificationPrefs, notificationLog,
+      households,
+      householdMembers,
+      invitations,
+      incomes,
+      fixedExpenses,
+      variableEstimates,
+      buckets,
+      bucketAllocations,
+      expenses,
+      bankImports,
+      analysisOverviews,
+      creditUsage,
+      notificationPrefs,
+      notificationLog,
     ] = await Promise.all([
-      fetchAll("households"), fetchAll("household_members"), fetchAll("household_invitations"),
-      fetchAll("incomes"), fetchAll("fixed_expenses"), fetchAll("variable_estimates"),
-      fetchAll("buckets"), fetchAll("bucket_allocations"), fetchAll("expenses"),
-      fetchAll("bank_imports"), fetchAll("analysis_overviews"), fetchAll("credit_usage"),
-      fetchAll("notification_prefs"), fetchAll("notification_log"),
+      fetchAll("households"),
+      fetchAll("household_members"),
+      fetchAll("household_invitations"),
+      fetchAll("incomes"),
+      fetchAll("fixed_expenses"),
+      fetchAll("variable_estimates"),
+      fetchAll("buckets"),
+      fetchAll("bucket_allocations"),
+      fetchAll("expenses"),
+      fetchAll("bank_imports"),
+      fetchAll("analysis_overviews"),
+      fetchAll("credit_usage"),
+      fetchAll("notification_prefs"),
+      fetchAll("notification_log"),
     ]);
 
     return {
@@ -57,11 +91,20 @@ export const exportMyData = createServerFn({ method: "POST" })
       },
       memberships: memberships ?? [],
       households: {
-        households, householdMembers, invitations,
-        incomes, fixedExpenses, variableEstimates,
-        buckets, bucketAllocations, expenses,
-        bankImports, analysisOverviews, creditUsage,
-        notificationPrefs, notificationLog,
+        households,
+        householdMembers,
+        invitations,
+        incomes,
+        fixedExpenses,
+        variableEstimates,
+        buckets,
+        bucketAllocations,
+        expenses,
+        bankImports,
+        analysisOverviews,
+        creditUsage,
+        notificationPrefs,
+        notificationLog,
       },
     };
   });
@@ -96,10 +139,7 @@ export const deleteHousehold = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Clear push subscriptions tied to this household (no CASCADE)
-    await supabaseAdmin
-      .from("push_subscriptions")
-      .delete()
-      .eq("household_id", data.household_id);
+    await supabaseAdmin.from("push_subscriptions").delete().eq("household_id", data.household_id);
 
     const { error: dErr } = await supabaseAdmin
       .from("households")
@@ -116,9 +156,7 @@ export const deleteHousehold = createServerFn({ method: "POST" })
  */
 export const leaveHousehold = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ household_id: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ household_id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 

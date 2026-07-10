@@ -1,23 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertHouseholdMember } from "@/lib/household-guard.server";
 import { z } from "zod";
 
 /** Month-to-date credit usage summary for a household. */
 export const getHouseholdCreditUsage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ householdId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ householdId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: mem } = await supabase
-      .from("household_members")
-      .select("user_id")
-      .eq("household_id", data.householdId)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!mem) throw new Error("Not a member of this household");
+    await assertHouseholdMember(supabase, data.householdId, userId);
 
     const { data: hh } = await supabase
       .from("households")

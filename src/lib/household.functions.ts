@@ -3,10 +3,34 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const DEFAULT_BUCKETS = [
-  { name: "Long-term investments", target_type: "pct_surplus" as const, target_value: 40, color: "#2c6e6b", sort_order: 0 },
-  { name: "Emergency savings", target_type: "pct_surplus" as const, target_value: 20, color: "#7aa874", sort_order: 1 },
-  { name: "Kids savings", target_type: "fixed_monthly" as const, target_value: 200, color: "#d4a373", sort_order: 2 },
-  { name: "Life projects", target_type: "pct_surplus" as const, target_value: 20, color: "#bc6c25", sort_order: 3 },
+  {
+    name: "Long-term investments",
+    target_type: "pct_surplus" as const,
+    target_value: 40,
+    color: "#2c6e6b",
+    sort_order: 0,
+  },
+  {
+    name: "Emergency savings",
+    target_type: "pct_surplus" as const,
+    target_value: 20,
+    color: "#7aa874",
+    sort_order: 1,
+  },
+  {
+    name: "Kids savings",
+    target_type: "fixed_monthly" as const,
+    target_value: 200,
+    color: "#d4a373",
+    sort_order: 2,
+  },
+  {
+    name: "Life projects",
+    target_type: "pct_surplus" as const,
+    target_value: 20,
+    color: "#bc6c25",
+    sort_order: 3,
+  },
 ];
 
 /** Returns the current user's household (creates one on first call). */
@@ -61,7 +85,6 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
     }
 
     // Create a fresh household with admin client — user is already verified by requireSupabaseAuth
-
 
     const { data: household, error: hErr } = await supabaseAdmin
       .from("households")

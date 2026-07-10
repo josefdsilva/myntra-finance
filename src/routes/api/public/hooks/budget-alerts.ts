@@ -12,7 +12,12 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
           .from("notification_prefs" as never)
           .select("user_id, baseline_warn, emergency_warn")
           .or("baseline_warn.eq.true,emergency_warn.eq.true");
-        const prefList = (prefs as Array<{ user_id: string; baseline_warn: boolean; emergency_warn: boolean }> | null) ?? [];
+        const prefList =
+          (prefs as Array<{
+            user_id: string;
+            baseline_warn: boolean;
+            emergency_warn: boolean;
+          }> | null) ?? [];
         if (!prefList.length) return Response.json({ sent: 0, reason: "no opted-in users" });
 
         const userIds = prefList.map((p) => p.user_id);
@@ -45,16 +50,17 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
             .eq("is_salary", true)
             .order("occurred_at", { ascending: false })
             .limit(6);
-          const cycle = computeCycle(((salaries as Array<{ occurred_at: string }> | null) ?? []).map((r) => r.occurred_at));
+          const cycle = computeCycle(
+            ((salaries as Array<{ occurred_at: string }> | null) ?? []).map((r) => r.occurred_at),
+          );
 
           const { data: fixed } = await supabaseAdmin
             .from("fixed_expenses")
             .select("monthly_amount")
             .eq("household_id", hhId);
-          const fixedTotal = ((fixed as Array<{ monthly_amount: number | string }> | null) ?? []).reduce(
-            (s, r) => s + Number(r.monthly_amount),
-            0,
-          );
+          const fixedTotal = (
+            (fixed as Array<{ monthly_amount: number | string }> | null) ?? []
+          ).reduce((s, r) => s + Number(r.monthly_amount), 0);
           const variablePool = Math.max(0, baseline - fixedTotal);
 
           const { data: cycleExp } = await supabaseAdmin
@@ -65,8 +71,12 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
             .lt("occurred_at", cycle.end.toISOString());
           type Row = { amount: number | string; kind: string; is_salary: boolean };
           const rows = (cycleExp as Row[] | null) ?? [];
-          const spent = rows.filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
-          const received = rows.filter((r) => r.kind === "income" && !r.is_salary).reduce((s, r) => s + Number(r.amount), 0);
+          const spent = rows
+            .filter((r) => r.kind !== "income")
+            .reduce((s, r) => s + Number(r.amount), 0);
+          const received = rows
+            .filter((r) => r.kind === "income" && !r.is_salary)
+            .reduce((s, r) => s + Number(r.amount), 0);
           const netSpent = Math.max(0, spent - received);
           const baselineRatio = variablePool > 0 ? netSpent / variablePool : netSpent > 0 ? 1 : 0;
 
@@ -74,17 +84,22 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
             .from("incomes")
             .select("monthly_amount")
             .eq("household_id", hhId);
-          const income = ((incomes as Array<{ monthly_amount: number | string }> | null) ?? []).reduce(
-            (s, r) => s + Number(r.monthly_amount),
-            0,
-          );
+          const income = (
+            (incomes as Array<{ monthly_amount: number | string }> | null) ?? []
+          ).reduce((s, r) => s + Number(r.monthly_amount), 0);
           const surplus = Math.max(0, income - baseline);
           const overspend = Math.max(0, netSpent - variablePool);
           const emergencyRatio = surplus > 0 ? overspend / surplus : overspend > 0 ? 1 : 0;
 
           const cycleKey = cycle.start.toISOString().slice(0, 10);
 
-          const fire = async (userId: string, kind: string, phase: string, title: string, body: string) => {
+          const fire = async (
+            userId: string,
+            kind: string,
+            phase: string,
+            title: string,
+            body: string,
+          ) => {
             const payload_hash = `${kind}:${phase}:${cycleKey}`;
             const { error } = await supabaseAdmin
               .from("notification_log" as never)
@@ -94,11 +109,21 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
               .from("push_subscriptions" as never)
               .select("*")
               .eq("user_id", userId);
-            const list = (subs as Array<{ id: string; endpoint: string; p256dh: string; auth: string }> | null) ?? [];
+            const list =
+              (subs as Array<{
+                id: string;
+                endpoint: string;
+                p256dh: string;
+                auth: string;
+              }> | null) ?? [];
             for (const s of list) {
               const r = await sendWebPush(s, { title, body, url: "/dashboard", tag: kind });
               if (r.ok) sent++;
-              else if (r.expired) await supabaseAdmin.from("push_subscriptions" as never).delete().eq("id", s.id);
+              else if (r.expired)
+                await supabaseAdmin
+                  .from("push_subscriptions" as never)
+                  .delete()
+                  .eq("id", s.id);
             }
           };
 

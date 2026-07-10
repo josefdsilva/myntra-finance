@@ -53,7 +53,8 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   });
 
   useEffect(() => {
-    const ok = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+    const ok =
+      typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
     setSupported(ok);
     if (!ok) return;
     navigator.serviceWorker.getRegistration("/sw.js").then(async (reg) => {
@@ -136,11 +137,17 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       const r = await testFn({ data: { endpoint: endpoint ?? null } });
       const failed = r.results.filter((x) => !x.ok);
       if (failed.length === 0) {
-        toast.success(`Test accepted by push service on ${r.sent}/${r.total} device(s). If you don't see it, check iOS Notification settings for the installed PWA.`);
+        toast.success(
+          `Test accepted by push service on ${r.sent}/${r.total} device(s). If you don't see it, check iOS Notification settings for the installed PWA.`,
+        );
       } else {
         const removed = failed.filter((f) => f.removed).length;
-        const detail = failed.map((f) => `${f.host} → ${f.status}${f.expired ? " (expired, removed)" : ""}`).join("; ");
-        toast.error(`${r.sent}/${r.total} delivered. Failures: ${detail}${removed ? " · stale removed" : ""}`);
+        const detail = failed
+          .map((f) => `${f.host} → ${f.status}${f.expired ? " (expired, removed)" : ""}`)
+          .join("; ");
+        toast.error(
+          `${r.sent}/${r.total} delivered. Failures: ${detail}${removed ? " · stale removed" : ""}`,
+        );
       }
       refetchDevices();
     } catch (e) {
@@ -149,7 +156,12 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   }
 
   async function removeAllDevices() {
-    if (!confirm("Remove ALL registered devices for your account? You'll need to re-enable push on each one.")) return;
+    if (
+      !confirm(
+        "Remove ALL registered devices for your account? You'll need to re-enable push on each one.",
+      )
+    )
+      return;
     setBusy(true);
     try {
       const reg = await navigator.serviceWorker?.getRegistration("/sw.js");
@@ -181,15 +193,11 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     <Card>
       <CardHeader>
         <CardTitle>{t("notif.title")}</CardTitle>
-        <CardDescription>
-          {t("notif.description")}
-        </CardDescription>
+        <CardDescription>{t("notif.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {supported === false && (
-          <p className="text-sm text-muted-foreground">
-            {t("notif.unsupported")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("notif.unsupported")}</p>
         )}
         {supported && (
           <div className="flex items-center justify-between gap-3">
@@ -202,7 +210,12 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
             <div className="flex gap-2">
               {subscribed ? (
                 <>
-                  <Button size="sm" variant="outline" onClick={() => test(currentEndpoint ?? undefined)} disabled={busy}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => test(currentEndpoint ?? undefined)}
+                    disabled={busy}
+                  >
                     {t("notif.testThis")}
                   </Button>
                   <Button size="sm" variant="outline" onClick={disable} disabled={busy}>
@@ -242,7 +255,9 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         {devices && devices.length > 0 && (
           <div className="border-t pt-4 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">{t("notif.registeredDevices", { count: devices.length })}</p>
+              <p className="text-sm font-medium">
+                {t("notif.registeredDevices", { count: devices.length })}
+              </p>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => test()} disabled={busy}>
                   {t("notif.testAll")}
@@ -254,13 +269,27 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
             </div>
             <ul className="space-y-2">
               {devices.map((d) => {
-                const host = (() => { try { return new URL(d.endpoint).host; } catch { return "unknown"; } })();
+                const host = (() => {
+                  try {
+                    return new URL(d.endpoint).host;
+                  } catch {
+                    return "unknown";
+                  }
+                })();
                 const isThis = d.endpoint === currentEndpoint;
                 return (
-                  <li key={d.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                  <li
+                    key={d.id}
+                    className="flex items-center justify-between gap-2 rounded-md border p-2"
+                  >
                     <div className="min-w-0">
                       <p className="text-xs font-medium truncate">
-                        {host} {isThis && <span className="text-primary">· {t("notif.thisDevice").toLowerCase()}</span>}
+                        {host}{" "}
+                        {isThis && (
+                          <span className="text-primary">
+                            · {t("notif.thisDevice").toLowerCase()}
+                          </span>
+                        )}
                       </p>
                       <p className="text-[11px] text-muted-foreground truncate">
                         {d.user_agent ?? "unknown UA"}
@@ -281,9 +310,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
                 );
               })}
             </ul>
-            <p className="text-[11px] text-muted-foreground">
-              {t("notif.iosHint")}
-            </p>
+            <p className="text-[11px] text-muted-foreground">{t("notif.iosHint")}</p>
           </div>
         )}
       </CardContent>

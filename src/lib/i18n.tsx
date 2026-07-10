@@ -1,5 +1,20 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { messages, type Locale, type MessageKey, SUPPORTED_LOCALES, LOCALE_LABELS, LOCALE_NAMES_EN } from "./i18n-messages";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  messages,
+  type Locale,
+  type MessageKey,
+  SUPPORTED_LOCALES,
+  LOCALE_LABELS,
+  LOCALE_NAMES_EN,
+} from "./i18n-messages";
 import { setCurrentLocale } from "./format";
 
 export type { Locale, MessageKey } from "./i18n-messages";
@@ -48,7 +63,9 @@ function interpolate(str: string, vars?: Record<string, string | number>) {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [isAuto, setIsAuto] = useState<boolean>(() => (typeof window === "undefined" ? true : readStoredLocale() === null));
+  const [isAuto, setIsAuto] = useState<boolean>(() =>
+    typeof window === "undefined" ? true : readStoredLocale() === null,
+  );
   const [locale, setLocaleState] = useState<Locale>(() => {
     if (typeof window === "undefined") return "en";
     return readStoredLocale() ?? detectBrowserLocale();
@@ -61,23 +78,37 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((l: Locale | "auto") => {
     if (l === "auto") {
-      try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
       setIsAuto(true);
       setLocaleState(detectBrowserLocale());
       return;
     }
-    try { window.localStorage.setItem(STORAGE_KEY, l); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem(STORAGE_KEY, l);
+    } catch {
+      /* ignore */
+    }
     setIsAuto(false);
     setLocaleState(l);
   }, []);
 
-  const t = useCallback<Ctx["t"]>((key, vars) => {
-    const bundle = messages[locale] ?? messages.en;
-    const raw = bundle[key] ?? messages.en[key] ?? key;
-    return interpolate(raw, vars);
-  }, [locale]);
+  const t = useCallback<Ctx["t"]>(
+    (key, vars) => {
+      const bundle = messages[locale] ?? messages.en;
+      const raw = bundle[key] ?? messages.en[key] ?? key;
+      return interpolate(raw, vars);
+    },
+    [locale],
+  );
 
-  const value = useMemo<Ctx>(() => ({ locale, setLocale, isAuto, t }), [locale, setLocale, isAuto, t]);
+  const value = useMemo<Ctx>(
+    () => ({ locale, setLocale, isAuto, t }),
+    [locale, setLocale, isAuto, t],
+  );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 

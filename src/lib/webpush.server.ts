@@ -31,8 +31,15 @@ function concat(...arrs: Uint8Array[]): Uint8Array {
   return out;
 }
 
-async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, len: number): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", ikm as BufferSource, { name: "HKDF" }, false, ["deriveBits"]);
+async function hkdf(
+  salt: Uint8Array,
+  ikm: Uint8Array,
+  info: Uint8Array,
+  len: number,
+): Promise<Uint8Array> {
+  const key = await crypto.subtle.importKey("raw", ikm as BufferSource, { name: "HKDF" }, false, [
+    "deriveBits",
+  ]);
   const bits = await crypto.subtle.deriveBits(
     { name: "HKDF", hash: "SHA-256", salt: salt as BufferSource, info: info as BufferSource },
     key,
@@ -52,7 +59,9 @@ async function importVapidPrivate(priv: Uint8Array, pub: Uint8Array): Promise<Cr
     y: b64urlEncode(y),
     ext: true,
   };
-  return crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  return crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, [
+    "sign",
+  ]);
 }
 
 async function vapidAuthorization(endpoint: string): Promise<string> {
@@ -75,11 +84,17 @@ async function vapidAuthorization(endpoint: string): Promise<string> {
   return `vapid t=${jwt}, k=${b64urlEncode(pub)}`;
 }
 
-async function encryptForSubscription(payload: Uint8Array, uaPubB64: string, authSecretB64: string): Promise<Uint8Array> {
+async function encryptForSubscription(
+  payload: Uint8Array,
+  uaPubB64: string,
+  authSecretB64: string,
+): Promise<Uint8Array> {
   const uaPubRaw = b64urlDecode(uaPubB64);
   const authSecret = b64urlDecode(authSecretB64);
 
-  const asKeypair = (await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"])) as CryptoKeyPair;
+  const asKeypair = (await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, [
+    "deriveBits",
+  ])) as CryptoKeyPair;
   const asPubRaw = new Uint8Array(await crypto.subtle.exportKey("raw", asKeypair.publicKey));
 
   const uaPubKey = await crypto.subtle.importKey(
@@ -101,9 +116,19 @@ async function encryptForSubscription(payload: Uint8Array, uaPubB64: string, aut
   const nonce = await hkdf(salt, ikm, new TextEncoder().encode("Content-Encoding: nonce\0"), 12);
 
   const plaintext = concat(payload, new Uint8Array([0x02]));
-  const aesKey = await crypto.subtle.importKey("raw", cek as BufferSource, { name: "AES-GCM" }, false, ["encrypt"]);
+  const aesKey = await crypto.subtle.importKey(
+    "raw",
+    cek as BufferSource,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt"],
+  );
   const ciphertext = new Uint8Array(
-    await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce as BufferSource }, aesKey, plaintext as BufferSource),
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: nonce as BufferSource },
+      aesKey,
+      plaintext as BufferSource,
+    ),
   );
 
   // RFC 8188 header: salt(16) || rs(4 BE) || idlen(1) || keyid(as_pub 65)
@@ -124,7 +149,10 @@ export type SendResult =
   | { ok: true }
   | { ok: false; status: number; expired: boolean; error?: string };
 
-export async function sendWebPush(sub: PushSubscriptionRecord, payload: object | string): Promise<SendResult> {
+export async function sendWebPush(
+  sub: PushSubscriptionRecord,
+  payload: object | string,
+): Promise<SendResult> {
   const raw = typeof payload === "string" ? payload : JSON.stringify(payload);
   try {
     const body = await encryptForSubscription(new TextEncoder().encode(raw), sub.p256dh, sub.auth);
@@ -144,6 +172,11 @@ export async function sendWebPush(sub: PushSubscriptionRecord, payload: object |
     const text = await res.text().catch(() => "");
     return { ok: false, status: res.status, expired, error: text };
   } catch (e) {
-    return { ok: false, status: 0, expired: false, error: e instanceof Error ? e.message : String(e) };
+    return {
+      ok: false,
+      status: 0,
+      expired: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
 }

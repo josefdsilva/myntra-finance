@@ -5,13 +5,15 @@ import { z } from "zod";
 export const confirmBucketAllocation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      household_id: z.string().uuid(),
-      bucket_id: z.string().uuid(),
-      period: z.string().date(), // YYYY-MM-01
-      amount: z.number().min(0),
-      note: z.string().max(300).optional().nullable(),
-    }).parse(input),
+    z
+      .object({
+        household_id: z.string().uuid(),
+        bucket_id: z.string().uuid(),
+        period: z.string().date(), // YYYY-MM-01
+        amount: z.number().min(0),
+        note: z.string().max(300).optional().nullable(),
+      })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     const { data: row, error } = await context.supabase

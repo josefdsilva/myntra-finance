@@ -19,12 +19,17 @@ const RATES = {
 
 export function estimateTextCredits(
   model: keyof typeof RATES,
-  usage?: { inputTokens?: number; outputTokens?: number; promptTokens?: number; completionTokens?: number },
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    promptTokens?: number;
+    completionTokens?: number;
+  },
 ): { credits: number; input: number; output: number } {
   const rate = RATES[model] as { input?: number; output?: number };
   const input = usage?.inputTokens ?? usage?.promptTokens ?? 0;
   const output = usage?.outputTokens ?? usage?.completionTokens ?? 0;
-  const credits = (input * (rate.input ?? 0)) + (output * (rate.output ?? 0));
+  const credits = input * (rate.input ?? 0) + output * (rate.output ?? 0);
   // Floor at a small minimum so completely-unknown usage still leaves a trace
   return { credits: Math.max(credits, 0.001), input, output };
 }

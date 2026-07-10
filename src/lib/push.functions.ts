@@ -20,19 +20,17 @@ export const subscribePush = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase
-      .from("push_subscriptions" as never)
-      .upsert(
-        {
-          user_id: context.userId,
-          household_id: data.household_id ?? null,
-          endpoint: data.endpoint,
-          p256dh: data.p256dh,
-          auth: data.auth,
-          user_agent: data.user_agent ?? null,
-        } as never,
-        { onConflict: "endpoint" },
-      );
+    const { error } = await context.supabase.from("push_subscriptions" as never).upsert(
+      {
+        user_id: context.userId,
+        household_id: data.household_id ?? null,
+        endpoint: data.endpoint,
+        p256dh: data.p256dh,
+        auth: data.auth,
+        user_agent: data.user_agent ?? null,
+      } as never,
+      { onConflict: "endpoint" },
+    );
     if (error) throw error;
     return { ok: true };
   });
@@ -58,7 +56,11 @@ export const getNotificationPrefs = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .maybeSingle();
     return (
-      (data as { weekly_digest: boolean; baseline_warn: boolean; emergency_warn: boolean } | null) ?? {
+      (data as {
+        weekly_digest: boolean;
+        baseline_warn: boolean;
+        emergency_warn: boolean;
+      } | null) ?? {
         weekly_digest: false,
         baseline_warn: false,
         emergency_warn: false,
@@ -98,7 +100,14 @@ export const listMyDevices = createServerFn({ method: "GET" })
       .select("id, endpoint, user_agent, created_at")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false });
-    return (data as Array<{ id: string; endpoint: string; user_agent: string | null; created_at: string }> | null) ?? [];
+    return (
+      (data as Array<{
+        id: string;
+        endpoint: string;
+        user_agent: string | null;
+        created_at: string;
+      }> | null) ?? []
+    );
   });
 
 export const deleteDevice = createServerFn({ method: "POST" })
@@ -127,7 +136,10 @@ export const deleteAllMyDevices = createServerFn({ method: "POST" })
 export const sendTestPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ endpoint: z.string().optional().nullable() }).optional().parse(input ?? {}),
+    z
+      .object({ endpoint: z.string().optional().nullable() })
+      .optional()
+      .parse(input ?? {}),
   )
   .handler(async ({ context, data }) => {
     let q = context.supabase
@@ -136,13 +148,35 @@ export const sendTestPush = createServerFn({ method: "POST" })
       .eq("user_id", context.userId);
     if (data?.endpoint) q = q.eq("endpoint", data.endpoint);
     const { data: subs } = await q;
-    const list = (subs as Array<{ id: string; endpoint: string; p256dh: string; auth: string; user_agent: string | null }> | null) ?? [];
+    const list =
+      (subs as Array<{
+        id: string;
+        endpoint: string;
+        p256dh: string;
+        auth: string;
+        user_agent: string | null;
+      }> | null) ?? [];
     if (!list.length) throw new Error("No subscribed devices for this account.");
     const { sendWebPush } = await import("./webpush.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const results: Array<{ id: string; host: string; ua: string | null; ok: boolean; status: number; expired: boolean; removed: boolean; error?: string }> = [];
+    const results: Array<{
+      id: string;
+      host: string;
+      ua: string | null;
+      ok: boolean;
+      status: number;
+      expired: boolean;
+      removed: boolean;
+      error?: string;
+    }> = [];
     for (const s of list) {
-      const host = (() => { try { return new URL(s.endpoint).host; } catch { return "unknown"; } })();
+      const host = (() => {
+        try {
+          return new URL(s.endpoint).host;
+        } catch {
+          return "unknown";
+        }
+      })();
       const r = await sendWebPush(s, {
         title: "Notifications enabled ✓",
         body: "You'll now receive selected alerts from Myntra.",
@@ -151,7 +185,10 @@ export const sendTestPush = createServerFn({ method: "POST" })
       });
       let removed = false;
       if (!r.ok && r.expired) {
-        await supabaseAdmin.from("push_subscriptions" as never).delete().eq("id", s.id);
+        await supabaseAdmin
+          .from("push_subscriptions" as never)
+          .delete()
+          .eq("id", s.id);
         removed = true;
       }
       results.push({

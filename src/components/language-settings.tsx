@@ -1,6 +1,12 @@
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Languages } from "lucide-react";
 
 const AUTO = "__auto";
@@ -18,10 +24,7 @@ export function LanguageSettings() {
         <CardDescription>{t("settings.language.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Select
-          value={value}
-          onValueChange={(v) => setLocale(v === AUTO ? "auto" : (v as Locale))}
-        >
+        <Select value={value} onValueChange={(v) => setLocale(v === AUTO ? "auto" : (v as Locale))}>
           <SelectTrigger className="w-full sm:w-72">
             <SelectValue />
           </SelectTrigger>

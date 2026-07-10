@@ -2,10 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
-import {
-  createLovableAiGatewayProvider,
-  requireLovableApiKey,
-} from "./ai-gateway.server";
+import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import {
   estimateTextCredits,
   estimateTranscribeCredits,
@@ -42,7 +39,11 @@ const ParsedExpense = z.object({
 const ParsedList = z.object({ items: z.array(ParsedExpense) });
 
 function extractJson(text: string): unknown {
-  const trimmed = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const trimmed = text
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
   try {
     return JSON.parse(trimmed);
   } catch {
@@ -122,17 +123,13 @@ export const parseVoiceMemo = createServerFn({ method: "POST" })
     const ext = data.mime_type.includes("webm")
       ? "webm"
       : data.mime_type.includes("mp4") || data.mime_type.includes("m4a")
-      ? "m4a"
-      : data.mime_type.includes("wav")
-      ? "wav"
-      : "webm";
+        ? "m4a"
+        : data.mime_type.includes("wav")
+          ? "wav"
+          : "webm";
 
     const form = new FormData();
-    form.append(
-      "file",
-      new Blob([audioBytes], { type: data.mime_type }),
-      `memo.${ext}`,
-    );
+    form.append("file", new Blob([audioBytes], { type: data.mime_type }), `memo.${ext}`);
     form.append("model", "openai/gpt-4o-mini-transcribe");
 
     const sttRes = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
@@ -212,13 +209,18 @@ export const parseBankStatement = createServerFn({ method: "POST" })
       const csvText = new TextDecoder().decode(
         Uint8Array.from(atob(data.file_base64), (c) => c.charCodeAt(0)),
       );
-      userContent = [{ role: "user", content: `Parse this bank statement CSV:\n\n${csvText.slice(0, 80_000)}` }];
+      userContent = [
+        { role: "user", content: `Parse this bank statement CSV:\n\n${csvText.slice(0, 80_000)}` },
+      ];
     } else {
       userContent = [
         {
           role: "user",
           content: [
-            { type: "text", text: "Parse this bank statement and return all expense transactions." },
+            {
+              type: "text",
+              text: "Parse this bank statement and return all expense transactions.",
+            },
             {
               type: "file",
               data: `data:${data.mime_type};base64,${data.file_base64}`,
@@ -316,4 +318,3 @@ No prose, no markdown fences.`,
     }
     return parsed;
   });
-

@@ -12,7 +12,13 @@ import { toast } from "sonner";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
-export function CoachPanel({ householdId, initialPrompt }: { householdId: string; initialPrompt?: string }) {
+export function CoachPanel({
+  householdId,
+  initialPrompt,
+}: {
+  householdId: string;
+  initialPrompt?: string;
+}) {
   const qc = useQueryClient();
   const genFn = useServerFn(generateOverview);
   const chatFn = useServerFn(chatWithCoach);
@@ -77,13 +83,18 @@ export function CoachPanel({ householdId, initialPrompt }: { householdId: string
               AI Financial Coach
             </CardTitle>
             <CardDescription className="mt-1">
-              On-demand overview and chat grounded in your current cycle. Cached for 24h to save credits.
+              On-demand overview and chat grounded in your current cycle. Cached for 24h to save
+              credits.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             {!overview && (
               <Button size="sm" onClick={() => overviewQ.refetch()} disabled={loading}>
-                {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4" />
+                )}
                 Generate overview
               </Button>
             )}
@@ -123,8 +134,8 @@ export function CoachPanel({ householdId, initialPrompt }: { householdId: string
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">
-            Click <span className="font-medium">Generate overview</span> to get a summary of what's going
-            well, watch-outs, and recommendations. Uses one AI call.
+            Click <span className="font-medium">Generate overview</span> to get a summary of what's
+            going well, watch-outs, and recommendations. Uses one AI call.
           </div>
         )}
 
@@ -133,18 +144,14 @@ export function CoachPanel({ householdId, initialPrompt }: { householdId: string
             <div className="max-h-72 overflow-y-auto space-y-3 pr-1">
               {history.length === 0 && (
                 <div className="text-xs text-muted-foreground">
-                  Ask anything, e.g. "Can we afford a €300 weekend trip this cycle?" or "Which category
-                  should we cut first?"
+                  Ask anything, e.g. "Can we afford a €300 weekend trip this cycle?" or "Which
+                  category should we cut first?"
                 </div>
               )}
               {history.map((m, i) => (
                 <div
                   key={i}
-                  className={
-                    m.role === "user"
-                      ? "flex justify-end"
-                      : "flex justify-start"
-                  }
+                  className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
                 >
                   <div
                     className={

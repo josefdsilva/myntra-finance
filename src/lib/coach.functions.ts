@@ -3,14 +3,34 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { computeCycle } from "@/lib/cycle";
-import {
-  createLovableAiGatewayProvider,
-  requireLovableApiKey,
-} from "./ai-gateway.server";
+import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
+import { rowsOrEmpty } from "@/lib/query-utils";
+import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+// Narrow row shapes used only to aggregate the coach snapshot. Kept local so a
+// schema tweak on unrelated columns doesn't force this file to change.
+type SalaryRow = { occurred_at: string };
+type ExpenseRow = {
+  amount: number | string;
+  category: string;
+  kind: string;
+  note: string | null;
+  occurred_at: string;
+};
+type PrevExpenseRow = Pick<ExpenseRow, "amount" | "kind" | "category">;
+type MonthlyRow = { monthly_amount: number | string };
+type BucketRow = {
+  id: string;
+  name: string;
+  target_type: string;
+  target_value: number | string;
+  target_deadline: string | null;
+};
+type AllocRow = { bucket_id: string; amount: number | string; confirmed_at: string };
 
 type CoachContext = {
   today: string;
@@ -49,17 +69,14 @@ type CoachContext = {
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
 
-async function buildContext(
-  supabase: any,
-  householdId: string,
-): Promise<CoachContext> {
+async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
     .from("households")
     .select("currency, baseline_budget, margin_pct")
     .eq("id", householdId)
     .maybeSingle();
 
-  const { data: salaryRows = [] } = await supabase
+  const { data: salaryRows } = await supabase
     .from("expenses")
     .select("occurred_at")
     .eq("household_id", householdId)
@@ -67,7 +84,7 @@ async function buildContext(
     .order("occurred_at", { ascending: false })
     .limit(6);
 
-  const salaryDatesDesc = (salaryRows ?? []).map((r: any) => r.occurred_at as string);
+  const salaryDatesDesc = rowsOrEmpty<SalaryRow>(salaryRows).map((r) => r.occurred_at);
   const cycle = computeCycle(salaryDatesDesc);
 
   // Previous cycle bounds
@@ -81,7 +98,7 @@ async function buildContext(
   const startISO = cycle.start.toISOString();
   const endISO = cycle.end.toISOString();
 
-  const { data: cycleExp = [] } = await supabase
+  const { data: cycleExp } = await supabase
     .from("expenses")
     .select("amount, category, kind, note, occurred_at")
     .eq("household_id", householdId)
@@ -90,14 +107,15 @@ async function buildContext(
 
   let previousCycleTotals: CoachContext["previousCycleTotals"] = null;
   if (prevStart && prevEnd) {
-    const { data: prevExp = [] } = await supabase
+    const { data: prevExp } = await supabase
       .from("expenses")
       .select("amount, kind, category")
       .eq("household_id", householdId)
       .gte("occurred_at", prevStart.toISOString())
       .lt("occurred_at", prevEnd.toISOString());
-    let s = 0, r = 0;
-    for (const e of prevExp ?? []) {
+    let s = 0,
+      r = 0;
+    for (const e of rowsOrEmpty<PrevExpenseRow>(prevExp)) {
       const a = Number(e.amount);
       if (e.kind === "income") r += a;
       else s += a;
@@ -105,33 +123,56 @@ async function buildContext(
     previousCycleTotals = { spent: s, received: r, net: s - r };
   }
 
-  const [{ data: fixed = [] }, { data: varEst = [] }, { data: buckets = [] }, { data: allocs = [] }] =
+  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }] =
     await Promise.all([
       supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
       supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
-      supabase.from("buckets").select("id, name, target_type, target_value, target_deadline").eq("household_id", householdId),
-      supabase.from("bucket_allocations").select("bucket_id, amount, confirmed_at")
-        .eq("household_id", householdId).gte("confirmed_at", startISO).lt("confirmed_at", endISO),
+      supabase
+        .from("buckets")
+        .select("id, name, target_type, target_value, target_deadline")
+        .eq("household_id", householdId),
+      supabase
+        .from("bucket_allocations")
+        .select("bucket_id, amount, confirmed_at")
+        .eq("household_id", householdId)
+        .gte("confirmed_at", startISO)
+        .lt("confirmed_at", endISO),
     ]);
 
-  const fixedMonthly = (fixed ?? []).reduce((s: number, r: any) => s + Number(r.monthly_amount), 0);
-  const variableEstimateMonthly = (varEst ?? []).reduce((s: number, r: any) => s + Number(r.monthly_amount), 0);
+  const sumMonthly = (rows: unknown): number =>
+    rowsOrEmpty<MonthlyRow>(rows as MonthlyRow[] | null).reduce(
+      (s, r) => s + Number(r.monthly_amount),
+      0,
+    );
+  const fixedMonthly = sumMonthly(fixed);
+  const variableEstimateMonthly = sumMonthly(varEst);
 
   const allocByBucket: Record<string, number> = {};
-  for (const a of allocs ?? []) {
+  for (const a of rowsOrEmpty<AllocRow>(allocs)) {
     allocByBucket[a.bucket_id] = (allocByBucket[a.bucket_id] ?? 0) + Number(a.amount);
   }
 
-  let spent = 0, received = 0;
+  let spent = 0,
+    received = 0;
   const byCategory: Record<string, number> = {};
-  const spendsForTop: Array<{ amount: number; category: string; note: string | null; occurred_at: string }> = [];
-  for (const e of cycleExp ?? []) {
+  const spendsForTop: Array<{
+    amount: number;
+    category: string;
+    note: string | null;
+    occurred_at: string;
+  }> = [];
+  for (const e of rowsOrEmpty<ExpenseRow>(cycleExp)) {
     const a = Number(e.amount);
     if (e.kind === "income") received += a;
     else {
       spent += a;
       byCategory[e.category] = (byCategory[e.category] ?? 0) + a;
-      spendsForTop.push({ amount: a, category: e.category, note: e.note, occurred_at: e.occurred_at });
+      spendsForTop.push({
+        amount: a,
+        category: e.category,
+        note: e.note,
+        occurred_at: e.occurred_at,
+      });
     }
   }
   spendsForTop.sort((a, b) => b.amount - a.amount);
@@ -153,7 +194,7 @@ async function buildContext(
     variableEstimateMonthly,
     cycleTotals: { spent, received, net: spent - received, byCategory },
     previousCycleTotals,
-    buckets: (buckets ?? []).map((b: any) => ({
+    buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
       name: b.name,
       target_type: b.target_type,
       target_value: Number(b.target_value),
@@ -180,7 +221,11 @@ const OVERVIEW_PROMPT = `Write a friendly financial overview in markdown with th
 Keep the whole thing under ~220 words. No preamble.`;
 
 const LANG_NAMES: Record<string, string> = {
-  en: "English", pt: "Portuguese", es: "Spanish", de: "German", fr: "French",
+  en: "English",
+  pt: "Portuguese",
+  es: "Spanish",
+  de: "German",
+  fr: "French",
 };
 
 function langInstruction(locale?: string) {
@@ -192,23 +237,18 @@ function langInstruction(locale?: string) {
 export const generateOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      householdId: z.string().uuid(),
-      refresh: z.boolean().optional(),
-      locale: z.string().optional(),
-    }).parse(input),
+    z
+      .object({
+        householdId: z.string().uuid(),
+        refresh: z.boolean().optional(),
+        locale: z.string().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Verify membership
-    const { data: mem } = await supabase
-      .from("household_members")
-      .select("user_id")
-      .eq("household_id", data.householdId)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!mem) throw new Error("Not a member of this household");
+    await assertHouseholdMember(supabase, data.householdId, userId);
 
     const ctx = await buildContext(supabase, data.householdId);
     const useCache = !data.locale || data.locale === "en";
@@ -255,15 +295,13 @@ export const generateOverview = createServerFn({ method: "POST" })
     if (useCache) {
       // Upsert via admin (RLS blocks writes from client role)
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin
-        .from("analysis_overviews")
-        .upsert({
-          household_id: data.householdId,
-          cycle_start: ctx.cycleStartKey,
-          content: result.text,
-          model: MODEL,
-          generated_at,
-        });
+      await supabaseAdmin.from("analysis_overviews").upsert({
+        household_id: data.householdId,
+        cycle_start: ctx.cycleStartKey,
+        content: result.text,
+        model: MODEL,
+        generated_at,
+      });
     }
 
     return { content: result.text, generated_at, model: MODEL, cached: false };
@@ -289,13 +327,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: mem } = await supabase
-      .from("household_members")
-      .select("user_id")
-      .eq("household_id", data.householdId)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!mem) throw new Error("Not a member of this household");
+    await assertHouseholdMember(supabase, data.householdId, userId);
 
     const ctx = await buildContext(supabase, data.householdId);
 
