@@ -437,19 +437,19 @@ function Dashboard() {
       <Card id="recent-expenses">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            <CardTitle>Recent expenses</CardTitle>
+            <CardTitle>{t("dashboard.recent.title")}</CardTitle>
             {expenseFilter !== "all" && (
               <button
                 type="button"
                 onClick={() => setExpenseFilter("all")}
                 className="text-xs text-muted-foreground underline hover:text-foreground"
               >
-                Showing {expenseFilter} — clear
+                {t("dashboard.recent.showing", { filter: t(`dashboard.filter.${expenseFilter}`) })}
               </button>
             )}
           </div>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/expenses">View all</Link>
+            <Link to="/expenses">{t("dashboard.recent.viewAll")}</Link>
           </Button>
         </CardHeader>
         <CardContent>
@@ -461,7 +461,7 @@ function Dashboard() {
                   ? e.kind === "income" && !e.is_salary
                   : e.kind !== "income",
             );
-            if (!list.length) return <p className="text-sm text-muted-foreground">No entries.</p>;
+            if (!list.length) return <p className="text-sm text-muted-foreground">{t("dashboard.recent.none")}</p>;
             return (
               <ul className="divide-y">
                 {list.map((e) => {
@@ -472,7 +472,7 @@ function Dashboard() {
                         <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
                         <p className="text-xs text-muted-foreground">
                           {fmtDateTime(e.occurred_at)} · {e.category}
-                          {isIncome ? " · received" : ""}
+                          {isIncome ? ` · ${t("dashboard.recent.received")}` : ""}
                         </p>
                       </div>
                       <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
