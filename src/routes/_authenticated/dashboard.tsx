@@ -425,8 +425,8 @@ function Dashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Quick add</CardTitle>
-            <CardDescription>Type or say what you spent — we'll parse it.</CardDescription>
+            <CardTitle>{t("dashboard.quickAdd.title")}</CardTitle>
+            <CardDescription>{t("dashboard.quickAdd.desc")}</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
