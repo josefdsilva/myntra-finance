@@ -73,6 +73,7 @@ function AnalysisPage() {
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
+  const { ask: initialAsk } = Route.useSearch();
 
   const [range, setRange] = useState<RangeKey>("1");
   const [includeFixed, setIncludeFixed] = useState(true);
@@ -303,7 +304,7 @@ function AnalysisPage() {
         </div>
       </header>
 
-      {householdId && <CoachPanel householdId={householdId} initialPrompt={Route.useSearch().ask} />}
+      {householdId && <CoachPanel householdId={householdId} initialPrompt={initialAsk} />}
 
 
 
