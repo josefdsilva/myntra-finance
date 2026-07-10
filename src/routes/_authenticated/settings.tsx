@@ -262,6 +262,9 @@ function HouseholdSection({
     name: string;
     baseline_budget: number | string;
     margin_pct: number | string;
+    country?: string | null;
+    adults?: number | null;
+    children?: number | null;
   };
   onChange: () => void;
 }) {
@@ -270,6 +273,9 @@ function HouseholdSection({
   const qc = useQueryClient();
   const [name, setName] = useState(household.name);
   const [margin, setMargin] = useState(Number(household.margin_pct));
+  const [country, setCountry] = useState((household.country ?? "PT").toUpperCase());
+  const [adults, setAdults] = useState(Number(household.adults ?? 2));
+  const [children, setChildren] = useState(Number(household.children ?? 0));
 
   const { data: fixedRows } = useQuery({
     queryKey: ["fixed-total", household.id],
