@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { enforceAllowlist } from "@/lib/allowlist.functions";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { I18nProvider } from "@/lib/i18n";
 import appIcon from "@/assets/app-icon.png.asset.json";
 
 function NotFoundComponent() {
@@ -160,8 +161,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster richColors position="top-right" />
+      <I18nProvider>
+        <Outlet />
+        <Toaster richColors position="top-right" />
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

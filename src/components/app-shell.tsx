@@ -8,21 +8,23 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/expenses", label: "Expenses", icon: Receipt },
-  { to: "/analysis", label: "Analysis", icon: BarChart3 },
-  { to: "/allocations", label: "Allocations", icon: PiggyBank },
-  { to: "/settings", label: "Settings", icon: Settings },
-  { to: "/wiki", label: "Wiki", icon: BookOpen },
-  { to: "/privacy", label: "Privacy", icon: ShieldCheck },
+  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
+  { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
+  { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+  { to: "/settings", labelKey: "nav.settings", icon: Settings },
+  { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
+  { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -141,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
           <div>
             <div className="font-display text-lg leading-tight">{householdName}</div>
-            <div className="text-xs text-muted-foreground">Budget & planning</div>
+            <div className="text-xs text-muted-foreground">{t("shell.subtitle")}</div>
           </div>
         </div>
         <nav className="flex md:flex-col gap-1 p-3 flex-1 overflow-x-auto">
@@ -160,7 +162,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
               >
                 <Icon className="size-4" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
@@ -168,14 +170,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-3 border-t hidden md:block space-y-1">
           <Button variant="ghost" className="w-full justify-start" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}>
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            {theme === "dark" ? "Light theme" : "Dark theme"}
+            {theme === "dark" ? t("shell.lightTheme") : t("shell.darkTheme")}
           </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={() => setPrivacy((s) => !s)}>
             {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            {privacy ? "Show numbers" : "Hide numbers"}
+            {privacy ? t("shell.showNumbers") : t("shell.hideNumbers")}
           </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
-            <LogOut className="size-4" /> Sign out
+            <LogOut className="size-4" /> {t("shell.signOut")}
           </Button>
 
         </div>
