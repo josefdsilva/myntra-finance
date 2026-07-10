@@ -102,12 +102,14 @@ export function ExpenseQuickAdd({
 function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const add = useServerFn(addExpense);
   const { names: hhCats } = useCategoryNames(householdId);
+  const { data: recentLabels = [] } = useRecentLabels(householdId);
   const categories = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
   const [kind, setKind] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(categories[0] ?? "other");
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
+  const [labels, setLabels] = useState<string[]>([]);
   const [customDate, setCustomDate] = useState(false);
   const nowLocal = () => {
     const d = new Date();
@@ -116,6 +118,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   };
   const [occurredAt, setOccurredAt] = useState<string>(nowLocal);
   const [loading, setLoading] = useState(false);
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
