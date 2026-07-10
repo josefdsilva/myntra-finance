@@ -304,7 +304,7 @@ function Dashboard() {
                   }}
                   className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25 ${expenseFilter === "spent" ? "ring-2 ring-orange-500/50" : ""}`}
                 >
-                  Spent {money(spent)}
+                  {t("dashboard.chip.spent", { value: money(spent) })}
                 </button>
                 {received > 0 && (
                   <button
@@ -317,14 +317,14 @@ function Dashboard() {
                     }}
                     className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25 ${expenseFilter === "received" ? "ring-2 ring-blue-500/50" : ""}`}
                   >
-                    Received {money(received)}
+                    {t("dashboard.chip.received", { value: money(received) })}
                   </button>
                 )}
                 <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-muted text-foreground tabular-nums">
-                  Balance {money(netSpent)}
+                  {t("dashboard.chip.balance", { value: money(netSpent) })}
                 </span>
               </div>
-              <span className="text-muted-foreground tabular-nums">{money(variablePool)} pool</span>
+              <span className="text-muted-foreground tabular-nums">{t("dashboard.chip.pool", { value: money(variablePool) })}</span>
             </div>
             <Progress
               value={pctSpent}
