@@ -100,6 +100,7 @@ function SettingsPage() {
           <IncomesSection householdId={householdId} />
           <FixedExpensesSection householdId={householdId} />
           <VariableEstimatesSection householdId={householdId} />
+          <CategoryManager householdId={householdId} />
           <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
