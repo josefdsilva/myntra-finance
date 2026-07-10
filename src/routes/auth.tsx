@@ -17,7 +17,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
-import appIcon from "@/assets/app-icon.png.asset.json";
+import appIcon from "@/assets/app-icon.svg.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({

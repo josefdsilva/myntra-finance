@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { enforceAllowlist } from "@/lib/allowlist.functions";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
-import appIcon from "@/assets/app-icon.png.asset.json";
+import appIcon from "@/assets/app-icon.svg.asset.json";
 
 function NotFoundComponent() {
   return (
@@ -108,7 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: appIcon.url },
     ],
     links: [
-      { rel: "icon", type: "image/png", href: appIcon.url },
+      { rel: "icon", type: "image/svg+xml", href: appIcon.url },
       { rel: "apple-touch-icon", href: appIcon.url },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
