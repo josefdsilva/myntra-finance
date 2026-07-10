@@ -47,6 +47,7 @@ const CATEGORIES = [
 ];
 
 function ExpensesPage() {
+  const t = useT();
   const qc = useQueryClient();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const del = useServerFn(deleteExpense);
