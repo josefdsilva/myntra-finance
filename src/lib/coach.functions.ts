@@ -3,11 +3,34 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { computeCycle } from "@/lib/cycle";
+import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
+import { rowsOrEmpty } from "@/lib/query-utils";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+// Narrow row shapes used only to aggregate the coach snapshot. Kept local so a
+// schema tweak on unrelated columns doesn't force this file to change.
+type SalaryRow = { occurred_at: string };
+type ExpenseRow = {
+  amount: number | string;
+  category: string;
+  kind: string;
+  note: string | null;
+  occurred_at: string;
+};
+type PrevExpenseRow = Pick<ExpenseRow, "amount" | "kind" | "category">;
+type MonthlyRow = { monthly_amount: number | string };
+type BucketRow = {
+  id: string;
+  name: string;
+  target_type: string;
+  target_value: number | string;
+  target_deadline: string | null;
+};
+type AllocRow = { bucket_id: string; amount: number | string; confirmed_at: string };
 
 type CoachContext = {
   today: string;
