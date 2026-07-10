@@ -98,9 +98,11 @@ export function ExpenseQuickAdd({
 
 function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const add = useServerFn(addExpense);
+  const { names: hhCats } = useCategoryNames(householdId);
+  const categories = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
   const [kind, setKind] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("groceries");
+  const [category, setCategory] = useState(categories[0] ?? "other");
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
   const [customDate, setCustomDate] = useState(false);
