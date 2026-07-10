@@ -39,7 +39,11 @@ function ExpensesPage() {
   const { data: hh } = useQuery({ queryKey: ["household"], queryFn: () => fetchHh() });
   const householdId = hh?.household?.id;
 
+  const { names: catNames } = useCategoryNames(householdId);
+  const categoryOptions = ["all", ...catNames];
+
   const [category, setCategory] = useState("all");
+
   const [cycleOffset, setCycleOffset] = useState(0);
 
   // Fetch salary history to derive pay cycles
