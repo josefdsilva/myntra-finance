@@ -6,6 +6,7 @@ import { computeCycle } from "@/lib/cycle";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
+import { computeBenchmarkComparison, type BenchmarkComparison } from "./benchmarks";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
