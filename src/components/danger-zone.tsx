@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import {
   deleteHousehold,
   deleteMyAccount,
+  exportMyData,
   leaveHousehold,
 } from "@/lib/privacy.functions";
 
