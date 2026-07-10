@@ -283,6 +283,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
         householdId: z.string().uuid(),
         history: z.array(ChatMsg).max(20),
         message: z.string().min(1).max(2000),
+        locale: z.string().optional(),
       })
       .parse(input),
   )
@@ -301,7 +302,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
     const result = await generateText({
       model: gateway(MODEL),
-      system: `${SYSTEM_BASE}
+      system: `${SYSTEM_BASE}${langInstruction(data.locale)}
 
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(ctx)}
