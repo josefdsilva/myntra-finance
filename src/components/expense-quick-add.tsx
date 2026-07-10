@@ -31,7 +31,9 @@ function bufferToBase64(buf: ArrayBuffer): string {
   return btoa(bin);
 }
 
-const CATEGORIES = [
+import { useCategoryNames } from "@/hooks/use-categories";
+
+const DEFAULT_CATEGORIES = [
   "groceries",
   "dining",
   "transport",
