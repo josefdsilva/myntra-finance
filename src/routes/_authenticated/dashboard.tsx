@@ -109,7 +109,7 @@ function Dashboard() {
   const buckets = dashboard?.buckets ?? [];
 
   // Trend: compare with yesterday's safe-to-spend (spent through end of yesterday, days-left as of yesterday)
-  const allExpenses = dashboard?.expenses ?? [];
+  const allExpenses = useMemo(() => dashboard?.expenses ?? [], [dashboard?.expenses]);
   const yesterdayEnd = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
