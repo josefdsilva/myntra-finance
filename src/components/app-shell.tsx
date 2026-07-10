@@ -8,15 +8,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/expenses", label: "Expenses", icon: Receipt },
-  { to: "/analysis", label: "Analysis", icon: BarChart3 },
-  { to: "/allocations", label: "Allocations", icon: PiggyBank },
-  { to: "/settings", label: "Settings", icon: Settings },
-  { to: "/wiki", label: "Wiki", icon: BookOpen },
-  { to: "/privacy", label: "Privacy", icon: ShieldCheck },
+  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
+  { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
+  { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+  { to: "/settings", labelKey: "nav.settings", icon: Settings },
+  { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
+  { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
