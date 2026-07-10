@@ -257,6 +257,10 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           <Label>Note (optional)</Label>
           <Input value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
+        <div className="md:col-span-4">
+          <Label>Labels (optional)</Label>
+          <LabelsInput value={labels} onChange={setLabels} suggestions={recentLabels} />
+        </div>
       </div>
     </form>
   );
