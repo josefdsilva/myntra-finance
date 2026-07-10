@@ -240,13 +240,15 @@ function AllocationsPage() {
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
-                      Allocated {money(Math.min(totalAllocated, surplus))} of {money(surplus)}{" "}
-                      surplus
+                      {t("alloc.summary.allocated", {
+                        allocated: money(Math.min(totalAllocated, surplus)),
+                        surplus: money(surplus),
+                      })}
                     </span>
                     <span className={unallocated < 0 ? "text-destructive" : ""}>
                       {unallocated < 0
-                        ? `Over by ${money(-unallocated)}`
-                        : `${money(unallocated)} unallocated`}
+                        ? t("alloc.summary.overBy", { value: money(-unallocated) })
+                        : t("alloc.summary.unallocated", { value: money(unallocated) })}
                     </span>
                   </div>
                 </div>
