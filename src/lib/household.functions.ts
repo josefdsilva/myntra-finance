@@ -33,11 +33,29 @@ const DEFAULT_BUCKETS = [
   },
 ];
 
-/** Returns the current user's household (creates one on first call). */
+/**
+ * Returns the current user's household. If `household_id` is provided and the
+ * caller is a member, that specific household is returned. Otherwise the
+ * caller's default household is returned (creating one on very first call).
+ */
 export const getOrCreateHousehold = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input: unknown) =>
+    z.object({ household_id: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+
+    // If a specific household was requested and the caller is a member, return it.
+    if (data?.household_id) {
+      const { data: mem } = await supabase
+        .from("household_members")
+        .select("role, households(*)")
+        .eq("household_id", data.household_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (mem?.households) return { household: mem.households, role: mem.role };
+    }
 
     // Prefer a shared household (member role) over a self-created empty one.
     const { data: memberships } = await supabase
