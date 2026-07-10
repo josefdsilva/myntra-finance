@@ -78,6 +78,8 @@ export const addExpensesBulk = createServerFn({ method: "POST" })
       source_meta: (d.source_meta ?? {}) as never,
       kind: d.kind,
       is_salary: d.kind === "income" ? !!d.is_salary : false,
+      labels: normalizeLabels(d.labels),
+
     }));
     const { data: inserted, error } = await context.supabase.from("expenses").insert(rows).select();
     if (error) throw error;
