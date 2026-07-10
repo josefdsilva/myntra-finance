@@ -500,6 +500,7 @@ function SalaryReceivedButton({
   lastSalaryAt: Date | null;
   onDone: () => void;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const mark = useServerFn(markSalaryReceived);
   const [loading, setLoading] = useState(false);
@@ -531,10 +532,12 @@ function SalaryReceivedButton({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
       <div>
-        <p className="text-sm font-medium">Payday?</p>
+        <p className="text-sm font-medium">{t("dashboard.salary.payday")}</p>
         <p className="text-xs text-muted-foreground">
-          {lastSalaryAt ? `Last salary: ${fmtDate(lastSalaryAt)}` : "No salary recorded yet."} Uses
-          your Settings income total.
+          {lastSalaryAt
+            ? t("dashboard.salary.last", { date: fmtDate(lastSalaryAt) })
+            : t("dashboard.salary.none")}{" "}
+          {t("dashboard.salary.usesSettings")}
         </p>
       </div>
       <Button
@@ -542,8 +545,7 @@ function SalaryReceivedButton({
         disabled={loading}
         variant={recentlyReceived ? "outline" : "default"}
       >
-        {loading ? <Loader2 className="animate-spin" /> : <Wallet />} Salary received — start new
-        cycle
+        {loading ? <Loader2 className="animate-spin" /> : <Wallet />} {t("dashboard.salary.button")}
       </Button>
     </div>
   );
