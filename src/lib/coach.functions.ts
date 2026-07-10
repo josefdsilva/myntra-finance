@@ -327,13 +327,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: mem } = await supabase
-      .from("household_members")
-      .select("user_id")
-      .eq("household_id", data.householdId)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!mem) throw new Error("Not a member of this household");
+    await assertHouseholdMember(supabase, data.householdId, userId);
 
     const ctx = await buildContext(supabase, data.householdId);
 
