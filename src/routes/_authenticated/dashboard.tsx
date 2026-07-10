@@ -346,21 +346,19 @@ function Dashboard() {
           <div className="mt-6 pt-6 border-t">
             {!buckets.length ? (
               <p className="text-xs text-muted-foreground">
-                No savings buckets configured — set targets in{" "}
-                <Link to="/settings" className="underline">
-                  Settings
-                </Link>{" "}
-                to see impact.
+                {t("dashboard.buckets.none")}
               </p>
             ) : !inJeopardy ? (
               <div className="flex items-start gap-3">
                 <span className="mt-1 size-2.5 rounded-full bg-primary shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Buckets on track</p>
+                  <p className="text-sm font-medium text-foreground">{t("dashboard.buckets.onTrack")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Spending up to {money(safeToday)}/day keeps all {buckets.length} bucket
-                    {buckets.length === 1 ? "" : "s"} fully funded this month (
-                    {money(totalAllocated)} total).
+                    {t("dashboard.buckets.onTrackBody", {
+                      perDay: money(safeToday),
+                      count: buckets.length,
+                      total: money(totalAllocated),
+                    })}
                   </p>
                 </div>
               </div>
@@ -369,7 +367,7 @@ function Dashboard() {
                 <span className="mt-1 size-2.5 rounded-full bg-destructive shrink-0" />
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-destructive">
-                    Overspent by {money(overspendAmount)} — buckets at risk
+                    {t("dashboard.buckets.overspent", { value: money(overspendAmount) })}
                   </p>
                   <ul className="text-xs text-muted-foreground space-y-1">
                     {jeopardizedBuckets.map((b) => (
@@ -379,7 +377,7 @@ function Dashboard() {
                           style={{ background: b.color ?? "var(--primary)" }}
                         />
                         <span className="font-medium text-foreground">{b.name}</span>
-                        <span>−{money(b.loss)} this month</span>
+                        <span>−{t("dashboard.buckets.loss", { value: money(b.loss) })}</span>
                       </li>
                     ))}
                   </ul>
@@ -391,24 +389,25 @@ function Dashboard() {
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Before baseline limit" value={money(remaining)} highlight />
+        <StatCard label={t("dashboard.stat.beforeLimit")} value={money(remaining)} highlight />
         <StatCard
-          label="Projected end of cycle"
+          label={t("dashboard.stat.projected")}
           value={money(projectedBalance)}
           hint={
             projectedBalance >= 0
-              ? `On pace (${money(avgDaily7)}/day avg)`
-              : `At current pace, over by ${money(-projectedBalance)}`
+              ? t("dashboard.stat.projectedOnPace", { value: money(avgDaily7) })
+              : t("dashboard.stat.projectedOver", { value: money(-projectedBalance) })
           }
           tone={projectedBalance >= 0 ? "good" : "bad"}
         />
         <StatCard
-          label="Emergency pool"
+          label={t("dashboard.stat.emergency")}
           value={money(Math.max(0, surplus - totalAllocated))}
-          hint="Unallocated surplus"
+          hint={t("dashboard.stat.emergencyHint")}
         />
-        <StatCard label="Monthly income" value={money(dashboard?.income ?? 0)} />
+        <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
+
 
       {householdId && (
         <DashboardTips
