@@ -11,6 +11,7 @@ import {
   exportMyData,
   leaveHousehold,
 } from "@/lib/privacy.functions";
+import { useT } from "@/lib/i18n";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,20 +37,20 @@ type Props = {
 
 export function DangerZone({ householdId, householdName, role }: Props) {
   const isOwner = role === "owner";
+  const t = useT();
 
   return (
     <Card className="border-destructive/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-destructive">
-          <AlertTriangle className="size-5" /> Privacy &amp; erasure
+          <AlertTriangle className="size-5" /> {t("danger.title")}
         </CardTitle>
         <CardDescription>
-          Under GDPR you can erase your data at any time. These actions are permanent.
-          See our{" "}
+          {t("danger.description")}{" "}
           <a href="/privacy" target="_blank" rel="noreferrer" className="underline">
-            privacy notice
-          </a>{" "}
-          for details.
+            {t("nav.privacy").toLowerCase()}
+          </a>
+          .
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -67,6 +68,7 @@ export function DangerZone({ householdId, householdName, role }: Props) {
 function ExportDataRow() {
   const doExport = useServerFn(exportMyData);
   const [busy, setBusy] = useState(false);
+  const t = useT();
 
   async function onExport() {
     setBusy(true);
@@ -91,12 +93,9 @@ function ExportDataRow() {
   }
 
   return (
-    <RowShell
-      title="Export my data"
-      body="Download a JSON file containing your profile, memberships, and every record from the households you belong to (incomes, fixed costs, buckets, expenses, allocations, notifications). GDPR right to data portability."
-    >
+    <RowShell title={t("danger.export.title")} body={t("danger.export.body")}>
       <Button variant="outline" size="sm" onClick={onExport} disabled={busy}>
-        <Download className="size-4" /> {busy ? "Preparing…" : "Download JSON"}
+        <Download className="size-4" /> {busy ? t("danger.export.busy") : t("danger.export.button")}
       </Button>
     </RowShell>
   );
@@ -111,6 +110,7 @@ function LeaveHouseholdRow({
 }) {
   const leave = useServerFn(leaveHousehold);
   const [busy, setBusy] = useState(false);
+  const t = useT();
 
   async function onLeave() {
     setBusy(true);
@@ -127,25 +127,24 @@ function LeaveHouseholdRow({
 
   return (
     <RowShell
-      title="Leave this household"
-      body={`Remove yourself from “${householdName}”. Your personal account stays. Other members keep the shared data.`}
+      title={t("danger.leave.title")}
+      body={t("danger.leave.body", { name: householdName })}
     >
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm">Leave household</Button>
+          <Button variant="outline" size="sm">{t("danger.leave.button")}</Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Leave “{householdName}”?</AlertDialogTitle>
+            <AlertDialogTitle>{t("danger.leave.confirmTitle", { name: householdName })}</AlertDialogTitle>
             <AlertDialogDescription>
-              You will lose access to this household's budget, expenses, and buckets.
-              If you are the only owner you must delete the household or promote another owner first.
+              {t("danger.leave.confirmBody")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction disabled={busy} onClick={onLeave}>
-              Yes, leave
+              {t("danger.leave.confirmAction")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -164,6 +163,7 @@ function DeleteHouseholdRow({
   const del = useServerFn(deleteHousehold);
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const t = useT();
 
   async function onDelete() {
     setBusy(true);
@@ -180,24 +180,23 @@ function DeleteHouseholdRow({
 
   return (
     <RowShell
-      title="Delete this household"
-      body={`Permanently erase “${householdName}” and every associated record — incomes, fixed costs, buckets, expenses, allocations, invitations. This cannot be undone and also affects other members.`}
+      title={t("danger.deleteHh.title")}
+      body={t("danger.deleteHh.body", { name: householdName })}
       danger
     >
       <AlertDialog onOpenChange={() => setConfirm("")}>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm">Delete household</Button>
+          <Button variant="destructive" size="sm">{t("danger.deleteHh.button")}</Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete “{householdName}”?</AlertDialogTitle>
+            <AlertDialogTitle>{t("danger.deleteHh.confirmTitle", { name: householdName })}</AlertDialogTitle>
             <AlertDialogDescription>
-              This erases all financial data for every member of this household.
-              Type <strong>DELETE</strong> to confirm.
+              {t("danger.deleteHh.confirmBody")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1">
-            <Label htmlFor="confirm-hh">Confirmation</Label>
+            <Label htmlFor="confirm-hh">{t("danger.confirmLabel")}</Label>
             <Input
               id="confirm-hh"
               value={confirm}
@@ -207,13 +206,13 @@ function DeleteHouseholdRow({
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={busy || confirm !== "DELETE"}
               onClick={onDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Permanently delete
+              {t("danger.deleteHh.action")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -227,6 +226,7 @@ function DeleteAccountRow() {
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const t = useT();
 
   async function onDelete() {
     setBusy(true);
@@ -244,24 +244,23 @@ function DeleteAccountRow() {
 
   return (
     <RowShell
-      title="Delete my account"
-      body="Erase your account, profile, notification preferences, and all households where you are the only owner. In shared households your membership is removed and the remaining owner keeps the data."
+      title={t("danger.deleteAcc.title")}
+      body={t("danger.deleteAcc.body")}
       danger
     >
       <AlertDialog onOpenChange={() => setConfirm("")}>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm">Delete my account</Button>
+          <Button variant="destructive" size="sm">{t("danger.deleteAcc.button")}</Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Erase your Myntra account?</AlertDialogTitle>
+            <AlertDialogTitle>{t("danger.deleteAcc.confirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This is your GDPR right to erasure. It cannot be undone. Households where you
-              are the sole owner will also be deleted. Type <strong>DELETE MY ACCOUNT</strong> to confirm.
+              {t("danger.deleteAcc.confirmBody")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1">
-            <Label htmlFor="confirm-acc">Confirmation</Label>
+            <Label htmlFor="confirm-acc">{t("danger.confirmLabel")}</Label>
             <Input
               id="confirm-acc"
               value={confirm}
@@ -271,13 +270,13 @@ function DeleteAccountRow() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={busy || confirm !== "DELETE MY ACCOUNT"}
               onClick={onDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Permanently erase
+              {t("danger.deleteAcc.action")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

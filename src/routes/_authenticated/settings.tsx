@@ -30,6 +30,7 @@ import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
 import { LanguageSettings } from "@/components/language-settings";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings · Myntra" }] }),
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const qc = useQueryClient();
+  const t = useT();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh, isLoading: hhLoading, error: hhError, refetch: refetchHh } = useQuery({
     queryKey: ["household"],
@@ -49,8 +51,8 @@ function SettingsPage() {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <header>
-        <h1 className="text-3xl font-display">Settings</h1>
-        <p className="text-sm text-muted-foreground">Configure your household budget.</p>
+        <h1 className="text-3xl font-display">{t("settings.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("settings.subtitle")}</p>
       </header>
 
       <LanguageSettings />
@@ -65,14 +67,14 @@ function SettingsPage() {
 
       {hhError && !hh && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
-          <p className="font-medium text-destructive">Couldn't load your household.</p>
+          <p className="font-medium text-destructive">{t("settings.loadError")}</p>
           <p className="text-muted-foreground mt-1">{(hhError as Error).message}</p>
           <button
             type="button"
             onClick={() => refetchHh()}
             className="mt-3 inline-flex items-center rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
           >
-            Retry
+            {t("common.retry")}
           </button>
         </div>
       )}
@@ -115,6 +117,7 @@ function rowsOrEmpty<T>(rows: T[] | null | undefined): T[] {
 }
 
 function CreditUsageSection({ household }: { household: { id: string } }) {
+  const t = useT();
   const fetchUsage = useServerFn(getHouseholdCreditUsage);
   const { data } = useQuery({
     queryKey: ["credit-usage", household.id],
@@ -138,10 +141,10 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Zap className="size-5 text-primary" />
-          Credit usage {periodLabel && <span className="text-sm font-normal text-muted-foreground">· {periodLabel}</span>}
+          {t("credits.title")} {periodLabel && <span className="text-sm font-normal text-muted-foreground">· {periodLabel}</span>}
         </CardTitle>
         <CardDescription>
-          AI features (coach, voice/text/statement parsing) and Cloud infrastructure consume credits. Each household has its own monthly cap.
+          {t("credits.description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -154,20 +157,20 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
               <span className="text-sm text-muted-foreground ml-2">/ {capValue.toFixed(2)} credits</span>
             </div>
             <div className={`text-sm tabular-nums ${overCap ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-              {overCap ? `Over by ${(total - capValue).toFixed(3)}` : `${remaining.toFixed(3)} remaining`}
+              {overCap ? t("credits.overBy", { value: (total - capValue).toFixed(3) }) : t("credits.remaining", { value: remaining.toFixed(3) })}
             </div>
           </div>
           <Progress value={pct} className={overCap ? "[&>*]:bg-destructive" : ""} />
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Monthly cap is fixed at {HARDWIRED_CAP} credits per household.
+          {t("credits.capNote", { cap: HARDWIRED_CAP })}
         </p>
 
 
         {data?.breakdown && data.breakdown.length > 0 ? (
           <div>
-            <div className="text-sm font-medium mb-2">This month by feature</div>
+            <div className="text-sm font-medium mb-2">{t("credits.byFeature")}</div>
             <div className="space-y-1.5">
               {data.breakdown.map((b) => (
                 <div key={b.operation} className="flex items-center justify-between text-sm rounded-md px-3 py-2 bg-muted/40">
@@ -181,12 +184,12 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No AI or Cloud activity recorded yet this month.</p>
+          <p className="text-sm text-muted-foreground">{t("credits.noActivity")}</p>
         )}
 
         {data?.recent && data.recent.length > 0 && (
           <details className="text-sm">
-            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Recent activity ({data.recent.length})</summary>
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t("credits.recent", { count: data.recent.length })}</summary>
             <div className="mt-2 space-y-1">
               {data.recent.map((r, i) => (
                 <div key={i} className="flex justify-between text-xs py-1 border-b last:border-b-0">
@@ -208,8 +211,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
         )}
 
         <p className="text-xs text-muted-foreground">
-          Credit costs are calculated from actual token counts (Gemini 3 Flash) and per-call transcription rates.
-          These are estimates aligned with Lovable's AI Gateway pricing; final billing is settled at the workspace level.
+          {t("credits.pricingNote")}
         </p>
       </CardContent>
     </Card>
@@ -219,6 +221,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
 
 
 function HouseholdSection({ household, onChange }: { household: { id: string; name: string; baseline_budget: number | string; margin_pct: number | string }; onChange: () => void }) {
+  const t = useT();
   const update = useServerFn(updateHousehold);
   const qc = useQueryClient();
   const [name, setName] = useState(household.name);
@@ -273,28 +276,28 @@ function HouseholdSection({ household, onChange }: { household: { id: string; na
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Household</CardTitle>
-        <CardDescription>The monthly baseline is calculated from your fixed expenses, variable estimates and safety margin.</CardDescription>
+        <CardTitle>{t("hh.title")}</CardTitle>
+        <CardDescription>{t("hh.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>Household name</Label>
+            <Label>{t("hh.name")}</Label>
             <div className="flex gap-2">
               <Input value={name} onChange={(e) => setName(e.target.value)} />
-              <Button onClick={saveName} variant="outline">Save</Button>
+              <Button onClick={saveName} variant="outline">{t("common.save")}</Button>
             </div>
           </div>
           <div>
-            <Label>Safety margin: {margin}%</Label>
+            <Label>{t("hh.safetyMargin", { value: margin })}</Label>
             <Slider value={[margin]} min={0} max={30} step={1} onValueChange={(v) => setMargin(v[0])} className="mt-3" />
           </div>
         </div>
         <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
-          <div className="flex justify-between text-sm"><span>Fixed monthly expenses</span><span className="tabular-nums">{money(fixedTotal)}</span></div>
-          <div className="flex justify-between text-sm"><span>Estimated variable costs</span><span className="tabular-nums">{money(varTotal)}</span></div>
-          <div className="flex justify-between text-sm text-muted-foreground"><span>Safety margin ({margin}%)</span><span className="tabular-nums">{money(safetyReserve)}</span></div>
-          <div className="border-t pt-2 flex justify-between font-medium"><span>Monthly baseline</span><span className="tabular-nums text-lg">{money(baseline)}</span></div>
+          <div className="flex justify-between text-sm"><span>{t("hh.fixedMonthly")}</span><span className="tabular-nums">{money(fixedTotal)}</span></div>
+          <div className="flex justify-between text-sm"><span>{t("hh.variableEst")}</span><span className="tabular-nums">{money(varTotal)}</span></div>
+          <div className="flex justify-between text-sm text-muted-foreground"><span>{t("hh.marginRow", { value: margin })}</span><span className="tabular-nums">{money(safetyReserve)}</span></div>
+          <div className="border-t pt-2 flex justify-between font-medium"><span>{t("hh.baseline")}</span><span className="tabular-nums text-lg">{money(baseline)}</span></div>
         </div>
       </CardContent>
     </Card>
@@ -302,6 +305,7 @@ function HouseholdSection({ household, onChange }: { household: { id: string; na
 }
 
 function VariableEstimatesSection({ householdId }: { householdId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const upsert = useServerFn(upsertVariableEstimate);
   const del = useServerFn(deleteVariableEstimate);
@@ -333,8 +337,8 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Estimated variable costs</CardTitle>
-        <CardDescription>Groceries, fuel, transport, goods — what you typically spend per month. Total: <span className="font-medium text-foreground">{money(total)}</span></CardDescription>
+        <CardTitle>{t("var.title")}</CardTitle>
+        <CardDescription>{t("var.description")} {t("common.total")}: <span className="font-medium text-foreground">{money(total)}</span></CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
@@ -352,7 +356,7 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
           ))}
         </ul>
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-2">
-          <Input placeholder="e.g. Groceries" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input placeholder={t("var.placeholder")} value={label} onChange={(e) => setLabel(e.target.value)} />
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -360,7 +364,7 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
             </SelectContent>
           </Select>
           <Input inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          <Button onClick={add}><Plus /> Add</Button>
+          <Button onClick={add}><Plus /> {t("common.add")}</Button>
         </div>
       </CardContent>
     </Card>
@@ -369,6 +373,7 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
 
 
 function IncomesSection({ householdId }: { householdId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const upsert = useServerFn(upsertIncome);
   const del = useServerFn(deleteIncome);
@@ -399,8 +404,8 @@ function IncomesSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monthly income</CardTitle>
-        <CardDescription>Total: <span className="font-medium text-foreground">{money(total)}</span></CardDescription>
+        <CardTitle>{t("income.title")}</CardTitle>
+        <CardDescription>{t("common.total")}: <span className="font-medium text-foreground">{money(total)}</span></CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
@@ -415,9 +420,9 @@ function IncomesSection({ householdId }: { householdId: string }) {
           ))}
         </ul>
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-2">
-          <Input placeholder="e.g. Alex salary" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input placeholder={t("income.placeholder")} value={label} onChange={(e) => setLabel(e.target.value)} />
           <Input inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          <Button onClick={add}><Plus /> Add</Button>
+          <Button onClick={add}><Plus /> {t("common.add")}</Button>
         </div>
       </CardContent>
     </Card>
@@ -425,6 +430,7 @@ function IncomesSection({ householdId }: { householdId: string }) {
 }
 
 function FixedExpensesSection({ householdId }: { householdId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const upsert = useServerFn(upsertFixedExpense);
   const del = useServerFn(deleteFixedExpense);
@@ -455,8 +461,8 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Fixed monthly expenses</CardTitle>
-        <CardDescription>Rent, loans, utilities, subscriptions. Total: <span className="font-medium text-foreground">{money(total)}</span></CardDescription>
+        <CardTitle>{t("fixed.title")}</CardTitle>
+        <CardDescription>{t("fixed.description")} {t("common.total")}: <span className="font-medium text-foreground">{money(total)}</span></CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
@@ -474,7 +480,7 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
           ))}
         </ul>
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-2">
-          <Input placeholder="e.g. Rent" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input placeholder={t("fixed.placeholder")} value={label} onChange={(e) => setLabel(e.target.value)} />
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -482,7 +488,7 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
             </SelectContent>
           </Select>
           <Input inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          <Button onClick={add}><Plus /> Add</Button>
+          <Button onClick={add}><Plus /> {t("common.add")}</Button>
         </div>
       </CardContent>
     </Card>
@@ -490,6 +496,7 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
 }
 
 function BucketsSection({ householdId }: { householdId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const upsert = useServerFn(upsertBucket);
   const del = useServerFn(deleteBucket);
@@ -540,20 +547,25 @@ function BucketsSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Allocation buckets</CardTitle>
+        <CardTitle>{t("buckets.title")}</CardTitle>
         <CardDescription>
-          Distribute your surplus (income − baseline). % buckets currently total <span className={`font-medium ${pctTotal > 100 ? "text-destructive" : "text-foreground"}`}>{pctTotal}%</span> of surplus.
+          {t("buckets.description", { pct: `<${pctTotal}>` }).split(`<${pctTotal}>`).flatMap((part, i, arr) =>
+            i < arr.length - 1
+              ? [part, <span key={i} className={`font-medium ${pctTotal > 100 ? "text-destructive" : "text-foreground"}`}>{pctTotal}%</span>]
+              : [part]
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {(rows ?? []).map((b) => <BucketRow key={b.id} bucket={b} onSave={save} onRemove={() => remove(b.id)} />)}
-        <Button variant="outline" onClick={addNew}><Plus /> Add bucket</Button>
+        <Button variant="outline" onClick={addNew}><Plus /> {t("buckets.add")}</Button>
       </CardContent>
     </Card>
   );
 }
 
 function BucketRow({ bucket, onSave, onRemove }: { bucket: any; onSave: (b: any) => void; onRemove: () => void }) {
+  const t = useT();
   const [b, setB] = useState(bucket);
   const dirty = JSON.stringify(b) !== JSON.stringify(bucket);
 
@@ -561,35 +573,35 @@ function BucketRow({ bucket, onSave, onRemove }: { bucket: any; onSave: (b: any)
     <div className="rounded-lg border p-4 space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-end">
         <div>
-          <Label>Name</Label>
+          <Label>{t("buckets.name")}</Label>
           <Input value={b.name} onChange={(e) => setB({ ...b, name: e.target.value })} />
         </div>
         <div>
-          <Label>Color</Label>
+          <Label>{t("buckets.color")}</Label>
           <Input type="color" value={b.color ?? "#2c6e6b"} onChange={(e) => setB({ ...b, color: e.target.value })} className="w-16 p-1 h-9" />
         </div>
         <Button variant="ghost" size="icon" onClick={onRemove}><Trash2 className="size-4" /></Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <Label>Target type</Label>
+          <Label>{t("buckets.targetType")}</Label>
           <Select value={b.target_type} onValueChange={(v) => setB({ ...b, target_type: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="pct_surplus">% of monthly surplus</SelectItem>
-              <SelectItem value="fixed_monthly">Fixed € per month</SelectItem>
-              <SelectItem value="fixed_yearly">Fixed € per year</SelectItem>
-              <SelectItem value="goal_by_date">Goal € by date</SelectItem>
+              <SelectItem value="pct_surplus">{t("buckets.pctSurplus")}</SelectItem>
+              <SelectItem value="fixed_monthly">{t("buckets.fixedMonthly")}</SelectItem>
+              <SelectItem value="fixed_yearly">{t("buckets.fixedYearly")}</SelectItem>
+              <SelectItem value="goal_by_date">{t("buckets.goalByDate")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label>
             {b.target_type === "pct_surplus"
-              ? `Target: ${b.target_value}%`
+              ? t("buckets.targetPct", { value: b.target_value })
               : b.target_type === "goal_by_date"
-              ? "Goal amount (€)"
-              : "Target amount (€)"}
+              ? t("buckets.goalAmount")
+              : t("buckets.targetAmount")}
           </Label>
           {b.target_type === "pct_surplus" ? (
             <Slider value={[Number(b.target_value)]} min={0} max={100} step={1} onValueChange={(v) => setB({ ...b, target_value: v[0] })} className="mt-3" />
@@ -599,24 +611,25 @@ function BucketRow({ bucket, onSave, onRemove }: { bucket: any; onSave: (b: any)
         </div>
         {b.target_type === "goal_by_date" && (
           <div>
-            <Label>Reach by</Label>
+            <Label>{t("buckets.reachBy")}</Label>
             <Input
               type="date"
               value={b.target_deadline ?? ""}
               onChange={(e) => setB({ ...b, target_deadline: e.target.value || null })}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Monthly contribution = goal ÷ months remaining.
+              {t("buckets.reachByHint")}
             </p>
           </div>
         )}
       </div>
-      {dirty && <Button size="sm" onClick={() => onSave(b)}>Save changes</Button>}
+      {dirty && <Button size="sm" onClick={() => onSave(b)}>{t("common.saveChanges")}</Button>}
     </div>
   );
 }
 
 function MembersSection({ householdId }: { householdId: string }) {
+  const t = useT();
   const invite = useServerFn(inviteMember);
   const { data: members } = useQuery({
     queryKey: ["members", householdId],
@@ -663,8 +676,8 @@ function MembersSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Household members</CardTitle>
-        <CardDescription>Both adults see the same budget. Invite your partner with a shareable link.</CardDescription>
+        <CardTitle>{t("members.title")}</CardTitle>
+        <CardDescription>{t("members.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <ul className="divide-y">
@@ -677,11 +690,11 @@ function MembersSection({ householdId }: { householdId: string }) {
         </ul>
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
           <Input type="email" placeholder="partner@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Button onClick={send}><Mail /> Create invite link</Button>
+          <Button onClick={send}><Mail /> {t("members.inviteBtn")}</Button>
         </div>
         {!!invites?.length && (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Pending invites</p>
+            <p className="text-sm font-medium">{t("members.pending")}</p>
             <ul className="space-y-2">
               {invites.map((i) => (
                 <li key={i.id} className="flex items-center justify-between gap-2 rounded-md border p-2 text-sm">
