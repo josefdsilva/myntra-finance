@@ -134,7 +134,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     previousCycleTotals = { spent: s, received: r, net: s - r };
   }
 
-  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }] =
+  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }, { data: allAllocs }] =
     await Promise.all([
       supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
       supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
@@ -148,6 +148,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
         .eq("household_id", householdId)
         .gte("confirmed_at", startISO)
         .lt("confirmed_at", endISO),
+      supabase
+        .from("bucket_allocations")
+        .select("bucket_id, amount")
+        .eq("household_id", householdId),
     ]);
 
   const sumMonthly = (rows: unknown): number =>
@@ -161,6 +165,13 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const allocByBucket: Record<string, number> = {};
   for (const a of rowsOrEmpty<AllocRow>(allocs)) {
     allocByBucket[a.bucket_id] = (allocByBucket[a.bucket_id] ?? 0) + Number(a.amount);
+  }
+  const totalByBucket: Record<string, number> = {};
+  let totalSavings = 0;
+  for (const a of rowsOrEmpty<AllAllocRow>(allAllocs)) {
+    const amt = Number(a.amount);
+    totalByBucket[a.bucket_id] = (totalByBucket[a.bucket_id] ?? 0) + amt;
+    totalSavings += amt;
   }
 
   let spent = 0,
@@ -188,6 +199,38 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   }
   spendsForTop.sort((a, b) => b.amount - a.amount);
 
+  // Estimate monthly income from recent salary events (avg gap between events).
+  let estimatedMonthlyIncome = 0;
+  if (salaryDatesDesc.length >= 2) {
+    // Pull matching salary amounts to average magnitude.
+    const { data: salaryAmts } = await supabase
+      .from("expenses")
+      .select("amount, occurred_at")
+      .eq("household_id", householdId)
+      .eq("is_salary", true)
+      .order("occurred_at", { ascending: false })
+      .limit(6);
+    const amts = rowsOrEmpty<{ amount: number | string }>(salaryAmts).map((r) => Number(r.amount));
+    if (amts.length) {
+      const avg = amts.reduce((s, n) => s + n, 0) / amts.length;
+      // If gap between latest two salaries is ~28-31d assume monthly.
+      const gapDays =
+        (new Date(salaryDatesDesc[0]).getTime() - new Date(salaryDatesDesc[1]).getTime()) /
+        86400000;
+      const perMonth = gapDays > 0 ? avg * (30 / gapDays) : avg;
+      estimatedMonthlyIncome = Math.round(perMonth * 100) / 100;
+    }
+  } else if (received > 0) {
+    estimatedMonthlyIncome = received;
+  }
+
+  const monthlySurplus = Math.max(
+    0,
+    estimatedMonthlyIncome - fixedMonthly - variableEstimateMonthly,
+  );
+  // Conservative: leave 25% of surplus as buffer for savings / unexpected.
+  const safeNewMonthlyCommitment = Math.round(monthlySurplus * 0.75 * 100) / 100;
+
   return {
     today: new Date().toISOString(),
     currency: hh?.currency ?? "EUR",
@@ -203,6 +246,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     },
     fixedMonthly,
     variableEstimateMonthly,
+    estimatedMonthlyIncome,
+    monthlySurplus,
+    safeNewMonthlyCommitment,
+    totalSavings,
     cycleTotals: { spent, received, net: spent - received, byCategory },
     previousCycleTotals,
     buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
@@ -211,11 +258,13 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       target_value: Number(b.target_value),
       target_deadline: b.target_deadline,
       allocatedThisCycle: allocByBucket[b.id] ?? 0,
+      totalSaved: totalByBucket[b.id] ?? 0,
     })),
     topSpends: spendsForTop.slice(0, 8),
     cycleStartKey: cycle.start.toISOString().slice(0, 10),
   };
 }
+
 
 const SYSTEM_BASE = `You are a warm, concise household financial coach for a family of four in Portugal. Currency EUR.
 You give practical, non-judgmental guidance based ONLY on the JSON snapshot the user provides.
