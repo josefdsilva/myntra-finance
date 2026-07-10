@@ -32,6 +32,9 @@ function bufferToBase64(buf: ArrayBuffer): string {
 }
 
 import { useCategoryNames } from "@/hooks/use-categories";
+import { LabelsInput } from "@/components/labels-input";
+import { useRecentLabels } from "@/hooks/use-labels";
+
 
 const DEFAULT_CATEGORIES = [
   "groceries",
