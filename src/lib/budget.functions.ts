@@ -35,12 +35,14 @@ export const addExpense = createServerFn({ method: "POST" })
         source_meta: (data.source_meta ?? {}) as never,
         kind: data.kind,
         is_salary: data.kind === "income" ? !!data.is_salary : false,
+        labels: normalizeLabels(data.labels),
       })
       .select()
       .single();
     if (error) throw error;
     return row;
   });
+
 
 export const addExpensesBulk = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
