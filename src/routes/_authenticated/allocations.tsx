@@ -331,17 +331,17 @@ function AllocationsPage() {
               })}
               <div className="pt-3 mt-3 border-t space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total targeted / month</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.monthly")}</span>
                   <span className="tabular-nums font-medium">{money(totalAllocated)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Confirmed this month</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.confirmed")}</span>
                   <span className="tabular-nums font-medium text-emerald-600">
                     {money(totalConfirmedThisMonth)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Unallocated surplus</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.emergency")}</span>
                   <span
                     className={`tabular-nums font-medium ${unallocated < 0 ? "text-destructive" : ""}`}
                   >
