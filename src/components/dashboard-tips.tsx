@@ -97,6 +97,7 @@ export function DashboardTips({
         { data: buckets },
         { data: incomes },
         { data: fixed },
+        { data: debts },
         { data: variables },
         { data: confirmations },
         { count: expenseCount },
@@ -132,7 +133,7 @@ export function DashboardTips({
       return {
         buckets: buckets ?? [],
         incomes: incomes ?? [],
-        fixed: fixed ?? [],
+        fixed: [...(fixed ?? []), ...(debts ?? [])],
         variables: variables ?? [],
         confirmations: confirmations ?? [],
         expenseCount: expenseCount ?? 0,
