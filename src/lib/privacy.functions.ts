@@ -33,6 +33,7 @@ export const exportMyData = createServerFn({ method: "POST" })
         | "household_invitations"
         | "incomes"
         | "fixed_expenses"
+        | "debts"
         | "variable_estimates"
         | "buckets"
         | "bucket_allocations"
@@ -55,6 +56,7 @@ export const exportMyData = createServerFn({ method: "POST" })
       invitations,
       incomes,
       fixedExpenses,
+      debts,
       variableEstimates,
       buckets,
       bucketAllocations,
@@ -70,6 +72,7 @@ export const exportMyData = createServerFn({ method: "POST" })
       fetchAll("household_invitations"),
       fetchAll("incomes"),
       fetchAll("fixed_expenses"),
+      fetchAll("debts"),
       fetchAll("variable_estimates"),
       fetchAll("buckets"),
       fetchAll("bucket_allocations"),
@@ -96,6 +99,7 @@ export const exportMyData = createServerFn({ method: "POST" })
         invitations,
         incomes,
         fixedExpenses,
+        debts,
         variableEstimates,
         buckets,
         bucketAllocations,
