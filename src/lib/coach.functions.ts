@@ -48,6 +48,17 @@ type CoachContext = {
     predicted: boolean;
   };
   fixedMonthly: number;
+  fixedExpensesMonthly: number;
+  debtMonthly: number;
+  debtPrincipalOutstanding: number;
+  debts: Array<{
+    label: string;
+    kind: string;
+    monthly_amount: number;
+    taeg_pct: number | null;
+    principal_remaining: number | null;
+    maturity_date: string | null;
+  }>;
   variableEstimateMonthly: number;
   /** Rough recurring income per month, averaged from up to 6 recent salary events. */
   estimatedMonthlyIncome: number;
