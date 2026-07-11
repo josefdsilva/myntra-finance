@@ -136,33 +136,65 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     previousCycleTotals = { spent: s, received: r, net: s - r };
   }
 
-  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }, { data: allAllocs }] =
-    await Promise.all([
-      supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
-      supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
-      supabase
-        .from("buckets")
-        .select("id, name, target_type, target_value, target_deadline")
-        .eq("household_id", householdId),
-      supabase
-        .from("bucket_allocations")
-        .select("bucket_id, amount, confirmed_at")
-        .eq("household_id", householdId)
-        .gte("confirmed_at", startISO)
-        .lt("confirmed_at", endISO),
-      supabase
-        .from("bucket_allocations")
-        .select("bucket_id, amount")
-        .eq("household_id", householdId),
-    ]);
+  const [
+    { data: fixed },
+    { data: debtsData },
+    { data: varEst },
+    { data: buckets },
+    { data: allocs },
+    { data: allAllocs },
+  ] = await Promise.all([
+    supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("debts")
+      .select("label, kind, monthly_amount, taeg_pct, principal_remaining, maturity_date")
+      .eq("household_id", householdId),
+    supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("buckets")
+      .select("id, name, target_type, target_value, target_deadline")
+      .eq("household_id", householdId),
+    supabase
+      .from("bucket_allocations")
+      .select("bucket_id, amount, confirmed_at")
+      .eq("household_id", householdId)
+      .gte("confirmed_at", startISO)
+      .lt("confirmed_at", endISO),
+    supabase
+      .from("bucket_allocations")
+      .select("bucket_id, amount")
+      .eq("household_id", householdId),
+  ]);
 
   const sumMonthly = (rows: unknown): number =>
     rowsOrEmpty<MonthlyRow>(rows as MonthlyRow[] | null).reduce(
       (s, r) => s + Number(r.monthly_amount),
       0,
     );
-  const fixedMonthly = sumMonthly(fixed);
+  const fixedExpensesMonthly = sumMonthly(fixed);
+  const debtMonthly = sumMonthly(debtsData);
+  const fixedMonthly = fixedExpensesMonthly + debtMonthly;
   const variableEstimateMonthly = sumMonthly(varEst);
+  type DebtRow = {
+    label: string;
+    kind: string;
+    monthly_amount: number | string;
+    taeg_pct: number | string | null;
+    principal_remaining: number | string | null;
+    maturity_date: string | null;
+  };
+  const debts = rowsOrEmpty<DebtRow>(debtsData).map((d) => ({
+    label: d.label,
+    kind: d.kind,
+    monthly_amount: Number(d.monthly_amount),
+    taeg_pct: d.taeg_pct == null ? null : Number(d.taeg_pct),
+    principal_remaining: d.principal_remaining == null ? null : Number(d.principal_remaining),
+    maturity_date: d.maturity_date,
+  }));
+  const debtPrincipalOutstanding = debts.reduce(
+    (s, d) => s + (d.principal_remaining ?? 0),
+    0,
+  );
 
   const allocByBucket: Record<string, number> = {};
   for (const a of rowsOrEmpty<AllocRow>(allocs)) {
@@ -269,6 +301,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       predicted: cycle.predicted,
     },
     fixedMonthly,
+    fixedExpensesMonthly,
+    debtMonthly,
+    debts,
+    debtPrincipalOutstanding,
     variableEstimateMonthly,
     estimatedMonthlyIncome,
     monthlySurplus,
