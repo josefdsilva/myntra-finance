@@ -15,6 +15,8 @@ import {
   deleteVariableEstimate,
   upsertBucket,
   deleteBucket,
+  upsertDebt,
+  deleteDebt,
 } from "@/lib/budget.functions";
 import { getHouseholdCreditUsage } from "@/lib/credits.functions";
 
@@ -101,6 +103,7 @@ function SettingsPage() {
           />
           <IncomesSection householdId={householdId} />
           <FixedExpensesSection householdId={householdId} />
+          <DebtsSection householdId={householdId} />
           <VariableEstimatesSection householdId={householdId} />
           <CategoryManager householdId={householdId} />
           <BucketsSection householdId={householdId} />
@@ -288,6 +291,17 @@ function HouseholdSection({
       return rowsOrEmpty(data);
     },
   });
+  const { data: debtRows } = useQuery({
+    queryKey: ["debts-total", household.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("debts")
+        .select("monthly_amount")
+        .eq("household_id", household.id);
+      if (error) throw error;
+      return rowsOrEmpty(data);
+    },
+  });
   const { data: varRows } = useQuery({
     queryKey: ["variable-estimates-total", household.id],
     queryFn: async () => {
@@ -301,9 +315,10 @@ function HouseholdSection({
   });
 
   const fixedTotal = rowsOrEmpty(fixedRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
+  const debtTotal = rowsOrEmpty(debtRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
   const varTotal = rowsOrEmpty(varRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
-  const safetyReserve = ((fixedTotal + varTotal) * margin) / 100;
-  const baseline = fixedTotal + varTotal + safetyReserve;
+  const safetyReserve = ((fixedTotal + debtTotal + varTotal) * margin) / 100;
+  const baseline = fixedTotal + debtTotal + varTotal + safetyReserve;
   const storedBaseline = Number(household.baseline_budget);
 
   // Auto-persist computed baseline whenever the inputs change
