@@ -320,3 +320,54 @@ export const deleteBucket = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ---- Debts ----
+export const upsertDebt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid().optional(),
+        household_id: z.string().uuid(),
+        label: z.string().min(1).max(80),
+        kind: z
+          .enum(["mortgage", "personal", "auto", "credit_card", "student", "other"])
+          .default("other"),
+        monthly_amount: z.number().min(0),
+        taeg_pct: z.number().min(0).max(100).nullable().optional(),
+        principal_remaining: z.number().min(0).nullable().optional(),
+        maturity_date: z.string().date().nullable().optional(),
+        note: z.string().max(500).nullable().optional(),
+        sort_order: z.number().int().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { id, ...payload } = data;
+    if (id) {
+      const { data: row, error } = await context.supabase
+        .from("debts")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    const { data: row, error } = await context.supabase
+      .from("debts")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteDebt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("debts").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
