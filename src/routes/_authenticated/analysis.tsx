@@ -219,15 +219,29 @@ function AnalysisPage() {
     enabled: !!householdId,
     queryKey: ["fixed-rows", householdId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("fixed_expenses")
-        .select("monthly_amount, category, label")
-        .eq("household_id", householdId!);
-      return (data ?? []) as Array<{
+      const [{ data: fx }, { data: dt }] = await Promise.all([
+        supabase
+          .from("fixed_expenses")
+          .select("monthly_amount, category, label")
+          .eq("household_id", householdId!),
+        supabase
+          .from("debts")
+          .select("monthly_amount, label")
+          .eq("household_id", householdId!),
+      ]);
+      const fixed = (fx ?? []) as Array<{
         monthly_amount: number | string;
         category: string | null;
         label: string;
       }>;
+      const debts = ((dt ?? []) as Array<{ monthly_amount: number | string; label: string }>).map(
+        (d) => ({
+          monthly_amount: d.monthly_amount,
+          category: "debt",
+          label: d.label,
+        }),
+      );
+      return [...fixed, ...debts];
     },
   });
   const fixedTotal = useMemo(

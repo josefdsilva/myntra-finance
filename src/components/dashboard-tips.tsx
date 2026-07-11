@@ -113,6 +113,7 @@ export function DashboardTips({
           .from("fixed_expenses")
           .select("id, monthly_amount")
           .eq("household_id", householdId),
+        supabase.from("debts").select("id, monthly_amount").eq("household_id", householdId),
         supabase
           .from("variable_estimates")
           .select("id, monthly_amount")
