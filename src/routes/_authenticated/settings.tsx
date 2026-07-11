@@ -451,6 +451,10 @@ function HouseholdSection({
             <span className="tabular-nums">{money(fixedTotal)}</span>
           </div>
           <div className="flex justify-between text-sm">
+            <span>Debt payments</span>
+            <span className="tabular-nums">{money(debtTotal)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
             <span>{t("hh.variableEst")}</span>
             <span className="tabular-nums">{money(varTotal)}</span>
           </div>
