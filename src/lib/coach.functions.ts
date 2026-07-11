@@ -48,6 +48,17 @@ type CoachContext = {
     predicted: boolean;
   };
   fixedMonthly: number;
+  fixedExpensesMonthly: number;
+  debtMonthly: number;
+  debtPrincipalOutstanding: number;
+  debts: Array<{
+    label: string;
+    kind: string;
+    monthly_amount: number;
+    taeg_pct: number | null;
+    principal_remaining: number | null;
+    maturity_date: string | null;
+  }>;
   variableEstimateMonthly: number;
   /** Rough recurring income per month, averaged from up to 6 recent salary events. */
   estimatedMonthlyIncome: number;
@@ -136,33 +147,65 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     previousCycleTotals = { spent: s, received: r, net: s - r };
   }
 
-  const [{ data: fixed }, { data: varEst }, { data: buckets }, { data: allocs }, { data: allAllocs }] =
-    await Promise.all([
-      supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
-      supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
-      supabase
-        .from("buckets")
-        .select("id, name, target_type, target_value, target_deadline")
-        .eq("household_id", householdId),
-      supabase
-        .from("bucket_allocations")
-        .select("bucket_id, amount, confirmed_at")
-        .eq("household_id", householdId)
-        .gte("confirmed_at", startISO)
-        .lt("confirmed_at", endISO),
-      supabase
-        .from("bucket_allocations")
-        .select("bucket_id, amount")
-        .eq("household_id", householdId),
-    ]);
+  const [
+    { data: fixed },
+    { data: debtsData },
+    { data: varEst },
+    { data: buckets },
+    { data: allocs },
+    { data: allAllocs },
+  ] = await Promise.all([
+    supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("debts")
+      .select("label, kind, monthly_amount, taeg_pct, principal_remaining, maturity_date")
+      .eq("household_id", householdId),
+    supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("buckets")
+      .select("id, name, target_type, target_value, target_deadline")
+      .eq("household_id", householdId),
+    supabase
+      .from("bucket_allocations")
+      .select("bucket_id, amount, confirmed_at")
+      .eq("household_id", householdId)
+      .gte("confirmed_at", startISO)
+      .lt("confirmed_at", endISO),
+    supabase
+      .from("bucket_allocations")
+      .select("bucket_id, amount")
+      .eq("household_id", householdId),
+  ]);
 
   const sumMonthly = (rows: unknown): number =>
     rowsOrEmpty<MonthlyRow>(rows as MonthlyRow[] | null).reduce(
       (s, r) => s + Number(r.monthly_amount),
       0,
     );
-  const fixedMonthly = sumMonthly(fixed);
+  const fixedExpensesMonthly = sumMonthly(fixed);
+  const debtMonthly = sumMonthly(debtsData);
+  const fixedMonthly = fixedExpensesMonthly + debtMonthly;
   const variableEstimateMonthly = sumMonthly(varEst);
+  type DebtRow = {
+    label: string;
+    kind: string;
+    monthly_amount: number | string;
+    taeg_pct: number | string | null;
+    principal_remaining: number | string | null;
+    maturity_date: string | null;
+  };
+  const debts = rowsOrEmpty<DebtRow>(debtsData).map((d) => ({
+    label: d.label,
+    kind: d.kind,
+    monthly_amount: Number(d.monthly_amount),
+    taeg_pct: d.taeg_pct == null ? null : Number(d.taeg_pct),
+    principal_remaining: d.principal_remaining == null ? null : Number(d.principal_remaining),
+    maturity_date: d.maturity_date,
+  }));
+  const debtPrincipalOutstanding = debts.reduce(
+    (s, d) => s + (d.principal_remaining ?? 0),
+    0,
+  );
 
   const allocByBucket: Record<string, number> = {};
   for (const a of rowsOrEmpty<AllocRow>(allocs)) {
@@ -269,6 +312,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       predicted: cycle.predicted,
     },
     fixedMonthly,
+    fixedExpensesMonthly,
+    debtMonthly,
+    debts,
+    debtPrincipalOutstanding,
     variableEstimateMonthly,
     estimatedMonthlyIncome,
     monthlySurplus,
@@ -299,6 +346,7 @@ You help with big life decisions as well as day-to-day budgeting. Common questio
 - Housing: "how much rent/mortgage can we afford?" — anchor on \`safeNewMonthlyCommitment\` and \`monthlySurplus\`; mention the 28/36 rule (housing ≤ ~28% of gross monthly income, total debt ≤ ~36%). Give a comfortable range and a stretch range. Flag if emergency savings are thin.
 - Buying vs financing (car, appliance, etc.): compare (a) paying cash from savings (name the bucket, show remaining after purchase, note the emergency-fund impact), (b) a loan at a reasonable market rate (assume typical Portugal auto loan 7–10% APR, personal loan 8–12% APR, mortgage 3.5–5% — always caveat "typical, check current offers"), (c) leasing. Show approximate monthly payment ranges and total interest.
 - Credit / debt: never encourage taking on debt that pushes total monthly commitments above \`safeNewMonthlyCommitment\`. Suggest concrete steps to free room (reduce a category, pause a bucket, delay purchase N months).
+- Existing debt (\`debts\` array with \`kind\`, \`monthly_amount\`, \`taeg_pct\`, \`principal_remaining\`, \`maturity_date\`; \`debtMonthly\` and \`debtPrincipalOutstanding\` are pre-summed): when the user asks about early repayment, refinancing, or renegotiation — rank debts by TAEG (highest first is the avalanche method; smallest principal first is the snowball method), and show approximate interest savings from an extra €X monthly overpayment using the standard amortization delta. Flag Portuguese-mortgage specifics: early-repayment fees are legally capped (0.5% variable, 2% fixed) — mention that any lump-sum decision is usually worth it if the TAEG exceeds risk-free savings alternatives (currently ~2.5–3.5% net). When the user shares a competing offer for the same debt, compare TAEG side-by-side and compute total remaining cost under each; a refinance is worth it only if lifetime savings after fees clearly beat staying put.
 - Comparing credit / loan offers: when the user shares two or more offers (or asks you to size one up), always compare on the same footing. Show a small markdown table with columns: Offer, APR (TAEG in Portugal), monthly payment, total interest, total cost, term. Compute monthly payment with the standard amortization formula P = L · r / (1 − (1+r)^-n) where r = APR/12 and n = months; total cost = monthly · n. Call out fees, insurance requirements, early-repayment penalties, and variable-vs-fixed rate risk. Flag the "spread + Euribor" structure for Portuguese mortgages. Recommend the offer with the lowest total cost that still fits \`safeNewMonthlyCommitment\`, and remind the user that TAEG is the fair comparison metric (not the nominal rate).
 - Comparing products / purchases (phones, appliances, cars, subscriptions, insurance, energy plans, etc.): put options side-by-side in a markdown table with price, key specs the user cares about, expected lifespan or contract length, and cost per year / per use. Include running costs (fuel/energy, subscription, maintenance) when they matter. End with one clear recommendation tied to the household's budget room and goals; suggest a "good enough" pick if the top option strains \`safeNewMonthlyCommitment\`. If the user hasn't shared numbers, ask for the 2–3 fields that would most change the answer.
 - Savings goals: use bucket \`totalSaved\` and \`allocatedThisCycle\` to project when a goal is reachable.

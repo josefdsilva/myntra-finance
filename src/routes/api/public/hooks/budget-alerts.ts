@@ -54,13 +54,17 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
             ((salaries as Array<{ occurred_at: string }> | null) ?? []).map((r) => r.occurred_at),
           );
 
-          const { data: fixed } = await supabaseAdmin
-            .from("fixed_expenses")
-            .select("monthly_amount")
-            .eq("household_id", hhId);
-          const fixedTotal = (
-            (fixed as Array<{ monthly_amount: number | string }> | null) ?? []
-          ).reduce((s, r) => s + Number(r.monthly_amount), 0);
+          const [{ data: fixed }, { data: debts }] = await Promise.all([
+            supabaseAdmin
+              .from("fixed_expenses")
+              .select("monthly_amount")
+              .eq("household_id", hhId),
+            supabaseAdmin.from("debts").select("monthly_amount").eq("household_id", hhId),
+          ]);
+          const sumMonthly = (
+            rows: Array<{ monthly_amount: number | string }> | null,
+          ) => (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+          const fixedTotal = sumMonthly(fixed) + sumMonthly(debts);
           const variablePool = Math.max(0, baseline - fixedTotal);
 
           const { data: cycleExp } = await supabaseAdmin

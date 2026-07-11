@@ -97,6 +97,7 @@ export function DashboardTips({
         { data: buckets },
         { data: incomes },
         { data: fixed },
+        { data: debts },
         { data: variables },
         { data: confirmations },
         { count: expenseCount },
@@ -113,6 +114,7 @@ export function DashboardTips({
           .from("fixed_expenses")
           .select("id, monthly_amount")
           .eq("household_id", householdId),
+        supabase.from("debts").select("id, monthly_amount").eq("household_id", householdId),
         supabase
           .from("variable_estimates")
           .select("id, monthly_amount")
@@ -131,7 +133,7 @@ export function DashboardTips({
       return {
         buckets: buckets ?? [],
         incomes: incomes ?? [],
-        fixed: fixed ?? [],
+        fixed: [...(fixed ?? []), ...(debts ?? [])],
         variables: variables ?? [],
         confirmations: confirmations ?? [],
         expenseCount: expenseCount ?? 0,

@@ -54,9 +54,10 @@ function Dashboard() {
         .limit(6);
       const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
 
-      const [{ data: fixed }, { data: expenses }, { data: incomes }, { data: buckets }] =
+      const [{ data: fixed }, { data: debts }, { data: expenses }, { data: incomes }, { data: buckets }] =
         await Promise.all([
           supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
+          supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
           supabase
             .from("expenses")
             .select("id, amount, category, merchant, occurred_at, note, source, kind, is_salary")
@@ -71,7 +72,9 @@ function Dashboard() {
             .eq("household_id", householdId!)
             .order("sort_order"),
         ]);
-      const fixedTotal = (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      const fixedTotal =
+        (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0) +
+        (debts ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const spent = (expenses ?? [])
         .filter((r) => r.kind !== "income")
         .reduce((s, r) => s + Number(r.amount), 0);

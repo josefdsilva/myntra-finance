@@ -15,6 +15,8 @@ import {
   deleteVariableEstimate,
   upsertBucket,
   deleteBucket,
+  upsertDebt,
+  deleteDebt,
 } from "@/lib/budget.functions";
 import { getHouseholdCreditUsage } from "@/lib/credits.functions";
 
@@ -101,6 +103,7 @@ function SettingsPage() {
           />
           <IncomesSection householdId={householdId} />
           <FixedExpensesSection householdId={householdId} />
+          <DebtsSection householdId={householdId} />
           <VariableEstimatesSection householdId={householdId} />
           <CategoryManager householdId={householdId} />
           <BucketsSection householdId={householdId} />
@@ -288,6 +291,17 @@ function HouseholdSection({
       return rowsOrEmpty(data);
     },
   });
+  const { data: debtRows } = useQuery({
+    queryKey: ["debts-total", household.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("debts")
+        .select("monthly_amount")
+        .eq("household_id", household.id);
+      if (error) throw error;
+      return rowsOrEmpty(data);
+    },
+  });
   const { data: varRows } = useQuery({
     queryKey: ["variable-estimates-total", household.id],
     queryFn: async () => {
@@ -301,14 +315,15 @@ function HouseholdSection({
   });
 
   const fixedTotal = rowsOrEmpty(fixedRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
+  const debtTotal = rowsOrEmpty(debtRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
   const varTotal = rowsOrEmpty(varRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
-  const safetyReserve = ((fixedTotal + varTotal) * margin) / 100;
-  const baseline = fixedTotal + varTotal + safetyReserve;
+  const safetyReserve = ((fixedTotal + debtTotal + varTotal) * margin) / 100;
+  const baseline = fixedTotal + debtTotal + varTotal + safetyReserve;
   const storedBaseline = Number(household.baseline_budget);
 
   // Auto-persist computed baseline whenever the inputs change
   useEffect(() => {
-    if (!Array.isArray(fixedRows) || !Array.isArray(varRows)) return;
+    if (!Array.isArray(fixedRows) || !Array.isArray(varRows) || !Array.isArray(debtRows)) return;
     if (Math.abs(baseline - storedBaseline) < 0.005 && margin === Number(household.margin_pct))
       return;
     update({
@@ -327,7 +342,7 @@ function HouseholdSection({
     // Intentionally excludes stable refs (update, onChange, qc, household.*) to
     // avoid write loops; recomputes only when the derived baseline inputs change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseline, margin, storedBaseline, fixedRows, varRows]);
+  }, [baseline, margin, storedBaseline, fixedRows, varRows, debtRows]);
 
   async function saveName() {
     try {
@@ -434,6 +449,10 @@ function HouseholdSection({
           <div className="flex justify-between text-sm">
             <span>{t("hh.fixedMonthly")}</span>
             <span className="tabular-nums">{money(fixedTotal)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Debt payments</span>
+            <span className="tabular-nums">{money(debtTotal)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span>{t("hh.variableEst")}</span>
@@ -1059,6 +1078,196 @@ function MembersSection({ householdId }: { householdId: string }) {
             </ul>
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+const DEBT_KINDS: Array<{ value: "mortgage" | "personal" | "auto" | "credit_card" | "student" | "other"; label: string }> = [
+  { value: "mortgage", label: "Mortgage" },
+  { value: "personal", label: "Personal loan" },
+  { value: "auto", label: "Auto loan" },
+  { value: "credit_card", label: "Credit card" },
+  { value: "student", label: "Student loan" },
+  { value: "other", label: "Other" },
+];
+
+function DebtsSection({ householdId }: { householdId: string }) {
+  const qc = useQueryClient();
+  const upsert = useServerFn(upsertDebt);
+  const del = useServerFn(deleteDebt);
+  const { data: rows, refetch } = useQuery({
+    queryKey: ["debts", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("debts")
+        .select("*")
+        .eq("household_id", householdId)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [label, setLabel] = useState("");
+  const [kind, setKind] = useState<(typeof DEBT_KINDS)[number]["value"]>("mortgage");
+  const [monthly, setMonthly] = useState("");
+  const [taeg, setTaeg] = useState("");
+  const [principal, setPrincipal] = useState("");
+  const [maturity, setMaturity] = useState("");
+
+  function bumpCaches() {
+    qc.invalidateQueries({ queryKey: ["debts-total", householdId] });
+    qc.invalidateQueries({ queryKey: ["household"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
+    qc.invalidateQueries({ queryKey: ["fixed-rows", householdId] });
+  }
+
+  async function add() {
+    if (!label || !monthly) return;
+    await upsert({
+      data: {
+        household_id: householdId,
+        label,
+        kind,
+        monthly_amount: parseFloat(monthly) || 0,
+        taeg_pct: taeg ? parseFloat(taeg) : null,
+        principal_remaining: principal ? parseFloat(principal) : null,
+        maturity_date: maturity || null,
+      },
+    });
+    setLabel("");
+    setMonthly("");
+    setTaeg("");
+    setPrincipal("");
+    setMaturity("");
+    refetch();
+    bumpCaches();
+  }
+
+  async function remove(id: string) {
+    await del({ data: { id } });
+    refetch();
+    bumpCaches();
+  }
+
+  const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+  const principalTotal = (rows ?? []).reduce(
+    (s, r) => s + Number(r.principal_remaining ?? 0),
+    0,
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Debt</CardTitle>
+        <CardDescription>
+          Loans and credit lines with an interest rate (TAEG) and maturity. Counted alongside fixed
+          expenses in your monthly baseline. Total: {" "}
+          <span className="font-medium text-foreground">{money(total)}</span>
+          {principalTotal > 0 && (
+            <>
+              {" "}· principal outstanding{" "}
+              <span className="font-medium text-foreground">{money(principalTotal)}</span>
+            </>
+          )}
+          .
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <ul className="divide-y">
+          {(rows ?? []).map((r) => (
+            <li key={r.id} className="flex items-center justify-between py-2 gap-3">
+              <div className="min-w-0">
+                <p className="truncate">{r.label}</p>
+                <p className="text-xs text-muted-foreground">
+                  {DEBT_KINDS.find((k) => k.value === r.kind)?.label ?? r.kind}
+                  {r.taeg_pct != null && ` · TAEG ${Number(r.taeg_pct).toFixed(2)}%`}
+                  {r.principal_remaining != null &&
+                    ` · principal ${money(Number(r.principal_remaining))}`}
+                  {r.maturity_date && ` · until ${r.maturity_date}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="tabular-nums font-medium">
+                  {money(r.monthly_amount)}<span className="text-xs text-muted-foreground">/mo</span>
+                </span>
+                <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Label</Label>
+            <Input
+              placeholder="e.g. Prestação Crédito Habitação"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Type</Label>
+            <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEBT_KINDS.map((k) => (
+                  <SelectItem key={k.value} value={k.value}>
+                    {k.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div>
+            <Label className="text-xs">Monthly (€)</Label>
+            <Input
+              inputMode="decimal"
+              placeholder="0.00"
+              value={monthly}
+              onChange={(e) => setMonthly(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">TAEG %</Label>
+            <Input
+              inputMode="decimal"
+              placeholder="e.g. 4.25"
+              value={taeg}
+              onChange={(e) => setTaeg(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Principal due (€)</Label>
+            <Input
+              inputMode="decimal"
+              placeholder="e.g. 120000"
+              value={principal}
+              onChange={(e) => setPrincipal(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Maturity</Label>
+            <Input
+              type="date"
+              value={maturity}
+              onChange={(e) => setMaturity(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={add}>
+            <Plus /> Add debt
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

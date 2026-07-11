@@ -131,12 +131,15 @@ function ExpensesPage() {
     enabled: !!householdId,
     queryKey: ["fixed-total", householdId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("fixed_expenses")
-        .select("monthly_amount")
-        .eq("household_id", householdId!);
-      if (error) throw error;
-      return (data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      const [{ data: fx, error: e1 }, { data: dt, error: e2 }] = await Promise.all([
+        supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
+        supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
+      ]);
+      if (e1) throw e1;
+      if (e2) throw e2;
+      const sum = (rows: Array<{ monthly_amount: number | string }> | null) =>
+        (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      return sum(fx) + sum(dt);
     },
   });
 
