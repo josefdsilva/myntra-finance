@@ -229,6 +229,59 @@ export type Database = {
           },
         ]
       }
+      debts: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          kind: string
+          label: string
+          maturity_date: string | null
+          monthly_amount: number
+          note: string | null
+          principal_remaining: number | null
+          sort_order: number
+          taeg_pct: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          kind?: string
+          label: string
+          maturity_date?: string | null
+          monthly_amount?: number
+          note?: string | null
+          principal_remaining?: number | null
+          sort_order?: number
+          taeg_pct?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          kind?: string
+          label?: string
+          maturity_date?: string | null
+          monthly_amount?: number
+          note?: string | null
+          principal_remaining?: number | null
+          sort_order?: number
+          taeg_pct?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_categories: {
         Row: {
           created_at: string
