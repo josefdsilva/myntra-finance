@@ -323,7 +323,7 @@ function HouseholdSection({
 
   // Auto-persist computed baseline whenever the inputs change
   useEffect(() => {
-    if (!Array.isArray(fixedRows) || !Array.isArray(varRows)) return;
+    if (!Array.isArray(fixedRows) || !Array.isArray(varRows) || !Array.isArray(debtRows)) return;
     if (Math.abs(baseline - storedBaseline) < 0.005 && margin === Number(household.margin_pct))
       return;
     update({
@@ -342,7 +342,7 @@ function HouseholdSection({
     // Intentionally excludes stable refs (update, onChange, qc, household.*) to
     // avoid write loops; recomputes only when the derived baseline inputs change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseline, margin, storedBaseline, fixedRows, varRows]);
+  }, [baseline, margin, storedBaseline, fixedRows, varRows, debtRows]);
 
   async function saveName() {
     try {
