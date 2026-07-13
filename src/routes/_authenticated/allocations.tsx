@@ -46,6 +46,7 @@ type Bucket = {
   target_value: number;
   target_deadline: string | null;
   color: string | null;
+  initial_balance: number;
 };
 
 function AllocationsPage() {
@@ -261,7 +262,10 @@ function AllocationsPage() {
                 const amount = monthly(b);
                 const confirmed = confirmations?.find((c) => c.bucket_id === b.id);
                 const isGoal = b.target_type === "goal_by_date";
-                const saved = goalTotals?.[b.id] ?? 0;
+                // Current balance = whatever the household already had saved before we
+                // started tracking this bucket, plus every confirmed contribution since.
+                const initialBalance = Number(b.initial_balance ?? 0);
+                const saved = initialBalance + (goalTotals?.[b.id] ?? 0);
                 const goalTarget = Number(b.target_value);
                 const goalPct =
                   isGoal && goalTarget > 0 ? Math.min(100, (saved / goalTarget) * 100) : 0;
@@ -307,6 +311,16 @@ function AllocationsPage() {
                         />
                       </div>
                     </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      {t("alloc.balance", { value: money(saved) })}
+                      {initialBalance > 0 && (
+                        <span>
+                          {" "}
+                          · {t("alloc.balance.includesInitial", { value: money(initialBalance) })}
+                        </span>
+                      )}
+                    </p>
 
                     {isGoal && (
                       <div className="mt-2 rounded-md bg-muted/40 px-3 py-2 space-y-1">
@@ -369,6 +383,7 @@ function AllocationsPage() {
         monthlyFn={monthly}
         firstSalaryAt={data?.firstSalaryAt ?? null}
         ytdTotals={ytdTotals ?? {}}
+        allTimeTotals={goalTotals ?? {}}
       />
     </div>
   );
@@ -379,11 +394,13 @@ function YearToDate({
   monthlyFn,
   firstSalaryAt,
   ytdTotals,
+  allTimeTotals,
 }: {
   buckets: Bucket[];
   monthlyFn: (b: Bucket) => number;
   firstSalaryAt: string | null;
   ytdTotals: Record<string, number>;
+  allTimeTotals: Record<string, number>;
 }) {
   const now = new Date();
   const year = now.getFullYear();
@@ -415,7 +432,10 @@ function YearToDate({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {buckets.map((b) => {
                 const confirmed = ytdTotals[b.id] ?? 0;
-                const projected = confirmed + monthlyFn(b) * monthsRemaining;
+                // Current balance = pre-existing initial funds + every confirmed contribution
+                // ever made (not just this year) — the real amount sitting in the bucket today.
+                const currentBalance = Number(b.initial_balance ?? 0) + (allTimeTotals[b.id] ?? 0);
+                const projected = currentBalance + monthlyFn(b) * monthsRemaining;
                 return (
                   <div key={b.id} className="rounded-lg border p-3">
                     <div className="flex items-center gap-2 mb-1">
@@ -425,7 +445,10 @@ function YearToDate({
                       />
                       <span className="font-medium text-sm">{b.name}</span>
                     </div>
-                    <p className="text-2xl font-display tabular-nums">{money(confirmed)}</p>
+                    <p className="text-2xl font-display tabular-nums">{money(currentBalance)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {money(confirmed)} confirmed this year
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       On pace for <span className="tabular-nums">{money(projected)}</span> by year
                       end

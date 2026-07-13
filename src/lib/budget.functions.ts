@@ -288,6 +288,7 @@ export const upsertBucket = createServerFn({ method: "POST" })
         target_deadline: z.string().date().nullable().optional(),
         color: z.string().max(20).optional().nullable(),
         sort_order: z.number().int().optional(),
+        initial_balance: z.number().min(0).optional(),
       })
       .parse(input),
   )

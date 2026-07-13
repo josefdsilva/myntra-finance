@@ -804,6 +804,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
         target_deadline: b.target_deadline ?? null,
         color: b.color,
         sort_order: b.sort_order,
+        initial_balance: Number(b.initial_balance ?? 0),
       },
     });
     qc.invalidateQueries({ queryKey: ["allocations"] });
@@ -823,6 +824,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
         target_value: 10,
         color: "#2c6e6b",
         sort_order: rows?.length ?? 0,
+        initial_balance: 0,
       },
     });
     refetch();
@@ -874,6 +876,7 @@ type BucketRowShape = {
   target_value: number | string;
   target_deadline: string | null;
   priority?: number | null;
+  initial_balance?: number | string | null;
   [key: string]: unknown;
 };
 
@@ -961,6 +964,16 @@ function BucketRow<T extends BucketRowShape>({
             <p className="text-xs text-muted-foreground mt-1">{t("buckets.reachByHint")}</p>
           </div>
         )}
+        <div>
+          <Label>{t("buckets.initialBalance")}</Label>
+          <Input
+            inputMode="decimal"
+            placeholder="0.00"
+            value={b.initial_balance ?? 0}
+            onChange={(e) => setB({ ...b, initial_balance: parseFloat(e.target.value) || 0 })}
+          />
+          <p className="text-xs text-muted-foreground mt-1">{t("buckets.initialBalanceHint")}</p>
+        </div>
       </div>
       {dirty && (
         <Button size="sm" onClick={() => onSave(b)}>
