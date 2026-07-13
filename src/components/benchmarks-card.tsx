@@ -129,6 +129,15 @@ export function BenchmarksCard({
         <CardDescription>
           Plain-English comparison against national statistics for a household of {householdLabel}.
           Public reference data ({comp.sourceYear}) — never other users&apos; data.
+          {newerAvailable && (
+            <>
+              {" "}
+              <span className="text-amber-600">
+                Newer public data ({newerAvailable}) is available and will ship in the next app
+                update.
+              </span>
+            </>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
