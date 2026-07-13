@@ -4,7 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Info, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { money } from "@/lib/format";
-import { computeBenchmarkComparison } from "@/lib/benchmarks";
+import {
+  computeBenchmarkComparison,
+  hasBenchmark,
+  supportedBenchmarkCountries,
+} from "@/lib/benchmarks";
 
 type Props = {
   householdId: string;
@@ -37,23 +41,72 @@ export function BenchmarksCard({
   const country = hh?.country ?? "PT";
   const adults = hh?.adults ?? 2;
   const children = hh?.children ?? 0;
+  const supported = hasBenchmark(country);
+
+  const { data: latestVersions } = useQuery({
+    enabled: supported,
+    queryKey: ["benchmark-versions"],
+    staleTime: 24 * 60 * 60 * 1000,
+    queryFn: async () => {
+      const res = await fetch("/api/public/benchmarks-version");
+      if (!res.ok) return null;
+      return (await res.json()) as Record<string, number>;
+    },
+  });
 
   const comp = useMemo(
     () =>
-      computeBenchmarkComparison({
-        country,
-        adults,
-        children,
-        monthlyIncome,
-        monthlySpend,
-        spendByCategory,
-      }),
-    [country, adults, children, monthlyIncome, monthlySpend, spendByCategory],
+      supported
+        ? computeBenchmarkComparison({
+            country,
+            adults,
+            children,
+            monthlyIncome,
+            monthlySpend,
+            spendByCategory,
+          })
+        : null,
+    [supported, country, adults, children, monthlyIncome, monthlySpend, spendByCategory],
   );
+
+  if (!supported || !comp) {
+    const supportedList = supportedBenchmarkCountries();
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>How you compare</CardTitle>
+          <CardDescription>
+            Public benchmarks are not yet available for your country ({country}).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            We only show comparisons when we have harmonised public reference data for your country.
+            Change your country in Settings to one we currently support:
+          </p>
+          <p className="text-foreground">
+            {supportedList.map((c) => `${c.name} (${c.code})`).join(" · ")}
+          </p>
+          <div className="flex items-start gap-2 text-xs border-t pt-3">
+            <Info className="size-3.5 mt-0.5 shrink-0" />
+            <p>
+              We compare against public statistics only (Eurostat / national statistics offices) —
+              never against other users&apos; data.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const householdLabel = `${adults} ${adults === 1 ? "adult" : "adults"}${
     children > 0 ? ` + ${children} ${children === 1 ? "child" : "children"}` : ""
   }`;
+
+  const newerAvailable =
+    latestVersions && latestVersions[comp.country] && latestVersions[comp.country] > comp.sourceYear
+      ? latestVersions[comp.country]
+      : null;
 
   const incomeStory = describeIncome(comp.incomePercentile, comp.countryName, householdLabel);
   const savingsStory =
