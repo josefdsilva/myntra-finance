@@ -1,4 +1,10 @@
 import ptBenchmark from "./benchmarks/pt.json";
+import esBenchmark from "./benchmarks/es.json";
+import deBenchmark from "./benchmarks/de.json";
+import frBenchmark from "./benchmarks/fr.json";
+import itBenchmark from "./benchmarks/it.json";
+import nlBenchmark from "./benchmarks/nl.json";
+import ieBenchmark from "./benchmarks/ie.json";
 
 /**
  * Static national benchmarks. Sourced from public statistics (Eurostat / INE)
@@ -14,15 +20,33 @@ export type CountryBenchmark = typeof ptBenchmark;
 
 const BENCHMARKS: Record<string, CountryBenchmark> = {
   PT: ptBenchmark,
+  ES: esBenchmark,
+  DE: deBenchmark,
+  FR: frBenchmark,
+  IT: itBenchmark,
+  NL: nlBenchmark,
+  IE: ieBenchmark,
 };
 
-export function getCountryBenchmark(country: string | null | undefined): CountryBenchmark {
-  const code = (country ?? "PT").toUpperCase();
-  return BENCHMARKS[code] ?? BENCHMARKS.PT;
+export function hasBenchmark(country: string | null | undefined): boolean {
+  const code = (country ?? "").toUpperCase();
+  return !!BENCHMARKS[code];
+}
+
+export function getCountryBenchmark(country: string | null | undefined): CountryBenchmark | null {
+  const code = (country ?? "").toUpperCase();
+  return BENCHMARKS[code] ?? null;
 }
 
 export function supportedBenchmarkCountries(): Array<{ code: string; name: string }> {
   return Object.values(BENCHMARKS).map((b) => ({ code: b.country, name: b.countryName }));
+}
+
+/** Latest bundled sourceYear per country. Used by the version-check endpoint. */
+export function benchmarkVersions(): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const b of Object.values(BENCHMARKS)) out[b.country] = b.sourceYear;
+  return out;
 }
 
 /** OECD-modified equivalence scale: 1 first adult + 0.5 per extra adult + 0.3 per child. */
