@@ -101,6 +101,9 @@ const en = {
   "buckets.targetAmount": "Target amount (€)",
   "buckets.reachBy": "Reach by",
   "buckets.reachByHint": "Monthly contribution = goal ÷ months remaining.",
+  "buckets.initialBalance": "Already have (optional)",
+  "buckets.initialBalanceHint":
+    "If you already had money saved before tracking this bucket, add it here. You can update it anytime.",
 
   // Members
   "members.title": "Household members",
@@ -277,6 +280,8 @@ const en = {
   "alloc.ytd.total": "Total confirmed YTD ({months} mo)",
   "alloc.mark": "Mark as allocated",
   "alloc.moved": "{value} moved",
+  "alloc.balance": "Balance: {value}",
+  "alloc.balance.includesInitial": "includes {value} you already had",
 
   // --- Analysis
   "ana.title": "Analysis",
@@ -374,6 +379,9 @@ const pt: Record<MessageKey, string> = {
   "buckets.targetAmount": "Valor alvo (€)",
   "buckets.reachBy": "Atingir até",
   "buckets.reachByHint": "Contribuição mensal = objetivo ÷ meses restantes.",
+  "buckets.initialBalance": "Já tem (opcional)",
+  "buckets.initialBalanceHint":
+    "Se já tinha dinheiro guardado antes de começar a acompanhar este balde, adicione aqui. Pode atualizar a qualquer momento.",
 
   "members.title": "Membros do agregado",
   "members.description":
@@ -545,6 +553,8 @@ const pt: Record<MessageKey, string> = {
   "alloc.ytd.total": "Total confirmado YTD ({months} m)",
   "alloc.mark": "Marcar como alocado",
   "alloc.moved": "{value} transferidos",
+  "alloc.balance": "Saldo: {value}",
+  "alloc.balance.includesInitial": "inclui {value} que já tinha",
 
   "ana.title": "Análise",
   "ana.subtitle.cycles": "Últimos {n} ciclos salariais · ",
@@ -639,6 +649,9 @@ const es: Record<MessageKey, string> = {
   "buckets.targetAmount": "Importe objetivo (€)",
   "buckets.reachBy": "Alcanzar para",
   "buckets.reachByHint": "Aporte mensual = meta ÷ meses restantes.",
+  "buckets.initialBalance": "Ya tiene (opcional)",
+  "buckets.initialBalanceHint":
+    "Si ya tenía dinero ahorrado antes de seguir este cubo, añádalo aquí. Puede actualizarlo en cualquier momento.",
 
   "members.title": "Miembros del hogar",
   "members.description":
@@ -809,6 +822,8 @@ const es: Record<MessageKey, string> = {
   "alloc.ytd.total": "Total confirmado YTD ({months} m)",
   "alloc.mark": "Marcar como asignado",
   "alloc.moved": "{value} movidos",
+  "alloc.balance": "Saldo: {value}",
+  "alloc.balance.includesInitial": "incluye {value} que ya tenía",
 
   "ana.title": "Análisis",
   "ana.subtitle.cycles": "Últimos {n} ciclos · ",
@@ -904,6 +919,9 @@ const de: Record<MessageKey, string> = {
   "buckets.targetAmount": "Zielbetrag (€)",
   "buckets.reachBy": "Erreichen bis",
   "buckets.reachByHint": "Monatlicher Beitrag = Ziel ÷ verbleibende Monate.",
+  "buckets.initialBalance": "Bereits vorhanden (optional)",
+  "buckets.initialBalanceHint":
+    "Wenn Sie vor der Nachverfolgung dieses Buckets bereits Geld gespart hatten, fügen Sie es hier hinzu. Sie können es jederzeit aktualisieren.",
 
   "members.title": "Haushaltsmitglieder",
   "members.description":
@@ -1075,6 +1093,8 @@ const de: Record<MessageKey, string> = {
   "alloc.ytd.total": "Bestätigt YTD ({months} Mon.)",
   "alloc.mark": "Als zugewiesen markieren",
   "alloc.moved": "{value} übertragen",
+  "alloc.balance": "Saldo: {value}",
+  "alloc.balance.includesInitial": "enthält {value}, die Sie bereits hatten",
 
   "ana.title": "Analyse",
   "ana.subtitle.cycles": "Letzte {n} Zyklen · ",
@@ -1170,6 +1190,9 @@ const fr: Record<MessageKey, string> = {
   "buckets.targetAmount": "Montant cible (€)",
   "buckets.reachBy": "Atteindre pour",
   "buckets.reachByHint": "Contribution mensuelle = objectif ÷ mois restants.",
+  "buckets.initialBalance": "Déjà disponible (facultatif)",
+  "buckets.initialBalanceHint":
+    "Si vous aviez déjà de l'argent épargné avant de suivre ce panier, ajoutez-le ici. Vous pouvez le mettre à jour à tout moment.",
 
   "members.title": "Membres du foyer",
   "members.description":
@@ -1340,6 +1363,8 @@ const fr: Record<MessageKey, string> = {
   "alloc.ytd.total": "Total confirmé YTD ({months} m)",
   "alloc.mark": "Marquer comme alloué",
   "alloc.moved": "{value} déplacés",
+  "alloc.balance": "Solde : {value}",
+  "alloc.balance.includesInitial": "inclut {value} que vous aviez déjà",
 
   "ana.title": "Analyse",
   "ana.subtitle.cycles": "{n} derniers cycles · ",

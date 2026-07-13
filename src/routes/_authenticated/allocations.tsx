@@ -46,6 +46,7 @@ type Bucket = {
   target_value: number;
   target_deadline: string | null;
   color: string | null;
+  initial_balance: number;
 };
 
 function AllocationsPage() {
@@ -261,7 +262,10 @@ function AllocationsPage() {
                 const amount = monthly(b);
                 const confirmed = confirmations?.find((c) => c.bucket_id === b.id);
                 const isGoal = b.target_type === "goal_by_date";
-                const saved = goalTotals?.[b.id] ?? 0;
+                // Current balance = whatever the household already had saved before we
+                // started tracking this bucket, plus every confirmed contribution since.
+                const initialBalance = Number(b.initial_balance ?? 0);
+                const saved = initialBalance + (goalTotals?.[b.id] ?? 0);
                 const goalTarget = Number(b.target_value);
                 const goalPct =
                   isGoal && goalTarget > 0 ? Math.min(100, (saved / goalTarget) * 100) : 0;
@@ -307,6 +311,16 @@ function AllocationsPage() {
                         />
                       </div>
                     </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      {t("alloc.balance", { value: money(saved) })}
+                      {initialBalance > 0 && (
+                        <span>
+                          {" "}
+                          · {t("alloc.balance.includesInitial", { value: money(initialBalance) })}
+                        </span>
+                      )}
+                    </p>
 
                     {isGoal && (
                       <div className="mt-2 rounded-md bg-muted/40 px-3 py-2 space-y-1">

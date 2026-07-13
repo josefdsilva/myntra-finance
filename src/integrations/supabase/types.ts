@@ -144,6 +144,7 @@ export type Database = {
           created_at: string
           household_id: string
           id: string
+          initial_balance: number
           name: string
           sort_order: number
           target_deadline: string | null
@@ -156,6 +157,7 @@ export type Database = {
           created_at?: string
           household_id: string
           id?: string
+          initial_balance?: number
           name: string
           sort_order?: number
           target_deadline?: string | null
@@ -168,6 +170,7 @@ export type Database = {
           created_at?: string
           household_id?: string
           id?: string
+          initial_balance?: number
           name?: string
           sort_order?: number
           target_deadline?: string | null
