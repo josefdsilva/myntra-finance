@@ -100,11 +100,12 @@ export function DashboardTips({
         { data: debts },
         { data: variables },
         { data: confirmations },
+        { data: allTimeAllocations },
         { count: expenseCount },
       ] = await Promise.all([
         supabase
           .from("buckets")
-          .select("id, name, target_type, target_value, target_deadline")
+          .select("id, name, target_type, target_value, target_deadline, initial_balance")
           .eq("household_id", householdId),
         supabase
           .from("incomes")
@@ -124,18 +125,29 @@ export function DashboardTips({
           .select("bucket_id, amount")
           .eq("household_id", householdId)
           .eq("period", period),
+        // All-time confirmed contributions per bucket (not just this period) — needed to
+        // know a goal bucket's real current balance for the feasibility checks below.
+        supabase
+          .from("bucket_allocations")
+          .select("bucket_id, amount")
+          .eq("household_id", householdId),
         supabase
           .from("expenses")
           .select("id", { count: "exact", head: true })
           .eq("household_id", householdId)
           .eq("kind", "expense"),
       ]);
+      const allTimeTotals: Record<string, number> = {};
+      for (const r of allTimeAllocations ?? []) {
+        allTimeTotals[r.bucket_id] = (allTimeTotals[r.bucket_id] ?? 0) + Number(r.amount);
+      }
       return {
         buckets: buckets ?? [],
         incomes: incomes ?? [],
         fixed: [...(fixed ?? []), ...(debts ?? [])],
         variables: variables ?? [],
         confirmations: confirmations ?? [],
+        allTimeTotals,
         expenseCount: expenseCount ?? 0,
       };
     },
@@ -393,6 +405,43 @@ export function DashboardTips({
         cta: { label: "Review", to: "/allocations" },
         chatPrompt: `My goal "${b.name}" is due in ${m} month${m === 1 ? "" : "s"}. Is it still realistic given my surplus, and what should I do if it isn't?`,
       });
+    }
+  }
+
+  // ---- Goal feasibility: too optimistic vs. under-challenging ----
+  // Forward-looking, not pace-history-based: given what's already saved (initial balance +
+  // every confirmed contribution to date) and the time left, is the monthly amount required
+  // to still hit the target in line with what the household can actually put aside?
+  if (surplus > 0) {
+    for (const b of data.buckets) {
+      if (b.target_type !== "goal_by_date") continue;
+      const target = Number(b.target_value);
+      const currentBalance = Number(b.initial_balance ?? 0) + (data.allTimeTotals[b.id] ?? 0);
+      const remaining = target - currentBalance;
+      if (remaining <= 0) continue; // already funded
+      const monthsLeft = monthsUntil(b.target_deadline);
+      const requiredMonthly = remaining / monthsLeft;
+      const ratio = requiredMonthly / surplus;
+
+      if (ratio > 0.75) {
+        tips.push({
+          id: `goal-unrealistic-${b.id}`,
+          severity: "warning",
+          title: `Goal "${b.name}" may be unrealistic`,
+          detail: `Reaching it by ${b.target_deadline} needs ${money(requiredMonthly)}/mo — ${Math.round(ratio * 100)}% of your ${money(surplus)} surplus. Extend the deadline or lower the target so it doesn't crowd out everything else.`,
+          cta: { label: "Adjust goal", to: "/settings" },
+          chatPrompt: `My goal "${b.name}" needs ${money(requiredMonthly)}/month to hit ${money(target)} by ${b.target_deadline}, which is ${Math.round(ratio * 100)}% of my ${money(surplus)} surplus. Should I push the deadline back or lower the target, and by how much?`,
+        });
+      } else if (ratio < 0.15 && monthsLeft >= 3) {
+        tips.push({
+          id: `goal-too-easy-${b.id}`,
+          severity: "info",
+          title: `Goal "${b.name}" could be more ambitious`,
+          detail: `Only ${money(requiredMonthly)}/mo (${Math.round(ratio * 100)}% of surplus) is needed to hit ${money(target)} by ${b.target_deadline}, with ${monthsLeft} months to go. You could pull the deadline in or raise the target instead of leaving surplus idle.`,
+          cta: { label: "Adjust goal", to: "/settings" },
+          chatPrompt: `My goal "${b.name}" only needs ${money(requiredMonthly)}/month (${Math.round(ratio * 100)}% of my surplus) to hit ${money(target)} by ${b.target_deadline}. Should I raise the target or move the deadline closer, and to what?`,
+        });
+      }
     }
   }
 
