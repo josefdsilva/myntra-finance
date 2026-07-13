@@ -21,6 +21,7 @@ import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalysisRouteImport } from './routes/_authenticated/analysis'
 import { Route as AuthenticatedAllocationsRouteImport } from './routes/_authenticated/allocations'
+import { Route as ApiPublicBenchmarksVersionRouteImport } from './routes/api/public/benchmarks-version'
 import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/public/hooks/weekly-digest'
 import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
 
@@ -84,6 +85,12 @@ const AuthenticatedAllocationsRoute =
     path: '/allocations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicBenchmarksVersionRoute =
+  ApiPublicBenchmarksVersionRouteImport.update({
+    id: '/api/public/benchmarks-version',
+    path: '/api/public/benchmarks-version',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksWeeklyDigestRoute =
   ApiPublicHooksWeeklyDigestRouteImport.update({
     id: '/api/public/hooks/weekly-digest',
@@ -109,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
 }
@@ -124,6 +132,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
 }
@@ -141,6 +150,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
 }
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/wiki'
     | '/invite/$token'
+    | '/api/public/benchmarks-version'
     | '/api/public/hooks/budget-alerts'
     | '/api/public/hooks/weekly-digest'
   fileRoutesByTo: FileRoutesByTo
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/wiki'
     | '/invite/$token'
+    | '/api/public/benchmarks-version'
     | '/api/public/hooks/budget-alerts'
     | '/api/public/hooks/weekly-digest'
   id:
@@ -189,6 +201,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/wiki'
     | '/invite/$token'
+    | '/api/public/benchmarks-version'
     | '/api/public/hooks/budget-alerts'
     | '/api/public/hooks/weekly-digest'
   fileRoutesById: FileRoutesById
@@ -199,6 +212,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
   ApiPublicHooksBudgetAlertsRoute: typeof ApiPublicHooksBudgetAlertsRoute
   ApiPublicHooksWeeklyDigestRoute: typeof ApiPublicHooksWeeklyDigestRoute
 }
@@ -289,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAllocationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/benchmarks-version': {
+      id: '/api/public/benchmarks-version'
+      path: '/api/public/benchmarks-version'
+      fullPath: '/api/public/benchmarks-version'
+      preLoaderRoute: typeof ApiPublicBenchmarksVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/weekly-digest': {
       id: '/api/public/hooks/weekly-digest'
       path: '/api/public/hooks/weekly-digest'
@@ -335,6 +356,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
   InviteTokenRoute: InviteTokenRoute,
+  ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
   ApiPublicHooksBudgetAlertsRoute: ApiPublicHooksBudgetAlertsRoute,
   ApiPublicHooksWeeklyDigestRoute: ApiPublicHooksWeeklyDigestRoute,
 }

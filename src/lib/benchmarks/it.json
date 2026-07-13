@@ -1,0 +1,41 @@
+{
+  "country": "IT",
+  "countryName": "Italy",
+  "currency": "EUR",
+  "sourceYear": 2023,
+  "sources": [
+    "Eurostat ilc_di01 (equivalised disposable income by decile, IT, 2023)",
+    "Eurostat hbs_str_t223 (mean consumption expenditure by COICOP, IT, 2020 wave)",
+    "Eurostat tec00131 / nasa_10_ki (household saving rate, IT)"
+  ],
+  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale). Category shares are remapped from COICOP divisions to the app's expense categories.",
+  "incomeDecilesAnnualEquivalised": {
+    "d1": 8200,
+    "d2": 11800,
+    "d3": 14400,
+    "d4": 16900,
+    "d5": 19400,
+    "d6": 22100,
+    "d7": 25400,
+    "d8": 29700,
+    "d9": 37500
+  },
+  "avgMonthlyHouseholdExpenditure": 2600,
+  "householdSavingRatePct": 9.1,
+  "categoryShares": {
+    "groceries": 17.0,
+    "dining": 8.0,
+    "transport": 8.0,
+    "fuel": 4.0,
+    "utilities": 9.0,
+    "housing": 22.0,
+    "subscriptions": 3.0,
+    "health": 6.0,
+    "kids": 3.0,
+    "shopping": 9.0,
+    "entertainment": 5.0,
+    "travel": 3.0,
+    "gifts": 2.0,
+    "other": 1.0
+  }
+}

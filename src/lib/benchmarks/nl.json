@@ -1,0 +1,41 @@
+{
+  "country": "NL",
+  "countryName": "Netherlands",
+  "currency": "EUR",
+  "sourceYear": 2023,
+  "sources": [
+    "Eurostat ilc_di01 (equivalised disposable income by decile, NL, 2023)",
+    "Eurostat hbs_str_t223 (mean consumption expenditure by COICOP, NL, 2020 wave)",
+    "Eurostat tec00131 / nasa_10_ki (household saving rate, NL)"
+  ],
+  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale). Category shares are remapped from COICOP divisions to the app's expense categories.",
+  "incomeDecilesAnnualEquivalised": {
+    "d1": 14200,
+    "d2": 18400,
+    "d3": 22000,
+    "d4": 25200,
+    "d5": 28400,
+    "d6": 31800,
+    "d7": 35800,
+    "d8": 40900,
+    "d9": 49600
+  },
+  "avgMonthlyHouseholdExpenditure": 3100,
+  "householdSavingRatePct": 13.8,
+  "categoryShares": {
+    "groceries": 12.0,
+    "dining": 6.0,
+    "transport": 7.0,
+    "fuel": 3.0,
+    "utilities": 8.0,
+    "housing": 26.0,
+    "subscriptions": 4.0,
+    "health": 6.0,
+    "kids": 3.0,
+    "shopping": 10.0,
+    "entertainment": 6.0,
+    "travel": 5.0,
+    "gifts": 2.0,
+    "other": 2.0
+  }
+}
