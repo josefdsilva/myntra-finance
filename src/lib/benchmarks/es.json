@@ -1,0 +1,41 @@
+{
+  "country": "ES",
+  "countryName": "Spain",
+  "currency": "EUR",
+  "sourceYear": 2023,
+  "sources": [
+    "Eurostat ilc_di01 (equivalised disposable income by decile, ES, 2023)",
+    "Eurostat hbs_str_t223 (mean consumption expenditure by COICOP, ES, 2020 wave)",
+    "Eurostat tec00131 / nasa_10_ki (household saving rate, ES)"
+  ],
+  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale). Category shares are remapped from COICOP divisions to the app's expense categories.",
+  "incomeDecilesAnnualEquivalised": {
+    "d1": 7100,
+    "d2": 10200,
+    "d3": 12500,
+    "d4": 14700,
+    "d5": 17000,
+    "d6": 19500,
+    "d7": 22500,
+    "d8": 26400,
+    "d9": 33200
+  },
+  "avgMonthlyHouseholdExpenditure": 2500,
+  "householdSavingRatePct": 7.2,
+  "categoryShares": {
+    "groceries": 15.0,
+    "dining": 10.0,
+    "transport": 7.0,
+    "fuel": 4.0,
+    "utilities": 9.0,
+    "housing": 22.0,
+    "subscriptions": 3.0,
+    "health": 5.0,
+    "kids": 3.0,
+    "shopping": 10.0,
+    "entertainment": 5.0,
+    "travel": 3.0,
+    "gifts": 2.0,
+    "other": 2.0
+  }
+}

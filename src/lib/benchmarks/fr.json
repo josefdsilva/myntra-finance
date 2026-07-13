@@ -1,0 +1,41 @@
+{
+  "country": "FR",
+  "countryName": "France",
+  "currency": "EUR",
+  "sourceYear": 2023,
+  "sources": [
+    "Eurostat ilc_di01 (equivalised disposable income by decile, FR, 2023)",
+    "Eurostat hbs_str_t223 (mean consumption expenditure by COICOP, FR, 2020 wave)",
+    "Eurostat tec00131 / nasa_10_ki (household saving rate, FR)"
+  ],
+  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale). Category shares are remapped from COICOP divisions to the app's expense categories.",
+  "incomeDecilesAnnualEquivalised": {
+    "d1": 11500,
+    "d2": 15200,
+    "d3": 18100,
+    "d4": 20800,
+    "d5": 23500,
+    "d6": 26400,
+    "d7": 30000,
+    "d8": 34700,
+    "d9": 42800
+  },
+  "avgMonthlyHouseholdExpenditure": 2700,
+  "householdSavingRatePct": 17.2,
+  "categoryShares": {
+    "groceries": 13.0,
+    "dining": 7.0,
+    "transport": 8.0,
+    "fuel": 4.0,
+    "utilities": 8.0,
+    "housing": 24.0,
+    "subscriptions": 3.0,
+    "health": 5.0,
+    "kids": 3.0,
+    "shopping": 10.0,
+    "entertainment": 6.0,
+    "travel": 4.0,
+    "gifts": 2.0,
+    "other": 3.0
+  }
+}
