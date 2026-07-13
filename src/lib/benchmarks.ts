@@ -134,8 +134,9 @@ export function computeBenchmarkComparison(params: {
   monthlyIncome: number;
   monthlySpend: number;
   spendByCategory: Record<string, number>;
-}): BenchmarkComparison {
+}): BenchmarkComparison | null {
   const bench = getCountryBenchmark(params.country);
+  if (!bench) return null;
   const factor = equivalenceFactor(params.adults, params.children);
   const annualEq = (params.monthlyIncome / factor) * 12;
   const incomePercentile = percentileFromDeciles(
