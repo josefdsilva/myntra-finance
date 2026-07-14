@@ -21,6 +21,7 @@ import {
   Check,
   ChevronsUpDown,
   Plus,
+  FileText,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -43,6 +44,7 @@ const NAV = [
   { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
   { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
   { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+  { to: "/cycle-report", labelKey: "nav.cycleReport", icon: FileText },
   { to: "/households", labelKey: "nav.households", icon: Users },
   { to: "/settings", labelKey: "nav.settings", icon: Settings },
   { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
@@ -209,7 +211,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Top bar mobile */}
-      <header className="md:hidden flex items-center justify-between p-4 border-b bg-card">
+      <header className="md:hidden flex items-center justify-between p-4 border-b bg-card print:hidden">
         <Link to="/" className="flex items-center gap-2">
           <img src={appIcon.url} alt="App icon" className="size-8 rounded-lg" />
           <span className="font-display text-lg">Budget</span>
@@ -241,13 +243,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile household switcher row (visible under the top bar) */}
       {open || hasMultiple ? (
-        <div className="md:hidden px-4 py-2 border-b bg-card">{HouseholdSwitcher}</div>
+        <div className="md:hidden px-4 py-2 border-b bg-card print:hidden">{HouseholdSwitcher}</div>
       ) : null}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          "md:w-60 md:border-r md:bg-card md:flex md:flex-col",
+          "md:w-60 md:border-r md:bg-card md:flex md:flex-col print:hidden",
           open ? "block border-b bg-card" : "hidden md:flex",
         )}
       >

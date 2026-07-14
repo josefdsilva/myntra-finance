@@ -19,6 +19,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCycleReportRouteImport } from './routes/_authenticated/cycle-report'
 import { Route as AuthenticatedAnalysisRouteImport } from './routes/_authenticated/analysis'
 import { Route as AuthenticatedAllocationsRouteImport } from './routes/_authenticated/allocations'
 import { Route as ApiPublicBenchmarksVersionRouteImport } from './routes/api/public/benchmarks-version'
@@ -74,6 +75,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCycleReportRoute =
+  AuthenticatedCycleReportRouteImport.update({
+    id: '/cycle-report',
+    path: '/cycle-report',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAnalysisRoute = AuthenticatedAnalysisRouteImport.update({
   id: '/analysis',
   path: '/analysis',
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/allocations': typeof AuthenticatedAllocationsRoute
   '/analysis': typeof AuthenticatedAnalysisRoute
+  '/cycle-report': typeof AuthenticatedCycleReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/households': typeof AuthenticatedHouseholdsRoute
@@ -126,6 +134,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/allocations': typeof AuthenticatedAllocationsRoute
   '/analysis': typeof AuthenticatedAnalysisRoute
+  '/cycle-report': typeof AuthenticatedCycleReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/households': typeof AuthenticatedHouseholdsRoute
@@ -144,6 +153,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/_authenticated/allocations': typeof AuthenticatedAllocationsRoute
   '/_authenticated/analysis': typeof AuthenticatedAnalysisRoute
+  '/_authenticated/cycle-report': typeof AuthenticatedCycleReportRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/allocations'
     | '/analysis'
+    | '/cycle-report'
     | '/dashboard'
     | '/expenses'
     | '/households'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/allocations'
     | '/analysis'
+    | '/cycle-report'
     | '/dashboard'
     | '/expenses'
     | '/households'
@@ -195,6 +207,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/_authenticated/allocations'
     | '/_authenticated/analysis'
+    | '/_authenticated/cycle-report'
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
     | '/_authenticated/households'
@@ -289,6 +302,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cycle-report': {
+      id: '/_authenticated/cycle-report'
+      path: '/cycle-report'
+      fullPath: '/cycle-report'
+      preLoaderRoute: typeof AuthenticatedCycleReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analysis': {
       id: '/_authenticated/analysis'
       path: '/analysis'
@@ -330,6 +350,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAllocationsRoute: typeof AuthenticatedAllocationsRoute
   AuthenticatedAnalysisRoute: typeof AuthenticatedAnalysisRoute
+  AuthenticatedCycleReportRoute: typeof AuthenticatedCycleReportRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
@@ -340,6 +361,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAllocationsRoute: AuthenticatedAllocationsRoute,
   AuthenticatedAnalysisRoute: AuthenticatedAnalysisRoute,
+  AuthenticatedCycleReportRoute: AuthenticatedCycleReportRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
@@ -363,3 +385,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
