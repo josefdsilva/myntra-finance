@@ -408,6 +408,37 @@ function CycleReportPage() {
             </CardContent>
           </Card>
 
+          {stats.debtPayments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Debt payments this cycle</CardTitle>
+                <CardDescription>
+                  {money(stats.debtPaidTotal)} put toward your debts.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Debt</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats.debtPayments.map((p, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{p.label}</TableCell>
+                        <TableCell className="text-muted-foreground capitalize">{p.source}</TableCell>
+                        <TableCell className="text-right tabular-nums">{money(p.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
           {stats.topSpends.length > 0 && (
             <Card>
               <CardHeader>

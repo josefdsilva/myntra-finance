@@ -270,6 +270,17 @@ function AnalysisPage() {
         .gte("occurred_at", cycle.start.toISOString())
         .lt("occurred_at", cycle.end.toISOString())
         .order("occurred_at", { ascending: true });
+      // Cash-affecting movements in this cycle (deposits out, withdrawals in,
+      // cash-sourced debt payments out). Transfers and bucket-sourced payments
+      // don't touch cash, so they're excluded.
+      const { data: cashMoves } = await supabase
+        .from("account_movements")
+        .select("amount, created_at, from_type, to_type, reason")
+        .eq("household_id", householdId!)
+        .gte("created_at", cycle.start.toISOString())
+        .lt("created_at", cycle.end.toISOString())
+        .or("from_type.eq.cash,to_type.eq.cash")
+        .order("created_at", { ascending: true });
       const monthlyIncome = (incomesRows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const surplus = Math.max(0, monthlyIncome - baseline);
       function monthsUntil(dateStr: string | null): number {
@@ -310,6 +321,13 @@ function AnalysisPage() {
         unallocated,
         bucketTargets: totalAllocated,
         surplus,
+        movements: (cashMoves ?? []) as Array<{
+          amount: string | number;
+          created_at: string;
+          from_type: string | null;
+          to_type: string | null;
+          reason: string | null;
+        }>,
       };
     },
   });
@@ -324,8 +342,47 @@ function AnalysisPage() {
 
   const burnSeries = useMemo<BurnPoint[]>(() => {
     if (!cycleData) return [];
-    const { cycle, tx } = cycleData;
-    const events = [...tx].sort((a, b) => +new Date(a.occurred_at) - +new Date(b.occurred_at));
+    const { cycle, tx, movements } = cycleData;
+    type Evt = {
+      time: number;
+      iso: string;
+      kind: "income" | "expense";
+      label: string;
+      amount: number;
+      delta: number;
+      isSalary: boolean;
+    };
+    const txEvts: Evt[] = tx.map((ev) => {
+      const amt = Number(ev.amount);
+      return {
+        time: +new Date(ev.occurred_at),
+        iso: ev.occurred_at,
+        kind: ev.kind,
+        label: ev.is_salary
+          ? ev.note || ev.merchant || t("ana.salaryFallback")
+          : ev.note ||
+            ev.merchant ||
+            ev.category ||
+            (ev.kind === "income" ? t("ana.incomeFallback") : t("ana.expenseFallback")),
+        amount: amt,
+        delta: ev.kind === "income" ? amt : -amt,
+        isSalary: ev.is_salary,
+      };
+    });
+    const mvEvts: Evt[] = (movements ?? []).map((m) => {
+      const amt = Number(m.amount);
+      const inflow = m.to_type === "cash"; // money returning to cash (withdrawal)
+      return {
+        time: +new Date(m.created_at),
+        iso: m.created_at,
+        kind: inflow ? "income" : "expense",
+        label: m.reason || (inflow ? t("ana.incomeFallback") : t("ana.expenseFallback")),
+        amount: amt,
+        delta: inflow ? amt : -amt,
+        isSalary: false,
+      };
+    });
+    const events = [...txEvts, ...mvEvts].sort((a, b) => a.time - b.time);
     let bal = 0;
     const out: BurnPoint[] = [];
     out.push({
@@ -336,26 +393,18 @@ function AnalysisPage() {
     });
     let fixedReserved = false;
     for (const ev of events) {
-      const amt = Number(ev.amount);
-      const delta = ev.kind === "income" ? amt : -amt;
-      bal += delta;
-      const evLabel = ev.is_salary
-        ? ev.note || ev.merchant || t("ana.salaryFallback")
-        : ev.note ||
-          ev.merchant ||
-          ev.category ||
-          (ev.kind === "income" ? t("ana.incomeFallback") : t("ana.expenseFallback"));
+      bal += ev.delta;
       out.push({
-        label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm"),
-        iso: ev.occurred_at,
+        label: fmt(new Date(ev.iso), "dd/MM HH:mm"),
+        iso: ev.iso,
         balance: Number(bal.toFixed(2)),
-        events: [{ kind: ev.kind, label: evLabel, amount: amt, delta }],
+        events: [{ kind: ev.kind, label: ev.label, amount: ev.amount, delta: ev.delta }],
       });
-      if (!fixedReserved && ev.is_salary && fixedTotal > 0) {
+      if (!fixedReserved && ev.isSalary && fixedTotal > 0) {
         bal -= fixedTotal;
         out.push({
-          label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm") + " · fixed",
-          iso: ev.occurred_at,
+          label: fmt(new Date(ev.iso), "dd/MM HH:mm") + " · fixed",
+          iso: ev.iso,
           balance: Number(bal.toFixed(2)),
           events: [
             {
