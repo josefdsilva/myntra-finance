@@ -631,15 +631,26 @@ function ConfirmAllocationButton({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Allocate to {bucketName}</DialogTitle>
-            <DialogDescription>How much did you actually move to this bucket?</DialogDescription>
+            <DialogTitle>
+              {mode === "add" ? `Add more to ${bucketName}` : `Allocate to ${bucketName}`}
+            </DialogTitle>
+            <DialogDescription>
+              {mode === "add"
+                ? `You've already moved ${money(alreadyMoved)} this month. How much more are you moving now?`
+                : "How much did you actually move to this bucket?"}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="rounded-md bg-muted/50 px-3 py-2 flex justify-between text-sm">
-              <span className="text-muted-foreground">Recommended this month</span>
-              <span className="tabular-nums font-medium">{money(suggested)}</span>
+              <span className="text-muted-foreground">
+                {mode === "add" ? "Remaining recommended" : "Recommended this month"}
+              </span>
+              <span className="tabular-nums font-medium">
+                {money(mode === "add" ? Math.max(0, suggested - alreadyMoved) : suggested)}
+              </span>
             </div>
+
 
             <div className="space-y-1.5">
               <Label htmlFor="alloc-amt">Amount moved (€)</Label>
