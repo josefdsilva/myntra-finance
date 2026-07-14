@@ -773,8 +773,9 @@ function ConfirmAllocationButton({
               Cancel
             </Button>
             <Button onClick={submit} disabled={loading || parsed === null}>
-              Confirm allocation
+              {mode === "add" ? "Add to allocation" : "Confirm allocation"}
             </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
