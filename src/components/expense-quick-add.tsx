@@ -119,6 +119,8 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   };
   const [occurredAt, setOccurredAt] = useState<string>(nowLocal);
   const [loading, setLoading] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestAmount, setSuggestAmount] = useState(0);
 
 
   async function submit(e: React.FormEvent) {
