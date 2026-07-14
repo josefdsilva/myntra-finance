@@ -271,8 +271,16 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
         </div>
       </div>
     </form>
+    <IncomeAllocationSuggestion
+      householdId={householdId}
+      amount={suggestAmount}
+      open={suggestOpen}
+      onOpenChange={setSuggestOpen}
+    />
+    </>
   );
 }
+
 
 function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const parse = useServerFn(parseMemo);
