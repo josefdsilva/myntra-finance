@@ -9,7 +9,7 @@ import { useActiveHouseholdId } from "@/lib/active-household";
 import { buildCyclesFromSalaries, type CycleSpan } from "@/lib/cycle";
 import { generateCycleReportNarrative } from "@/lib/cycle-report.functions";
 import { upsertVariableEstimate } from "@/lib/budget.functions";
-import { useLocale } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 import { money, fmtDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ function CycleReportPage() {
   const qc = useQueryClient();
   const genFn = useServerFn(generateCycleReportNarrative);
   const upsertEstimate = useServerFn(upsertVariableEstimate);
+  const t = useT();
 
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],
@@ -114,7 +115,7 @@ function CycleReportPage() {
         queryKey: ["cycle-report", householdId, selectedCycle.start.toISOString(), locale],
       });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to regenerate");
+      toast.error(e instanceof Error ? e.message : t("cycleReport.regenerateFailed"));
     } finally {
       setRefreshing(false);
     }
@@ -139,10 +140,15 @@ function CycleReportPage() {
           monthly_amount: row.suggested,
         },
       });
-      toast.success(`${row.estimateLabel} estimate updated to ${money(row.suggested)}/mo`);
+      toast.success(
+        t("cycleReport.estimateUpdatedToast", {
+          label: row.estimateLabel,
+          amount: money(row.suggested),
+        }),
+      );
       qc.invalidateQueries({ queryKey: ["cycle-report", householdId] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to apply");
+      toast.error(e instanceof Error ? e.message : t("cycleReport.applyFailed"));
     } finally {
       setApplying(null);
     }
@@ -158,12 +164,9 @@ function CycleReportPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <PiggyBank className="size-5" /> Cycle report
+              <PiggyBank className="size-5" /> {t("cycleReport.title")}
             </CardTitle>
-            <CardDescription>
-              No closed cycle yet. Once you record a second salary on the Dashboard, your first
-              cycle closes and a report shows up here.
-            </CardDescription>
+            <CardDescription>{t("cycleReport.noClosedCycle")}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -174,16 +177,14 @@ function CycleReportPage() {
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
-          <h1 className="font-display text-2xl">Cycle report</h1>
-          <p className="text-sm text-muted-foreground">
-            A closed-cycle overview you can print or save as PDF.
-          </p>
+          <h1 className="font-display text-2xl">{t("cycleReport.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("cycleReport.printSubtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           {closedCycles.length > 0 && (
             <Select value={selected ?? undefined} onValueChange={setSelected}>
               <SelectTrigger className="w-56">
-                <SelectValue placeholder="Select a cycle" />
+                <SelectValue placeholder={t("cycleReport.selectCyclePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {[...closedCycles].reverse().map((c) => (
@@ -200,10 +201,10 @@ function CycleReportPage() {
             ) : (
               <RefreshCw className="size-4" />
             )}
-            Regenerate
+            {t("cycleReport.regenerate")}
           </Button>
           <Button size="sm" onClick={() => window.print()}>
-            <Printer className="size-4" /> Print / Save as PDF
+            <Printer className="size-4" /> {t("cycleReport.printSave")}
           </Button>
         </div>
       </div>
@@ -215,32 +216,39 @@ function CycleReportPage() {
       ) : (
         <>
           <div className="hidden print:block">
-            <h1 className="font-display text-2xl">Cycle report</h1>
+            <h1 className="font-display text-2xl">{t("cycleReport.title")}</h1>
             <p className="text-sm text-muted-foreground">
-              {fmtDate(selectedCycle.start)} – {fmtDate(selectedCycle.end)} · generated{" "}
+              {fmtDate(selectedCycle.start)} – {fmtDate(selectedCycle.end)} ·{" "}
+              {t("cycleReport.generatedPrefix")}{" "}
               {new Date(reportQ.data!.generated_at).toLocaleString()}
             </p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Summary</CardTitle>
+              <CardTitle>{t("cycleReport.summary")}</CardTitle>
               <CardDescription>
                 {fmtDate(selectedCycle.start)} – {fmtDate(selectedCycle.end)} ({stats.cycleDays}{" "}
-                days)
+                {t("cycleReport.days")})
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <Stat label="Income" value={money(stats.actualIncome)} />
-                <Stat label="Fixed (baseline)" value={money(stats.fixedMonthly)} />
+                <Stat label={t("cycleReport.incomeLabel")} value={money(stats.actualIncome)} />
                 <Stat
-                  label="Variable spent"
+                  label={t("cycleReport.fixedBaselineLabel")}
+                  value={money(stats.fixedMonthly)}
+                />
+                <Stat
+                  label={t("cycleReport.variableSpentLabel")}
                   value={money(stats.actualVariableSpent)}
-                  sub={`of ${money(stats.variablePool)} pool`}
+                  sub={t("cycleReport.ofPool", { pool: money(stats.variablePool) })}
                   warn={stats.actualVariableSpent > stats.variablePool}
                 />
-                <Stat label="Moved to buckets" value={money(stats.confirmedBucketAllocations)} />
+                <Stat
+                  label={t("cycleReport.movedToBucketsLabel")}
+                  value={money(stats.confirmedBucketAllocations)}
+                />
               </div>
             </CardContent>
           </Card>
@@ -251,30 +259,33 @@ function CycleReportPage() {
                 <div className="flex items-center gap-3">
                   <Wallet className="size-5 text-emerald-600 shrink-0" />
                   <div>
-                    <p className="font-medium">{money(leftover)} was left over from this cycle</p>
-                    <p className="text-sm text-muted-foreground">
-                      Decide where it should go — buckets, debt, or keep it in the account.
+                    <p className="font-medium">
+                      {t("cycleReport.leftOverBody", { amount: money(leftover) })}
                     </p>
+                    <p className="text-sm text-muted-foreground">{t("cycleReport.leftOverHint")}</p>
                   </div>
                 </div>
-                <Button onClick={() => setSurplusOpen(true)}>Decide what to do with it</Button>
+                <Button onClick={() => setSurplusOpen(true)}>
+                  {t("cycleReport.decideWhatToDo")}
+                </Button>
               </CardContent>
             </Card>
           )}
 
           <Card>
             <CardHeader>
-              <CardTitle>What went well · areas to improve</CardTitle>
-              <CardDescription>
-                Rule-based numbers below, synthesized into a short summary by AI.
-              </CardDescription>
+              <CardTitle>{t("cycleReport.wentWellTitle")}</CardTitle>
+              <CardDescription>{t("cycleReport.wentWellDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-sm [&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:font-semibold [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_p]:my-1">
                 <ReactMarkdown>{reportQ.data!.narrative}</ReactMarkdown>
               </div>
               <p className="text-xs text-muted-foreground mt-3 print:hidden">
-                {reportQ.data!.cached ? "Cached" : "Freshly generated"} · generated{" "}
+                {reportQ.data!.cached
+                  ? t("cycleReport.cachedLabel")
+                  : t("cycleReport.freshlyGenerated")}{" "}
+                · {t("cycleReport.generatedPrefix")}{" "}
                 {new Date(reportQ.data!.generated_at).toLocaleString()}
               </p>
             </CardContent>
@@ -282,21 +293,18 @@ function CycleReportPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Variable spending vs. estimates</CardTitle>
-              <CardDescription>
-                "Suggested" is the average monthly-equivalent actual spend across this cycle and up
-                to 2 prior closed cycles.
-              </CardDescription>
+              <CardTitle>{t("cycleReport.varSpendingTitle")}</CardTitle>
+              <CardDescription>{t("cycleReport.varSpendingDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Estimate</TableHead>
-                    <TableHead className="text-right">Actual</TableHead>
+                    <TableHead>{t("cycleReport.categoryHeader")}</TableHead>
+                    <TableHead className="text-right">{t("cycleReport.estimateHeader")}</TableHead>
+                    <TableHead className="text-right">{t("cycleReport.actualHeader")}</TableHead>
                     <TableHead className="text-right">Δ</TableHead>
-                    <TableHead className="text-right">Suggested</TableHead>
+                    <TableHead className="text-right">{t("cycleReport.suggestedHeader")}</TableHead>
                     <TableHead className="print:hidden" />
                   </TableRow>
                 </TableHeader>
@@ -335,11 +343,11 @@ function CycleReportPage() {
                               ) : (
                                 <Check className="size-3" />
                               )}
-                              Apply
+                              {t("cycleReport.apply")}
                             </Button>
                           ) : (
                             <Badge variant="outline" className="text-[10px]">
-                              in line
+                              {t("cycleReport.inLine")}
                             </Badge>
                           )}
                         </TableCell>
@@ -353,23 +361,27 @@ function CycleReportPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Buckets</CardTitle>
-              <CardDescription>Allocated this cycle vs. current total balance.</CardDescription>
+              <CardTitle>{t("cycleReport.bucketsTitle")}</CardTitle>
+              <CardDescription>{t("cycleReport.bucketsDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Bucket</TableHead>
-                    <TableHead className="text-right">Allocated this cycle</TableHead>
-                    <TableHead className="text-right">Current balance</TableHead>
+                    <TableHead>{t("cycleReport.bucketHeader")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("cycleReport.allocatedThisCycleHeader")}
+                    </TableHead>
+                    <TableHead className="text-right">
+                      {t("cycleReport.currentBalanceHeader")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {stats.buckets.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} className="text-muted-foreground text-sm">
-                        No buckets configured.
+                        {t("cycleReport.noBucketsConfigured")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -380,7 +392,9 @@ function CycleReportPage() {
                           {b.allocatedThisCycle > 0 ? (
                             money(b.allocatedThisCycle)
                           ) : (
-                            <span className="text-muted-foreground">not confirmed</span>
+                            <span className="text-muted-foreground">
+                              {t("cycleReport.notConfirmed")}
+                            </span>
                           )}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
@@ -397,16 +411,16 @@ function CycleReportPage() {
           {stats.topSpends.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Biggest expenses this cycle</CardTitle>
+                <CardTitle>{t("cycleReport.biggestExpensesTitle")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Note</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>{t("cycleReport.dateHeader")}</TableHead>
+                      <TableHead>{t("cycleReport.categoryHeader")}</TableHead>
+                      <TableHead>{t("cycleReport.noteHeader")}</TableHead>
+                      <TableHead className="text-right">{t("cycleReport.amountHeader")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -218,7 +218,7 @@ export function BenchmarksCard({
             </p>
 
             {comp.excludedCategories.length > 0 && (
-              <p className="text-xs text-muted-foreground capitalize-first">
+              <p className="text-xs text-muted-foreground">
                 {t("benchmarks.excludedNote", { list: excludedLabel })}
               </p>
             )}

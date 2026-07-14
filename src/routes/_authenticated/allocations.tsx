@@ -339,8 +339,11 @@ function AllocationsPage() {
                         <Progress value={goalPct} />
                         <p className={`text-xs ${onTrack ? "text-emerald-600" : "text-amber-600"}`}>
                           {onTrack
-                            ? `On track · ${money(saved - expectedByNow)} ahead of schedule`
-                            : `Behind by ${money(expectedByNow - saved)} · need ${money((goalTarget - saved) / Math.max(1, monthsLeft))}/mo to catch up`}
+                            ? t("alloc.goalOnTrack", { amount: money(saved - expectedByNow) })
+                            : t("alloc.goalBehind", {
+                                behindAmount: money(expectedByNow - saved),
+                                needed: money((goalTarget - saved) / Math.max(1, monthsLeft)),
+                              })}
                         </p>
                       </div>
                     )}
@@ -517,6 +520,7 @@ function ConfirmAllocationButton({
   unallocatedSurplus: number;
   onChanged: () => void;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const confirmFn = useServerFn(confirmBucketAllocation);
   const undoFn = useServerFn(undoBucketAllocation);
@@ -560,8 +564,8 @@ function ConfirmAllocationButton({
   }
 
   async function submit() {
-    if (parsed === null) return toast.error("Invalid amount");
-    if (mode === "add" && parsed <= 0) return toast.error("Enter an amount greater than 0");
+    if (parsed === null) return toast.error(t("alloc.invalidAmount"));
+    if (mode === "add" && parsed <= 0) return toast.error(t("alloc.enterAmountGreaterThanZero"));
     setLoading(true);
     try {
       await confirmFn({
@@ -574,13 +578,15 @@ function ConfirmAllocationButton({
           mode,
         },
       });
-      toast.success(mode === "add" ? "Added to allocation" : "Allocation confirmed");
+      toast.success(
+        mode === "add" ? t("alloc.addedToAllocationToast") : t("alloc.allocationConfirmedToast"),
+      );
       setOpen(false);
       setNote("");
       onChanged();
       invalidate();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("alloc.failed"));
     } finally {
       setLoading(false);
     }
@@ -590,11 +596,11 @@ function ConfirmAllocationButton({
     setLoading(true);
     try {
       await undoFn({ data: { id: confirmed.id } });
-      toast.success("Confirmation removed");
+      toast.success(t("alloc.confirmationRemovedToast"));
       onChanged();
       invalidate();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("alloc.failed"));
     } finally {
       setLoading(false);
     }
@@ -614,10 +620,10 @@ function ConfirmAllocationButton({
       {confirmed ? (
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
-            <Check className="size-3.5" /> {money(alreadyMoved)} moved
+            <Check className="size-3.5" /> {t("alloc.movedLabel", { amount: money(alreadyMoved) })}
           </span>
           <Button size="sm" variant="outline" onClick={() => openDialog("add")} disabled={loading}>
-            Add more
+            {t("alloc.addMore")}
           </Button>
           <Button size="sm" variant="ghost" onClick={undo} disabled={loading}>
             <Undo2 className="size-3.5" />
@@ -625,35 +631,36 @@ function ConfirmAllocationButton({
         </div>
       ) : (
         <Button size="sm" variant="outline" onClick={() => openDialog("set")}>
-          Mark as allocated
+          {t("alloc.markAsAllocated")}
         </Button>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {mode === "add" ? `Add more to ${bucketName}` : `Allocate to ${bucketName}`}
+              {mode === "add"
+                ? t("alloc.addMoreToBucket", { bucket: bucketName })
+                : t("alloc.allocateToBucket", { bucket: bucketName })}
             </DialogTitle>
             <DialogDescription>
               {mode === "add"
-                ? `You've already moved ${money(alreadyMoved)} this month. How much more are you moving now?`
-                : "How much did you actually move to this bucket?"}
+                ? t("alloc.alreadyMovedQuestion", { amount: money(alreadyMoved) })
+                : t("alloc.howMuchMoved")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="rounded-md bg-muted/50 px-3 py-2 flex justify-between text-sm">
               <span className="text-muted-foreground">
-                {mode === "add" ? "Remaining recommended" : "Recommended this month"}
+                {mode === "add" ? t("alloc.remainingRecommended") : t("alloc.recommendedThisMonth")}
               </span>
               <span className="tabular-nums font-medium">
                 {money(mode === "add" ? Math.max(0, suggested - alreadyMoved) : suggested)}
               </span>
             </div>
 
-
             <div className="space-y-1.5">
-              <Label htmlFor="alloc-amt">Amount moved (€)</Label>
+              <Label htmlFor="alloc-amt">{t("alloc.amountMovedLabel")}</Label>
               <Input
                 id="alloc-amt"
                 inputMode="decimal"
@@ -675,7 +682,7 @@ function ConfirmAllocationButton({
                     )
                   }
                 >
-                  Use recommended
+                  {t("alloc.useRecommended")}
                 </Button>
 
                 {isGoal && (
@@ -686,27 +693,29 @@ function ConfirmAllocationButton({
                     className="h-7 text-xs"
                     onClick={() => setAmount(Math.max(0, goalTarget - savedSoFar).toFixed(2))}
                   >
-                    Fund remainder ({money(Math.max(0, goalTarget - savedSoFar))})
+                    {t("alloc.fundRemainder", {
+                      amount: money(Math.max(0, goalTarget - savedSoFar)),
+                    })}
                   </Button>
                 )}
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="alloc-note">Note (optional)</Label>
+              <Label htmlFor="alloc-note">{t("alloc.noteLabel")}</Label>
               <Textarea
                 id="alloc-note"
                 rows={2}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="e.g. bonus month, skipped due to travel…"
+                placeholder={t("alloc.notePlaceholder")}
               />
             </div>
 
             {parsed !== null && (
               <div className="rounded-md border p-3 space-y-2 text-sm">
                 <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">
-                  Impact
+                  {t("alloc.impact")}
                 </p>
 
                 <div className="flex justify-between items-center gap-2">
@@ -716,19 +725,17 @@ function ConfirmAllocationButton({
                     ) : (
                       <TrendingDown className="size-3.5" />
                     )}
-                    vs recommended
+                    {t("alloc.vsRecommended")}
                   </span>
                   <span
                     className={`tabular-nums font-medium ${Math.abs(delta) < 0.01 ? "" : delta > 0 ? "text-amber-600" : "text-sky-600"}`}
                   >
-                    {delta === 0 ? "on target" : `${delta > 0 ? "+" : ""}${money(delta)}`}
+                    {delta === 0 ? t("alloc.onTarget") : `${delta > 0 ? "+" : ""}${money(delta)}`}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center gap-2">
-                  <span className="text-muted-foreground">
-                    Emergency / unallocated surplus after
-                  </span>
+                  <span className="text-muted-foreground">{t("alloc.emergencyAfter")}</span>
                   <span
                     className={`tabular-nums font-medium ${newUnallocated < 0 ? "text-destructive" : "text-emerald-600"}`}
                   >
@@ -741,7 +748,7 @@ function ConfirmAllocationButton({
                     <div className="pt-2 border-t space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <Target className="size-3.5" /> Goal after this
+                          <Target className="size-3.5" /> {t("alloc.goalAfterThis")}
                         </span>
                         <span className="tabular-nums">
                           {money(newSaved)} / {money(goalTarget)} ({goalPctAfter.toFixed(0)}%)
@@ -753,12 +760,18 @@ function ConfirmAllocationButton({
                           className={`text-xs ${newMonthlyNeeded > suggested + 0.01 ? "text-amber-600" : "text-muted-foreground"}`}
                         >
                           {newMonthlyNeeded > suggested + 0.01
-                            ? `You'll need ${money(newMonthlyNeeded)}/mo (up from ${money(suggested)}) to hit the goal.`
-                            : `On track — ${money(newMonthlyNeeded)}/mo needed for the remaining ${monthsLeft - 1} month(s).`}
+                            ? t("alloc.goalNeedMore", {
+                                needed: money(newMonthlyNeeded),
+                                suggested: money(suggested),
+                              })
+                            : t("alloc.goalOnTrackMonths", {
+                                needed: money(newMonthlyNeeded),
+                                months: monthsLeft - 1,
+                              })}
                         </p>
                       )}
                       {remainingToGoal === 0 && (
-                        <p className="text-xs text-emerald-600">Goal reached 🎉</p>
+                        <p className="text-xs text-emerald-600">{t("alloc.goalReached")}</p>
                       )}
                     </div>
                   </>
@@ -767,8 +780,7 @@ function ConfirmAllocationButton({
                 {newUnallocated < 0 && (
                   <p className="text-xs text-destructive flex items-start gap-1.5">
                     <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
-                    This overspends the month's surplus by {money(-newUnallocated)} — it'll come
-                    from your emergency pool.
+                    {t("alloc.overspendWarning", { amount: money(-newUnallocated) })}
                   </p>
                 )}
               </div>
@@ -777,12 +789,11 @@ function ConfirmAllocationButton({
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>
-              Cancel
+              {t("alloc.cancel")}
             </Button>
             <Button onClick={submit} disabled={loading || parsed === null}>
-              {mode === "add" ? "Add to allocation" : "Confirm allocation"}
+              {mode === "add" ? t("alloc.addToAllocation") : t("alloc.confirmAllocation")}
             </Button>
-
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -799,6 +810,7 @@ function AllocationHistory({
   buckets: Bucket[];
   householdId: string;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const undoFn = useServerFn(undoBucketAllocation);
   const nameOf = (id: string) => buckets.find((b) => b.id === id)?.name ?? "—";
@@ -807,7 +819,7 @@ function AllocationHistory({
   async function undo(id: string) {
     try {
       await undoFn({ data: { id } });
-      toast.success("Removed");
+      toast.success(t("alloc.removedToast"));
       qc.invalidateQueries({ queryKey: ["bucket-allocations-history", householdId] });
       qc.invalidateQueries({ queryKey: ["bucket-allocations-totals", householdId] });
       qc.invalidateQueries({
@@ -815,7 +827,7 @@ function AllocationHistory({
       });
       qc.invalidateQueries({ queryKey: ["bucket-allocations", householdId] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("alloc.failed"));
     }
   }
 

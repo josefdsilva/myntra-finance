@@ -21,6 +21,8 @@ import {
   Sparkles,
   ShieldCheck,
 } from "lucide-react";
+import { useLocale } from "@/lib/i18n";
+import { WIKI_STRINGS } from "@/lib/wiki-content";
 
 export const Route = createFileRoute("/_authenticated/wiki")({
   head: () => ({
@@ -71,18 +73,21 @@ function Term({ children }: { children: React.ReactNode }) {
 }
 
 function WikiPage() {
+  const locale = useLocale();
+  const w = (key: string) => WIKI_STRINGS[locale]?.[key] ?? WIKI_STRINGS.en[key] ?? key;
+
   const toc = [
-    { id: "overview", label: "Overview" },
-    { id: "cycles", label: "Pay cycles" },
-    { id: "baseline", label: "Baseline & safe-to-spend" },
-    { id: "expenses", label: "Expenses & capture" },
-    { id: "allocations", label: "Allocations & buckets" },
-    { id: "analysis", label: "Analysis" },
-    { id: "settings", label: "Settings" },
-    { id: "notifications", label: "Notifications" },
-    { id: "privacy", label: "Hidden mode & dark mode" },
-    { id: "credits", label: "Credits & tokens" },
-    { id: "faq", label: "FAQ" },
+    { id: "overview", label: w("toc.overview") },
+    { id: "cycles", label: w("toc.cycles") },
+    { id: "baseline", label: w("toc.baseline") },
+    { id: "expenses", label: w("toc.expenses") },
+    { id: "allocations", label: w("toc.allocations") },
+    { id: "analysis", label: w("toc.analysis") },
+    { id: "settings", label: w("toc.settings") },
+    { id: "notifications", label: w("toc.notifications") },
+    { id: "privacy", label: w("toc.privacy") },
+    { id: "credits", label: w("toc.credits") },
+    { id: "faq", label: w("toc.faq") },
   ];
 
   return (
@@ -91,18 +96,15 @@ function WikiPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <BookOpen className="size-3.5" />
-            Wiki
+            {w("header.eyebrow")}
           </div>
-          <h1 className="font-display text-3xl md:text-4xl">How this app works</h1>
-          <p className="text-muted-foreground">
-            A complete guide to every screen, field and formula. Skim the table of contents or jump
-            straight to the section you need.
-          </p>
+          <h1 className="font-display text-3xl md:text-4xl">{w("header.title")}</h1>
+          <p className="text-muted-foreground">{w("header.subtitle")}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Table of contents</CardTitle>
+            <CardTitle className="text-base">{w("header.tocTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="grid gap-1 sm:grid-cols-2 text-sm">
@@ -117,62 +119,51 @@ function WikiPage() {
           </CardContent>
         </Card>
 
-        <Section id="overview" icon={BookOpen} title="Overview">
+        <Section id="overview" icon={BookOpen} title={w("toc.overview")}>
           <p>
-            Myntra helps a couple (or small family) plan and manage monthly money together. Instead
-            of tracking every cent against a calendar month, the app works in{" "}
-            <Term>pay cycles</Term> — the window between two consecutive salary deposits — and
-            answers one core question every day:
+            {w("overview.p1a")}
+            <Term>{w("overview.term1")}</Term>
+            {w("overview.p1b")}
           </p>
           <p className="rounded-lg border bg-muted/40 p-3 text-foreground">
-            <strong>
-              “How much can I still spend today without breaking the baseline or putting a savings
-              goal in jeopardy?”
-            </strong>
+            <strong>{w("overview.callout")}</strong>
           </p>
-          <p>
-            To do that it needs three things from you: your fixed monthly costs, your estimated
-            variable costs (groceries, fuel…), and your allocation buckets (investments, savings,
-            kids, projects). From there it computes a safe-to-spend value, tracks your actual
-            expenses, and shows analytics.
-          </p>
+          <p>{w("overview.p2")}</p>
           <div className="flex flex-wrap gap-2 pt-1">
-            <Badge variant="secondary">Shared household</Badge>
-            <Badge variant="secondary">EUR</Badge>
-            <Badge variant="secondary">DD/MM/YYYY HH:mm:ss</Badge>
-            <Badge variant="secondary">Invite-only</Badge>
+            <Badge variant="secondary">{w("overview.badge1")}</Badge>
+            <Badge variant="secondary">{w("overview.badge2")}</Badge>
+            <Badge variant="secondary">{w("overview.badge3")}</Badge>
+            <Badge variant="secondary">{w("overview.badge4")}</Badge>
           </div>
         </Section>
 
-        <Section id="cycles" icon={Calendar} title="Pay cycles">
+        <Section id="cycles" icon={Calendar} title={w("toc.cycles")}>
           <p>
-            A <Term>cycle</Term> starts the day the primary salary is received and ends the day
-            before the next one. All budgets, safe-to-spend and allocations are computed against the
-            current cycle — not the calendar month.
+            {w("cycles.p1a")}
+            <Term>{w("cycles.term1")}</Term>
+            {w("cycles.p1b")}
           </p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              The cycle anchor is the most recent record marked as a <Term>salary deposit</Term>.
+              {w("cycles.li1a")}
+              <Term>{w("cycles.li1term")}</Term>
+              {w("cycles.li1b")}
             </li>
             <li>
-              Use the <strong>Salary received · restart cycle</strong> button on the Dashboard when
-              you get paid. It creates the salary record using the amount from Settings and starts a
-              new cycle.
+              {w("cycles.li2a")}
+              <strong>{w("cycles.li2strong")}</strong>
+              {w("cycles.li2b")}
             </li>
-            <li>
-              If no salary has ever been registered, the app falls back to the current calendar
-              month.
-            </li>
-            <li>
-              On Expenses and Allocations you can navigate to previous cycles with the arrows.
-            </li>
+            <li>{w("cycles.li3")}</li>
+            <li>{w("cycles.li4")}</li>
           </ul>
         </Section>
 
-        <Section id="baseline" icon={Wallet} title="Baseline & safe-to-spend">
+        <Section id="baseline" icon={Wallet} title={w("toc.baseline")}>
           <p>
-            The <Term>baseline</Term> is your target monthly cost of living. It is a calculated
-            value, not a number you type:
+            {w("baseline.p1a")}
+            <Term>{w("baseline.term1")}</Term>
+            {w("baseline.p1b")}
           </p>
           <pre className="rounded-lg border bg-muted/40 p-3 text-xs text-foreground overflow-x-auto">
             {`baseline = fixed_monthly_expenses
@@ -181,379 +172,359 @@ function WikiPage() {
           </pre>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              <Term>Fixed monthly expenses</Term> — rent, utilities, subscriptions, insurance.
-              Things that hit every month at (roughly) the same amount.
+              <Term>{w("baseline.li1term")}</Term>
+              {w("baseline.li1")}
             </li>
             <li>
-              <Term>Estimated variable costs</Term> — categories you spend on regularly but with
-              varying amounts: groceries, fuel, transportation, household goods…
+              <Term>{w("baseline.li2term")}</Term>
+              {w("baseline.li2")}
             </li>
             <li>
-              <Term>Safety margin</Term> — a percentage buffer on top, to absorb small surprises
-              without alarms firing.
+              <Term>{w("baseline.li3term")}</Term>
+              {w("baseline.li3")}
             </li>
           </ul>
-          <p className="pt-2 font-medium text-foreground">Safe to spend today</p>
+          <p className="pt-2 font-medium text-foreground">{w("baseline.safeTodayHeading")}</p>
           <pre className="rounded-lg border bg-muted/40 p-3 text-xs text-foreground overflow-x-auto">
             {`variable_pool = baseline - fixed_expenses_in_cycle
 remaining     = variable_pool - variable_spent_in_cycle + refunds_received
 safe_today    = remaining / days_left_in_cycle`}
           </pre>
-          <p>The Dashboard shows this as a large number with three tags:</p>
+          <p>{w("baseline.p3")}</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
               <Badge className="bg-orange-500/15 text-orange-600 dark:text-orange-400 border-transparent">
-                Spent
+                {w("baseline.badgeSpent")}
               </Badge>{" "}
-              variable expenses recorded this cycle.
+              {w("baseline.li4After")}
             </li>
             <li>
               <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-transparent">
-                Received
+                {w("baseline.badgeReceived")}
               </Badge>{" "}
-              money received during the cycle (refunds, reimbursements — not salary).
+              {w("baseline.li5After")}
             </li>
             <li>
-              <Badge variant="secondary">Balance</Badge> spent minus received: the net drain on the
-              variable pool.
+              <Badge variant="secondary">{w("baseline.badgeBalance")}</Badge>{" "}
+              {w("baseline.li6After")}
             </li>
           </ul>
           <p>
-            The trend indicator (↑/↓) compares today's safe-to-spend against yesterday's. The{" "}
-            <strong>Projected end of cycle</strong> card extrapolates using your last 7 days of
-            spending — green if you'll finish under baseline, red if you'll blow through it.
+            {w("baseline.p4a")}
+            <strong>{w("baseline.p4strong")}</strong>
+            {w("baseline.p4b")}
           </p>
         </Section>
 
-        <Section id="expenses" icon={Receipt} title="Expenses & capture">
+        <Section id="expenses" icon={Receipt} title={w("toc.expenses")}>
           <p>
-            Expenses are anything that is <em>not</em> a fixed monthly bill or the salary. Only
-            these entries move the safe-to-spend needle. There are several ways to add them:
+            {w("expenses.p1a")}
+            <em>{w("expenses.p1em")}</em>
+            {w("expenses.p1b")}
           </p>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="quick">
-              <AccordionTrigger>Quick add (form)</AccordionTrigger>
+              <AccordionTrigger>{w("expenses.acc1Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Type amount, category, note and date. Fastest for a single purchase you remember.
+                {w("expenses.acc1Body")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="ai">
-              <AccordionTrigger>AI text or voice memo</AccordionTrigger>
+              <AccordionTrigger>{w("expenses.acc2Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Paste (or dictate) something like{" "}
-                <em>“45 euros groceries at Continente yesterday”</em>. The AI extracts amount,
-                category, merchant and date. Review and confirm before saving.
+                {w("expenses.acc2BodyA")}
+                <em>{w("expenses.acc2BodyEm")}</em>
+                {w("expenses.acc2BodyB")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="photo">
-              <AccordionTrigger>Photo of a receipt or bill</AccordionTrigger>
+              <AccordionTrigger>{w("expenses.acc3Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Upload the image; the AI reads the total, merchant and date and pre-fills the form.
+                {w("expenses.acc3Body")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="stmt">
-              <AccordionTrigger>Bank statement import</AccordionTrigger>
+              <AccordionTrigger>{w("expenses.acc4Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Paste a statement export. Rows are parsed into candidate expenses. A duplicate check
-                runs against the ±2-day window already in your log — likely duplicates are
-                highlighted in amber and pre-unchecked. Use <em>Select all</em>,{" "}
-                <em>Reset dupes</em> and <em>None</em> to move quickly.
+                {w("expenses.acc4BodyA")}
+                <em>{w("expenses.acc4Em1")}</em>
+                {w("expenses.acc4Mid")}
+                <em>{w("expenses.acc4Em2")}</em>
+                {w("expenses.acc4Mid2")}
+                <em>{w("expenses.acc4Em3")}</em>
+                {w("expenses.acc4End")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="fields">
-              <AccordionTrigger>What each field means</AccordionTrigger>
+              <AccordionTrigger>{w("expenses.acc5Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground space-y-2">
                 <div>
-                  <Term>Amount</Term> in EUR. Positive for outgoing money.
+                  <Term>{w("expenses.fieldAmountTerm")}</Term>
+                  {w("expenses.fieldAmount")}
                 </div>
                 <div>
-                  <Term>Type</Term> <em>expense</em> reduces the pool, <em>received</em> refunds it
-                  (not salary).
+                  <Term>{w("expenses.fieldTypeTerm")}</Term> <em>{w("expenses.fieldTypeEm1")}</em>
+                  {w("expenses.fieldTypeMid")}
+                  <em>{w("expenses.fieldTypeEm2")}</em>
+                  {w("expenses.fieldTypeEnd")}
                 </div>
                 <div>
-                  <Term>Category</Term> drives the Analysis pie chart and matches variable-estimate
-                  categories.
+                  <Term>{w("expenses.fieldCategoryTerm")}</Term>
+                  {w("expenses.fieldCategory")}
                 </div>
                 <div>
-                  <Term>Date</Term> when the money actually moved — this determines which cycle it
-                  belongs to.
+                  <Term>{w("expenses.fieldDateTerm")}</Term>
+                  {w("expenses.fieldDate")}
                 </div>
                 <div>
-                  <Term>Note</Term> free text (merchant, purpose). Useful in the Analysis tooltips.
+                  <Term>{w("expenses.fieldNoteTerm")}</Term>
+                  {w("expenses.fieldNote")}
                 </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
         </Section>
 
-        <Section id="allocations" icon={PiggyBank} title="Allocations & buckets">
+        <Section id="allocations" icon={PiggyBank} title={w("toc.allocations")}>
           <p>
-            A <Term>bucket</Term> represents a place your income should flow to every cycle:
-            long-term investments, savings account, kids' savings, a house-project fund, etc. Each
-            bucket has a target that determines how much the app <em>recommends</em> you move.
+            {w("allocations.p1a")}
+            <Term>{w("allocations.term1")}</Term>
+            {w("allocations.p1b")}
+            <em>{w("allocations.p1em")}</em>
+            {w("allocations.p1c")}
           </p>
-          <p className="font-medium text-foreground">Target types</p>
+          <p className="font-medium text-foreground">{w("allocations.targetTypesHeading")}</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              <Term>% of income</Term> — a share of the salary, e.g. 15% to investments.
+              <Term>{w("allocations.tt1term")}</Term>
+              {w("allocations.tt1")}
             </li>
             <li>
-              <Term>Fixed € per month</Term> — a flat monthly contribution.
+              <Term>{w("allocations.tt2term")}</Term>
+              {w("allocations.tt2")}
             </li>
             <li>
-              <Term>Goal € by date</Term> — you want <em>X €</em> in this bucket by a specific date.
-              The app computes the monthly contribution needed from today, and re-computes every
-              cycle based on what was actually allocated.
+              <Term>{w("allocations.tt3term")}</Term>
+              {w("allocations.tt3a")}
+              <em>{w("allocations.tt3em")}</em>
+              {w("allocations.tt3b")}
             </li>
           </ul>
-          <p className="font-medium text-foreground pt-2">Mark as allocated</p>
+          <p className="font-medium text-foreground pt-2">{w("allocations.markHeading")}</p>
           <p>
-            When you move money into an account for a bucket, click{" "}
-            <strong>Mark as allocated</strong> and enter the actual amount transferred. The impact
-            panel shows:
+            {w("allocations.markP1a")}
+            <strong>{w("allocations.markStrong")}</strong>
+            {w("allocations.markP1b")}
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Delta versus the recommendation for the cycle.</li>
+            <li>{w("allocations.li1")}</li>
             <li>
-              Effect on the <Term>emergency pool</Term> (surplus / shortfall versus recommended
-              totals).
+              {w("allocations.li2a")}
+              <Term>{w("allocations.li2term")}</Term>
+              {w("allocations.li2b")}
             </li>
-            <li>
-              For goal buckets: updated progress percentage and the revised monthly rate needed to
-              still hit the deadline.
-            </li>
+            <li>{w("allocations.li3")}</li>
           </ul>
-          <p>
-            Allocating more than recommended pulls from the emergency pool; allocating less leaves
-            surplus in it. Nothing forces you to hit the exact number — the app just keeps the math
-            honest.
-          </p>
+          <p>{w("allocations.p2")}</p>
         </Section>
 
-        <Section id="analysis" icon={BarChart3} title="Analysis">
-          <p>Two views help you understand where the money went and where it's heading.</p>
-          <p className="font-medium text-foreground">Cycle burndown</p>
+        <Section id="analysis" icon={BarChart3} title={w("toc.analysis")}>
+          <p>{w("analysis.p1")}</p>
+          <p className="font-medium text-foreground">{w("analysis.burndownHeading")}</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              The line starts at <strong>−fixed_total</strong> on day 1 — fixed costs are already
-              reserved even before you spend anything variable.
+              {w("analysis.li1a")}
+              <strong>{w("analysis.li1strong")}</strong>
+              {w("analysis.li1b")}
             </li>
-            <li>
-              It drops with each expense and rises with each received entry and the salary event.
-            </li>
-            <li>
-              Dashed reference lines show the funding thresholds (baseline and, when relevant,
-              allocation requirements).
-            </li>
-            <li>Hover any point to see the exact transactions that moved the balance that day.</li>
+            <li>{w("analysis.li2")}</li>
+            <li>{w("analysis.li3")}</li>
+            <li>{w("analysis.li4")}</li>
           </ul>
-          <p className="font-medium text-foreground pt-2">Category distribution</p>
-          <p>
-            A pie chart of variable spending in the selected window (day / week / month). Use it to
-            spot categories drifting above their variable-estimate share.
-          </p>
+          <p className="font-medium text-foreground pt-2">{w("analysis.categoryHeading")}</p>
+          <p>{w("analysis.p2")}</p>
         </Section>
 
-        <Section id="settings" icon={SettingsIcon} title="Settings">
+        <Section id="settings" icon={SettingsIcon} title={w("toc.settings")}>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              <Term>Household</Term> — name, primary salary amount and expected payday cadence. The
-              salary amount is what the <em>Salary received</em> button will record.
+              <Term>{w("settings.li1term")}</Term>
+              {w("settings.li1a")}
+              <em>{w("settings.li1em")}</em>
+              {w("settings.li1b")}
             </li>
             <li>
-              <Term>Members</Term> — invite your partner by email. Both members share the same data;
-              there is no per-member wallet.
+              <Term>{w("settings.li2term")}</Term>
+              {w("settings.li2")}
             </li>
             <li>
-              <Term>Fixed monthly expenses</Term> — one row per recurring bill.
+              <Term>{w("settings.li3term")}</Term>
+              {w("settings.li3")}
             </li>
             <li>
-              <Term>Variable cost estimates</Term> — expected monthly spend per category. Sum feeds
-              the baseline.
+              <Term>{w("settings.li4term")}</Term>
+              {w("settings.li4")}
             </li>
             <li>
-              <Term>Safety margin (%)</Term> — buffer applied on top of fixed + variable estimates.
+              <Term>{w("settings.li5term")}</Term>
+              {w("settings.li5")}
             </li>
             <li>
-              <Term>Allocation buckets</Term> — create/edit buckets, targets, and goal deadlines.
+              <Term>{w("settings.li6term")}</Term>
+              {w("settings.li6")}
             </li>
             <li>
-              <Term>Notifications</Term> — enable web push per device and toggle each alert
-              individually.
+              <Term>{w("settings.li7term")}</Term>
+              {w("settings.li7")}
             </li>
           </ul>
         </Section>
 
-        <Section id="notifications" icon={Bell} title="Notifications">
-          <p>
-            All notifications are opt-in, per device and per type. Enable a device first (Settings →
-            Notifications → Enable on this device), then toggle the ones you want.
-          </p>
+        <Section id="notifications" icon={Bell} title={w("toc.notifications")}>
+          <p>{w("notifications.p1")}</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              <strong>Monday morning digest</strong> (08:00 Europe/Lisbon) — a summary of the
-              previous week: total spent and received (excluding fixed costs and salary), top-3
-              expenses and received items, a comparison to the previous week, an AI commentary on
-              pace, and how much room you still have in the baseline and emergency pool.
+              <strong>{w("notifications.li1strong")}</strong>
+              {w("notifications.li1")}
             </li>
             <li>
-              <strong>Baseline approaching / reached</strong> — sent when the remaining variable
-              pool crosses warning and breach thresholds.
+              <strong>{w("notifications.li2strong")}</strong>
+              {w("notifications.li2")}
             </li>
             <li>
-              <strong>Emergency pool near depletion</strong> — sent when consumption of the surplus
-              reaches a critical level.
+              <strong>{w("notifications.li3strong")}</strong>
+              {w("notifications.li3")}
             </li>
           </ul>
-          <p>
-            iOS Safari requires the app to be installed to the home screen before push works.
-            Desktop Chrome / Firefox / Edge and Android work directly.
-          </p>
+          <p>{w("notifications.p2")}</p>
         </Section>
 
-        <Section id="privacy" icon={Eye} title="Hidden mode & dark mode">
+        <Section id="privacy" icon={Eye} title={w("toc.privacy")}>
           <p>
-            <Term>Hidden mode</Term> (eye icon) blurs every monetary value in the app so you can
-            open it in public without exposing balances. The toggle is remembered across sessions in
-            this browser.
+            <Term>{w("privacy.p1term")}</Term>
+            {w("privacy.p1")}
           </p>
           <p>
-            <Term>Dark mode</Term> (sun/moon icon) follows your OS preference by default and
-            remembers your explicit choice across sessions.
+            <Term>{w("privacy.p2term")}</Term>
+            {w("privacy.p2")}
           </p>
           <p className="flex items-center gap-2 pt-1">
             <ShieldCheck className="size-4 text-primary" />
-            <span>
-              Access is restricted to allow-listed emails. Sign-ups are disabled; new members join
-              by invitation only.
-            </span>
+            <span>{w("privacy.p3")}</span>
           </p>
         </Section>
 
-        <Section id="credits" icon={Sparkles} title="Credits & tokens">
+        <Section id="credits" icon={Sparkles} title={w("toc.credits")}>
           <p>
-            Some Myntra features are powered by AI models (the financial coach,
-            voice/text/photo/bank-statement parsing). Every call to those models has a real cost,
-            which we measure in <strong>credits</strong>. Each household gets a cap of{" "}
-            <strong>10 credits per month</strong>; usage is visible in{" "}
-            <em>Settings → Credit Usage</em>.
+            {w("credits.p1a")}
+            <strong>{w("credits.p1strong")}</strong>
+            {w("credits.p1b")}
+            <strong>{w("credits.p1strong2")}</strong>
+            {w("credits.p1c")}
+            <em>{w("credits.p1em")}</em>
+            {w("credits.p1d")}
           </p>
 
-          <h3 className="font-medium text-foreground mt-4">What is a token?</h3>
+          <h3 className="font-medium text-foreground mt-4">{w("credits.tokenHeading")}</h3>
           <p>
-            AI models don't read characters or words — they read <strong>tokens</strong>, small
-            chunks of text (roughly ¾ of a word in English, a bit less for other languages). A short
-            memo like <em>"Grocery €42 at Pingo Doce"</em> is ~10 tokens; a full bank statement page
-            can be several thousand. Images count too: a receipt photo is billed as a fixed block of
-            image tokens plus the tokens of any text the model writes back.
+            {w("credits.tokenP1a")}
+            <strong>{w("credits.tokenStrong")}</strong>
+            {w("credits.tokenP1b")}
+            <em>{w("credits.tokenEm")}</em>
+            {w("credits.tokenP1c")}
           </p>
           <p>
-            Every AI call has two sides: <strong>input tokens</strong> (what we send — your memo,
-            receipt, or the context we build for the coach) and <strong>output tokens</strong> (what
-            the model writes back — the parsed JSON or the coach's answer). Both are billed, and
-            output tokens are usually more expensive per token than input.
+            {w("credits.tokenP2a")}
+            <strong>{w("credits.tokenP2strong1")}</strong>
+            {w("credits.tokenP2mid")}
+            <strong>{w("credits.tokenP2strong2")}</strong>
+            {w("credits.tokenP2end")}
           </p>
 
-          <h3 className="font-medium text-foreground mt-4">How Myntra turns tokens into credits</h3>
+          <h3 className="font-medium text-foreground mt-4">{w("credits.howHeading")}</h3>
           <p>
-            After every AI call we log the token counts, convert them to a fractional credit cost
-            using the model's pricing, and store that against your household in the{" "}
-            <code>credit_usage</code> table. The Settings page sums the current month and shows a
-            progress bar towards the 10-credit cap. Non-AI features (adding expenses manually,
-            viewing charts, notifications, sync) do <strong>not</strong> consume credits.
+            {w("credits.howP1a")}
+            <code>{w("credits.howCode")}</code>
+            {w("credits.howP1b")}
+            <strong>{w("credits.howStrong")}</strong>
+            {w("credits.howP1c")}
           </p>
-          <p>Typical costs per action:</p>
+          <p>{w("credits.typicalCosts")}</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              <strong>Text/voice memo parsing</strong> — very small, often well below 0.01 credits
-              per entry.
+              <strong>{w("credits.cost1strong")}</strong>
+              {w("credits.cost1")}
             </li>
             <li>
-              <strong>Receipt photo parsing</strong> — larger, because the image itself is billed;
-              still typically a few hundredths of a credit.
+              <strong>{w("credits.cost2strong")}</strong>
+              {w("credits.cost2")}
             </li>
             <li>
-              <strong>Bank statement import</strong> — the most expensive per call, because full
-              pages of text are sent in.
+              <strong>{w("credits.cost3strong")}</strong>
+              {w("credits.cost3")}
             </li>
             <li>
-              <strong>Financial coach report</strong> — cached for 24h so re-opening the tab is
-              free; only <em>Regenerate</em> and each chat reply cost credits.
+              <strong>{w("credits.cost4strong")}</strong>
+              {w("credits.cost4a")}
+              <em>{w("credits.cost4em")}</em>
+              {w("credits.cost4b")}
             </li>
           </ul>
 
-          <h3 className="font-medium text-foreground mt-4">How to save credits</h3>
+          <h3 className="font-medium text-foreground mt-4">{w("credits.saveHeading")}</h3>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              Prefer <strong>text/voice memos</strong> over photos when you already know the amount
-              — much cheaper than image parsing.
+              {w("credits.save1a")}
+              <strong>{w("credits.save1strong")}</strong>
+              {w("credits.save1b")}
+            </li>
+            <li>{w("credits.save2")}</li>
+            <li>
+              {w("credits.save3a")}
+              <strong>{w("credits.save3strong")}</strong>
+              {w("credits.save3b")}
             </li>
             <li>
-              For photos, crop tightly to the total/merchant area before uploading; smaller images =
-              fewer image tokens.
+              {w("credits.save4a")}
+              <em>{w("credits.save4em")}</em>
+              {w("credits.save4b")}
             </li>
-            <li>
-              Import bank statements <strong>once per cycle</strong> instead of after every
-              transaction, and let the deduplication step merge with what you already logged.
-            </li>
-            <li>
-              Reuse the cached coach report during the 24h window instead of clicking{" "}
-              <em>Regenerate</em>; only regenerate after a material change (big expense, allocation,
-              new payday).
-            </li>
-            <li>
-              Keep coach chat messages short and specific — long back-and-forths spend both input
-              and output tokens on every turn.
-            </li>
-            <li>
-              Fix obvious things (merchant, category, amount) directly in the form instead of asking
-              the AI to re-parse.
-            </li>
+            <li>{w("credits.save5")}</li>
+            <li>{w("credits.save6")}</li>
           </ul>
-          <p className="text-xs text-muted-foreground mt-2">
-            When the 10-credit cap is reached, AI features pause until the next month; everything
-            else keeps working normally.
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">{w("credits.footnote")}</p>
         </Section>
 
-        <Section id="faq" icon={Sparkles} title="FAQ">
+        <Section id="faq" icon={Sparkles} title={w("toc.faq")}>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="why-cycles">
-              <AccordionTrigger>Why cycles instead of months?</AccordionTrigger>
+              <AccordionTrigger>{w("faq.q1Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Salaries rarely land on the 1st. A cycle aligned to payday gives a truthful “how
-                much do I have left before the next paycheck” answer.
+                {w("faq.q1Body")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="salary-in-list">
-              <AccordionTrigger>
-                Should I delete the salary entry from Recent expenses?
-              </AccordionTrigger>
+              <AccordionTrigger>{w("faq.q2Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                No. That record is the anchor for the current cycle. Deleting it will make the app
-                fall back to calendar-month mode until the next payday.
+                {w("faq.q2Body")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="under-allocated">
-              <AccordionTrigger>What happens if I allocate less than recommended?</AccordionTrigger>
+              <AccordionTrigger>{w("faq.q3Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                The shortfall stays in the emergency pool for the cycle. Goal buckets recompute the
-                monthly rate needed to still hit the deadline.
+                {w("faq.q3Body")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="over-baseline">
-              <AccordionTrigger>What if we go over baseline?</AccordionTrigger>
+              <AccordionTrigger>{w("faq.q4Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Safe-to-spend goes negative and the projected-end card turns red. The overrun is
-                first absorbed by the safety margin, then by the emergency pool, then by cutting
-                allocations.
+                {w("faq.q4Body")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="ai-accuracy">
-              <AccordionTrigger>Is the AI parsing always right?</AccordionTrigger>
+              <AccordionTrigger>{w("faq.q5Trigger")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                No — always review the pre-filled form before saving. It's a head start, not an
-                autopilot.
+                {w("faq.q5Body")}
               </AccordionContent>
             </AccordionItem>
           </Accordion>

@@ -55,24 +55,29 @@ function Dashboard() {
         .limit(6);
       const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
 
-      const [{ data: fixed }, { data: debts }, { data: expenses }, { data: incomes }, { data: buckets }] =
-        await Promise.all([
-          supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
-          supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
-          supabase
-            .from("expenses")
-            .select("id, amount, category, merchant, occurred_at, note, source, kind, is_salary")
-            .eq("household_id", householdId!)
-            .gte("occurred_at", cycle.start.toISOString())
-            .lt("occurred_at", cycle.end.toISOString())
-            .order("occurred_at", { ascending: false }),
-          supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
-          supabase
-            .from("buckets")
-            .select("id, name, target_type, target_value, target_deadline, color")
-            .eq("household_id", householdId!)
-            .order("sort_order"),
-        ]);
+      const [
+        { data: fixed },
+        { data: debts },
+        { data: expenses },
+        { data: incomes },
+        { data: buckets },
+      ] = await Promise.all([
+        supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
+        supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
+        supabase
+          .from("expenses")
+          .select("id, amount, category, merchant, occurred_at, note, source, kind, is_salary")
+          .eq("household_id", householdId!)
+          .gte("occurred_at", cycle.start.toISOString())
+          .lt("occurred_at", cycle.end.toISOString())
+          .order("occurred_at", { ascending: false }),
+        supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
+        supabase
+          .from("buckets")
+          .select("id, name, target_type, target_value, target_deadline, color")
+          .eq("household_id", householdId!)
+          .order("sort_order"),
+      ]);
       const fixedTotal =
         (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0) +
         (debts ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
@@ -518,14 +523,14 @@ function SalaryReceivedButton({
   async function onClick() {
     if (recentlyReceived) {
       const ok = window.confirm(
-        `Last salary was recorded on ${fmtDate(lastSalaryAt!)}. Record another?`,
+        t("dashboard.salary.confirmDuplicate", { date: fmtDate(lastSalaryAt!) }),
       );
       if (!ok) return;
     }
     setLoading(true);
     try {
       const row = await mark({ data: { household_id: householdId } });
-      toast.success("Salary recorded — new cycle started");
+      toast.success(t("dashboard.salary.recordedToast"));
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["salaries"] });
       qc.invalidateQueries({ queryKey: ["expenses-list"] });
@@ -536,43 +541,42 @@ function SalaryReceivedButton({
         setSuggestOpen(true);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("dashboard.failed"));
     } finally {
       setLoading(false);
     }
   }
 
-
   return (
     <>
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-      <div>
-        <p className="text-sm font-medium">{t("dashboard.salary.payday")}</p>
-        <p className="text-xs text-muted-foreground">
-          {lastSalaryAt
-            ? t("dashboard.salary.last", { date: fmtDate(lastSalaryAt) })
-            : t("dashboard.salary.none")}{" "}
-          {t("dashboard.salary.usesSettings")}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div>
+          <p className="text-sm font-medium">{t("dashboard.salary.payday")}</p>
+          <p className="text-xs text-muted-foreground">
+            {lastSalaryAt
+              ? t("dashboard.salary.last", { date: fmtDate(lastSalaryAt) })
+              : t("dashboard.salary.none")}{" "}
+            {t("dashboard.salary.usesSettings")}
+          </p>
+        </div>
+        <Button
+          onClick={onClick}
+          disabled={loading}
+          variant={recentlyReceived ? "outline" : "default"}
+        >
+          {loading ? <Loader2 className="animate-spin" /> : <Wallet />}{" "}
+          {t("dashboard.salary.button")}
+        </Button>
       </div>
-      <Button
-        onClick={onClick}
-        disabled={loading}
-        variant={recentlyReceived ? "outline" : "default"}
-      >
-        {loading ? <Loader2 className="animate-spin" /> : <Wallet />} {t("dashboard.salary.button")}
-      </Button>
-    </div>
-    <IncomeAllocationSuggestion
-      householdId={householdId}
-      amount={suggestAmount}
-      open={suggestOpen}
-      onOpenChange={setSuggestOpen}
-    />
+      <IncomeAllocationSuggestion
+        householdId={householdId}
+        amount={suggestAmount}
+        open={suggestOpen}
+        onOpenChange={setSuggestOpen}
+      />
     </>
   );
 }
-
 
 function StatCard({
   label,
@@ -613,6 +617,7 @@ function Sparkline({
   max: number;
   threshold: number;
 }) {
+  const t = useT();
   const w = 280;
   const h = 44;
   const pad = 2;
@@ -624,7 +629,7 @@ function Sparkline({
     <svg
       viewBox={`0 0 ${w} ${h}`}
       className="w-full h-11 overflow-visible"
-      aria-label="Last 7 days spend"
+      aria-label={t("dashboard.sparklineAria")}
     >
       <line
         x1={pad}

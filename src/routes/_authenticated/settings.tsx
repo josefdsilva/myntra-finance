@@ -112,7 +112,7 @@ function SettingsPage() {
           <CreditUsageSection household={hh!.household!} />
           <DangerZone
             householdId={householdId}
-            householdName={hh!.household!.name ?? "this household"}
+            householdName={hh!.household!.name ?? t("hh.defaultName")}
             role={hh!.role}
           />
         </>
@@ -121,14 +121,16 @@ function SettingsPage() {
   );
 }
 
-const OPERATION_LABELS: Record<string, string> = {
-  ai_coach_overview: "AI coach — cycle overview",
-  ai_coach_chat: "AI coach — chat",
-  ai_parse_memo: "AI expense capture — text",
-  ai_parse_voice: "AI expense capture — voice",
-  ai_parse_photo: "AI expense capture — photo",
-  ai_parse_statement: "AI bank statement import",
-};
+function operationLabels(t: ReturnType<typeof useT>): Record<string, string> {
+  return {
+    ai_coach_overview: t("credits.opCoachOverview"),
+    ai_coach_chat: t("credits.opCoachChat"),
+    ai_parse_memo: t("credits.opParseMemo"),
+    ai_parse_voice: t("credits.opParseVoice"),
+    ai_parse_photo: t("credits.opParsePhoto"),
+    ai_parse_statement: t("credits.opParseStatement"),
+  };
+}
 
 const HARDWIRED_CAP = 10;
 
@@ -138,6 +140,7 @@ function rowsOrEmpty<T>(rows: T[] | null | undefined): T[] {
 
 function CreditUsageSection({ household }: { household: { id: string } }) {
   const t = useT();
+  const opLabels = operationLabels(t);
   const fetchUsage = useServerFn(getHouseholdCreditUsage);
   const { data } = useQuery({
     queryKey: ["credit-usage", household.id],
@@ -203,7 +206,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
                   className="flex items-center justify-between text-sm rounded-md px-3 py-2 bg-muted/40"
                 >
                   <div>
-                    <div>{OPERATION_LABELS[b.operation] ?? b.operation}</div>
+                    <div>{opLabels[b.operation] ?? b.operation}</div>
                     <div className="text-xs text-muted-foreground">
                       {b.count} call{b.count === 1 ? "" : "s"}
                     </div>
@@ -234,7 +237,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
                       minute: "2-digit",
                     })}
                     {" · "}
-                    {OPERATION_LABELS[r.operation] ?? r.operation}
+                    {opLabels[r.operation] ?? r.operation}
                   </span>
                   <span className="tabular-nums">
                     {r.credits.toFixed(4)}
@@ -347,10 +350,10 @@ function HouseholdSection({
   async function saveName() {
     try {
       await update({ data: { household_id: household.id, name } });
-      toast.success("Saved");
+      toast.success(t("hh.savedToast"));
       onChange();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
     }
   }
 
@@ -364,12 +367,12 @@ function HouseholdSection({
           children: Math.max(0, Math.round(children)),
         },
       });
-      toast.success("Saved");
+      toast.success(t("hh.savedToast"));
       onChange();
       qc.invalidateQueries({ queryKey: ["household-demographics", household.id] });
       qc.invalidateQueries({ queryKey: ["coach"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
     }
   }
 
@@ -819,7 +822,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
     await upsert({
       data: {
         household_id: householdId,
-        name: "New bucket",
+        name: t("buckets.newBucketName"),
         target_type: "pct_surplus",
         target_value: 10,
         color: "#2c6e6b",
@@ -1023,10 +1026,10 @@ function MembersSection({ householdId }: { householdId: string }) {
     try {
       await invite({ data: { household_id: householdId, email } });
       setEmail("");
-      toast.success("Invitation created — share the link below");
+      toast.success(t("members.invitationCreatedToast"));
       refetch();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("members.failedToast"));
     }
   }
 
@@ -1050,7 +1053,7 @@ function MembersSection({ householdId }: { householdId: string }) {
         <ul className="divide-y">
           {(members ?? []).map((m) => (
             <li key={m.user_id} className="flex justify-between py-2">
-              <span>{m.profile?.display_name ?? "Member"}</span>
+              <span>{m.profile?.display_name ?? t("members.fallbackName")}</span>
               <span className="text-xs uppercase text-muted-foreground">{m.role}</span>
             </li>
           ))}
@@ -1096,16 +1099,22 @@ function MembersSection({ householdId }: { householdId: string }) {
   );
 }
 
-const DEBT_KINDS: Array<{ value: "mortgage" | "personal" | "auto" | "credit_card" | "student" | "other"; label: string }> = [
-  { value: "mortgage", label: "Mortgage" },
-  { value: "personal", label: "Personal loan" },
-  { value: "auto", label: "Auto loan" },
-  { value: "credit_card", label: "Credit card" },
-  { value: "student", label: "Student loan" },
-  { value: "other", label: "Other" },
-];
+type DebtKind = "mortgage" | "personal" | "auto" | "credit_card" | "student" | "other";
+
+function debtKinds(t: ReturnType<typeof useT>): Array<{ value: DebtKind; label: string }> {
+  return [
+    { value: "mortgage", label: t("debts.kindMortgage") },
+    { value: "personal", label: t("debts.kindPersonal") },
+    { value: "auto", label: t("debts.kindAuto") },
+    { value: "credit_card", label: t("debts.kindCreditCard") },
+    { value: "student", label: t("debts.kindStudent") },
+    { value: "other", label: t("debts.kindOther") },
+  ];
+}
 
 function DebtsSection({ householdId }: { householdId: string }) {
+  const t = useT();
+  const DEBT_KINDS = debtKinds(t);
   const qc = useQueryClient();
   const upsert = useServerFn(upsertDebt);
   const del = useServerFn(deleteDebt);
@@ -1166,10 +1175,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
   }
 
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-  const principalTotal = (rows ?? []).reduce(
-    (s, r) => s + Number(r.principal_remaining ?? 0),
-    0,
-  );
+  const principalTotal = (rows ?? []).reduce((s, r) => s + Number(r.principal_remaining ?? 0), 0);
 
   return (
     <Card>
@@ -1177,11 +1183,12 @@ function DebtsSection({ householdId }: { householdId: string }) {
         <CardTitle>Debt</CardTitle>
         <CardDescription>
           Loans and credit lines with an interest rate (TAEG) and maturity. Counted alongside fixed
-          expenses in your monthly baseline. Total: {" "}
+          expenses in your monthly baseline. Total:{" "}
           <span className="font-medium text-foreground">{money(total)}</span>
           {principalTotal > 0 && (
             <>
-              {" "}· principal outstanding{" "}
+              {" "}
+              · principal outstanding{" "}
               <span className="font-medium text-foreground">{money(principalTotal)}</span>
             </>
           )}
@@ -1204,7 +1211,8 @@ function DebtsSection({ householdId }: { householdId: string }) {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="tabular-nums font-medium">
-                  {money(r.monthly_amount)}<span className="text-xs text-muted-foreground">/mo</span>
+                  {money(r.monthly_amount)}
+                  <span className="text-xs text-muted-foreground">/mo</span>
                 </span>
                 <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
@@ -1269,11 +1277,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
           </div>
           <div>
             <Label className="text-xs">Maturity</Label>
-            <Input
-              type="date"
-              value={maturity}
-              onChange={(e) => setMaturity(e.target.value)}
-            />
+            <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
           </div>
         </div>
         <div className="flex justify-end">

@@ -17,6 +17,7 @@ import { confirmBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { money } from "@/lib/format";
 import { Loader2, PiggyBank, Wallet, CreditCard, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 type Bucket = {
   id: string;
@@ -56,6 +57,7 @@ export function IncomeAllocationSuggestion({
 }) {
   const qc = useQueryClient();
   const confirmFn = useServerFn(confirmBucketAllocation);
+  const t = useT();
 
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -79,11 +81,7 @@ export function IncomeAllocationSuggestion({
           .from("debts")
           .select("id, label, monthly_amount, taeg_pct, principal_remaining")
           .eq("household_id", householdId),
-        supabase
-          .from("households")
-          .select("baseline_budget")
-          .eq("id", householdId)
-          .maybeSingle(),
+        supabase.from("households").select("baseline_budget").eq("id", householdId).maybeSingle(),
       ]);
       return {
         buckets: (buckets.data ?? []) as Bucket[],
@@ -104,9 +102,7 @@ export function IncomeAllocationSuggestion({
       const target = new Date(b.target_deadline);
       const months = Math.max(
         1,
-        (target.getFullYear() - now.getFullYear()) * 12 +
-          (target.getMonth() - now.getMonth()) +
-          1,
+        (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth()) + 1,
       );
       return v / months;
     }
@@ -180,7 +176,7 @@ export function IncomeAllocationSuggestion({
 
   async function confirmAll() {
     if (overspend) {
-      toast.error(`Distribution exceeds received amount by ${money(-keepInAccount)}`);
+      toast.error(t("incomeSuggestion.overspendError", { amount: money(-keepInAccount) }));
       return;
     }
     setSaving(true);
@@ -194,7 +190,7 @@ export function IncomeAllocationSuggestion({
               bucket_id,
               period,
               amount: amt,
-              note: "From money received",
+              note: t("incomeSuggestion.noteFromReceived"),
               mode: "add",
             },
           }),
@@ -207,13 +203,19 @@ export function IncomeAllocationSuggestion({
         queryKey: ["bucket-allocations-ytd", householdId, new Date().getFullYear()],
       });
       const parts: string[] = [];
-      if (bucketsTotal > 0) parts.push(`${money(bucketsTotal)} to buckets`);
-      if (parsedDebt > 0) parts.push(`${money(parsedDebt)} noted for debt`);
-      if (keepInAccount > 0.005) parts.push(`${money(keepInAccount)} kept in account`);
-      toast.success(parts.length ? `Done — ${parts.join(", ")}` : "No allocations changed");
+      if (bucketsTotal > 0)
+        parts.push(t("incomeSuggestion.partBuckets", { amount: money(bucketsTotal) }));
+      if (parsedDebt > 0) parts.push(t("incomeSuggestion.partDebt", { amount: money(parsedDebt) }));
+      if (keepInAccount > 0.005)
+        parts.push(t("incomeSuggestion.partKeep", { amount: money(keepInAccount) }));
+      toast.success(
+        parts.length
+          ? t("incomeSuggestion.doneToast", { parts: parts.join(", ") })
+          : t("incomeSuggestion.noChangeToast"),
+      );
       onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("incomeSuggestion.failedToast"));
     } finally {
       setSaving(false);
     }
@@ -227,12 +229,9 @@ export function IncomeAllocationSuggestion({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-4 text-primary" />
-            What should we do with {money(amount)}?
+            {t("incomeSuggestion.title", { amount: money(amount) })}
           </DialogTitle>
-          <DialogDescription>
-            A suggested split based on your buckets and debts this cycle. Tweak any row before
-            confirming — anything left over stays in your bank account.
-          </DialogDescription>
+          <DialogDescription>{t("incomeSuggestion.description")}</DialogDescription>
         </DialogHeader>
 
         {isLoading || !data ? (
@@ -243,13 +242,12 @@ export function IncomeAllocationSuggestion({
           <div className="space-y-4">
             {data.buckets.length === 0 ? (
               <p className="text-sm text-muted-foreground rounded-md bg-muted/40 p-3">
-                No buckets set up yet — the full amount will stay in your account. Create buckets on
-                the Allocations page to see suggestions here.
+                {t("incomeSuggestion.noBuckets")}
               </p>
             ) : (
               <div className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <PiggyBank className="size-3.5" /> Move to buckets
+                  <PiggyBank className="size-3.5" /> {t("incomeSuggestion.moveToBuckets")}
                 </p>
                 {data.buckets.map((b) => (
                   <div key={b.id} className="flex items-center gap-3">
@@ -276,13 +274,16 @@ export function IncomeAllocationSuggestion({
             {chosenDebt && (
               <div className="space-y-2 pt-2 border-t">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <CreditCard className="size-3.5" /> Extra debt payment
+                  <CreditCard className="size-3.5" /> {t("incomeSuggestion.extraDebtPayment")}
                 </p>
                 <div className="flex items-center gap-3">
                   <span className="text-sm flex-1 truncate">
                     {chosenDebt.label}
                     {chosenDebt.taeg_pct != null && (
-                      <span className="text-xs text-muted-foreground"> · TAEG {chosenDebt.taeg_pct}%</span>
+                      <span className="text-xs text-muted-foreground">
+                        {" "}
+                        {t("incomeSuggestion.taeg", { pct: chosenDebt.taeg_pct })}
+                      </span>
                     )}
                   </span>
                   <div className="w-28">
@@ -294,20 +295,18 @@ export function IncomeAllocationSuggestion({
                     />
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  We just note this here — record the payment as a normal expense when you make it.
-                </p>
+                <p className="text-xs text-muted-foreground">{t("incomeSuggestion.debtNote")}</p>
               </div>
             )}
 
             <div className="rounded-md border p-3 space-y-1.5 text-sm bg-muted/30">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Distributed</span>
+                <span className="text-muted-foreground">{t("incomeSuggestion.distributed")}</span>
                 <span className="tabular-nums font-medium">{money(distributedTotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1.5">
-                  <Wallet className="size-3.5" /> Keep in account
+                  <Wallet className="size-3.5" /> {t("incomeSuggestion.keepInAccount")}
                 </span>
                 <span
                   className={`tabular-nums font-medium ${overspend ? "text-destructive" : "text-emerald-600"}`}
@@ -316,16 +315,14 @@ export function IncomeAllocationSuggestion({
                 </span>
               </div>
               {overspend && (
-                <p className="text-xs text-destructive">
-                  Distribution exceeds the received amount — reduce a row or use "Auto-suggest".
-                </p>
+                <p className="text-xs text-destructive">{t("incomeSuggestion.overspendWarning")}</p>
               )}
               <div className="pt-1">
                 <Label htmlFor="income-received-total" className="sr-only">
-                  Received
+                  {t("incomeSuggestion.received")}
                 </Label>
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Received</span>
+                  <span className="text-muted-foreground">{t("incomeSuggestion.received")}</span>
                   <span className="tabular-nums">{money(amount)}</span>
                 </div>
               </div>
@@ -335,11 +332,11 @@ export function IncomeAllocationSuggestion({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-            Skip
+            {t("incomeSuggestion.skip")}
           </Button>
           <Button onClick={confirmAll} disabled={saving || isLoading || overspend}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            Apply distribution
+            {t("incomeSuggestion.applyDistribution")}
           </Button>
         </DialogFooter>
       </DialogContent>

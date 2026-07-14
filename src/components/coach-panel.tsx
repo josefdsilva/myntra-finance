@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, RefreshCw, MessageSquare, Send, Loader2 } from "lucide-react";
 import { generateOverview, chatWithCoach } from "@/lib/coach.functions";
-import { useLocale } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 import { toast } from "sonner";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
@@ -23,6 +23,7 @@ export function CoachPanel({
   const genFn = useServerFn(generateOverview);
   const chatFn = useServerFn(chatWithCoach);
   const locale = useLocale();
+  const t = useT();
   const [chatOpen, setChatOpen] = useState(false);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMsg[]>([]);
@@ -39,16 +40,17 @@ export function CoachPanel({
     mutationFn: () => genFn({ data: { householdId, refresh: true, locale } }),
     onSuccess: (d) => {
       qc.setQueryData(["coach-overview", householdId, locale], d);
-      toast.success("Overview refreshed");
+      toast.success(t("coach.overviewRefreshedToast"));
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : t("coach.failedToast")),
   });
 
   const chatMut = useMutation({
     mutationFn: (payload: { message: string; history: ChatMsg[] }) =>
       chatFn({ data: { householdId, message: payload.message, history: payload.history, locale } }),
     onSuccess: (d) => setHistory((h) => [...h, { role: "assistant", content: d.reply }]),
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Chat failed"),
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : t("coach.chatFailedToast")),
   });
 
   const overview = overviewQ.data;
@@ -80,12 +82,9 @@ export function CoachPanel({
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="size-4 text-primary" />
-              AI Financial Coach
+              {t("coach.title")}
             </CardTitle>
-            <CardDescription className="mt-1">
-              On-demand overview and chat grounded in your current cycle. Cached for 24h to save
-              credits.
-            </CardDescription>
+            <CardDescription className="mt-1">{t("coach.description")}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             {!overview && (
@@ -95,7 +94,7 @@ export function CoachPanel({
                 ) : (
                   <Sparkles className="size-4" />
                 )}
-                Generate overview
+                {t("coach.generateOverview")}
               </Button>
             )}
             {overview && (
@@ -110,12 +109,12 @@ export function CoachPanel({
                 ) : (
                   <RefreshCw className="size-4" />
                 )}
-                Refresh
+                {t("coach.refresh")}
               </Button>
             )}
             <Button size="sm" variant="ghost" onClick={() => setChatOpen((o) => !o)}>
               <MessageSquare className="size-4" />
-              {chatOpen ? "Hide chat" : "Chat"}
+              {chatOpen ? t("coach.hideChat") : t("coach.chat")}
             </Button>
           </div>
         </div>
@@ -128,14 +127,13 @@ export function CoachPanel({
               <ReactMarkdown>{overview.content}</ReactMarkdown>
             </div>
             <div className="text-xs text-muted-foreground mt-2">
-              {overview.cached ? "Cached" : "Fresh"} · generated{" "}
-              {new Date(overview.generated_at).toLocaleString()}
+              {overview.cached ? t("coach.cachedLabel") : t("coach.freshLabel")} ·{" "}
+              {t("coach.generatedPrefix")} {new Date(overview.generated_at).toLocaleString()}
             </div>
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">
-            Click <span className="font-medium">Generate overview</span> to get a summary of what's
-            going well, watch-outs, and recommendations. Uses one AI call.
+            {t("coach.emptyState", { label: t("coach.generateOverview") })}
           </div>
         )}
 
@@ -144,18 +142,16 @@ export function CoachPanel({
             <div className="max-h-72 overflow-y-auto space-y-3 pr-1">
               {history.length === 0 && (
                 <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground">
-                    Ask anything — day-to-day budgeting or bigger life decisions. Try:
-                  </div>
+                  <div className="text-xs text-muted-foreground">{t("coach.askAnything")}</div>
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      "We're thinking of moving. What monthly rent can we comfortably afford?",
-                      "Our car broke. Should we buy used with savings or take a loan? What price range?",
-                      "Compare two loan offers: €15,000 at 8.5% TAEG over 60 months vs 7.9% TAEG over 72 months. Which is cheaper overall and which fits our budget?",
-                      "Help me compare an iPhone 15 (€899) vs a Pixel 8 (€699) for our needs — which is the better buy?",
-                      "Should we switch to a cheaper energy plan? What should I compare?",
-                      "Can we afford a €300 weekend trip this cycle?",
-                      "When could we realistically reach €20,000 in savings?",
+                      t("coach.suggestion1"),
+                      t("coach.suggestion2"),
+                      t("coach.suggestion3"),
+                      t("coach.suggestion4"),
+                      t("coach.suggestion5"),
+                      t("coach.suggestion6"),
+                      t("coach.suggestion7"),
                     ].map((s) => (
                       <button
                         key={s}
@@ -193,7 +189,7 @@ export function CoachPanel({
               {chatMut.isPending && (
                 <div className="flex justify-start">
                   <div className="rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground inline-flex items-center gap-2">
-                    <Loader2 className="size-3 animate-spin" /> Thinking…
+                    <Loader2 className="size-3 animate-spin" /> {t("coach.thinking")}
                   </div>
                 </div>
               )}
@@ -202,7 +198,7 @@ export function CoachPanel({
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask the coach…"
+                placeholder={t("coach.inputPlaceholder")}
                 rows={2}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -216,9 +212,7 @@ export function CoachPanel({
                 <Send className="size-4" />
               </Button>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Chat is ephemeral — resets when you reload the page.
-            </div>
+            <div className="text-xs text-muted-foreground">{t("coach.ephemeralNote")}</div>
           </div>
         )}
       </CardContent>
