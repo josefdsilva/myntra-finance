@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -24,6 +24,7 @@ import {
 import { createHousehold, listMyHouseholds, updateHousehold } from "@/lib/household.functions";
 import { deleteHousehold, leaveHousehold } from "@/lib/privacy.functions";
 import { setActiveHouseholdId, useActiveHouseholdId } from "@/lib/active-household";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/households")({
   head: () => ({ meta: [{ title: "Households · Myntra" }] }),
@@ -38,6 +39,7 @@ function HouseholdsPage() {
   const rename = useServerFn(updateHousehold);
   const leave = useServerFn(leaveHousehold);
   const remove = useServerFn(deleteHousehold);
+  const t = useT();
 
   const { data: households = [], isLoading } = useQuery({
     queryKey: ["my-households"],
@@ -49,7 +51,7 @@ function HouseholdsPage() {
   const createMutation = useMutation({
     mutationFn: (name: string) => create({ data: { name } }),
     onSuccess: (res) => {
-      toast.success("Household created");
+      toast.success(t("households.createdToast"));
       setNewName("");
       qc.invalidateQueries({ queryKey: ["my-households"] });
       setActiveHouseholdId(res.household.id);
@@ -61,29 +63,24 @@ function HouseholdsPage() {
   function switchTo(id: string) {
     setActiveHouseholdId(id);
     qc.clear();
-    toast.success("Switched household");
+    toast.success(t("households.switchedToast"));
   }
 
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
       <header>
         <h1 className="text-3xl font-display flex items-center gap-2">
-          <Users className="size-6" /> Households
+          <Users className="size-6" /> {t("households.title")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          You can belong to multiple households — for example your personal budget and a shared
-          family budget. Data never crosses between them.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("households.description")}</p>
       </header>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Plus className="size-4" /> Create a new household
+            <Plus className="size-4" /> {t("households.createTitle")}
           </CardTitle>
-          <CardDescription>
-            Starts empty with the default buckets. You&apos;ll be its owner.
-          </CardDescription>
+          <CardDescription>{t("households.createDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -97,34 +94,34 @@ function HouseholdsPage() {
           >
             <div className="flex-1">
               <Label htmlFor="new-hh" className="sr-only">
-                Household name
+                {t("households.nameSrLabel")}
               </Label>
               <Input
                 id="new-hh"
-                placeholder="e.g. Family, Personal, Weekend house"
+                placeholder={t("households.namePlaceholder")}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 maxLength={100}
               />
             </div>
             <Button type="submit" disabled={!newName.trim() || createMutation.isPending}>
-              {createMutation.isPending ? "Creating…" : "Create"}
+              {createMutation.isPending ? t("households.creating") : t("households.create")}
             </Button>
           </form>
         </CardContent>
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-medium">Your households</h2>
+        <h2 className="text-lg font-medium">{t("households.yourHouseholds")}</h2>
         {isLoading && <div className="h-24 rounded-lg bg-muted animate-pulse" />}
         {!isLoading && households.length === 0 && (
-          <p className="text-sm text-muted-foreground">No households yet.</p>
+          <p className="text-sm text-muted-foreground">{t("households.noHouseholds")}</p>
         )}
         {households.map((h) => (
           <HouseholdCard
             key={h.household.id}
             id={h.household.id}
-            name={h.household.name ?? "Untitled"}
+            name={h.household.name ?? t("households.untitled")}
             role={h.role}
             isActive={h.household.id === activeId}
             onSwitch={() => switchTo(h.household.id)}
@@ -132,7 +129,7 @@ function HouseholdsPage() {
               await rename({ data: { household_id: h.household.id, name } });
               qc.invalidateQueries({ queryKey: ["my-households"] });
               qc.invalidateQueries({ queryKey: ["household"] });
-              toast.success("Renamed");
+              toast.success(t("households.renamedToast"));
             }}
             onLeave={async () => {
               await leave({ data: { household_id: h.household.id } });
@@ -141,7 +138,7 @@ function HouseholdsPage() {
                 setActiveHouseholdId(null);
                 qc.clear();
               }
-              toast.success("Left household");
+              toast.success(t("households.leftToast"));
             }}
             onDelete={async () => {
               await remove({ data: { household_id: h.household.id, confirm: "DELETE" } });
@@ -150,18 +147,16 @@ function HouseholdsPage() {
                 setActiveHouseholdId(null);
                 qc.clear();
               }
-              toast.success("Household deleted");
+              toast.success(t("households.deletedToast"));
             }}
           />
         ))}
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Need to invite someone to a household you own? Open{" "}
-        <Link to="/settings" className="underline">
-          Settings
-        </Link>{" "}
-        → Members while that household is active.
+        {t("households.inviteHint", {
+          settingsLink: t("households.settingsLink"),
+        })}
       </p>
     </div>
   );
@@ -180,6 +175,7 @@ function HouseholdCard(props: {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.name);
   const isOwner = props.role === "owner";
+  const t = useT();
 
   async function saveRename() {
     const n = name.trim();
@@ -208,7 +204,7 @@ function HouseholdCard(props: {
                 maxLength={100}
               />
               <Button size="sm" onClick={saveRename}>
-                Save
+                {t("households.save")}
               </Button>
               <Button
                 size="sm"
@@ -218,7 +214,7 @@ function HouseholdCard(props: {
                   setEditing(false);
                 }}
               >
-                Cancel
+                {t("households.cancel")}
               </Button>
             </div>
           ) : (
@@ -226,7 +222,7 @@ function HouseholdCard(props: {
               <div className="font-medium truncate">{props.name}</div>
               {props.isActive && (
                 <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wide text-primary">
-                  <Check className="size-3" /> active
+                  <Check className="size-3" /> {t("households.active")}
                 </span>
               )}
               <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -239,12 +235,12 @@ function HouseholdCard(props: {
           <div className="flex flex-wrap gap-2 shrink-0">
             {!props.isActive && (
               <Button size="sm" variant="outline" onClick={props.onSwitch}>
-                Switch to
+                {t("households.switchTo")}
               </Button>
             )}
             {isOwner && (
               <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
-                Rename
+                {t("households.rename")}
               </Button>
             )}
             <LeaveOrDelete
@@ -266,17 +262,18 @@ function LeaveOrDelete(props: {
   onLeave: () => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
+  const t = useT();
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
           {props.isOwner ? (
             <>
-              <Trash2 className="size-4" /> Delete
+              <Trash2 className="size-4" /> {t("households.delete")}
             </>
           ) : (
             <>
-              <LogOut className="size-4" /> Leave
+              <LogOut className="size-4" /> {t("households.leave")}
             </>
           )}
         </Button>
@@ -284,16 +281,16 @@ function LeaveOrDelete(props: {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {props.isOwner ? `Delete "${props.name}"?` : `Leave "${props.name}"?`}
+            {props.isOwner
+              ? t("households.deleteConfirmTitle", { name: props.name })
+              : t("households.leaveConfirmTitle", { name: props.name })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {props.isOwner
-              ? "This permanently deletes the household and every expense, bucket, income and member link inside it. This cannot be undone."
-              : "You will no longer see this household's data. The owner can invite you back later."}
+            {props.isOwner ? t("households.deleteConfirmBody") : t("households.leaveConfirmBody")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("households.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={async () => {
               try {
@@ -304,7 +301,7 @@ function LeaveOrDelete(props: {
               }
             }}
           >
-            {props.isOwner ? "Delete household" : "Leave"}
+            {props.isOwner ? t("households.deleteHousehold") : t("households.leave")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

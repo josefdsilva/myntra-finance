@@ -70,14 +70,14 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     try {
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
-        toast.error("Notification permission denied");
+        toast.error(t("notif.permissionDenied"));
         return;
       }
       let reg = await navigator.serviceWorker.getRegistration("/sw.js");
       if (!reg) reg = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
       const { key } = await getKey();
-      if (!key) throw new Error("Server VAPID key missing");
+      if (!key) throw new Error(t("notif.vapidKeyMissing"));
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
@@ -95,9 +95,9 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       setSubscribed(true);
       setCurrentEndpoint(sub.endpoint);
       refetchDevices();
-      toast.success("This device will now receive push notifications.");
+      toast.success(t("notif.enabledToast"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to enable notifications");
+      toast.error(e instanceof Error ? e.message : t("notif.enableFailed"));
     } finally {
       setBusy(false);
     }
@@ -115,9 +115,9 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       setSubscribed(false);
       setCurrentEndpoint(null);
       refetchDevices();
-      toast.success("Notifications disabled on this device.");
+      toast.success(t("notif.disabledToast"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to disable");
+      toast.error(e instanceof Error ? e.message : t("notif.disableFailed"));
     } finally {
       setBusy(false);
     }
@@ -128,7 +128,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       await setPrefs({ data: { [key]: value } });
       qc.invalidateQueries({ queryKey: ["notif-prefs"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("notif.failed"));
     }
   }
 
@@ -137,31 +137,29 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       const r = await testFn({ data: { endpoint: endpoint ?? null } });
       const failed = r.results.filter((x) => !x.ok);
       if (failed.length === 0) {
-        toast.success(
-          `Test accepted by push service on ${r.sent}/${r.total} device(s). If you don't see it, check iOS Notification settings for the installed PWA.`,
-        );
+        toast.success(t("notif.testAcceptedToast", { sent: r.sent, total: r.total }));
       } else {
         const removed = failed.filter((f) => f.removed).length;
         const detail = failed
-          .map((f) => `${f.host} → ${f.status}${f.expired ? " (expired, removed)" : ""}`)
+          .map((f) => `${f.host} → ${f.status}${f.expired ? t("notif.expiredRemovedNote") : ""}`)
           .join("; ");
         toast.error(
-          `${r.sent}/${r.total} delivered. Failures: ${detail}${removed ? " · stale removed" : ""}`,
+          t("notif.testFailedToast", {
+            sent: r.sent,
+            total: r.total,
+            detail,
+            removedNote: removed ? t("notif.staleRemovedNote") : "",
+          }),
         );
       }
       refetchDevices();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No devices");
+      toast.error(e instanceof Error ? e.message : t("notif.noDevices"));
     }
   }
 
   async function removeAllDevices() {
-    if (
-      !confirm(
-        "Remove ALL registered devices for your account? You'll need to re-enable push on each one.",
-      )
-    )
-      return;
+    if (!confirm(t("notif.removeAllConfirm"))) return;
     setBusy(true);
     try {
       const reg = await navigator.serviceWorker?.getRegistration("/sw.js");
@@ -171,9 +169,9 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       setSubscribed(false);
       setCurrentEndpoint(null);
       refetchDevices();
-      toast.success(`Removed ${r.removed} device(s). Click Enable to register this one again.`);
+      toast.success(t("notif.removedAllToast", { count: r.removed }));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("notif.failed"));
     } finally {
       setBusy(false);
     }
@@ -183,9 +181,9 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     try {
       await delDevFn({ data: { id } });
       refetchDevices();
-      toast.success("Device removed");
+      toast.success(t("notif.deviceRemovedToast"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : t("notif.failed"));
     }
   }
 
@@ -273,7 +271,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
                   try {
                     return new URL(d.endpoint).host;
                   } catch {
-                    return "unknown";
+                    return t("notif.unknownHost");
                   }
                 })();
                 const isThis = d.endpoint === currentEndpoint;
@@ -292,7 +290,7 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
                         )}
                       </p>
                       <p className="text-[11px] text-muted-foreground truncate">
-                        {d.user_agent ?? "unknown UA"}
+                        {d.user_agent ?? t("notif.unknownUA")}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {new Date(d.created_at).toLocaleString()}

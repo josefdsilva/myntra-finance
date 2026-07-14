@@ -9,6 +9,9 @@ import {
   hasBenchmark,
   supportedBenchmarkCountries,
 } from "@/lib/benchmarks";
+import { useT } from "@/lib/i18n";
+
+type T = ReturnType<typeof useT>;
 
 type Props = {
   householdId: string;
@@ -24,6 +27,7 @@ export function BenchmarksCard({
   monthlySpend,
   spendByCategory,
 }: Props) {
+  const t = useT();
   const { data: hh } = useQuery({
     enabled: !!householdId,
     queryKey: ["household-demographics", householdId],
@@ -74,33 +78,27 @@ export function BenchmarksCard({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>How you compare</CardTitle>
-          <CardDescription>
-            Public benchmarks are not yet available for your country ({country}).
-          </CardDescription>
+          <CardTitle>{t("benchmarks.title")}</CardTitle>
+          <CardDescription>{t("benchmarks.notSupported", { country })}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>
-            We only show comparisons when we have harmonised public reference data for your country.
-            Change your country in Settings to one we currently support:
-          </p>
+          <p>{t("benchmarks.notSupportedBody")}</p>
           <p className="text-foreground">
             {supportedList.map((c) => `${c.name} (${c.code})`).join(" · ")}
           </p>
           <div className="flex items-start gap-2 text-xs border-t pt-3">
             <Info className="size-3.5 mt-0.5 shrink-0" />
-            <p>
-              We compare against public statistics only (Eurostat / national statistics offices) —
-              never against other users&apos; data.
-            </p>
+            <p>{t("benchmarks.disclaimer")}</p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  const householdLabel = `${adults} ${adults === 1 ? "adult" : "adults"}${
-    children > 0 ? ` + ${children} ${children === 1 ? "child" : "children"}` : ""
+  const householdLabel = `${adults} ${adults === 1 ? t("benchmarks.adult") : t("benchmarks.adults")}${
+    children > 0
+      ? ` + ${children} ${children === 1 ? t("benchmarks.child") : t("benchmarks.children")}`
+      : ""
   }`;
 
   const newerAvailable =
@@ -108,12 +106,13 @@ export function BenchmarksCard({
       ? latestVersions[comp.country]
       : null;
 
-  const incomeStory = describeIncome(comp.incomePercentile, comp.countryName, householdLabel);
+  const incomeStory = describeIncome(t, comp.incomePercentile, comp.countryName, householdLabel);
   const savingsStory =
     comp.savingsRatePct != null
-      ? describeSavings(comp.savingsRatePct, comp.nationalSavingsRatePct, comp.countryName)
+      ? describeSavings(t, comp.savingsRatePct, comp.nationalSavingsRatePct, comp.countryName)
       : null;
   const spendStory = describeSpend(
+    t,
     comp.monthlySpend,
     comp.nationalAvgMonthlyExpenditure,
     comp.countryName,
@@ -125,16 +124,14 @@ export function BenchmarksCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>How you compare · {comp.countryName}</CardTitle>
+        <CardTitle>{t("benchmarks.titleWithCountry", { country: comp.countryName })}</CardTitle>
         <CardDescription>
-          Plain-English comparison against national statistics for a household of {householdLabel}.
-          Public reference data ({comp.sourceYear}) — never other users&apos; data.
+          {t("benchmarks.description", { household: householdLabel, year: comp.sourceYear })}
           {newerAvailable && (
             <>
               {" "}
               <span className="text-amber-600">
-                Newer public data ({newerAvailable}) is available and will ship in the next app
-                update.
+                {t("benchmarks.newerDataAvailable", { year: newerAvailable })}
               </span>
             </>
           )}
@@ -142,36 +139,49 @@ export function BenchmarksCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {monthlyIncome <= 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Record at least one salary to see how your income and spending compare.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("benchmarks.needSalary")}</p>
         ) : (
           <>
-            <StoryTile tone={incomeStory.tone} headline={incomeStory.headline} detail={incomeStory.detail} />
+            <StoryTile
+              tone={incomeStory.tone}
+              headline={incomeStory.headline}
+              detail={incomeStory.detail}
+            />
             {savingsStory && (
-              <StoryTile tone={savingsStory.tone} headline={savingsStory.headline} detail={savingsStory.detail} />
+              <StoryTile
+                tone={savingsStory.tone}
+                headline={savingsStory.headline}
+                detail={savingsStory.detail}
+              />
             )}
-            <StoryTile tone={spendStory.tone} headline={spendStory.headline} detail={spendStory.detail} />
+            <StoryTile
+              tone={spendStory.tone}
+              headline={spendStory.headline}
+              detail={spendStory.detail}
+            />
 
             <div>
-              <h4 className="text-sm font-medium mb-2">Where your spending stands out</h4>
+              <h4 className="text-sm font-medium mb-2">{t("benchmarks.spendingStandsOut")}</h4>
               {flagged.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Your category mix looks typical — nothing more than ~30% away from the national
-                  average.
-                </p>
+                <p className="text-sm text-muted-foreground">{t("benchmarks.typicalMix")}</p>
               ) : (
                 <ul className="space-y-2">
                   {flagged.map((c) => {
                     const higher = c.deviationPct > 0;
                     const diffAbs = Math.abs(c.userMonthly - c.benchmarkMonthly);
-                    const multiple = c.benchmarkMonthly > 0 ? c.userMonthly / c.benchmarkMonthly : 0;
+                    const multiple =
+                      c.benchmarkMonthly > 0 ? c.userMonthly / c.benchmarkMonthly : 0;
                     const ratioLabel =
                       multiple >= 1.5
-                        ? `${multiple.toFixed(1)}× the national average`
+                        ? t("benchmarks.ratioMultiple", { multiple: multiple.toFixed(1) })
                         : multiple > 0 && multiple <= 0.7
-                          ? `about ${Math.round((1 - multiple) * 100)}% below the national average`
-                          : `${Math.abs(c.deviationPct).toFixed(0)}% ${higher ? "above" : "below"} the national average`;
+                          ? t("benchmarks.ratioBelow", {
+                              pct: Math.round((1 - multiple) * 100),
+                            })
+                          : t("benchmarks.ratioDeviation", {
+                              pct: Math.abs(c.deviationPct).toFixed(0),
+                              direction: higher ? t("benchmarks.above") : t("benchmarks.below"),
+                            });
                     return (
                       <li
                         key={c.category}
@@ -182,14 +192,17 @@ export function BenchmarksCard({
                         }`}
                       >
                         <div className="capitalize font-medium">
-                          {c.category} is {ratioLabel}
+                          {t("benchmarks.categoryIs", { category: c.category, ratioLabel })}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          You spend about {money(c.userMonthly)}/mo; typical {comp.countryName}{" "}
-                          household of your size spends {money(c.benchmarkMonthly)}/mo.
+                          {t("benchmarks.spendDetail", {
+                            user: money(c.userMonthly),
+                            country: comp.countryName,
+                            benchmark: money(c.benchmarkMonthly),
+                          })}
                           {higher
-                            ? ` Cutting to the average would free ~${money(diffAbs)}/mo.`
-                            : ` You save ~${money(diffAbs)}/mo vs the average here.`}
+                            ? t("benchmarks.cuttingFree", { amount: money(diffAbs) })
+                            : t("benchmarks.saveVsAverage", { amount: money(diffAbs) })}
                         </div>
                       </li>
                     );
@@ -200,10 +213,7 @@ export function BenchmarksCard({
 
             <div className="flex items-start gap-2 text-xs text-muted-foreground border-t pt-3">
               <Info className="size-3.5 mt-0.5 shrink-0" />
-              <p>
-                Based on public statistics (Eurostat, INE Portugal). Adjust your country and
-                household size in Settings for a more accurate comparison.
-              </p>
+              <p>{t("benchmarks.methodologyNote")}</p>
             </div>
           </>
         )}
@@ -214,15 +224,7 @@ export function BenchmarksCard({
 
 type Tone = "up" | "down" | "neutral";
 
-function StoryTile({
-  tone,
-  headline,
-  detail,
-}: {
-  tone: Tone;
-  headline: string;
-  detail: string;
-}) {
+function StoryTile({ tone, headline, detail }: { tone: Tone; headline: string; detail: string }) {
   const cls =
     tone === "up"
       ? "border-emerald-500/30 bg-emerald-500/5"
@@ -231,7 +233,11 @@ function StoryTile({
         : "border-border";
   const Icon = tone === "up" ? TrendingUp : tone === "down" ? TrendingDown : Minus;
   const iconCls =
-    tone === "up" ? "text-emerald-600" : tone === "down" ? "text-amber-600" : "text-muted-foreground";
+    tone === "up"
+      ? "text-emerald-600"
+      : tone === "down"
+        ? "text-amber-600"
+        : "text-muted-foreground";
   return (
     <div className={`rounded-lg border p-3 flex gap-3 ${cls}`}>
       <Icon className={`size-4 mt-0.5 shrink-0 ${iconCls}`} />
@@ -243,62 +249,72 @@ function StoryTile({
   );
 }
 
-function describeIncome(percentile: number, countryName: string, householdLabel: string) {
+function describeIncome(t: T, percentile: number, countryName: string, householdLabel: string) {
   // Percentile = share of households at or below your income.
   const topPct = Math.max(1, Math.round(100 - percentile));
   const bottomPct = Math.max(1, Math.round(percentile));
   let headline: string;
   let tone: Tone;
-  if (percentile >= 90) {
-    headline = `Your income is in the top ${topPct}% of ${countryName} households your size.`;
-    tone = "up";
-  } else if (percentile >= 70) {
-    headline = `Your income is in the top ${topPct}% of ${countryName} households your size.`;
+  if (percentile >= 90 || percentile >= 70) {
+    headline = t("benchmarks.incomeTopPercentile", { pct: topPct, country: countryName });
     tone = "up";
   } else if (percentile >= 45 && percentile <= 55) {
-    headline = `Your income is right around the median for ${countryName} households your size.`;
+    headline = t("benchmarks.incomeMedian", { country: countryName });
     tone = "neutral";
   } else if (percentile >= 30) {
-    headline = `Your income is a bit below the median for ${countryName} households your size.`;
+    headline = t("benchmarks.incomeBelowMedian", { country: countryName });
     tone = "neutral";
   } else {
-    headline = `Your income is in the bottom ${bottomPct}% of ${countryName} households your size.`;
+    headline = t("benchmarks.incomeBottomPercentile", { pct: bottomPct, country: countryName });
     tone = "down";
   }
-  const detail = `Compared with ${householdLabel} across ${countryName}, roughly ${bottomPct}% earn less than you and ${topPct}% earn more (adjusted for household size).`;
+  const detail = t("benchmarks.incomeDetail", {
+    household: householdLabel,
+    country: countryName,
+    bottomPct,
+    topPct,
+  });
   return { tone, headline, detail };
 }
 
-function describeSavings(userPct: number, nationalPct: number, countryName: string) {
+function describeSavings(t: T, userPct: number, nationalPct: number, countryName: string) {
   const delta = userPct - nationalPct;
   let headline: string;
   let tone: Tone;
   if (userPct < 0) {
-    headline = `You&apos;re spending more than you earn (${userPct.toFixed(1)}% savings rate).`;
+    headline = t("benchmarks.savingsNegative", { pct: userPct.toFixed(1) });
     tone = "down";
   } else if (delta >= 5) {
-    headline = `You save ${userPct.toFixed(1)}% of income — well above the ${countryName} average of ${nationalPct}%.`;
+    headline = t("benchmarks.savingsAboveAvg", {
+      pct: userPct.toFixed(1),
+      country: countryName,
+      avg: nationalPct,
+    });
     tone = "up";
   } else if (delta >= -2) {
-    headline = `You save ${userPct.toFixed(1)}% of income — about the same as the ${countryName} average (${nationalPct}%).`;
+    headline = t("benchmarks.savingsAboutSame", {
+      pct: userPct.toFixed(1),
+      country: countryName,
+      avg: nationalPct,
+    });
     tone = "neutral";
   } else {
-    headline = `You save ${userPct.toFixed(1)}% of income — below the ${countryName} average of ${nationalPct}%.`;
+    headline = t("benchmarks.savingsBelowAvg", {
+      pct: userPct.toFixed(1),
+      country: countryName,
+      avg: nationalPct,
+    });
     tone = "down";
   }
   const detail =
     delta >= 0
-      ? `That&apos;s ${delta.toFixed(1)} percentage points above average — a stronger cushion than most households.`
-      : `That&apos;s ${Math.abs(delta).toFixed(1)} percentage points below average — closing the gap would strengthen your buffer.`;
-  // Fix stray &apos; entities (JSX renders literal string) — replace with actual char.
-  return {
-    tone,
-    headline: headline.replace(/&apos;/g, "\u2019"),
-    detail: detail.replace(/&apos;/g, "\u2019"),
-  };
+      ? t("benchmarks.savingsDetailAbove", { delta: delta.toFixed(1) })
+      : t("benchmarks.savingsDetailBelow", { delta: Math.abs(delta).toFixed(1) });
+  return { tone, headline, detail };
 }
 
 function describeSpend(
+  t: T,
   userSpend: number,
   natSpend: number,
   countryName: string,
@@ -310,18 +326,23 @@ function describeSpend(
   let tone: Tone;
   if (ratio <= 0.9) {
     const pct = Math.round((1 - ratio) * 100);
-    headline = `You spend about ${pct}% less per month than the typical ${countryName} household your size.`;
+    headline = t("benchmarks.spendLess", { pct, country: countryName });
     tone = "up";
   } else if (ratio <= 1.1) {
-    headline = `Your monthly spending is about average for ${countryName} households your size.`;
+    headline = t("benchmarks.spendAverage", { country: countryName });
     tone = "neutral";
   } else {
     const pct = Math.round((ratio - 1) * 100);
-    headline = `You spend about ${pct}% more per month than the typical ${countryName} household your size.`;
+    headline = t("benchmarks.spendMore", { pct, country: countryName });
     tone = "down";
   }
-  const detail = `You: ${money(userSpend)}/mo · Typical ${householdLabel} in ${countryName}: ${money(
-    natSpend,
-  )}/mo (${diff >= 0 ? "+" : "−"}${money(Math.abs(diff))}).`;
+  const detail = t("benchmarks.spendDetailFull", {
+    user: money(userSpend),
+    household: householdLabel,
+    country: countryName,
+    typical: money(natSpend),
+    sign: diff >= 0 ? "+" : "−",
+    diff: money(Math.abs(diff)),
+  });
   return { tone, headline, detail };
 }

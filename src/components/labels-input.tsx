@@ -1,12 +1,13 @@
 import { useState, KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n";
 
 // Free-form multi-label input. Adds a label on Enter, comma, or blur.
 export function LabelsInput({
   value,
   onChange,
-  placeholder = "e.g. holidays, birthday party",
+  placeholder,
   suggestions = [],
 }: {
   value: string[];
@@ -15,6 +16,8 @@ export function LabelsInput({
   suggestions?: string[];
 }) {
   const [draft, setDraft] = useState("");
+  const t = useT();
+  const resolvedPlaceholder = placeholder ?? t("labelsInput.placeholder");
 
   function commit(raw: string) {
     const parts = raw
@@ -56,7 +59,7 @@ export function LabelsInput({
               type="button"
               onClick={() => remove(l)}
               className="hover:opacity-70"
-              aria-label={`Remove ${l}`}
+              aria-label={t("labelsInput.removeAria", { label: l })}
             >
               <X className="size-3" />
             </button>
@@ -64,7 +67,7 @@ export function LabelsInput({
         ))}
         <Input
           className="border-0 shadow-none focus-visible:ring-0 h-6 px-1 flex-1 min-w-32"
-          placeholder={value.length ? "" : placeholder}
+          placeholder={value.length ? "" : resolvedPlaceholder}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKey}
