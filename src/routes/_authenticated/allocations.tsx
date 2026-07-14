@@ -521,7 +521,18 @@ function ConfirmAllocationButton({
   const confirmFn = useServerFn(confirmBucketAllocation);
   const undoFn = useServerFn(undoBucketAllocation);
   const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState(suggested.toFixed(2));
+  // "set" (no prior confirmation) or "add" (already confirmed, moving more this cycle)
+  const [mode, setMode] = useState<"set" | "add">("set");
+  const alreadyMoved = confirmed ? Number(confirmed.amount) : 0;
+  const defaultAmount = () => {
+    if (confirmed) {
+      // Suggest the remaining recommended amount not yet moved this month (or 0 if already fully allocated)
+      const remaining = Math.max(0, suggested - alreadyMoved);
+      return remaining.toFixed(2);
+    }
+    return suggested.toFixed(2);
+  };
+  const [amount, setAmount] = useState(defaultAmount());
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -530,9 +541,11 @@ function ConfirmAllocationButton({
     return isFinite(n) && n >= 0 ? n : null;
   }, [amount]);
 
-  const delta = parsed !== null ? parsed - suggested : 0;
-  const newUnallocated = unallocatedSurplus - delta; // surplus goes down if you allocate more
-  const newSaved = savedSoFar + (parsed ?? 0);
+  const effectiveMovedAfter = mode === "add" ? alreadyMoved + (parsed ?? 0) : (parsed ?? 0);
+  const delta = effectiveMovedAfter - suggested;
+  const newUnallocated =
+    unallocatedSurplus - (mode === "add" ? (parsed ?? 0) : (parsed ?? 0) - alreadyMoved);
+  const newSaved = savedSoFar + (mode === "add" ? (parsed ?? 0) : (parsed ?? 0) - alreadyMoved);
   const remainingToGoal = Math.max(0, goalTarget - newSaved);
   const newMonthlyNeeded =
     isGoal && monthsLeft > 1 ? remainingToGoal / Math.max(1, monthsLeft - 1) : 0;
@@ -548,6 +561,7 @@ function ConfirmAllocationButton({
 
   async function submit() {
     if (parsed === null) return toast.error("Invalid amount");
+    if (mode === "add" && parsed <= 0) return toast.error("Enter an amount greater than 0");
     setLoading(true);
     try {
       await confirmFn({
@@ -557,9 +571,10 @@ function ConfirmAllocationButton({
           period,
           amount: parsed,
           note: note.trim() || null,
+          mode,
         },
       });
-      toast.success("Allocation confirmed");
+      toast.success(mode === "add" ? "Added to allocation" : "Allocation confirmed");
       setOpen(false);
       setNote("");
       onChanged();
@@ -585,32 +600,34 @@ function ConfirmAllocationButton({
     }
   }
 
-  if (confirmed) {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
-          <Check className="size-3.5" /> {money(confirmed.amount)} moved
-        </span>
-        <Button size="sm" variant="ghost" onClick={undo} disabled={loading}>
-          <Undo2 className="size-3.5" />
-        </Button>
-      </div>
+  function openDialog(nextMode: "set" | "add") {
+    setMode(nextMode);
+    setAmount(
+      nextMode === "add" ? Math.max(0, suggested - alreadyMoved).toFixed(2) : suggested.toFixed(2),
     );
+    setNote("");
+    setOpen(true);
   }
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => {
-          setAmount(suggested.toFixed(2));
-          setNote("");
-          setOpen(true);
-        }}
-      >
-        Mark as allocated
-      </Button>
+      {confirmed ? (
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+            <Check className="size-3.5" /> {money(alreadyMoved)} moved
+          </span>
+          <Button size="sm" variant="outline" onClick={() => openDialog("add")} disabled={loading}>
+            Add more
+          </Button>
+          <Button size="sm" variant="ghost" onClick={undo} disabled={loading}>
+            <Undo2 className="size-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => openDialog("set")}>
+          Mark as allocated
+        </Button>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
