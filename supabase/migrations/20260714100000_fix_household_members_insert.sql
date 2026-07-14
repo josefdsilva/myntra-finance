@@ -1,0 +1,16 @@
+-- Critical fix: the original "Self insert as creator" policy let ANY
+-- authenticated user insert themselves into household_members for ANY
+-- household_id, with ANY role (including 'owner') — the WITH CHECK only
+-- verified user_id = auth.uid(), never that the caller had actually been
+-- invited to (or created) that household. In practice this meant any
+-- signed-in user could grant themselves owner access to any household by
+-- calling supabase.from("household_members").insert(...) directly from the
+-- client, bypassing invitations entirely.
+--
+-- Every legitimate join/create path (getOrCreateHousehold, acceptInvite,
+-- createHousehold in household.functions.ts) already inserts membership
+-- rows via the service-role client after validating an invitation or
+-- creating a fresh household — none of them rely on this policy. So the
+-- fix is to remove client-side INSERT access to this table entirely;
+-- membership rows can only be created server-side going forward.
+DROP POLICY IF EXISTS "Self insert as creator" ON public.household_members;

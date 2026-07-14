@@ -180,6 +180,17 @@ export const acceptInvite = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!invite) throw new Error("Invitation not found or already used");
 
+    // The invite link is only valid for the email it was sent to — otherwise
+    // anyone who gets hold of the link (forwarded, leaked, etc.) could join
+    // a household they were never invited to.
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const callerEmail = authUser?.user?.email?.toLowerCase().trim();
+    if (!callerEmail || callerEmail !== invite.email.toLowerCase().trim()) {
+      throw new Error(
+        "This invitation was sent to a different email address. Sign in with that account to accept it.",
+      );
+    }
+
     const { error } = await supabaseAdmin
       .from("household_members")
       .insert({ household_id: invite.household_id, user_id: context.userId, role: "member" });
