@@ -34,6 +34,7 @@ function bufferToBase64(buf: ArrayBuffer): string {
 import { useCategoryNames } from "@/hooks/use-categories";
 import { LabelsInput } from "@/components/labels-input";
 import { useRecentLabels } from "@/hooks/use-labels";
+import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 
 
 const DEFAULT_CATEGORIES = [
@@ -118,6 +119,8 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   };
   const [occurredAt, setOccurredAt] = useState<string>(nowLocal);
   const [loading, setLoading] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestAmount, setSuggestAmount] = useState(0);
 
 
   async function submit(e: React.FormEvent) {
@@ -150,6 +153,10 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       setOccurredAt(nowLocal());
       toast.success(kind === "income" ? "Money received added" : "Expense added");
       onAdded?.();
+      if (kind === "income") {
+        setSuggestAmount(n);
+        setSuggestOpen(true);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -159,6 +166,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
 
 
   return (
+    <>
     <form onSubmit={submit} className="space-y-3">
       <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
         <button
@@ -263,8 +271,16 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
         </div>
       </div>
     </form>
+    <IncomeAllocationSuggestion
+      householdId={householdId}
+      amount={suggestAmount}
+      open={suggestOpen}
+      onOpenChange={setSuggestOpen}
+    />
+    </>
   );
 }
+
 
 function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const parse = useServerFn(parseMemo);
