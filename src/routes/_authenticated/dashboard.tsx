@@ -510,6 +510,8 @@ function SalaryReceivedButton({
   const qc = useQueryClient();
   const mark = useServerFn(markSalaryReceived);
   const [loading, setLoading] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestAmount, setSuggestAmount] = useState(0);
   // Don't re-trigger if a salary was already recorded within the last 5 days
   const recentlyReceived = lastSalaryAt && Date.now() - lastSalaryAt.getTime() < 5 * 86400_000;
 
@@ -522,18 +524,24 @@ function SalaryReceivedButton({
     }
     setLoading(true);
     try {
-      await mark({ data: { household_id: householdId } });
+      const row = await mark({ data: { household_id: householdId } });
       toast.success("Salary recorded — new cycle started");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["salaries"] });
       qc.invalidateQueries({ queryKey: ["expenses-list"] });
       onDone();
+      const amt = Number(row?.amount ?? 0);
+      if (amt > 0) {
+        setSuggestAmount(amt);
+        setSuggestOpen(true);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
