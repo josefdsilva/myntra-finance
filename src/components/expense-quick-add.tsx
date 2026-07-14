@@ -166,6 +166,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
 
 
   return (
+    <>
     <form onSubmit={submit} className="space-y-3">
       <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
         <button
