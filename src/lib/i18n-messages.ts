@@ -370,7 +370,7 @@ const en = {
   "incomeSuggestion.noBuckets":
     "No buckets set up yet — the full amount will stay in your account. Create buckets on the Allocations page to see suggestions here.",
   "incomeSuggestion.extraDebtPayment": "Extra debt payment",
-  "incomeSuggestion.taeg": "· TAEG {pct}%",
+  "incomeSuggestion.taeg": "· APR {pct}%",
   "incomeSuggestion.debtNote":
     "We just note this here — record the payment as a normal expense when you make it.",
   "incomeSuggestion.distributed": "Distributed",
@@ -405,7 +405,7 @@ const en = {
   "coach.suggestion2":
     "Our car broke. Should we buy used with savings or take a loan? What price range?",
   "coach.suggestion3":
-    "Compare two loan offers: €15,000 at 8.5% TAEG over 60 months vs 7.9% TAEG over 72 months. Which is cheaper overall and which fits our budget?",
+    "Compare two loan offers: €15,000 at 8.5% APR over 60 months vs 7.9% APR over 72 months. Which is cheaper overall and which fits our budget?",
   "coach.suggestion4":
     "Help me compare an iPhone 15 (€899) vs a Pixel 8 (€699) for our needs — which is the better buy?",
   "coach.suggestion5": "Should we switch to a cheaper energy plan? What should I compare?",
@@ -2023,7 +2023,7 @@ const es: Record<MessageKey, string> = {
   "incomeSuggestion.noBuckets":
     "Aún no hay reservas configuradas — el monto total permanecerá en tu cuenta. Crea reservas en la página de Asignaciones para ver sugerencias aquí.",
   "incomeSuggestion.extraDebtPayment": "Pago extra de deuda",
-  "incomeSuggestion.taeg": "· TAEG {pct}%",
+  "incomeSuggestion.taeg": "· TAE {pct}%",
   "incomeSuggestion.debtNote":
     "Solo lo anotamos aquí — registra el pago como un gasto normal cuando lo realices.",
   "incomeSuggestion.distributed": "Distribuido",
@@ -2060,7 +2060,7 @@ const es: Record<MessageKey, string> = {
   "coach.suggestion2":
     "Se nos rompió el coche. ¿Deberíamos comprar uno usado con los ahorros o pedir un préstamo? ¿En qué rango de precio?",
   "coach.suggestion3":
-    "Compara dos ofertas de préstamo: 15.000 € al 8,5% TAEG en 60 meses frente a 7,9% TAEG en 72 meses. ¿Cuál es más barata en total y cuál se ajusta a nuestro presupuesto?",
+    "Compara dos ofertas de préstamo: 15.000 € al 8,5% TAE en 60 meses frente a 7,9% TAE en 72 meses. ¿Cuál es más barata en total y cuál se ajusta a nuestro presupuesto?",
   "coach.suggestion4":
     "Ayúdame a comparar un iPhone 15 (899 €) con un Pixel 8 (699 €) para nuestras necesidades — ¿cuál es la mejor compra?",
   "coach.suggestion5":
