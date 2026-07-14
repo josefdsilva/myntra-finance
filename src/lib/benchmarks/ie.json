@@ -5,10 +5,11 @@
   "sourceYear": 2023,
   "sources": [
     "Eurostat ilc_di01 (equivalised disposable income by decile, IE, 2023)",
-    "Eurostat hbs_str_t223 (mean consumption expenditure by COICOP, IE, 2020 wave)",
+    "Eurostat hbs_str_t223 (structure of consumption expenditure by COICOP & income quintile, IE, 2020 wave)",
+    "Eurostat hbs_exp_t133 (mean consumption expenditure by income quintile, per adult equivalent)",
     "Eurostat tec00131 / nasa_10_ki (household saving rate, IE)"
   ],
-  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale). Category shares are remapped from COICOP divisions to the app's expense categories.",
+  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale). categoryShares are % of total consumption expenditure remapped from COICOP to the app's categories (middle of the distribution). quintileExpenditureMultipliers scale mean per-adult-equivalent expenditure to each income quintile; per-quintile category structure is derived in code via a documented income gradient. avgHouseholdEquivFactor converts between per-household and per-adult-equivalent figures.",
   "incomeDecilesAnnualEquivalised": {
     "d1": 13100,
     "d2": 17600,
@@ -21,6 +22,14 @@
     "d9": 53800
   },
   "avgMonthlyHouseholdExpenditure": 3300,
+  "avgHouseholdEquivFactor": 1.75,
+  "quintileExpenditureMultipliers": {
+    "q1": 0.63,
+    "q2": 0.83,
+    "q3": 0.98,
+    "q4": 1.12,
+    "q5": 1.44
+  },
   "householdSavingRatePct": 13.0,
   "categoryShares": {
     "groceries": 14.0,

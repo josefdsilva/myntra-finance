@@ -5,11 +5,12 @@
   "sourceYear": 2023,
   "sources": [
     "Eurostat ilc_di01 (equivalised disposable income by decile, PT, 2023)",
-    "Eurostat hbs_str_t223 (mean consumption expenditure by COICOP, PT, latest)",
+    "Eurostat hbs_str_t223 (structure of consumption expenditure by COICOP & income quintile, PT, 2020 wave)",
+    "Eurostat hbs_exp_t133 (mean consumption expenditure by income quintile, per adult equivalent)",
     "INE Portugal - Inquérito às Despesas das Famílias",
     "Eurostat tec00131 (household saving rate, PT)"
   ],
-  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale: 1 first adult + 0.5 per extra adult + 0.3 per child). Compare a household by dividing its net monthly income by its equivalence factor then multiplying by 12. Category shares are % of total household consumption expenditure and are then remapped from COICOP divisions to the app's expense categories.",
+  "notes": "Deciles are annual EQUIVALISED net disposable income in EUR (OECD-modified scale: 1 first adult + 0.5 per extra adult + 0.3 per child). categoryShares are % of total household consumption expenditure remapped from COICOP divisions to the app's expense categories, representing the middle of the distribution. quintileExpenditureMultipliers scale the mean per-adult-equivalent expenditure to each income quintile (grounded in hbs_exp_t133 quintile ratios). Per-quintile category structure is derived in code by applying a documented income gradient (Engel's law) to these shares. avgHouseholdEquivFactor is the OECD-modified equivalence factor of the average national household, used to convert between per-household and per-adult-equivalent figures.",
   "incomeDecilesAnnualEquivalised": {
     "d1": 5700,
     "d2": 8300,
@@ -22,6 +23,14 @@
     "d9": 27900
   },
   "avgMonthlyHouseholdExpenditure": 2150,
+  "avgHouseholdEquivFactor": 1.6,
+  "quintileExpenditureMultipliers": {
+    "q1": 0.58,
+    "q2": 0.79,
+    "q3": 0.96,
+    "q4": 1.17,
+    "q5": 1.5
+  },
   "householdSavingRatePct": 8.0,
   "categoryShares": {
     "groceries": 17.0,
