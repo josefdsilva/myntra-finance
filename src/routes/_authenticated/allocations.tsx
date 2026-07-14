@@ -667,10 +667,17 @@ function ConfirmAllocationButton({
                   size="sm"
                   variant="ghost"
                   className="h-7 text-xs"
-                  onClick={() => setAmount(suggested.toFixed(2))}
+                  onClick={() =>
+                    setAmount(
+                      (mode === "add" ? Math.max(0, suggested - alreadyMoved) : suggested).toFixed(
+                        2,
+                      ),
+                    )
+                  }
                 >
                   Use recommended
                 </Button>
+
                 {isGoal && (
                   <Button
                     type="button"
