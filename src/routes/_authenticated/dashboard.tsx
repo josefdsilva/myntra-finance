@@ -544,6 +544,7 @@ function SalaryReceivedButton({
 
 
   return (
+    <>
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
       <div>
         <p className="text-sm font-medium">{t("dashboard.salary.payday")}</p>
@@ -562,8 +563,16 @@ function SalaryReceivedButton({
         {loading ? <Loader2 className="animate-spin" /> : <Wallet />} {t("dashboard.salary.button")}
       </Button>
     </div>
+    <IncomeAllocationSuggestion
+      householdId={householdId}
+      amount={suggestAmount}
+      open={suggestOpen}
+      onOpenChange={setSuggestOpen}
+    />
+    </>
   );
 }
+
 
 function StatCard({
   label,
