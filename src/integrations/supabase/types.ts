@@ -264,6 +264,71 @@ export type Database = {
           },
         ]
       }
+      account_movements: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          from_id: string | null
+          from_type: Database["public"]["Enums"]["movement_account_type"] | null
+          household_id: string
+          id: string
+          kind: Database["public"]["Enums"]["movement_kind"]
+          note: string | null
+          period: string
+          principal_after: number | null
+          principal_before: number | null
+          reason: string | null
+          recompute_mode: string | null
+          to_id: string | null
+          to_type: Database["public"]["Enums"]["movement_account_type"] | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          from_id?: string | null
+          from_type?: Database["public"]["Enums"]["movement_account_type"] | null
+          household_id: string
+          id?: string
+          kind: Database["public"]["Enums"]["movement_kind"]
+          note?: string | null
+          period: string
+          principal_after?: number | null
+          principal_before?: number | null
+          reason?: string | null
+          recompute_mode?: string | null
+          to_id?: string | null
+          to_type?: Database["public"]["Enums"]["movement_account_type"] | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          from_id?: string | null
+          from_type?: Database["public"]["Enums"]["movement_account_type"] | null
+          household_id?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["movement_kind"]
+          note?: string | null
+          period?: string
+          principal_after?: number | null
+          principal_before?: number | null
+          reason?: string | null
+          recompute_mode?: string | null
+          to_id?: string | null
+          to_type?: Database["public"]["Enums"]["movement_account_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_movements_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       debts: {
         Row: {
           created_at: string
@@ -271,12 +336,16 @@ export type Database = {
           id: string
           kind: string
           label: string
+          last_recompute_at: string | null
           maturity_date: string | null
           monthly_amount: number
           note: string | null
+          opened_at: string | null
           principal_remaining: number | null
           sort_order: number
+          starting_principal: number | null
           taeg_pct: number | null
+          tan_pct: number | null
           updated_at: string
         }
         Insert: {
@@ -285,12 +354,16 @@ export type Database = {
           id?: string
           kind?: string
           label: string
+          last_recompute_at?: string | null
           maturity_date?: string | null
           monthly_amount?: number
           note?: string | null
+          opened_at?: string | null
           principal_remaining?: number | null
           sort_order?: number
+          starting_principal?: number | null
           taeg_pct?: number | null
+          tan_pct?: number | null
           updated_at?: string
         }
         Update: {
@@ -299,12 +372,16 @@ export type Database = {
           id?: string
           kind?: string
           label?: string
+          last_recompute_at?: string | null
           maturity_date?: string | null
           monthly_amount?: number
           note?: string | null
+          opened_at?: string | null
           principal_remaining?: number | null
           sort_order?: number
+          starting_principal?: number | null
           taeg_pct?: number | null
+          tan_pct?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -758,7 +835,58 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      fund_deposit: {
+        Args: {
+          p_household: string
+          p_bucket: string
+          p_amount: number
+          p_reason?: string
+          p_period?: string
+          p_note?: string
+        }
+        Returns: string
+      }
+      fund_withdrawal: {
+        Args: {
+          p_household: string
+          p_bucket: string
+          p_amount: number
+          p_reason?: string
+          p_period?: string
+          p_note?: string
+        }
+        Returns: string
+      }
+      fund_transfer: {
+        Args: {
+          p_household: string
+          p_from_bucket: string
+          p_to_bucket: string
+          p_amount: number
+          p_reason?: string
+          p_period?: string
+          p_note?: string
+        }
+        Returns: string
+      }
+      service_debt: {
+        Args: {
+          p_household: string
+          p_debt: string
+          p_amount: number
+          p_source_type: string
+          p_source_bucket?: string
+          p_new_principal?: number
+          p_new_installment?: number
+          p_new_maturity?: string
+          p_recompute_mode?: string
+          p_reason?: string
+          p_note?: string
+          p_period?: string
+          p_as_of?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       bucket_target_type:
@@ -775,6 +903,8 @@ export type Database = {
         | "ai_photo"
       import_status: "pending" | "parsed" | "approved" | "failed"
       member_role: "owner" | "member"
+      movement_account_type: "cash" | "bucket" | "debt"
+      movement_kind: "deposit" | "withdrawal" | "transfer" | "debt_payment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -918,6 +1048,8 @@ export const Constants = {
       ],
       import_status: ["pending", "parsed", "approved", "failed"],
       member_role: ["owner", "member"],
+      movement_account_type: ["cash", "bucket", "debt"],
+      movement_kind: ["deposit", "withdrawal", "transfer", "debt_payment"],
     },
   },
 } as const
