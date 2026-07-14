@@ -224,10 +224,7 @@ function AnalysisPage() {
           .from("fixed_expenses")
           .select("monthly_amount, category, label")
           .eq("household_id", householdId!),
-        supabase
-          .from("debts")
-          .select("monthly_amount, label")
-          .eq("household_id", householdId!),
+        supabase.from("debts").select("monthly_amount, label").eq("household_id", householdId!),
       ]);
       const fixed = (fx ?? []) as Array<{
         monthly_amount: number | string;
@@ -335,7 +332,7 @@ function AnalysisPage() {
       label: fmt(cycle.start, "dd/MM"),
       iso: cycle.start.toISOString(),
       balance: 0,
-      events: [{ kind: "expense", label: "Cycle start", amount: 0, delta: 0 }],
+      events: [{ kind: "expense", label: t("ana.cycleStart"), amount: 0, delta: 0 }],
     });
     let fixedReserved = false;
     for (const ev of events) {
@@ -343,8 +340,11 @@ function AnalysisPage() {
       const delta = ev.kind === "income" ? amt : -amt;
       bal += delta;
       const evLabel = ev.is_salary
-        ? ev.note || ev.merchant || "Salary"
-        : ev.note || ev.merchant || ev.category || (ev.kind === "income" ? "Income" : "Expense");
+        ? ev.note || ev.merchant || t("ana.salaryFallback")
+        : ev.note ||
+          ev.merchant ||
+          ev.category ||
+          (ev.kind === "income" ? t("ana.incomeFallback") : t("ana.expenseFallback"));
       out.push({
         label: fmt(new Date(ev.occurred_at), "dd/MM HH:mm"),
         iso: ev.occurred_at,
@@ -360,7 +360,7 @@ function AnalysisPage() {
           events: [
             {
               kind: "fixed",
-              label: "Fixed expenses reserved",
+              label: t("ana.fixedExpensesReserved"),
               amount: fixedTotal,
               delta: -fixedTotal,
             },
@@ -377,7 +377,7 @@ function AnalysisPage() {
       events: [],
     });
     return out;
-  }, [cycleData, fixedTotal]);
+  }, [cycleData, fixedTotal, t]);
 
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
 
@@ -479,7 +479,7 @@ function AnalysisPage() {
           <CardContent>
             {!burnSeries.length ? (
               <p className="text-sm text-muted-foreground py-10 text-center">
-                No activity in this cycle yet.
+                {t("ana.noActivity")}
               </p>
             ) : (
               <div className="h-72">
@@ -500,7 +500,7 @@ function AnalysisPage() {
                     <Area
                       type="stepAfter"
                       dataKey="balance"
-                      name="Balance"
+                      name={t("ana.balanceLegend")}
                       stroke="var(--primary)"
                       fill="var(--primary)"
                       fillOpacity={0.15}
@@ -512,7 +512,7 @@ function AnalysisPage() {
                       strokeWidth={1}
                       strokeDasharray="2 2"
                       label={{
-                        value: "Empty (overdraft below)",
+                        value: t("ana.emptyOverdraft"),
                         position: "insideBottomRight",
                         fontSize: 10,
                         fill: "hsl(var(--destructive))",
@@ -525,7 +525,9 @@ function AnalysisPage() {
                         strokeWidth={1.5}
                         strokeDasharray="6 4"
                         label={{
-                          value: `Bucket funding floor ${money(cycleData.bucketTargets)} (don't spend below)`,
+                          value: t("ana.bucketFundingFloor", {
+                            amount: money(cycleData.bucketTargets),
+                          }),
                           position: "insideTopRight",
                           fontSize: 10,
                           fill: "#b45309",

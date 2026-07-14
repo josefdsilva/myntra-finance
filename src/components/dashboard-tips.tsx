@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import {
   AlertTriangle,
   Info,
@@ -52,6 +53,7 @@ export function DashboardTips({
   daysLeft,
   avgDaily7,
 }: Props) {
+  const t = useT();
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const navigate = useNavigate();
@@ -162,34 +164,30 @@ export function DashboardTips({
     tips.push({
       id: "no-baseline",
       severity: "critical",
-      title: "Set your monthly baseline budget",
-      detail: "Without a baseline we can't compute your safe-to-spend or surplus.",
-      cta: { label: "Open settings", to: "/settings" },
-      chatPrompt:
-        "I haven't set a baseline monthly budget yet. How should I decide on a reasonable baseline given my income and fixed costs?",
+      title: t("tips.noBaseline.title"),
+      detail: t("tips.noBaseline.detail"),
+      cta: { label: t("tips.cta.openSettings"), to: "/settings" },
+      chatPrompt: t("tips.noBaseline.chat"),
     });
   }
   if (!data.incomes.length) {
     tips.push({
       id: "no-income",
       severity: "critical",
-      title: "Add your monthly income",
-      detail: "Income powers surplus, salary detection and bucket allocations.",
-      cta: { label: "Add income", to: "/settings" },
-      chatPrompt:
-        "I haven't recorded any income sources. What should I include and how do I estimate monthly amounts for variable income?",
+      title: t("tips.noIncome.title"),
+      detail: t("tips.noIncome.detail"),
+      cta: { label: t("tips.cta.addIncome"), to: "/settings" },
+      chatPrompt: t("tips.noIncome.chat"),
     });
   }
   if (!data.buckets.length) {
     tips.push({
       id: "no-buckets",
       severity: "critical",
-      title: "Create your first savings bucket",
-      detail:
-        "Buckets turn surplus into concrete goals (emergency fund, holiday, house…). The earlier the better.",
-      cta: { label: "Create bucket", to: "/settings" },
-      chatPrompt:
-        "I have no savings buckets yet. Given my situation, which buckets should I create first and how much should I aim for in each?",
+      title: t("tips.noBuckets.title"),
+      detail: t("tips.noBuckets.detail"),
+      cta: { label: t("tips.cta.createBucket"), to: "/settings" },
+      chatPrompt: t("tips.noBuckets.chat"),
     });
   }
 
@@ -199,10 +197,12 @@ export function DashboardTips({
     tips.push({
       id: "single-income-source",
       severity: "warning",
-      title: "All your income comes from a single source",
-      detail: `"${only.label ?? "Your only income stream"}" covers 100% of household income (${money(income)}/mo). A job loss or reduction would eliminate all cash flow — building a larger emergency fund and diversifying income reduces this risk.`,
-      chatPrompt:
-        "My household depends on a single income source. What's a reasonable emergency fund target for that situation, and what are realistic ways for a family of four in Portugal to diversify income?",
+      title: t("tips.singleIncome.title"),
+      detail: t("tips.singleIncome.detail", {
+        label: only.label ?? t("tips.singleIncome.fallbackLabel"),
+        income: money(income),
+      }),
+      chatPrompt: t("tips.singleIncome.chat"),
     });
   } else if (data.incomes.length > 1 && income > 0) {
     const sorted = [...data.incomes].sort(
@@ -213,10 +213,13 @@ export function DashboardTips({
       tips.push({
         id: "income-concentration",
         severity: "info",
-        title: "Income is concentrated in one source",
-        detail: `"${sorted[0].label ?? "Your largest income"}" accounts for ${Math.round((top / income) * 100)}% of household income. Losing it would leave only ${money(income - top)}/mo.`,
-        chatPrompt:
-          "Most of my household income comes from a single source. How exposed am I, and what should I do to reduce that risk?",
+        title: t("tips.incomeConcentration.title"),
+        detail: t("tips.incomeConcentration.detail", {
+          label: sorted[0].label ?? t("tips.incomeConcentration.fallbackLabel"),
+          pct: Math.round((top / income) * 100),
+          remaining: money(income - top),
+        }),
+        chatPrompt: t("tips.incomeConcentration.chat"),
       });
     }
   }
@@ -228,20 +231,22 @@ export function DashboardTips({
       tips.push({
         id: "low-savings-rate",
         severity: "warning",
-        title: `Savings rate is only ${Math.round(rate * 100)}%`,
-        detail: `You save ${money(surplus)} out of ${money(income)}/mo. A common target is 15–20% — small baseline cuts or income growth compound over time.`,
-        chatPrompt: `My household savings rate is about ${Math.round(rate * 100)}% of income. How can I realistically raise it without cutting essential spending?`,
+        title: t("tips.lowSavingsRate.title", { pct: Math.round(rate * 100) }),
+        detail: t("tips.lowSavingsRate.detail", { surplus: money(surplus), income: money(income) }),
+        chatPrompt: t("tips.lowSavingsRate.chat", { pct: Math.round(rate * 100) }),
       });
     }
   } else if (income > 0 && surplus <= 0) {
     tips.push({
       id: "negative-surplus",
       severity: "critical",
-      title: "Your baseline leaves no surplus",
-      detail: `Baseline (${money(baseline)}) meets or exceeds income (${money(income)}). Nothing is being saved — this is unsustainable.`,
-      cta: { label: "Review baseline", to: "/settings" },
-      chatPrompt:
-        "My baseline budget leaves me with no surplus each month. Where should I look first to bring spending down?",
+      title: t("tips.negativeSurplus.title"),
+      detail: t("tips.negativeSurplus.detail", {
+        baseline: money(baseline),
+        income: money(income),
+      }),
+      cta: { label: t("tips.cta.reviewBaseline"), to: "/settings" },
+      chatPrompt: t("tips.negativeSurplus.chat"),
     });
   }
 
@@ -269,21 +274,22 @@ export function DashboardTips({
     tips.push({
       id: "over-allocated",
       severity: "warning",
-      title: `Bucket targets exceed surplus by ${money(totalAllocated - surplus)}`,
-      detail:
-        "Your monthly bucket targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
-      cta: { label: "Rebalance", to: "/allocations" },
-      chatPrompt: `My bucket targets add up to ${money(totalAllocated)} but my surplus is only ${money(surplus)}. Which buckets should I trim first?`,
+      title: t("tips.overAllocated.title", { excess: money(totalAllocated - surplus) }),
+      detail: t("tips.overAllocated.detail"),
+      cta: { label: t("tips.cta.rebalance"), to: "/allocations" },
+      chatPrompt: t("tips.overAllocated.chat", {
+        allocated: money(totalAllocated),
+        surplus: money(surplus),
+      }),
     });
   } else if (data.buckets.length && surplus > 0 && unallocated > Math.max(50, surplus * 0.1)) {
     tips.push({
       id: "unallocated-surplus",
       severity: "warning",
-      title: `${money(unallocated)} of surplus is unallocated`,
-      detail:
-        "Assign it to an existing bucket or create a new one — idle surplus tends to leak into everyday spending.",
-      cta: { label: "Allocate", to: "/allocations" },
-      chatPrompt: `I have ${money(unallocated)} of unallocated monthly surplus. What are good uses for it given my current buckets and goals?`,
+      title: t("tips.unallocatedSurplus.title", { value: money(unallocated) }),
+      detail: t("tips.unallocatedSurplus.detail"),
+      cta: { label: t("tips.cta.allocate"), to: "/allocations" },
+      chatPrompt: t("tips.unallocatedSurplus.chat", { value: money(unallocated) }),
     });
   }
 
@@ -297,12 +303,15 @@ export function DashboardTips({
     tips.push({
       id: "confirm-allocations",
       severity: "warning",
-      title: `Confirm this month's allocations (${unconfirmed.length} pending)`,
-      detail: `Month ends in ${daysToMonthEnd} day${daysToMonthEnd === 1 ? "" : "s"} — lock in ${unconfirmed
-        .map((b) => b.name)
-        .slice(0, 3)
-        .join(", ")}${unconfirmed.length > 3 ? "…" : ""}.`,
-      cta: { label: "Go to allocations", to: "/allocations" },
+      title: t("tips.confirmAllocations.title", { count: unconfirmed.length }),
+      detail: t("tips.confirmAllocations.detail", {
+        days: daysToMonthEnd,
+        names: `${unconfirmed
+          .map((b) => b.name)
+          .slice(0, 3)
+          .join(", ")}${unconfirmed.length > 3 ? "…" : ""}`,
+      }),
+      cta: { label: t("tips.cta.goToAllocations"), to: "/allocations" },
     });
   }
 
@@ -311,10 +320,9 @@ export function DashboardTips({
     tips.push({
       id: "no-fixed",
       severity: "info",
-      title: "Track your fixed expenses",
-      detail:
-        "Recording rent, utilities and subscriptions makes the baseline realistic and the burndown chart accurate.",
-      cta: { label: "Add fixed expenses", to: "/settings" },
+      title: t("tips.noFixed.title"),
+      detail: t("tips.noFixed.detail"),
+      cta: { label: t("tips.cta.addFixedExpenses"), to: "/settings" },
     });
   }
 
@@ -330,10 +338,16 @@ export function DashboardTips({
       tips.push({
         id: "estimates-too-low",
         severity: "warning",
-        title: "Your variable estimates look too low",
-        detail: `You're spending ~${money(projectedMonthly)}/month at the current pace but planned only ${money(variableEstTotal)}. Increase the estimate or tighten spending.`,
-        cta: { label: "Review estimates", to: "/settings" },
-        chatPrompt: `My variable spending pace (${money(projectedMonthly)}/mo) is much higher than my planned estimate (${money(variableEstTotal)}/mo). Which categories usually drive that gap and how do I close it?`,
+        title: t("tips.estimatesTooLow.title"),
+        detail: t("tips.estimatesTooLow.detail", {
+          pace: money(projectedMonthly),
+          planned: money(variableEstTotal),
+        }),
+        cta: { label: t("tips.cta.reviewEstimates"), to: "/settings" },
+        chatPrompt: t("tips.estimatesTooLow.chat", {
+          pace: money(projectedMonthly),
+          planned: money(variableEstTotal),
+        }),
       });
     } else if (
       variableEstTotal > 0 &&
@@ -344,20 +358,22 @@ export function DashboardTips({
       tips.push({
         id: "estimates-too-high",
         severity: "info",
-        title: "Your variable estimates may be too high",
-        detail: `Planned ${money(variableEstTotal)}/month but actual pace is only ${money(projectedMonthly)}. You may be able to redirect the difference into a bucket.`,
-        cta: { label: "Adjust estimates", to: "/settings" },
-        chatPrompt: `I've been consistently spending less than my variable estimate. Should I lower the estimate or redirect the difference into a specific bucket?`,
+        title: t("tips.estimatesTooHigh.title"),
+        detail: t("tips.estimatesTooHigh.detail", {
+          planned: money(variableEstTotal),
+          actual: money(projectedMonthly),
+        }),
+        cta: { label: t("tips.cta.adjustEstimates"), to: "/settings" },
+        chatPrompt: t("tips.estimatesTooHigh.chat"),
       });
     }
   } else if (baseline > 0 && !data.variables.length && data.expenseCount > 5) {
     tips.push({
       id: "no-variable-estimates",
       severity: "info",
-      title: "Add variable expense estimates",
-      detail:
-        "Estimating groceries, transport, etc. sharpens your baseline and improves the analysis view.",
-      cta: { label: "Add estimates", to: "/settings" },
+      title: t("tips.noVariableEstimates.title"),
+      detail: t("tips.noVariableEstimates.detail"),
+      cta: { label: t("tips.cta.addEstimates"), to: "/settings" },
     });
   }
 
@@ -368,9 +384,9 @@ export function DashboardTips({
       tips.push({
         id: "overpace",
         severity: "warning",
-        title: `On pace to overspend by ${money(projected - variablePool)} this cycle`,
-        detail: `At ${money(avgDaily7)}/day average, you'll end the cycle over budget. Slow down or top up from surplus.`,
-        chatPrompt: `I'm on pace to overspend my variable pool by about ${money(projected - variablePool)} this cycle. What are the fastest levers to slow down without hurting the family?`,
+        title: t("tips.overpace.title", { value: money(projected - variablePool) }),
+        detail: t("tips.overpace.detail", { avgDaily: money(avgDaily7) }),
+        chatPrompt: t("tips.overpace.chat", { value: money(projected - variablePool) }),
       });
     }
   }
@@ -384,10 +400,13 @@ export function DashboardTips({
       tips.push({
         id: "no-emergency-bucket",
         severity: "info",
-        title: "No dedicated emergency fund",
-        detail: `You don't have a bucket earmarked for emergencies. Renaming or repurposing an existing bucket (not adding new money) gives that safety net a clear home — a common target is 3–6× monthly baseline (${money(baseline * 3)}–${money(baseline * 6)}).`,
-        cta: { label: "Manage buckets", to: "/settings" },
-        chatPrompt: `I don't have a dedicated emergency fund bucket. How large should it be for a family of four in Portugal, and how should I fund it without hurting my other goals?`,
+        title: t("tips.noEmergency.title"),
+        detail: t("tips.noEmergency.detail", {
+          low: money(baseline * 3),
+          high: money(baseline * 6),
+        }),
+        cta: { label: t("tips.cta.manageBuckets"), to: "/settings" },
+        chatPrompt: t("tips.noEmergency.chat"),
       });
     }
   }
@@ -400,10 +419,10 @@ export function DashboardTips({
       tips.push({
         id: `goal-close-${b.id}`,
         severity: "info",
-        title: `Goal "${b.name}" deadline is close`,
-        detail: `${m} month${m === 1 ? "" : "s"} left — check whether the target is reachable.`,
-        cta: { label: "Review", to: "/allocations" },
-        chatPrompt: `My goal "${b.name}" is due in ${m} month${m === 1 ? "" : "s"}. Is it still realistic given my surplus, and what should I do if it isn't?`,
+        title: t("tips.goalClose.title", { name: b.name }),
+        detail: t("tips.goalClose.detail", { months: m }),
+        cta: { label: t("tips.cta.review"), to: "/allocations" },
+        chatPrompt: t("tips.goalClose.chat", { name: b.name, months: m }),
       });
     }
   }
@@ -427,19 +446,43 @@ export function DashboardTips({
         tips.push({
           id: `goal-unrealistic-${b.id}`,
           severity: "warning",
-          title: `Goal "${b.name}" may be unrealistic`,
-          detail: `Reaching it by ${b.target_deadline} needs ${money(requiredMonthly)}/mo — ${Math.round(ratio * 100)}% of your ${money(surplus)} surplus. Extend the deadline or lower the target so it doesn't crowd out everything else.`,
-          cta: { label: "Adjust goal", to: "/settings" },
-          chatPrompt: `My goal "${b.name}" needs ${money(requiredMonthly)}/month to hit ${money(target)} by ${b.target_deadline}, which is ${Math.round(ratio * 100)}% of my ${money(surplus)} surplus. Should I push the deadline back or lower the target, and by how much?`,
+          title: t("tips.goalUnrealistic.title", { name: b.name }),
+          detail: t("tips.goalUnrealistic.detail", {
+            date: b.target_deadline ?? "",
+            required: money(requiredMonthly),
+            pct: Math.round(ratio * 100),
+            surplus: money(surplus),
+          }),
+          cta: { label: t("tips.cta.adjustGoal"), to: "/settings" },
+          chatPrompt: t("tips.goalUnrealistic.chat", {
+            name: b.name,
+            required: money(requiredMonthly),
+            target: money(target),
+            date: b.target_deadline ?? "",
+            pct: Math.round(ratio * 100),
+            surplus: money(surplus),
+          }),
         });
       } else if (ratio < 0.15 && monthsLeft >= 3) {
         tips.push({
           id: `goal-too-easy-${b.id}`,
           severity: "info",
-          title: `Goal "${b.name}" could be more ambitious`,
-          detail: `Only ${money(requiredMonthly)}/mo (${Math.round(ratio * 100)}% of surplus) is needed to hit ${money(target)} by ${b.target_deadline}, with ${monthsLeft} months to go. You could pull the deadline in or raise the target instead of leaving surplus idle.`,
-          cta: { label: "Adjust goal", to: "/settings" },
-          chatPrompt: `My goal "${b.name}" only needs ${money(requiredMonthly)}/month (${Math.round(ratio * 100)}% of my surplus) to hit ${money(target)} by ${b.target_deadline}. Should I raise the target or move the deadline closer, and to what?`,
+          title: t("tips.goalTooEasy.title", { name: b.name }),
+          detail: t("tips.goalTooEasy.detail", {
+            required: money(requiredMonthly),
+            pct: Math.round(ratio * 100),
+            target: money(target),
+            date: b.target_deadline ?? "",
+            months: monthsLeft,
+          }),
+          cta: { label: t("tips.cta.adjustGoal"), to: "/settings" },
+          chatPrompt: t("tips.goalTooEasy.chat", {
+            name: b.name,
+            required: money(requiredMonthly),
+            pct: Math.round(ratio * 100),
+            target: money(target),
+            date: b.target_deadline ?? "",
+          }),
         });
       }
     }
@@ -462,30 +505,28 @@ export function DashboardTips({
           <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-medium">
-              {tips.length === 0
-                ? "All good — no issues detected"
-                : "All tips acknowledged this cycle"}
+              {tips.length === 0 ? t("tips.allGood") : t("tips.allAcknowledged")}
             </p>
             <p className="text-sm text-muted-foreground">
               {tips.length === 0
-                ? "Your budget, buckets and pace look healthy this cycle."
-                : `${hidden.length} tip${hidden.length === 1 ? "" : "s"} dismissed until next cycle.`}
+                ? t("tips.healthyBody")
+                : t("tips.dismissedUntilNext", { count: hidden.length })}
             </p>
           </div>
           {hidden.length > 0 && (
             <Button size="sm" variant="ghost" onClick={() => setShowDismissed((s) => !s)}>
-              {showDismissed ? "Hide" : "Show"} dismissed
+              {showDismissed ? t("tips.hideDismissed") : t("tips.showDismissed")}
             </Button>
           )}
         </CardContent>
         {showDismissed && hidden.length > 0 && (
           <CardContent className="space-y-2 pt-0">
-            {hidden.map((t) => (
+            {hidden.map((tip) => (
               <TipRow
-                key={t.id}
-                tip={t}
+                key={tip.id}
+                tip={tip}
                 dismissed
-                onRestore={() => restore(t.id)}
+                onRestore={() => restore(tip.id)}
                 onChat={openChat}
               />
             ))}
@@ -499,33 +540,33 @@ export function DashboardTips({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Lightbulb className="size-5" /> Issues &amp; tips
+          <Lightbulb className="size-5" /> {t("tips.title")}
           <span className="text-xs font-normal text-muted-foreground">({active.length})</span>
         </CardTitle>
         <CardDescription>
-          Rule-based suggestions computed from your data. Use{" "}
-          <span className="font-medium">Chat</span> to explore any of them with the AI coach, or{" "}
-          <span className="font-medium">Dismiss</span> to hide it for this cycle.
+          {t("tips.description", { chat: t("tips.chatButton"), dismiss: t("tips.dismissButton") })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        {active.map((t) => (
-          <TipRow key={t.id} tip={t} onDismiss={() => dismiss(t.id)} onChat={openChat} />
+        {active.map((tip) => (
+          <TipRow key={tip.id} tip={tip} onDismiss={() => dismiss(tip.id)} onChat={openChat} />
         ))}
         {hidden.length > 0 && (
           <div className="pt-2 flex justify-end">
             <Button size="sm" variant="ghost" onClick={() => setShowDismissed((s) => !s)}>
-              {showDismissed ? "Hide" : `Show ${hidden.length} dismissed`}
+              {showDismissed
+                ? t("tips.hideDismissed")
+                : t("tips.showCountDismissed", { count: hidden.length })}
             </Button>
           </div>
         )}
         {showDismissed &&
-          hidden.map((t) => (
+          hidden.map((tip) => (
             <TipRow
-              key={`d-${t.id}`}
-              tip={t}
+              key={`d-${tip.id}`}
+              tip={tip}
               dismissed
-              onRestore={() => restore(t.id)}
+              onRestore={() => restore(tip.id)}
               onChat={openChat}
             />
           ))}
@@ -547,6 +588,7 @@ function TipRow({
   onRestore?: () => void;
   onChat?: (prompt: string) => void;
 }) {
+  const t = useT();
   const styles: Record<
     Severity,
     { border: string; bg: string; icon: React.ReactNode; iconWrap: string }
@@ -600,17 +642,17 @@ function TipRow({
               className="h-7 px-2 text-xs"
               onClick={() => onChat(tip.chatPrompt!)}
             >
-              <MessageSquare className="size-3" /> Chat
+              <MessageSquare className="size-3" /> {t("tips.chatButton")}
             </Button>
           )}
           {!dismissed && onDismiss && (
             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={onDismiss}>
-              <X className="size-3" /> Dismiss
+              <X className="size-3" /> {t("tips.dismissButton")}
             </Button>
           )}
           {dismissed && onRestore && (
             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={onRestore}>
-              <Undo2 className="size-3" /> Restore
+              <Undo2 className="size-3" /> {t("tips.restoreButton")}
             </Button>
           )}
         </div>

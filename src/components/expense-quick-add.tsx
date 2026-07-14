@@ -18,6 +18,7 @@ import { parseMemo, parseVoiceMemo, parseReceiptPhoto } from "@/lib/ai-parse.fun
 import { addExpense, addExpensesBulk } from "@/lib/budget.functions";
 
 import { money, fmtDateTime } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
 // Encode a large ArrayBuffer to base64 without blowing the call stack.
 // Spreading a multi-MB Uint8Array into String.fromCharCode hangs the tab.
@@ -35,7 +36,6 @@ import { useCategoryNames } from "@/hooks/use-categories";
 import { LabelsInput } from "@/components/labels-input";
 import { useRecentLabels } from "@/hooks/use-labels";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
-
 
 const DEFAULT_CATEGORIES = [
   "groceries",
@@ -70,18 +70,19 @@ export function ExpenseQuickAdd({
   householdId: string;
   onAdded?: () => void;
 }) {
+  const t = useT();
   return (
     <Tabs defaultValue="manual">
       <TabsList className="mb-4 flex-wrap h-auto">
-        <TabsTrigger value="manual">Manual</TabsTrigger>
+        <TabsTrigger value="manual">{t("expQuick.tabManual")}</TabsTrigger>
         <TabsTrigger value="ai">
-          <Sparkles className="size-3.5 mr-1" /> AI memo
+          <Sparkles className="size-3.5 mr-1" /> {t("expQuick.tabAiMemo")}
         </TabsTrigger>
         <TabsTrigger value="voice">
-          <Mic className="size-3.5 mr-1" /> Voice
+          <Mic className="size-3.5 mr-1" /> {t("expQuick.tabVoice")}
         </TabsTrigger>
         <TabsTrigger value="photo">
-          <Camera className="size-3.5 mr-1" /> Photo
+          <Camera className="size-3.5 mr-1" /> {t("expQuick.tabPhoto")}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="manual">
@@ -121,12 +122,12 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [loading, setLoading] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestAmount, setSuggestAmount] = useState(0);
-
+  const t = useT();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const n = parseFloat(amount.replace(",", "."));
-    if (!isFinite(n) || n <= 0) return toast.error("Enter a valid amount");
+    if (!isFinite(n) || n <= 0) return toast.error(t("expQuick.invalidAmount"));
     setLoading(true);
     try {
       const occurredIso =
@@ -151,136 +152,143 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       setLabels([]);
       setCustomDate(false);
       setOccurredAt(nowLocal());
-      toast.success(kind === "income" ? "Money received added" : "Expense added");
+      toast.success(
+        kind === "income" ? t("expQuick.moneyReceivedAdded") : t("expQuick.expenseAdded"),
+      );
       onAdded?.();
       if (kind === "income") {
         setSuggestAmount(n);
         setSuggestOpen(true);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
     } finally {
       setLoading(false);
     }
   }
 
-
   return (
     <>
-    <form onSubmit={submit} className="space-y-3">
-      <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
-        <button
-          type="button"
-          onClick={() => {
-            setKind("expense");
-            setCategory("groceries");
-          }}
-          className={`px-3 py-1.5 text-sm rounded ${kind === "expense" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-        >
-          Expense
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setKind("income");
-            setCategory("gifts");
-          }}
-          className={`px-3 py-1.5 text-sm rounded ${kind === "income" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-        >
-          Money received
-        </button>
-      </div>
-      {kind === "income" && (
-        <p className="text-xs text-muted-foreground">
-          For salary payments, use the <span className="font-medium">Salary received</span> button
-          on the dashboard instead — it starts a new pay cycle.
-        </p>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div>
-          <Label>Amount (€)</Label>
-          <Input
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-          />
+      <form onSubmit={submit} className="space-y-3">
+        <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
+          <button
+            type="button"
+            onClick={() => {
+              setKind("expense");
+              setCategory("groceries");
+            }}
+            className={`px-3 py-1.5 text-sm rounded ${kind === "expense" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          >
+            {t("expQuick.kindExpense")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setKind("income");
+              setCategory("gifts");
+            }}
+            className={`px-3 py-1.5 text-sm rounded ${kind === "income" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          >
+            {t("expQuick.kindIncome")}
+          </button>
         </div>
-        <div>
-          <Label>Category</Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{kind === "income" ? "From" : "Merchant"}</Label>
-          <Input
-            value={merchant}
-            onChange={(e) => setMerchant(e.target.value)}
-            placeholder={kind === "income" ? "e.g. Grandma" : "e.g. Lidl"}
-          />
-        </div>
-        <div className="flex items-end">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <>
-                <Plus /> Add
-              </>
-            )}
-          </Button>
-        </div>
-        <div className="md:col-span-2">
-          <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none mb-2">
-            <input
-              type="checkbox"
-              checked={customDate}
-              onChange={(e) => setCustomDate(e.target.checked)}
-              className="accent-primary size-4"
-            />
-            <span>
-              Set custom date & time{" "}
-              {!customDate && <span className="text-muted-foreground">(defaults to now)</span>}
-            </span>
-          </label>
-          {customDate && (
+        {kind === "income" && (
+          <p className="text-xs text-muted-foreground">
+            {t("expQuick.salaryHint", { label: t("expQuick.salaryReceivedLabel") })}
+          </p>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <Label>{t("expQuick.amountLabel")}</Label>
             <Input
-              type="datetime-local"
-              value={occurredAt}
-              onChange={(e) => setOccurredAt(e.target.value)}
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
             />
-          )}
+          </div>
+          <div>
+            <Label>{t("expQuick.categoryLabel")}</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>
+              {kind === "income" ? t("expQuick.fromLabel") : t("expQuick.merchantLabel")}
+            </Label>
+            <Input
+              value={merchant}
+              onChange={(e) => setMerchant(e.target.value)}
+              placeholder={
+                kind === "income"
+                  ? t("expQuick.fromPlaceholder")
+                  : t("expQuick.merchantPlaceholder")
+              }
+            />
+          </div>
+          <div className="flex items-end">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <>
+                  <Plus /> {t("expQuick.add")}
+                </>
+              )}
+            </Button>
+          </div>
+          <div className="md:col-span-2">
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none mb-2">
+              <input
+                type="checkbox"
+                checked={customDate}
+                onChange={(e) => setCustomDate(e.target.checked)}
+                className="accent-primary size-4"
+              />
+              <span>
+                {t("expQuick.customDateLabel")}{" "}
+                {!customDate && (
+                  <span className="text-muted-foreground">{t("expQuick.defaultsToNow")}</span>
+                )}
+              </span>
+            </label>
+            {customDate && (
+              <Input
+                type="datetime-local"
+                value={occurredAt}
+                onChange={(e) => setOccurredAt(e.target.value)}
+              />
+            )}
+          </div>
+          <div className="md:col-span-2">
+            <Label>{t("expQuick.noteLabel")}</Label>
+            <Input value={note} onChange={(e) => setNote(e.target.value)} />
+          </div>
+          <div className="md:col-span-4">
+            <Label>{t("expQuick.labelsLabel")}</Label>
+            <LabelsInput value={labels} onChange={setLabels} suggestions={recentLabels} />
+          </div>
         </div>
-        <div className="md:col-span-2">
-          <Label>Note (optional)</Label>
-          <Input value={note} onChange={(e) => setNote(e.target.value)} />
-        </div>
-        <div className="md:col-span-4">
-          <Label>Labels (optional)</Label>
-          <LabelsInput value={labels} onChange={setLabels} suggestions={recentLabels} />
-        </div>
-      </div>
-    </form>
-    <IncomeAllocationSuggestion
-      householdId={householdId}
-      amount={suggestAmount}
-      open={suggestOpen}
-      onOpenChange={setSuggestOpen}
-    />
+      </form>
+      <IncomeAllocationSuggestion
+        householdId={householdId}
+        amount={suggestAmount}
+        open={suggestOpen}
+        onOpenChange={setSuggestOpen}
+      />
     </>
   );
 }
-
 
 function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const parse = useServerFn(parseMemo);
@@ -288,6 +296,7 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [text, setText] = useState("");
   const [items, setItems] = useState<Parsed[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const t = useT();
 
   async function doParse() {
     if (!text.trim()) return;
@@ -296,7 +305,7 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       const res = await parse({ data: { text, householdId } });
       setItems(res.items);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Parsing failed");
+      toast.error(err instanceof Error ? err.message : t("expQuick.parsingFailed"));
     } finally {
       setLoading(false);
     }
@@ -319,12 +328,16 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           })),
         },
       });
-      toast.success(`Added ${items.length} expense${items.length === 1 ? "" : "s"}`);
+      toast.success(
+        items.length === 1
+          ? t("expQuick.addedExpenseSingular")
+          : t("expQuick.addedExpensesPlural", { count: items.length }),
+      );
       setItems(null);
       setText("");
       onAdded?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
     } finally {
       setLoading(false);
     }
@@ -333,14 +346,15 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   return (
     <div className="space-y-3">
       <Textarea
-        placeholder='e.g. "Spent 42€ at Lidl for groceries yesterday, and 18€ on lunch today"'
+        placeholder={t("expQuick.aiPlaceholder")}
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={3}
       />
       {!items ? (
         <Button onClick={doParse} disabled={loading || !text.trim()}>
-          {loading ? <Loader2 className="animate-spin" /> : <Sparkles />} Parse with AI
+          {loading ? <Loader2 className="animate-spin" /> : <Sparkles />}{" "}
+          {t("expQuick.parseWithAi")}
         </Button>
       ) : (
         <ParsedReview
@@ -365,6 +379,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
   const [loading, setLoading] = useState(false);
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const t = useT();
 
   async function start() {
     try {
@@ -386,7 +401,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
           setTranscript(res.transcript);
           setItems(res.items);
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Voice parsing failed");
+          toast.error(err instanceof Error ? err.message : t("expQuick.voiceParsingFailed"));
         } finally {
           setLoading(false);
         }
@@ -395,7 +410,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
       recRef.current = rec;
       setRecording(true);
     } catch {
-      toast.error("Microphone permission needed");
+      toast.error(t("expQuick.micPermissionNeeded"));
     }
   }
 
@@ -421,12 +436,16 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
           })),
         },
       });
-      toast.success(`Added ${items.length} expense${items.length === 1 ? "" : "s"}`);
+      toast.success(
+        items.length === 1
+          ? t("expQuick.addedExpenseSingular")
+          : t("expQuick.addedExpensesPlural", { count: items.length }),
+      );
       setItems(null);
       setTranscript("");
       onAdded?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
     } finally {
       setLoading(false);
     }
@@ -437,21 +456,23 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
       <div className="flex items-center gap-3">
         {!recording ? (
           <Button onClick={start} disabled={loading}>
-            <Mic /> Start recording
+            <Mic /> {t("expQuick.startRecording")}
           </Button>
         ) : (
           <Button onClick={stop} variant="destructive">
-            <MicOff /> Stop & parse
+            <MicOff /> {t("expQuick.stopAndParse")}
           </Button>
         )}
         {loading && <Loader2 className="animate-spin text-muted-foreground" />}
         {recording && (
-          <span className="text-sm text-muted-foreground animate-pulse">Listening…</span>
+          <span className="text-sm text-muted-foreground animate-pulse">
+            {t("expQuick.listening")}
+          </span>
         )}
       </div>
       {transcript && (
         <div className="text-sm bg-muted/50 rounded-md p-3">
-          <p className="text-xs uppercase text-muted-foreground mb-1">Transcript</p>
+          <p className="text-xs uppercase text-muted-foreground mb-1">{t("expQuick.transcript")}</p>
           <p>{transcript}</p>
         </div>
       )}
@@ -489,6 +510,7 @@ function ParsedReview({
 }) {
   const { names: hhCats } = useCategoryNames(householdId);
   const catOptions = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
+  const t = useT();
   function update(idx: number, patch: Partial<Parsed>) {
     setItems(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
@@ -497,13 +519,14 @@ function ParsedReview({
   }
 
   if (!items.length)
-    return <p className="text-sm text-muted-foreground">Nothing detected. Try rephrasing.</p>;
-
+    return <p className="text-sm text-muted-foreground">{t("expQuick.nothingDetected")}</p>;
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Review {items.length} parsed expense{items.length === 1 ? "" : "s"}:
+        {items.length === 1
+          ? t("expQuick.reviewOneExpense")
+          : t("expQuick.reviewExpenses", { count: items.length })}
       </p>
       <div className="space-y-2">
         {items.map((it, i) => (
@@ -544,11 +567,13 @@ function ParsedReview({
       </div>
       <div className="flex gap-2">
         <Button onClick={onConfirm} disabled={loading || !items.length}>
-          {loading ? <Loader2 className="animate-spin" /> : null} Confirm & save (
-          {money(items.reduce((s, i) => s + i.amount, 0))})
+          {loading ? <Loader2 className="animate-spin" /> : null}{" "}
+          {t("expQuick.confirmAndSave", {
+            amount: money(items.reduce((s, i) => s + i.amount, 0)),
+          })}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
-          Cancel
+          {t("expQuick.cancel")}
         </Button>
       </div>
     </div>
@@ -564,6 +589,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
   const [base64, setBase64] = useState<string>("");
   const [items, setItems] = useState<Parsed[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const t = useT();
 
   function clear() {
     setPreview(null);
@@ -576,8 +602,8 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("image/")) return toast.error("Please pick an image");
-    if (f.size > 8 * 1024 * 1024) return toast.error("Image too large (max 8MB)");
+    if (!f.type.startsWith("image/")) return toast.error(t("expQuick.pickImage"));
+    if (f.size > 8 * 1024 * 1024) return toast.error(t("expQuick.imageTooLarge"));
     const buf = await f.arrayBuffer();
     const b64 = bufferToBase64(buf);
     setBase64(b64);
@@ -593,7 +619,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
       const res = await parse({ data: { image_base64: base64, mime_type: mime, householdId } });
       setItems(res.items);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Photo parsing failed");
+      toast.error(err instanceof Error ? err.message : t("expQuick.photoParsingFailed"));
     } finally {
       setLoading(false);
     }
@@ -616,11 +642,15 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
           })),
         },
       });
-      toast.success(`Added ${items.length} expense${items.length === 1 ? "" : "s"}`);
+      toast.success(
+        items.length === 1
+          ? t("expQuick.addedExpenseSingular")
+          : t("expQuick.addedExpensesPlural", { count: items.length }),
+      );
       clear();
       onAdded?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
     } finally {
       setLoading(false);
     }
@@ -639,12 +669,9 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
             onChange={onFile}
           />
           <Button onClick={() => inputRef.current?.click()} variant="outline">
-            <Camera /> Take or upload receipt photo
+            <Camera /> {t("expQuick.takeOrUploadPhoto")}
           </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            The AI reads the total, merchant and date from a receipt or bill photo. Review before
-            saving.
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">{t("expQuick.photoHint")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -654,7 +681,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
               type="button"
               onClick={clear}
               className="absolute top-1 right-1 rounded-full bg-background/90 border p-1 hover:bg-background"
-              aria-label="Remove"
+              aria-label={t("expQuick.removeAria")}
             >
               <X className="size-3.5" />
             </button>
@@ -662,10 +689,11 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
           {!items ? (
             <div className="flex gap-2">
               <Button onClick={doParse} disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : <Sparkles />} Parse receipt
+                {loading ? <Loader2 className="animate-spin" /> : <Sparkles />}{" "}
+                {t("expQuick.parseReceipt")}
               </Button>
               <Button variant="ghost" onClick={clear} disabled={loading}>
-                Cancel
+                {t("expQuick.cancel")}
               </Button>
             </div>
           ) : (

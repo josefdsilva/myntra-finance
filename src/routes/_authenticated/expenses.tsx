@@ -145,7 +145,7 @@ function ExpensesPage() {
 
   async function remove(id: string) {
     await del({ data: { id } });
-    toast.success("Removed");
+    toast.success(t("exp.removedToast"));
     refetch();
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   }
@@ -248,10 +248,10 @@ function ExpensesPage() {
               {recentLabels.length > 0 && (
                 <Select value={labelFilter} onValueChange={setLabelFilter}>
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="All labels" />
+                    <SelectValue placeholder={t("exp.allLabels")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All labels</SelectItem>
+                    <SelectItem value="all">{t("exp.allLabels")}</SelectItem>
                     {recentLabels.map((l) => (
                       <SelectItem key={l} value={l}>
                         {l}
@@ -276,7 +276,7 @@ function ExpensesPage() {
                       <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
                       <p className="text-xs text-muted-foreground">
                         {fmtDateTime(e.occurred_at)} · {e.category}
-                        {isIncome ? " · received" : ""} ·{" "}
+                        {isIncome ? t("exp.receivedSuffix") : ""} ·{" "}
                         <span className="capitalize">{e.source.replace("_", " ")}</span>
                       </p>
                       {e.note && (e.merchant || e.category) && e.note !== e.merchant && (
@@ -292,7 +292,7 @@ function ExpensesPage() {
                               type="button"
                               onClick={() => setLabelFilter(l)}
                               className="text-[10px] rounded-full bg-primary/10 text-primary px-2 py-0.5 hover:bg-primary/20"
-                              title={`Filter by "${l}"`}
+                              title={t("exp.filterByLabel", { label: l })}
                             >
                               {l}
                             </button>
@@ -327,6 +327,7 @@ type ParsedItem = {
 };
 
 function BankImport({ householdId, onImported }: { householdId: string; onImported: () => void }) {
+  const t = useT();
   const parse = useServerFn(parseBankStatement);
   const bulk = useServerFn(addExpensesBulk);
   const ref = useRef<HTMLInputElement>(null);
@@ -339,7 +340,7 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
     if (!parsed.length) return { flags: [] as boolean[] };
     const times = parsed
       .map((p) => (p.occurred_at ? new Date(p.occurred_at).getTime() : NaN))
-      .filter((t) => !isNaN(t));
+      .filter((tms) => !isNaN(tms));
     const minT = times.length ? Math.min(...times) : Date.now();
     const maxT = times.length ? Math.max(...times) : Date.now();
     const from = new Date(minT - 2 * 86400_000).toISOString();
@@ -373,7 +374,7 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.size > 10 * 1024 * 1024) return toast.error("File too large (max 10MB)");
+    if (f.size > 10 * 1024 * 1024) return toast.error(t("exp.fileTooLarge"));
     setLoading(true);
     try {
       const buf = await f.arrayBuffer();
@@ -392,11 +393,14 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
       setDupFlags(flags);
       setSelected(flags.map((isDup) => !isDup));
       const dupCount = flags.filter(Boolean).length;
-      toast.success(
-        `Parsed ${parsed.length} transactions${dupCount ? ` — ${dupCount} likely duplicate${dupCount === 1 ? "" : "s"} unchecked` : ""}`,
-      );
+      const dupNote = !dupCount
+        ? ""
+        : dupCount === 1
+          ? t("exp.dupCountSingular")
+          : t("exp.dupCountPlural", { count: dupCount });
+      toast.success(t("exp.parsedTransactions", { count: parsed.length }) + dupNote);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Parse failed");
+      toast.error(err instanceof Error ? err.message : t("exp.parseFailed"));
     } finally {
       setLoading(false);
       if (ref.current) ref.current.value = "";
@@ -406,7 +410,7 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
   async function confirmImport() {
     if (!items?.length) return;
     const toImport = items.filter((_, i) => selected[i]);
-    if (!toImport.length) return toast.error("Nothing selected");
+    if (!toImport.length) return toast.error(t("exp.nothingSelected"));
     setLoading(true);
     try {
       await bulk({
@@ -423,13 +427,14 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
         },
       });
       const skipped = items.length - toImport.length;
-      toast.success(`Imported ${toImport.length}${skipped ? ` · skipped ${skipped}` : ""}`);
+      const skippedNote = skipped ? t("exp.skippedCount", { count: skipped }) : "";
+      toast.success(t("exp.importedCount", { count: toImport.length }) + skippedNote);
       setItems(null);
       setSelected([]);
       setDupFlags([]);
       onImported();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Import failed");
+      toast.error(err instanceof Error ? err.message : t("exp.importFailed"));
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/invite/$token")({
   head: () => ({ meta: [{ title: "Join household" }] }),
@@ -18,6 +19,7 @@ function InvitePage() {
   const navigate = useNavigate();
   const accept = useServerFn(acceptInvite);
   const [state, setState] = useState<"loading" | "auth" | "ready" | "joining">("loading");
+  const t = useT();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -33,10 +35,10 @@ function InvitePage() {
     setState("joining");
     try {
       await accept({ data: { token } });
-      toast.success("Joined household!");
+      toast.success(t("invite.joinedToast"));
       navigate({ to: "/" });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to join");
+      toast.error(e instanceof Error ? e.message : t("invite.failedToast"));
       setState("ready");
     }
   }
@@ -45,20 +47,20 @@ function InvitePage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <Card className="max-w-md w-full">
         <CardHeader>
-          <CardTitle>Household invitation</CardTitle>
+          <CardTitle>{t("invite.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {state === "loading" && <Loader2 className="animate-spin mx-auto" />}
           {state === "auth" && (
             <>
-              <p>Sign in or create an account first, then come back to this link.</p>
-              <Button onClick={() => navigate({ to: "/auth" })}>Go to sign-in</Button>
+              <p>{t("invite.signInFirst")}</p>
+              <Button onClick={() => navigate({ to: "/auth" })}>{t("invite.goToSignIn")}</Button>
             </>
           )}
           {state === "ready" && (
             <>
-              <p>You've been invited to join a household. Accept to share the budget.</p>
-              <Button onClick={join}>Accept invitation</Button>
+              <p>{t("invite.readyBody")}</p>
+              <Button onClick={join}>{t("invite.acceptInvitation")}</Button>
             </>
           )}
           {state === "joining" && <Loader2 className="animate-spin mx-auto" />}
