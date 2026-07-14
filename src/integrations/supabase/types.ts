@@ -232,6 +232,38 @@ export type Database = {
           },
         ]
       }
+      cycle_reports: {
+        Row: {
+          cycle_start: string
+          generated_at: string
+          household_id: string
+          model: string | null
+          narrative: string
+        }
+        Insert: {
+          cycle_start: string
+          generated_at?: string
+          household_id: string
+          model?: string | null
+          narrative: string
+        }
+        Update: {
+          cycle_start?: string
+          generated_at?: string
+          household_id?: string
+          model?: string | null
+          narrative?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cycle_reports_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       debts: {
         Row: {
           created_at: string

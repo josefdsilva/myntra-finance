@@ -69,3 +69,53 @@ export function computeCycle(salaryDatesDesc: string[], now = new Date()): Cycle
     predicted,
   };
 }
+
+export type CycleSpan = { start: Date; end: Date; predicted: boolean };
+
+/**
+ * Build the full list of pay cycles (oldest first) from ascending salary dates.
+ * Every cycle except the last is "closed" (bounded by two real salary events);
+ * the last one is the ongoing cycle with a predicted end. Same algorithm used
+ * by the Analysis page's burndown range picker, extracted here so other
+ * features (e.g. the cycle report) can build the same list without
+ * duplicating the interval-prediction logic.
+ */
+export function buildCyclesFromSalaries(salaryDatesAsc: string[]): CycleSpan[] {
+  const out: CycleSpan[] = [];
+  if (!salaryDatesAsc.length) return out;
+  for (let i = 0; i < salaryDatesAsc.length; i++) {
+    const start = new Date(salaryDatesAsc[i]);
+    let end: Date;
+    let predicted = false;
+    if (i < salaryDatesAsc.length - 1) {
+      end = new Date(salaryDatesAsc[i + 1]);
+    } else {
+      predicted = true;
+      if (i >= 1) {
+        const prev = new Date(salaryDatesAsc[i - 1]);
+        const diff = start.getTime() - prev.getTime();
+        const days = Math.round(diff / 86400000);
+        end =
+          days >= 20 && days <= 45
+            ? new Date(start.getTime() + diff)
+            : new Date(
+                start.getFullYear(),
+                start.getMonth() + 1,
+                start.getDate(),
+                start.getHours(),
+                start.getMinutes(),
+              );
+      } else {
+        end = new Date(
+          start.getFullYear(),
+          start.getMonth() + 1,
+          start.getDate(),
+          start.getHours(),
+          start.getMinutes(),
+        );
+      }
+    }
+    out.push({ start, end, predicted });
+  }
+  return out;
+}

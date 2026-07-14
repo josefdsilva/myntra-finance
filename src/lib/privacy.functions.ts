@@ -40,6 +40,7 @@ export const exportMyData = createServerFn({ method: "POST" })
         | "expenses"
         | "bank_imports"
         | "analysis_overviews"
+        | "cycle_reports"
         | "credit_usage"
         | "notification_prefs"
         | "notification_log",
@@ -63,6 +64,7 @@ export const exportMyData = createServerFn({ method: "POST" })
       expenses,
       bankImports,
       analysisOverviews,
+      cycleReports,
       creditUsage,
       notificationPrefs,
       notificationLog,
@@ -79,6 +81,7 @@ export const exportMyData = createServerFn({ method: "POST" })
       fetchAll("expenses"),
       fetchAll("bank_imports"),
       fetchAll("analysis_overviews"),
+      fetchAll("cycle_reports"),
       fetchAll("credit_usage"),
       fetchAll("notification_prefs"),
       fetchAll("notification_log"),
@@ -106,6 +109,7 @@ export const exportMyData = createServerFn({ method: "POST" })
         expenses,
         bankImports,
         analysisOverviews,
+        cycleReports,
         creditUsage,
         notificationPrefs,
         notificationLog,
