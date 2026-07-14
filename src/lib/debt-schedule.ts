@@ -1,6 +1,8 @@
+import { differenceInCalendarMonths } from "date-fns";
 import {
   monthlyRateFromTaeg,
   monthlyRateFromNominalTan,
+  installmentFor,
   scheduleSummary,
   applyOverpayment,
   type ScheduleSummary,
@@ -27,18 +29,48 @@ export function debtAnchorDate(debt: Debt): Date {
   return new Date(debt.last_recompute_at ?? debt.opened_at ?? debt.created_at);
 }
 
+/**
+ * The installment that drives the schedule. A user-set `maturity_date` is
+ * authoritative: we derive the installment that clears the principal by that
+ * date, so payoff/interest stay consistent with what the user configured.
+ * Falls back to the stored monthly amount when there's no maturity.
+ */
+export function effectiveInstallment(
+  debt: Debt,
+  principal: number,
+  monthlyRate: number,
+  anchor: Date,
+): number {
+  if (debt.maturity_date) {
+    const term = differenceInCalendarMonths(new Date(debt.maturity_date), anchor);
+    if (term > 0) {
+      const derived = installmentFor(principal, monthlyRate, term);
+      if (derived > 0) return derived;
+    }
+  }
+  return Number(debt.monthly_amount ?? 0);
+}
+
 /** Live payoff summary for the progress UI, evaluated at `today`. */
 export function debtLiveSchedule(debt: Debt, today: Date = new Date()): ScheduleSummary {
   const anchorPrincipal = Number(debt.principal_remaining ?? debt.starting_principal ?? 0);
   const startingPrincipal = Number(debt.starting_principal ?? debt.principal_remaining ?? 0);
-  return scheduleSummary({
+  const r = debtMonthlyRate(debt);
+  const anchor = debtAnchorDate(debt);
+  const installment = effectiveInstallment(debt, anchorPrincipal, r, anchor);
+  const summary = scheduleSummary({
     principal: anchorPrincipal,
     startingPrincipal,
-    monthlyRate: debtMonthlyRate(debt),
-    installment: Number(debt.monthly_amount ?? 0),
-    anchorDate: debtAnchorDate(debt),
+    monthlyRate: r,
+    installment,
+    anchorDate: anchor,
     today,
   });
+  // Honor the user-defined maturity as the payoff date when present.
+  if (debt.maturity_date && !summary.paidOff) {
+    return { ...summary, payoffDate: new Date(debt.maturity_date) };
+  }
+  return summary;
 }
 
 export type OverpaymentPreview = {
@@ -70,12 +102,13 @@ export function previewOverpayment(
   const balanceBefore = live.remaining;
   const applied = Math.min(amount, balanceBefore);
   const r = debtMonthlyRate(debt);
-  const maturity = debt.maturity_date
-    ? new Date(debt.maturity_date)
-    : (live.payoffDate ?? asOf);
+  const anchor = debtAnchorDate(debt);
+  const anchorPrincipal = Number(debt.principal_remaining ?? debt.starting_principal ?? 0);
+  const installment = effectiveInstallment(debt, anchorPrincipal, r, anchor);
+  const maturity = debt.maturity_date ? new Date(debt.maturity_date) : (live.payoffDate ?? asOf);
 
   const result = applyOverpayment(
-    { principal: balanceBefore, monthlyRate: r, installment: Number(debt.monthly_amount ?? 0), maturityDate: maturity },
+    { principal: balanceBefore, monthlyRate: r, installment, maturityDate: maturity },
     applied,
     mode,
     asOf,
