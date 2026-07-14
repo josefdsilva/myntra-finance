@@ -153,6 +153,10 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       setOccurredAt(nowLocal());
       toast.success(kind === "income" ? "Money received added" : "Expense added");
       onAdded?.();
+      if (kind === "income") {
+        setSuggestAmount(n);
+        setSuggestOpen(true);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
