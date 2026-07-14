@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { money } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { depositToBucket, withdrawFromBucket, transferBetweenBuckets } from "@/lib/movements";
 
 type BucketOption = { id: string; name: string };
@@ -39,6 +40,7 @@ export function MoveFundsDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const [action, setAction] = useState<Action>("deposit");
   const [bucket, setBucket] = useState<string>(buckets[0]?.id ?? "");
@@ -64,48 +66,50 @@ export function MoveFundsDialog({
       return transferBetweenBuckets({ ...common, fromBucketId: bucket, toBucketId: toBucket });
     },
     onSuccess: () => {
-      toast.success("Funds moved.");
+      toast.success(t("move.toastMoved"));
       qc.invalidateQueries();
       onOpenChange(false);
       setAmountStr("");
       setReason("");
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not move funds"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("move.toastFailed")),
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Move funds</DialogTitle>
-          <DialogDescription>Add to, withdraw from, or transfer between projects.</DialogDescription>
+          <DialogTitle>{t("debt.moveFunds")}</DialogTitle>
+          <DialogDescription>{t("move.desc")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs">Action</Label>
+            <Label className="text-xs">{t("move.action")}</Label>
             <Select value={action} onValueChange={(v) => setAction(v as Action)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="deposit">Add funds</SelectItem>
-                <SelectItem value="withdrawal">Withdraw funds</SelectItem>
-                <SelectItem value="transfer">Transfer between projects</SelectItem>
+                <SelectItem value="deposit">{t("move.add")}</SelectItem>
+                <SelectItem value="withdrawal">{t("move.withdraw")}</SelectItem>
+                <SelectItem value="transfer">{t("move.transfer")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">{action === "transfer" ? "From project" : "Project"}</Label>
+            <Label className="text-xs">
+              {action === "transfer" ? t("move.fromProject") : t("move.project")}
+            </Label>
             <Select value={bucket} onValueChange={setBucket}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a project" />
+                <SelectValue placeholder={t("move.selectProject")} />
               </SelectTrigger>
               <SelectContent>
                 {buckets.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
-                    {b.name} ({money(bucketBalances[b.id] ?? 0)})
+                    {t("debt.projectOption", { name: b.name, balance: money(bucketBalances[b.id] ?? 0) })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -114,10 +118,10 @@ export function MoveFundsDialog({
 
           {action === "transfer" && (
             <div className="space-y-1.5">
-              <Label className="text-xs">To project</Label>
+              <Label className="text-xs">{t("move.toProject")}</Label>
               <Select value={toBucket} onValueChange={setToBucket}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a project" />
+                  <SelectValue placeholder={t("move.selectProject")} />
                 </SelectTrigger>
                 <SelectContent>
                   {buckets
@@ -133,7 +137,7 @@ export function MoveFundsDialog({
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Amount</Label>
+            <Label className="text-xs">{t("debt.amount")}</Label>
             <Input
               type="number"
               inputMode="decimal"
@@ -144,23 +148,27 @@ export function MoveFundsDialog({
             />
             {fundsShort && (
               <p className="text-xs text-destructive">
-                Only {money(sourceBalance)} available in that project.
+                {t("move.onlyAvailable", { amount: money(sourceBalance) })}
               </p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Reason (optional)</Label>
-            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. rebalancing" />
+            <Label className="text-xs">{t("move.reasonOptional")}</Label>
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={t("move.reasonPlaceholder")}
+            />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("debt.cancel")}
           </Button>
           <Button disabled={!canSubmit || mut.isPending} onClick={() => mut.mutate()}>
-            {mut.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Confirm
+            {mut.isPending ? <Loader2 className="size-4 animate-spin" /> : null} {t("move.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

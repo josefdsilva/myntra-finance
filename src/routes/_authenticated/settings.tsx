@@ -1182,7 +1182,8 @@ function DebtsSection({ householdId }: { householdId: string }) {
       <CardHeader>
         <CardTitle>Debt</CardTitle>
         <CardDescription>
-          Loans and credit lines with an interest rate (TAEG) and maturity. Counted alongside fixed
+          Loans and credit lines with an interest rate ({t("settings.debtRateLabel")}) and maturity.
+          Counted alongside fixed
           expenses in your monthly baseline. Total:{" "}
           <span className="font-medium text-foreground">{money(total)}</span>
           {principalTotal > 0 && (
@@ -1203,7 +1204,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
                 <p className="truncate">{r.label}</p>
                 <p className="text-xs text-muted-foreground">
                   {DEBT_KINDS.find((k) => k.value === r.kind)?.label ?? r.kind}
-                  {r.taeg_pct != null && ` · TAEG ${Number(r.taeg_pct).toFixed(2)}%`}
+                  {r.taeg_pct != null && ` · ${t("debt.apr", { pct: Number(r.taeg_pct).toFixed(2) })}`}
                   {r.principal_remaining != null &&
                     ` · principal ${money(Number(r.principal_remaining))}`}
                   {r.maturity_date && ` · until ${r.maturity_date}`}
@@ -1258,7 +1259,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
             />
           </div>
           <div>
-            <Label className="text-xs">TAEG %</Label>
+            <Label className="text-xs">{t("settings.debtRateLabel")} %</Label>
             <Input
               inputMode="decimal"
               placeholder="e.g. 4.25"

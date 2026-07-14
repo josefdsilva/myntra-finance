@@ -22,6 +22,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2 } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { serviceDebt, type RecomputeMode } from "@/lib/movements";
 import { previewOverpayment, type Debt } from "@/lib/debt-schedule";
 
@@ -42,6 +43,7 @@ export function OverpaymentDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const [amountStr, setAmountStr] = useState("");
   const [source, setSource] = useState<"cash" | "bucket">("cash");
@@ -74,29 +76,29 @@ export function OverpaymentDialog({
       }),
     onSuccess: () => {
       toast.success(
-        preview?.paidOff ? "Debt paid off in full." : `Paid ${money(amount)} toward ${debt.label}.`,
+        preview?.paidOff
+          ? t("debt.toastPaidOff")
+          : t("debt.toastPaid", { amount: money(amount), label: debt.label }),
       );
       qc.invalidateQueries();
       onOpenChange(false);
       setAmountStr("");
       setReason("");
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Payment failed"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("debt.toastFailed")),
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Pay down {debt.label}</DialogTitle>
-          <DialogDescription>
-            An overpayment goes entirely to principal, then the schedule is recalculated.
-          </DialogDescription>
+          <DialogTitle>{t("debt.payDownTitle", { label: debt.label })}</DialogTitle>
+          <DialogDescription>{t("debt.overpayDesc")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs">Amount</Label>
+            <Label className="text-xs">{t("debt.amount")}</Label>
             <Input
               type="number"
               inputMode="decimal"
@@ -108,7 +110,7 @@ export function OverpaymentDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Pay from</Label>
+            <Label className="text-xs">{t("debt.payFrom")}</Label>
             <Select
               value={source === "cash" ? "cash" : sourceBucket || "cash"}
               onValueChange={(v) => {
@@ -125,60 +127,65 @@ export function OverpaymentDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cash">Cash / this cycle</SelectItem>
+                <SelectItem value="cash">{t("debt.cashOption")}</SelectItem>
                 {buckets.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
-                    {b.name} ({money(bucketBalances[b.id] ?? 0)})
+                    {t("debt.projectOption", { name: b.name, balance: money(bucketBalances[b.id] ?? 0) })}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {fundsShort && (
-              <p className="text-xs text-destructive">Not enough balance in that project.</p>
-            )}
+            {fundsShort && <p className="text-xs text-destructive">{t("debt.notEnough")}</p>}
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">After the overpayment</Label>
+            <Label className="text-xs">{t("debt.afterOverpay")}</Label>
             <RadioGroup value={mode} onValueChange={(v) => setMode(v as RecomputeMode)}>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <RadioGroupItem value="reduce_installment" /> Lower the monthly payment
+                <RadioGroupItem value="reduce_installment" /> {t("debt.reduceInstallment")}
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <RadioGroupItem value="shorten_term" /> Keep the payment, finish sooner
+                <RadioGroupItem value="shorten_term" /> {t("debt.shortenTerm")}
               </label>
             </RadioGroup>
           </div>
 
           {preview && (
             <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
-              <Row label="Balance now" value={money(preview.balanceBefore)} />
-              <Row label="After payment" value={money(preview.newPrincipal)} />
+              <Row label={t("debt.balanceNow")} value={money(preview.balanceBefore)} />
+              <Row label={t("debt.afterPayment")} value={money(preview.newPrincipal)} />
               {preview.paidOff ? (
-                <p className="text-emerald-600 font-medium">This clears the debt in full.</p>
+                <p className="text-emerald-600 font-medium">{t("debt.clearsFull")}</p>
               ) : mode === "reduce_installment" ? (
                 <Row
-                  label="New monthly"
-                  value={`${money(preview.newInstallment)} (was ${money(Number(debt.monthly_amount))})`}
+                  label={t("debt.newMonthly")}
+                  value={t("debt.newMonthlyValue", {
+                    value: money(preview.newInstallment),
+                    old: money(Number(debt.monthly_amount)),
+                  })}
                 />
               ) : (
-                <Row label="New payoff date" value={fmtDate(preview.newMaturity)} />
+                <Row label={t("debt.newPayoff")} value={fmtDate(preview.newMaturity)} />
               )}
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Note (optional)</Label>
-            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. bonus" />
+            <Label className="text-xs">{t("debt.noteOptional")}</Label>
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={t("debt.notePlaceholder")}
+            />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("debt.cancel")}
           </Button>
           <Button disabled={!canSubmit || mut.isPending} onClick={() => mut.mutate()}>
-            {mut.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Pay
+            {mut.isPending ? <Loader2 className="size-4 animate-spin" /> : null} {t("debt.pay")}
           </Button>
         </DialogFooter>
       </DialogContent>

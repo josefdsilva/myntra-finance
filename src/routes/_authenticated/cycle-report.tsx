@@ -411,25 +411,27 @@ function CycleReportPage() {
           {stats.debtPayments.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Debt payments this cycle</CardTitle>
+                <CardTitle>{t("cycleReport.debtPaymentsTitle")}</CardTitle>
                 <CardDescription>
-                  {money(stats.debtPaidTotal)} put toward your debts.
+                  {t("cycleReport.debtPaymentsDesc", { amount: money(stats.debtPaidTotal) })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Debt</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>{t("cycleReport.debtHeader")}</TableHead>
+                      <TableHead>{t("cycleReport.sourceHeader")}</TableHead>
+                      <TableHead className="text-right">{t("cycleReport.amountHeader")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {stats.debtPayments.map((p, i) => (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{p.label}</TableCell>
-                        <TableCell className="text-muted-foreground capitalize">{p.source}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {t(p.source === "cash" ? "cycleReport.sourceCash" : "cycleReport.sourceProject")}
+                        </TableCell>
                         <TableCell className="text-right tabular-nums">{money(p.amount)}</TableCell>
                       </TableRow>
                     ))}
