@@ -340,6 +340,7 @@ export type Database = {
           id: string
           kind: string
           label: string
+          deduced_rate_pct: number | null
           last_recompute_at: string | null
           maturity_date: string | null
           monthly_amount: number
@@ -358,6 +359,7 @@ export type Database = {
           id?: string
           kind?: string
           label: string
+          deduced_rate_pct?: number | null
           last_recompute_at?: string | null
           maturity_date?: string | null
           monthly_amount?: number
@@ -376,6 +378,7 @@ export type Database = {
           id?: string
           kind?: string
           label?: string
+          deduced_rate_pct?: number | null
           last_recompute_at?: string | null
           maturity_date?: string | null
           monthly_amount?: number

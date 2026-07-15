@@ -9,6 +9,7 @@ import {
   scheduleSummary,
   applyOverpayment,
   reconcileDebtInputs,
+  impliedAnnualRate,
 } from "./amortization";
 
 const near = (a: number, b: number, tol = 0.5) => Math.abs(a - b) <= tol;
@@ -106,6 +107,22 @@ test("overpaying the full balance clears the debt", () => {
   expect(res.paidOff).toBe(true);
   expect(res.principal).toBe(0);
   expect(res.installment).toBe(0);
+});
+
+test("impliedAnnualRate inverts the installment (round-trip)", () => {
+  // 10,000 at 6% effective over 24 months → 442.49/mo; solving should recover 6%.
+  const rate = impliedAnnualRate(10000, M6, 24);
+  expect(rate).not.toBeNull();
+  expect(near(rate as number, 6, 0.05)).toBe(true);
+});
+
+test("impliedAnnualRate returns 0 for an interest-free schedule", () => {
+  expect(impliedAnnualRate(1200, 100, 12)).toBe(0);
+});
+
+test("impliedAnnualRate returns null when payments can't cover the principal", () => {
+  // 300/mo × 24 = 7,200 < 10,000 principal → no non-negative rate works.
+  expect(impliedAnnualRate(10000, 300, 24)).toBeNull();
 });
 
 test("reconcileDebtInputs derives the missing field both ways", () => {

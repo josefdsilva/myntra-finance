@@ -173,6 +173,54 @@ export function applyOverpayment(
 }
 
 /**
+ * Solve for the annual EFFECTIVE rate implied by a principal, a fixed monthly
+ * installment, and a term — i.e. the rate that makes those three consistent.
+ * There is no closed form, so this bisects on the monthly rate.
+ *
+ * Returns the annual effective rate as a percent (e.g. 5.25), or null when no
+ * non-negative rate can amortize the principal over the term (the installment is
+ * lower than principal / term, so total payments fall short of the principal).
+ */
+export function impliedAnnualRate(
+  principal: number,
+  installment: number,
+  termMonths: number,
+): number | null {
+  if (principal <= 0 || installment <= 0 || termMonths <= 0) return null;
+
+  const zeroRateInstallment = principal / termMonths;
+  if (installment < zeroRateInstallment - 1e-9) return null; // can't amortize, even at 0%
+  if (Math.abs(installment - zeroRateInstallment) < 1e-9) return 0;
+
+  const f = (r: number) => installmentFor(principal, r, termMonths) - installment;
+
+  // Bracket the root: installmentFor is increasing in r.
+  let lo = 0;
+  let hi = 0.02; // ~26.8% annual effective, a sane starting ceiling
+  let guard = 0;
+  while (f(hi) < 0 && hi < 1 && guard < 64) {
+    hi *= 2;
+    guard += 1;
+  }
+  if (f(hi) < 0) return null; // rate absurdly high — treat as unsolvable
+
+  for (let i = 0; i < 100; i += 1) {
+    const mid = (lo + hi) / 2;
+    const v = f(mid);
+    if (Math.abs(v) < 1e-7) {
+      lo = mid;
+      hi = mid;
+      break;
+    }
+    if (v < 0) lo = mid;
+    else hi = mid;
+  }
+  const r = (lo + hi) / 2;
+  const annualEffectivePct = (Math.pow(1 + r, 12) - 1) * 100;
+  return Math.round(annualEffectivePct * 10000) / 10000; // 4 dp
+}
+
+/**
  * Derive the missing field at debt-creation time. Given principal + monthly rate
  * and exactly one of { term months, installment }, compute the other.
  */

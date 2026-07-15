@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { differenceInCalendarMonths } from "date-fns";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { impliedAnnualRate } from "@/lib/amortization";
 import { z } from "zod";
 
 const expenseInput = z.object({
@@ -345,10 +347,23 @@ export const upsertDebt = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { id, ...payload } = data;
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    // Deduce the annual effective rate from principal + monthly + (today → maturity).
+    // Re-anchor the schedule to today so the rate reflects clearing the remaining
+    // principal by the maturity date. Null when inputs can't amortize.
+    const principal = payload.principal_remaining ?? null;
+    let deduced_rate_pct: number | null = null;
+    if (payload.maturity_date && principal && payload.monthly_amount > 0) {
+      const term = differenceInCalendarMonths(new Date(payload.maturity_date), today);
+      if (term > 0) deduced_rate_pct = impliedAnnualRate(principal, payload.monthly_amount, term);
+    }
+
     if (id) {
       const { data: row, error } = await context.supabase
         .from("debts")
-        .update(payload)
+        .update({ ...payload, deduced_rate_pct, last_recompute_at: todayStr })
         .eq("id", id)
         .select()
         .single();
@@ -357,7 +372,13 @@ export const upsertDebt = createServerFn({ method: "POST" })
     }
     const { data: row, error } = await context.supabase
       .from("debts")
-      .insert(payload)
+      .insert({
+        ...payload,
+        deduced_rate_pct,
+        starting_principal: principal,
+        opened_at: todayStr,
+        last_recompute_at: todayStr,
+      })
       .select()
       .single();
     if (error) throw error;

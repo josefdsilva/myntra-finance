@@ -34,6 +34,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { money } from "@/lib/format";
+import { impliedAnnualRate } from "@/lib/amortization";
+import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
 import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
@@ -1177,6 +1179,18 @@ function DebtsSection({ householdId }: { householdId: string }) {
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
   const principalTotal = (rows ?? []).reduce((s, r) => s + Number(r.principal_remaining ?? 0), 0);
 
+  // Live "deduced rate" preview: solve the annual effective rate from
+  // principal + monthly + months to maturity. This is what the app uses for
+  // payoff/interest — the entered all-in rate is only a reference estimate.
+  const pNum = parseFloat(principal);
+  const mNum = parseFloat(monthly);
+  const termToMaturity = maturity
+    ? differenceInCalendarMonths(new Date(maturity), new Date())
+    : 0;
+  const deducedRate =
+    pNum && mNum && termToMaturity > 0 ? impliedAnnualRate(pNum, mNum, termToMaturity) : null;
+  const deducedUnsolvable = !!(pNum && mNum && termToMaturity > 0 && deducedRate == null);
+
   return (
     <Card>
       <CardHeader>
@@ -1281,6 +1295,19 @@ function DebtsSection({ householdId }: { householdId: string }) {
             <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
           </div>
         </div>
+        {deducedRate != null && (
+          <p className="text-xs text-muted-foreground">
+            Deduced rate (used for payoff calculations):{" "}
+            <span className="font-medium text-foreground">{deducedRate.toFixed(2)}%</span>
+          </p>
+        )}
+        {deducedUnsolvable && (
+          <p className="text-xs text-destructive">
+            These values don&apos;t add up — the monthly payment is too low to clear the principal by
+            that date. Payoff will use your entered rate instead.
+          </p>
+        )}
+
         <div className="flex justify-end">
           <Button onClick={add}>
             <Plus /> Add debt
