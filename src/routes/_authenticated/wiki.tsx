@@ -15,6 +15,7 @@ import {
   Receipt,
   PiggyBank,
   BarChart3,
+  Calculator,
   Settings as SettingsIcon,
   Bell,
   Eye,
@@ -82,12 +83,29 @@ function WikiPage() {
     { id: "baseline", label: w("toc.baseline") },
     { id: "expenses", label: w("toc.expenses") },
     { id: "allocations", label: w("toc.allocations") },
+    { id: "glossary", label: w("toc.glossary") },
     { id: "analysis", label: w("toc.analysis") },
     { id: "settings", label: w("toc.settings") },
     { id: "notifications", label: w("toc.notifications") },
     { id: "privacy", label: w("toc.privacy") },
     { id: "credits", label: w("toc.credits") },
     { id: "faq", label: w("toc.faq") },
+  ];
+
+  const glossary: Array<{ id: string; formula: string }> = [
+    { id: "income", formula: "Income = Σ Settings incomes" },
+    { id: "fixed", formula: "Fixed Costs = Σ Settings fixed expenses" },
+    { id: "debt", formula: "Debt Payments = Σ Settings debts (monthly)" },
+    { id: "variable", formula: "Variable Estimate = Σ Settings variable estimates" },
+    { id: "margin", formula: "Margin = margin% × (Fixed + Debt + Variable)" },
+    { id: "baseline", formula: "Baseline = Fixed + Debt + Variable + Margin" },
+    { id: "surplus", formula: "Surplus = Income − Baseline" },
+    { id: "plannedAlloc", formula: "Planned Allocations = Σ per-project monthly target" },
+    { id: "plannedSurplus", formula: "Planned Surplus = Surplus − Planned Allocations" },
+    { id: "realAlloc", formula: "Real Allocations = confirmed allocations + movements in − out" },
+    { id: "realSurplus", formula: "Real Surplus = Surplus − Real Allocations" },
+    { id: "received", formula: "Received = Σ money-in operations (this cycle)" },
+    { id: "realExpenses", formula: "Real Expenses = Σ money-out operations (this cycle)" },
   ];
 
   return (
@@ -326,6 +344,23 @@ safe_today    = remaining / days_left_in_cycle`}
             <li>{w("allocations.li3")}</li>
           </ul>
           <p>{w("allocations.p2")}</p>
+        </Section>
+
+        <Section id="glossary" icon={Calculator} title={w("toc.glossary")}>
+          <p>{w("glossary.intro")}</p>
+          <div className="space-y-3">
+            {glossary.map((g) => (
+              <div key={g.id}>
+                <p>
+                  <strong className="text-foreground">{w(`glossary.${g.id}.term`)}</strong> —{" "}
+                  {w(`glossary.${g.id}.desc`)}
+                </p>
+                <pre className="mt-1 rounded-lg border bg-muted/40 p-2 text-xs text-foreground overflow-x-auto">
+                  {g.formula}
+                </pre>
+              </div>
+            ))}
+          </div>
         </Section>
 
         <Section id="analysis" icon={BarChart3} title={w("toc.analysis")}>

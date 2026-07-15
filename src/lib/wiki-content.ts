@@ -15,7 +15,41 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "toc.notifications": "Notifications",
     "toc.privacy": "Hidden mode & dark mode",
     "toc.credits": "Credits & tokens",
+    "toc.glossary": "How the numbers work",
     "toc.faq": "FAQ",
+    "glossary.intro":
+      "Every figure in bynku comes from a fixed formula. Here is each term, what it means, and how it is calculated. \"This cycle\" means the current pay cycle.",
+    "glossary.income.term": "Income",
+    "glossary.income.desc": "Your regular monthly income, summed from Settings.",
+    "glossary.fixed.term": "Fixed Costs",
+    "glossary.fixed.desc": "The bills that repeat every month.",
+    "glossary.debt.term": "Debt Payments",
+    "glossary.debt.desc": "Monthly installments on your loans and credit lines.",
+    "glossary.variable.term": "Variable Estimate",
+    "glossary.variable.desc": "Your expected monthly variable spending (groceries, transport, etc.).",
+    "glossary.margin.term": "Margin",
+    "glossary.margin.desc": "A safety buffer, set with the slider, as a percentage of the three above.",
+    "glossary.baseline.term": "Baseline",
+    "glossary.baseline.desc": "Your target monthly cost of living — everything you need before saving.",
+    "glossary.surplus.term": "Surplus",
+    "glossary.surplus.desc":
+      "What is left of your income after the baseline: money you can save or spend freely.",
+    "glossary.plannedAlloc.term": "Planned Allocations",
+    "glossary.plannedAlloc.desc":
+      "How much you intend to move into your projects each month (their targets).",
+    "glossary.plannedSurplus.term": "Planned Surplus",
+    "glossary.plannedSurplus.desc": "What would remain after fulfilling every project's target.",
+    "glossary.realAlloc.term": "Real Allocations",
+    "glossary.realAlloc.desc":
+      "The money you have actually moved into projects this cycle (confirmations and transfers).",
+    "glossary.realSurplus.term": "Real Surplus",
+    "glossary.realSurplus.desc":
+      "What remains after the amounts you really moved — your true position.",
+    "glossary.received.term": "Received",
+    "glossary.received.desc":
+      "Ad-hoc money in during the cycle (refunds, gifts), recorded as income.",
+    "glossary.realExpenses.term": "Real Expenses",
+    "glossary.realExpenses.desc": "The money-out you have actually recorded this cycle.",
     "header.eyebrow": "Wiki",
     "header.title": "How this app works",
     "header.subtitle":
