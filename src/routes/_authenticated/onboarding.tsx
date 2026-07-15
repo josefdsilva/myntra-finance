@@ -332,7 +332,11 @@ function IncomeStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Wallet} title="What comes in each month?" subtitle="Add your salary and any other regular income." />
+      <StepHead icon={Wallet} title="What comes in each month?" subtitle="Add your salary and any other regular income — or deduce it from a bank statement." />
+      <div className="mb-3">
+        <StatementImportButton householdId={householdId} />
+        <span className="ml-2 text-xs text-muted-foreground">or add manually below</span>
+      </div>
       <div className="flex gap-2">
         <Input placeholder="e.g. Salary" value={label} onChange={(e) => setLabel(e.target.value)} />
         <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={amount} onChange={(e) => setAmount(e.target.value)} />
