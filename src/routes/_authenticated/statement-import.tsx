@@ -80,13 +80,13 @@ function StatementImportPage() {
         supabase.from("fixed_expenses").select("label, monthly_amount").eq("household_id", householdId!),
         supabase.from("variable_estimates").select("label, monthly_amount").eq("household_id", householdId!),
         supabase.from("incomes").select("label, monthly_amount").eq("household_id", householdId!),
-        supabase.from("debts").select("label").eq("household_id", householdId!),
+        supabase.from("debts").select("label, monthly_amount").eq("household_id", householdId!),
       ]);
       return {
         fixed: fx.data ?? [],
         variable: ve.data ?? [],
         incomes: inc.data ?? [],
-        debts: (dt.data ?? []).map((d) => d.label),
+        debts: dt.data ?? [],
       };
     },
   });
@@ -154,7 +154,7 @@ function StatementImportPage() {
       );
       setIncomeRows(
         analysis.income.map((i) => ({
-          include: i.isSalary,
+          include: i.recurring,
           label: i.label,
           monthly_amount: i.monthlyAmount,
           isSalary: i.isSalary,
@@ -236,6 +236,16 @@ function StatementImportPage() {
     );
   }
 
+  const inclSum = (rows: Array<{ include: boolean; monthly_amount: number }>) =>
+    rows.filter((r) => r.include).reduce((s, r) => s + (Number(r.monthly_amount) || 0), 0);
+  const curSum = (list?: Array<{ monthly_amount: number | string }>) =>
+    (list ?? []).reduce((s, r) => s + Number(r.monthly_amount || 0), 0);
+  const totalNode = (next: number, cur: number) => (
+    <span className="text-xs text-muted-foreground whitespace-nowrap">
+      {t("stmt.totalNow", { amount: money(next), current: money(cur) })}
+    </span>
+  );
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <header>
@@ -271,6 +281,7 @@ function StatementImportPage() {
                 }}
               />
             </label>
+            <p className="text-xs text-muted-foreground mt-3">{t("stmt.how")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -280,7 +291,11 @@ function StatementImportPage() {
           </p>
 
           {incomeRows.length > 0 && (
-            <Section title={t("stmt.incomeTitle")} desc={t("stmt.incomeDesc")}>
+            <Section
+              title={t("stmt.incomeTitle")}
+              desc={t("stmt.incomeDesc")}
+              right={totalNode(inclSum(incomeRows), curSum(current?.incomes))}
+            >
               {incomeRows.map((r, i) => (
                 <Row key={i} include={r.include} onToggle={(v) => setIncomeRows(upd(incomeRows, i, { include: v }))}>
                   <input
@@ -304,7 +319,11 @@ function StatementImportPage() {
           )}
 
           {fixedRows.length > 0 && (
-            <Section title={t("stmt.fixedTitle")} desc={t("stmt.fixedDesc")}>
+            <Section
+              title={t("stmt.fixedTitle")}
+              desc={t("stmt.fixedDesc")}
+              right={totalNode(inclSum(fixedRows), curSum(current?.fixed))}
+            >
               {fixedRows.map((r, i) => (
                 <Row key={i} include={r.include} onToggle={(v) => setFixedRows(upd(fixedRows, i, { include: v }))}>
                   <input
@@ -332,7 +351,11 @@ function StatementImportPage() {
           )}
 
           {debtRows.length > 0 && (
-            <Section title={t("stmt.debtTitle")} desc={t("stmt.debtDesc")}>
+            <Section
+              title={t("stmt.debtTitle")}
+              desc={t("stmt.debtDesc")}
+              right={totalNode(inclSum(debtRows), curSum(current?.debts))}
+            >
               {debtRows.map((r, i) => (
                 <Row key={i} include={r.include} onToggle={(v) => setDebtRows(upd(debtRows, i, { include: v }))}>
                   <input
@@ -340,7 +363,7 @@ function StatementImportPage() {
                     value={r.label}
                     onChange={(e) => setDebtRows(upd(debtRows, i, { label: e.target.value }))}
                   />
-                  {current?.debts.some((l) => l.trim().toLowerCase() === r.label.trim().toLowerCase()) && (
+                  {current?.debts.some((d) => d.label.trim().toLowerCase() === r.label.trim().toLowerCase()) && (
                     <Badge variant="outline" className="text-[10px]">
                       {t("stmt.exists")}
                     </Badge>
@@ -355,7 +378,11 @@ function StatementImportPage() {
           )}
 
           {varRows.length > 0 && (
-            <Section title={t("stmt.variableTitle")} desc={t("stmt.variableDesc")}>
+            <Section
+              title={t("stmt.variableTitle")}
+              desc={t("stmt.variableDesc")}
+              right={totalNode(inclSum(varRows), curSum(current?.variable))}
+            >
               {varRows.map((r, i) => (
                 <Row key={i} include={r.include} onToggle={(v) => setVarRows(upd(varRows, i, { include: v }))}>
                   <span className="flex-1 text-sm capitalize">{r.category}</span>
@@ -398,12 +425,27 @@ function upd<T>(arr: T[], i: number, patch: Partial<T>): T[] {
   return arr.map((r, j) => (j === i ? { ...r, ...patch } : r));
 }
 
-function Section({ title, desc, children }: { title: string; desc: string; children: ReactNode }) {
+function Section({
+  title,
+  desc,
+  right,
+  children,
+}: {
+  title: string;
+  desc: string;
+  right?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{desc}</CardDescription>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{desc}</CardDescription>
+          </div>
+          {right && <div className="text-right shrink-0">{right}</div>}
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">{children}</CardContent>
     </Card>

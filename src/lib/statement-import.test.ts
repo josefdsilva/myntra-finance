@@ -10,6 +10,7 @@ import {
   normalizeMerchant,
   analyzeStatement,
   statementMonths,
+  detectIncome,
 } from "./statement-import";
 
 test("parseAmount handles EU and US formats and signs", () => {
@@ -101,6 +102,20 @@ test("inferColumns + toTransactions parse the statement", () => {
   const t = txns();
   expect(t.length).toBe(22);
   expect(statementMonths(t)).toBe(3);
+});
+
+test("detectIncome finds salary despite varying description and amount", () => {
+  const rows = [
+    { date: "2026-01-25", description: "ORDENADO ACME REF 111", amount: 1990 },
+    { date: "2026-02-25", description: "TRANSF SALARIO 222", amount: 2010 },
+    { date: "2026-03-24", description: "VENC ACME 333", amount: 2000 },
+    { date: "2026-02-10", description: "MB WAY JOAO", amount: 15 },
+  ];
+  const inc = detectIncome(rows);
+  const salary = inc.find((c) => c.isSalary);
+  expect(salary).toBeDefined();
+  expect(salary!.recurring).toBe(true);
+  expect(Math.abs(salary!.monthlyAmount - 2000)).toBeLessThan(30);
 });
 
 test("analyzeStatement separates fixed, debt, income and variable", () => {

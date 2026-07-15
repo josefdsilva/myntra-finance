@@ -502,43 +502,78 @@ export type IncomeCandidate = {
   monthlyAmount: number;
   occurrences: number;
   isSalary: boolean;
+  /** True when it recurs across months (pre-selected); false for one-offs (shown, not ticked). */
+  recurring: boolean;
   confidence: number;
 };
 
-/** Detect recurring INFLOWS (salary/other income). Largest regular one = salary. */
-export function detectIncome(txns: RawTxn[], months: number): IncomeCandidate[] {
-  const groups = new Map<string, number[]>();
-  txns.forEach((t, i) => {
-    if (t.amount <= 0) return; // inflows only
-    const key = normalizeMerchant(t.description);
-    if (!key) return;
-    const arr = groups.get(key) ?? [];
-    arr.push(i);
-    groups.set(key, arr);
+/**
+ * Detect INFLOWS (income). Salary descriptions and amounts often vary month to
+ * month, so we don't rely on an exact match:
+ *  1. group by merchant for stable-description salaries;
+ *  2. cluster the rest by amount similarity across ≥2 months (catches varying
+ *     descriptions/amounts);
+ *  3. surface remaining sizeable inflows as un-ticked candidates, so an
+ *     irregular salary is never hidden (inflows are rare in a statement).
+ * The largest recurring inflow is flagged as salary.
+ */
+export function detectIncome(txns: RawTxn[]): IncomeCandidate[] {
+  const inflows = txns.map((t, i) => ({ t, i })).filter((x) => x.t.amount > 0);
+  if (inflows.length === 0) return [];
+
+  const used = new Set<number>();
+  const candidates: IncomeCandidate[] = [];
+  const build = (items: Array<{ t: RawTxn; i: number }>, recurring: boolean): IncomeCandidate => ({
+    label: items[0].t.description.slice(0, 60),
+    monthlyAmount: Math.round(median(items.map((x) => x.t.amount)) * 100) / 100,
+    occurrences: items.length,
+    isSalary: false,
+    recurring,
+    confidence: recurring ? 0.7 : 0.25,
   });
 
-  const candidates: IncomeCandidate[] = [];
-  for (const [label, idxs] of groups) {
-    if (idxs.length < 2) continue;
-    const sorted = idxs.slice().sort((a, b) => +new Date(txns[a].date) - +new Date(txns[b].date));
-    const dates = sorted.map((i) => txns[i].date);
-    const amounts = sorted.map((i) => txns[i].amount);
-    const gaps: number[] = [];
-    for (let i = 1; i < dates.length; i += 1) gaps.push(daysBetween(dates[i - 1], dates[i]));
-    if (cadenceFromGap(median(gaps)) !== "monthly") continue;
-    const monthlyAmount = Math.round(median(amounts) * 100) / 100;
-    const regularity = Math.max(0, 1 - cv(gaps));
-    const occRatio = Math.min(1, sorted.length / Math.max(2, months));
-    candidates.push({
-      label: txns[sorted[0]].description.slice(0, 60),
-      monthlyAmount,
-      occurrences: sorted.length,
-      isSalary: false,
-      confidence: Math.round((0.6 * occRatio + 0.4 * regularity) * 100) / 100,
-    });
+  // 1. Stable-description monthly inflows.
+  const byMerchant = new Map<string, Array<{ t: RawTxn; i: number }>>();
+  for (const x of inflows) {
+    const key = normalizeMerchant(x.t.description) || `#${x.i}`;
+    (byMerchant.get(key) ?? byMerchant.set(key, []).get(key)!).push(x);
   }
-  candidates.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
-  if (candidates.length) candidates[0].isSalary = true; // largest regular inflow
+  for (const group of byMerchant.values()) {
+    if (group.length < 2) continue;
+    const sorted = group.slice().sort((a, b) => +new Date(a.t.date) - +new Date(b.t.date));
+    const gaps: number[] = [];
+    for (let i = 1; i < sorted.length; i += 1) gaps.push(daysBetween(sorted[i - 1].t.date, sorted[i].t.date));
+    if (cadenceFromGap(median(gaps)) !== "monthly") continue;
+    candidates.push(build(sorted, true));
+    sorted.forEach((x) => used.add(x.i));
+  }
+
+  // 2. Cluster remaining inflows by amount (±15%) across ≥2 distinct months.
+  const remaining = inflows.filter((x) => !used.has(x.i)).sort((a, b) => b.t.amount - a.t.amount);
+  for (const seed of remaining) {
+    if (used.has(seed.i)) continue;
+    const cluster = remaining.filter(
+      (x) => !used.has(x.i) && Math.abs(x.t.amount - seed.t.amount) <= 0.15 * seed.t.amount,
+    );
+    const distinctMonths = new Set(cluster.map((x) => x.t.date.slice(0, 7))).size;
+    if (cluster.length >= 2 && distinctMonths >= 2) {
+      candidates.push(build(cluster, true));
+      cluster.forEach((x) => used.add(x.i));
+    }
+  }
+
+  // 3. Remaining sizeable one-off inflows — shown but not pre-selected.
+  const leftover = inflows.filter((x) => !used.has(x.i)).sort((a, b) => b.t.amount - a.t.amount);
+  const biggest = leftover[0]?.t.amount ?? 0;
+  for (const x of leftover) {
+    if (x.t.amount >= Math.max(50, 0.2 * biggest)) candidates.push(build([x], false));
+  }
+
+  candidates.sort(
+    (a, b) => Number(b.recurring) - Number(a.recurring) || b.monthlyAmount - a.monthlyAmount,
+  );
+  const salary = candidates.find((c) => c.recurring);
+  if (salary) salary.isSalary = true;
   return candidates;
 }
 
@@ -593,7 +628,7 @@ export function analyzeStatement(
   const recurringIndexes = new Set<number>();
   for (const r of allRecurring) for (const i of r.txnIndexes) recurringIndexes.add(i);
   const variable = estimateVariable(txns, recurringIndexes, months, categoryOf);
-  const income = detectIncome(txns, months);
+  const income = detectIncome(txns);
   const debts = detectDebtInstallments(allRecurring);
   return { months, txnCount: txns.length, fixed, variable, income, debts };
 }
