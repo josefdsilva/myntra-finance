@@ -152,6 +152,21 @@ export const updateHousehold = createServerFn({ method: "POST" })
     return updated;
   });
 
+/** Mark a household's first-run onboarding as done (or skipped). */
+export const completeOnboarding = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ household_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("households")
+      .update({ onboarded_at: new Date().toISOString() })
+      .eq("id", data.household_id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const inviteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>

@@ -22,7 +22,6 @@ import {
   ChevronsUpDown,
   Plus,
   FileText,
-  Upload,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,7 +46,6 @@ const NAV = [
   { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
   { to: "/cycle-report", labelKey: "nav.cycleReport", icon: FileText },
   { to: "/households", labelKey: "nav.households", icon: Users },
-  { to: "/statement-import", labelKey: "nav.statementImport", icon: Upload },
   { to: "/settings", labelKey: "nav.settings", icon: Settings },
   { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
   { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
@@ -85,6 +83,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       setActiveHouseholdId(resolvedId);
     }
   }, [resolvedId, activeId]);
+
+  // Send freshly-created households (never onboarded) to the setup wizard.
+  const needsOnboarding = !!resolvedId && hh?.household?.onboarded_at == null;
+  useEffect(() => {
+    if (needsOnboarding && pathname !== "/onboarding") {
+      navigate({ to: "/onboarding" });
+    }
+  }, [needsOnboarding, pathname, navigate]);
 
   function switchHousehold(id: string) {
     if (id === resolvedId) return;
