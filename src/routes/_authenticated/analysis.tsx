@@ -309,6 +309,7 @@ function AnalysisPage() {
       const unallocated = Math.max(0, surplus - totalAllocated);
       return {
         cycle,
+        monthlyIncome,
         tx: (cycleTx ?? []) as Array<{
           amount: string | number;
           occurred_at: string;
@@ -595,7 +596,7 @@ function AnalysisPage() {
       {householdId && cycleCount > 0 && (
         <BenchmarksCard
           householdId={householdId}
-          monthlyIncome={totalIncome / cycleCount}
+          monthlyIncome={cycleData?.monthlyIncome ?? 0}
           monthlySpend={totalSpend / cycleCount}
           spendByCategory={Object.fromEntries(
             byCategory.map((c) => [c.name, c.value / cycleCount]),

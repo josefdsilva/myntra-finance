@@ -173,7 +173,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
           const body = [
             `Spent €${spentLast.toFixed(0)} (${trend >= 0 ? "+" : ""}${trend.toFixed(0)} vs prev)`,
             `Received €${receivedLast.toFixed(0)}`,
-            `Pool €${variablePool.toFixed(0)} · Emergency €${surplus.toFixed(0)}`,
+            `Pool €${variablePool.toFixed(0)} · Surplus €${surplus.toFixed(0)}`,
             aiText,
           ]
             .filter(Boolean)

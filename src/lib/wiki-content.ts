@@ -20,7 +20,8 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "glossary.intro":
       "Every figure in bynku comes from a fixed formula. Here is each term, what it means, and how it is calculated. \"This cycle\" means the current pay cycle.",
     "glossary.income.term": "Income",
-    "glossary.income.desc": "Your regular monthly income, summed from Settings.",
+    "glossary.income.desc":
+      "Your regular monthly income, summed from Settings. This one figure drives your baseline surplus, savings rate and the national benchmark — the same value everywhere in the app.",
     "glossary.fixed.term": "Fixed Costs",
     "glossary.fixed.desc": "The bills that repeat every month.",
     "glossary.debt.term": "Debt Payments",
@@ -47,7 +48,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
       "What remains after the amounts you really moved — your true position.",
     "glossary.received.term": "Received",
     "glossary.received.desc":
-      "Ad-hoc money in during the cycle (refunds, gifts), recorded as income.",
+      "Ad-hoc money in during the cycle (refunds, gifts, bonuses). It raises what you can spend this cycle, but it does not change your recurring Income or Surplus.",
     "glossary.realExpenses.term": "Real Expenses",
     "glossary.realExpenses.desc": "The money-out you have actually recorded this cycle.",
     "header.eyebrow": "Wiki",

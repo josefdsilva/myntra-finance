@@ -64,8 +64,6 @@ type CoachContext = {
   variableEstimateMonthly: number;
   /** Canonical monthly income = sum of Settings incomes (matches the app screens). */
   settingsIncome: number;
-  /** Rough recurring income per month, averaged from up to 6 recent salary events. */
-  estimatedMonthlyIncome: number;
   /** Settings income − baseline (baseline includes fixed + debt + variable + margin). */
   monthlySurplus: number;
   /** Conservative safe monthly payment for a new recurring commitment (rent, loan, lease). */
@@ -217,9 +215,8 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const debtMonthly = sumMonthly(debtsData);
   const fixedMonthly = fixedExpensesMonthly + debtMonthly;
   const variableEstimateMonthly = sumMonthly(varEst);
-  // Canonical income = sum of Settings incomes, matching the Dashboard/Allocations
-  // screens. estimatedMonthlyIncome (from salary events) stays for the burndown and
-  // benchmark, but surplus uses the same basis the app displays.
+  // Canonical income = sum of Settings incomes. This single figure drives surplus,
+  // savings rate, debt-to-income and the benchmark, matching every app screen.
   const { data: incomesRows } = await supabase
     .from("incomes")
     .select("monthly_amount")
@@ -336,31 +333,6 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   }
   spendsForTop.sort((a, b) => b.amount - a.amount);
 
-  // Estimate monthly income from recent salary events (avg gap between events).
-  let estimatedMonthlyIncome = 0;
-  if (salaryDatesDesc.length >= 2) {
-    // Pull matching salary amounts to average magnitude.
-    const { data: salaryAmts } = await supabase
-      .from("expenses")
-      .select("amount, occurred_at")
-      .eq("household_id", householdId)
-      .eq("is_salary", true)
-      .order("occurred_at", { ascending: false })
-      .limit(6);
-    const amts = rowsOrEmpty<{ amount: number | string }>(salaryAmts).map((r) => Number(r.amount));
-    if (amts.length) {
-      const avg = amts.reduce((s, n) => s + n, 0) / amts.length;
-      // If gap between latest two salaries is ~28-31d assume monthly.
-      const gapDays =
-        (new Date(salaryDatesDesc[0]).getTime() - new Date(salaryDatesDesc[1]).getTime()) /
-        86400000;
-      const perMonth = gapDays > 0 ? avg * (30 / gapDays) : avg;
-      estimatedMonthlyIncome = Math.round(perMonth * 100) / 100;
-    }
-  } else if (received > 0) {
-    estimatedMonthlyIncome = received;
-  }
-
   // Surplus matches the app: Settings income − baseline (baseline already includes
   // fixed + debt + variable + safety margin).
   const monthlySurplus = Math.max(0, settingsIncome - baseline);
@@ -385,13 +357,15 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   }
   const totalMonthlySpend =
     Math.round((spent * monthScale + fixedMonthly + variableEstimateMonthly) * 100) / 100;
+  // Benchmark uses the canonical Settings income, the same figure that drives
+  // surplus and every screen — so the coach and the Benchmarks card agree.
   const benchmark =
-    estimatedMonthlyIncome > 0
+    settingsIncome > 0
       ? computeBenchmarkComparison({
           country: hh?.country ?? "PT",
           adults: Number(hh?.adults ?? 2),
           children: Number(hh?.children ?? 0),
-          monthlyIncome: estimatedMonthlyIncome,
+          monthlyIncome: settingsIncome,
           monthlySpend: totalMonthlySpend,
           spendByCategory: monthlySpendByCategory,
         })
@@ -417,7 +391,6 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     debtPrincipalOutstanding,
     variableEstimateMonthly,
     settingsIncome,
-    estimatedMonthlyIncome,
     monthlySurplus,
     safeNewMonthlyCommitment,
     totalSavings,
