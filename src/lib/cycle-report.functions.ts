@@ -69,6 +69,8 @@ export type ClosedCycleStats = {
   categories: CategoryReportRow[];
   buckets: BucketReportRow[];
   topSpends: Array<{ amount: number; category: string; note: string | null; occurred_at: string }>;
+  debtPayments: Array<{ label: string; amount: number; source: string }>;
+  debtPaidTotal: number;
   trend: Array<{ start: string; end: string; variableSpentMonthly: number }>;
 };
 
@@ -271,6 +273,26 @@ export async function buildClosedCycleStats(
     }),
   );
 
+  // Debt payments (overpayments / transfers) confirmed during this cycle.
+  const { data: debtRows } = await supabase
+    .from("debts")
+    .select("id, label")
+    .eq("household_id", householdId);
+  const debtLabels = new Map((debtRows ?? []).map((d) => [d.id as string, d.label as string]));
+  const { data: debtMoves } = await supabase
+    .from("account_movements")
+    .select("amount, to_id, from_type")
+    .eq("household_id", householdId)
+    .eq("to_type", "debt")
+    .gte("created_at", cycle.start.toISOString())
+    .lt("created_at", cycle.end.toISOString());
+  const debtPayments = (debtMoves ?? []).map((m) => ({
+    label: debtLabels.get(m.to_id as string) ?? "Debt",
+    amount: Number(m.amount),
+    source: m.from_type === "bucket" ? "project" : "cash",
+  }));
+  const debtPaidTotal = Math.round(debtPayments.reduce((s, p) => s + p.amount, 0) * 100) / 100;
+
   return {
     cycleStart: cycle.start.toISOString(),
     cycleEnd: cycle.end.toISOString(),
@@ -286,6 +308,8 @@ export async function buildClosedCycleStats(
     categories,
     buckets: bucketRows,
     topSpends,
+    debtPayments,
+    debtPaidTotal,
     trend,
   };
 }
