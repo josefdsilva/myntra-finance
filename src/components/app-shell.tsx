@@ -86,6 +86,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [resolvedId, activeId]);
 
+  // Send freshly-created households (never onboarded) to the setup wizard.
+  const needsOnboarding = !!resolvedId && hh?.household?.onboarded_at == null;
+  useEffect(() => {
+    if (needsOnboarding && pathname !== "/onboarding") {
+      navigate({ to: "/onboarding" });
+    }
+  }, [needsOnboarding, pathname, navigate]);
+
   function switchHousehold(id: string) {
     if (id === resolvedId) return;
     setActiveHouseholdId(id);
