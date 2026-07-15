@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
+import { StatementImportButton } from "@/components/statement-import-flow";
 import { LanguageSettings } from "@/components/language-settings";
 import { CategoryManager } from "@/components/category-manager";
 import { useCategoryNames } from "@/hooks/use-categories";
@@ -531,11 +532,16 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("var.title")}</CardTitle>
-        <CardDescription>
-          {t("var.description")} {t("common.total")}:{" "}
-          <span className="font-medium text-foreground">{money(total)}</span>
-        </CardDescription>
+        <div className="flex flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle>{t("var.title")}</CardTitle>
+            <CardDescription>
+              {t("var.description")} {t("common.total")}:{" "}
+              <span className="font-medium text-foreground">{money(total)}</span>
+            </CardDescription>
+          </div>
+          <StatementImportButton householdId={householdId} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
@@ -630,10 +636,15 @@ function IncomesSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("income.title")}</CardTitle>
-        <CardDescription>
-          {t("common.total")}: <span className="font-medium text-foreground">{money(total)}</span>
-        </CardDescription>
+        <div className="flex flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle>{t("income.title")}</CardTitle>
+            <CardDescription>
+              {t("common.total")}: <span className="font-medium text-foreground">{money(total)}</span>
+            </CardDescription>
+          </div>
+          <StatementImportButton householdId={householdId} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
@@ -724,11 +735,16 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("fixed.title")}</CardTitle>
-        <CardDescription>
-          {t("fixed.description")} {t("common.total")}:{" "}
-          <span className="font-medium text-foreground">{money(total)}</span>
-        </CardDescription>
+        <div className="flex flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle>{t("fixed.title")}</CardTitle>
+            <CardDescription>
+              {t("fixed.description")} {t("common.total")}:{" "}
+              <span className="font-medium text-foreground">{money(total)}</span>
+            </CardDescription>
+          </div>
+          <StatementImportButton householdId={householdId} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
@@ -1194,21 +1210,25 @@ function DebtsSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Debt</CardTitle>
-        <CardDescription>
-          Loans and credit lines with an interest rate ({t("settings.debtRateLabel")}) and maturity.
-          Counted alongside fixed
-          expenses in your monthly baseline. Total:{" "}
-          <span className="font-medium text-foreground">{money(total)}</span>
-          {principalTotal > 0 && (
-            <>
-              {" "}
-              · principal outstanding{" "}
-              <span className="font-medium text-foreground">{money(principalTotal)}</span>
-            </>
-          )}
-          .
-        </CardDescription>
+        <div className="flex flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle>Debt</CardTitle>
+            <CardDescription>
+              Loans and credit lines with an interest rate ({t("settings.debtRateLabel")}) and
+              maturity. Counted alongside fixed expenses in your monthly baseline. Total:{" "}
+              <span className="font-medium text-foreground">{money(total)}</span>
+              {principalTotal > 0 && (
+                <>
+                  {" "}
+                  · principal outstanding{" "}
+                  <span className="font-medium text-foreground">{money(principalTotal)}</span>
+                </>
+              )}
+              .
+            </CardDescription>
+          </div>
+          <StatementImportButton householdId={householdId} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
