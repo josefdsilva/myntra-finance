@@ -1,5 +1,4 @@
 // Run with: bun test src/lib/amortization.test.ts
-/// <reference types="@types/bun" />
 import { test, expect } from "bun:test";
 import {
   monthlyRateFromTaeg,
