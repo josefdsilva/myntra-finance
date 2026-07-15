@@ -149,6 +149,23 @@ function AllocationsPage() {
     },
   });
 
+  const { data: bucketMovementsThisMonth } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["alloc-bucket-movements", householdId, period],
+    queryFn: async () => {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+      const { data } = await supabase
+        .from("account_movements")
+        .select("amount, to_type, from_type")
+        .eq("household_id", householdId!)
+        .gte("created_at", monthStart)
+        .lt("created_at", nextMonth)
+        .or("to_type.eq.bucket,from_type.eq.bucket");
+      return data ?? [];
+    },
+  });
+
   const income = data?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
 
@@ -184,6 +201,16 @@ function AllocationsPage() {
   );
   const showCloseWarning = daysLeftInMonth <= 7 && unconfirmedBuckets.length > 0;
   const totalConfirmedThisMonth = (confirmations ?? []).reduce((s, c) => s + Number(c.amount), 0);
+  // Real money moved into projects this cycle = confirmed allocations + net account
+  // movements (deposits + transfers-in − withdrawals − bucket-sourced debt payments).
+  const movementsNetIntoBuckets = (bucketMovementsThisMonth ?? []).reduce((s, m) => {
+    let d = 0;
+    if (m.to_type === "bucket") d += Number(m.amount);
+    if (m.from_type === "bucket") d -= Number(m.amount);
+    return s + d;
+  }, 0);
+  const realAllocated = totalConfirmedThisMonth + movementsNetIntoBuckets;
+  const realSurplus = surplus - realAllocated;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
@@ -355,21 +382,27 @@ function AllocationsPage() {
               })}
               <div className="pt-3 mt-3 border-t space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("alloc.totals.monthly")}</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.plannedAlloc")}</span>
                   <span className="tabular-nums font-medium">{money(totalAllocated)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("alloc.totals.confirmed")}</span>
+                  <span className="text-muted-foreground">{t("alloc.totals.realAlloc")}</span>
                   <span className="tabular-nums font-medium text-emerald-600">
-                    {money(totalConfirmedThisMonth)}
+                    {money(realAllocated)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("alloc.totals.emergency")}</span>
-                  <span
-                    className={`tabular-nums font-medium ${unallocated < 0 ? "text-destructive" : ""}`}
-                  >
+                  <span className="text-muted-foreground">{t("alloc.totals.plannedSurplus")}</span>
+                  <span className={`tabular-nums ${unallocated < 0 ? "text-destructive" : ""}`}>
                     {money(unallocated)}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="font-medium text-foreground">{t("alloc.totals.realSurplus")}</span>
+                  <span
+                    className={`tabular-nums font-semibold ${realSurplus < 0 ? "text-destructive" : "text-foreground"}`}
+                  >
+                    {money(realSurplus)}
                   </span>
                 </div>
               </div>

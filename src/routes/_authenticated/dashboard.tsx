@@ -103,6 +103,42 @@ function Dashboard() {
     },
   });
 
+  // Real allocations this cycle = confirmed bucket allocations for this period
+  // + net account movements into buckets. Used so the dashboard reflects what
+  // was actually set aside, not the planned target.
+  const { data: realAlloc } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["dashboard-real-alloc", householdId],
+    queryFn: async () => {
+      const now = new Date();
+      const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+      const [{ data: confs }, { data: moves }] = await Promise.all([
+        supabase
+          .from("bucket_allocations")
+          .select("amount")
+          .eq("household_id", householdId!)
+          .eq("period", period),
+        supabase
+          .from("account_movements")
+          .select("amount, to_type, from_type")
+          .eq("household_id", householdId!)
+          .gte("created_at", monthStart)
+          .lt("created_at", nextMonth)
+          .or("to_type.eq.bucket,from_type.eq.bucket"),
+      ]);
+      const confirmed = (confs ?? []).reduce((s, c) => s + Number(c.amount), 0);
+      const movementsNet = (moves ?? []).reduce((s, m) => {
+        let d = 0;
+        if (m.to_type === "bucket") d += Number(m.amount);
+        if (m.from_type === "bucket") d -= Number(m.amount);
+        return s + d;
+      }, 0);
+      return confirmed + movementsNet;
+    },
+  });
+
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
@@ -119,6 +155,8 @@ function Dashboard() {
 
   const income = dashboard?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
+  const realAllocated = realAlloc ?? 0;
+  const realSurplus = surplus - realAllocated;
   const overspendAmount = Math.max(0, netSpent - variablePool);
   const buckets = dashboard?.buckets ?? [];
 
@@ -412,9 +450,10 @@ function Dashboard() {
           tone={projectedBalance >= 0 ? "good" : "bad"}
         />
         <StatCard
-          label={t("dashboard.stat.emergency")}
-          value={money(Math.max(0, surplus - totalAllocated))}
-          hint={t("dashboard.stat.emergencyHint")}
+          label={t("dashboard.stat.realSurplus")}
+          value={money(realSurplus)}
+          hint={t("dashboard.stat.realSurplusHint")}
+          tone={realSurplus < 0 ? "bad" : undefined}
         />
         <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
