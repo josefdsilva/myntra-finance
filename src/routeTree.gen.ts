@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
+import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
@@ -55,6 +56,12 @@ const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStatementImportRoute =
+  AuthenticatedStatementImportRouteImport.update({
+    id: '/statement-import',
+    path: '/statement-import',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -122,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/expenses': typeof AuthenticatedExpensesRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/statement-import': typeof AuthenticatedStatementImportRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
@@ -139,6 +147,7 @@ export interface FileRoutesByTo {
   '/expenses': typeof AuthenticatedExpensesRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/statement-import': typeof AuthenticatedStatementImportRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
@@ -158,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/statement-import': typeof AuthenticatedStatementImportRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/households'
     | '/settings'
+    | '/statement-import'
     | '/wiki'
     | '/invite/$token'
     | '/api/public/benchmarks-version'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/households'
     | '/settings'
+    | '/statement-import'
     | '/wiki'
     | '/invite/$token'
     | '/api/public/benchmarks-version'
@@ -212,6 +224,7 @@ export interface FileRouteTypes {
     | '/_authenticated/expenses'
     | '/_authenticated/households'
     | '/_authenticated/settings'
+    | '/_authenticated/statement-import'
     | '/_authenticated/wiki'
     | '/invite/$token'
     | '/api/public/benchmarks-version'
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/wiki'
       fullPath: '/wiki'
       preLoaderRoute: typeof AuthenticatedWikiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/statement-import': {
+      id: '/_authenticated/statement-import'
+      path: '/statement-import'
+      fullPath: '/statement-import'
+      preLoaderRoute: typeof AuthenticatedStatementImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -355,6 +375,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStatementImportRoute: typeof AuthenticatedStatementImportRoute
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
 }
 
@@ -366,6 +387,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStatementImportRoute: AuthenticatedStatementImportRoute,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
 }
 
