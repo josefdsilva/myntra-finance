@@ -164,27 +164,61 @@ export type ColumnMap = {
   credit?: number;
 };
 
-const HEADER_HINTS = {
-  date: ["date", "data", "fecha", "datum", "dt", "movimento", "value date", "data valor"],
-  description: ["desc", "description", "descrição", "descripcion", "concepto", "detail", "movimento", "referência", "beneficiario", "payee", "memo", "verwendungszweck"],
-  amount: ["amount", "montante", "importe", "valor", "importo", "betrag", "value", "montant"],
-  debit: ["debit", "débito", "debito", "cargo", "saída", "out", "soll"],
-  credit: ["credit", "crédito", "credito", "abono", "entrada", "in", "haben"],
-};
+const has = (s: string, ...words: string[]) => words.some((w) => s.includes(w));
 
-function matchHeader(cell: string, hints: string[]): boolean {
-  const c = cell.trim().toLowerCase();
-  return hints.some((h) => c === h || c.includes(h));
-}
-
-/** Infer which columns hold date/description/amount. Returns null if unsure. */
+/**
+ * Infer which columns hold date / description / amount, using exclusions so
+ * lookalikes don't collide:
+ *  - a "value date" column ("Data-valor") must NOT be read as the amount just
+ *    because it contains "valor";
+ *  - a running-balance column ("Saldo … após movimento") must NEVER be the amount.
+ * Returns null if it can't identify at least date + description + (amount | debit/credit).
+ */
 export function inferColumns(header: string[]): ColumnMap | null {
-  const find = (hints: string[]) => header.findIndex((h) => matchHeader(h, hints));
-  const date = find(HEADER_HINTS.date);
-  const description = find(HEADER_HINTS.description);
-  const amount = find(HEADER_HINTS.amount);
-  const debit = find(HEADER_HINTS.debit);
-  const credit = find(HEADER_HINTS.credit);
+  const H = header.map((h) => h.trim().toLowerCase());
+  const isDate = (s: string) => has(s, "data", "date", "fecha", "datum");
+  const isBalance = (s: string) => has(s, "saldo", "balance", "dispon", "kontostand");
+
+  // Date — prefer the movement/operation date over a value date.
+  let date = H.findIndex((s) => isDate(s) && has(s, "mov", "oper", "lanc", "lanç", "book"));
+  if (date < 0) date = H.findIndex(isDate);
+
+  // Amount — strong, unambiguous tokens first; then "valor/value" but never on a
+  // date or balance column.
+  let amount = H.findIndex(
+    (s, i) =>
+      i !== date &&
+      !isBalance(s) &&
+      has(s, "montante", "importe", "importo", "betrag", "amount", "montant"),
+  );
+  if (amount < 0) {
+    amount = H.findIndex(
+      (s, i) => i !== date && !isDate(s) && !isBalance(s) && has(s, "valor", "value", "valeur"),
+    );
+  }
+
+  // Separate debit/credit columns only when there's no single amount column.
+  let debit = -1;
+  let credit = -1;
+  if (amount < 0) {
+    debit = H.findIndex(
+      (s, i) => i !== date && has(s, "débito", "debito", "debit", "cargo", "saída", "saida", "soll"),
+    );
+    credit = H.findIndex(
+      (s, i) => i !== date && has(s, "crédito", "credito", "credit", "abono", "entrada", "haben"),
+    );
+  }
+
+  // Description — keyworded first, else the first remaining non-date/-balance column.
+  const used = new Set([date, amount, debit, credit].filter((i) => i >= 0));
+  let description = H.findIndex(
+    (s, i) =>
+      !used.has(i) &&
+      !isBalance(s) &&
+      has(s, "desc", "concep", "referê", "refere", "detalhe", "detail", "memo", "beneficiario", "payee", "verwendung"),
+  );
+  if (description < 0) description = H.findIndex((s, i) => !used.has(i) && !isBalance(s) && !isDate(s));
+
   if (date < 0 || description < 0) return null;
   if (amount < 0 && (debit < 0 || credit < 0)) return null;
   const map: ColumnMap = { date, description };

@@ -71,6 +71,32 @@ function txns() {
   return toTransactions(rows, map!);
 }
 
+test("inferColumns is not fooled by a value-date or balance column", () => {
+  // Real PT bank layout: "Data-valor" contains "valor", "Saldo…" is the balance.
+  const header = [
+    "Data mov.",
+    "Data-valor",
+    "Descrição",
+    "Montante",
+    "Saldo contabilístico após movimento",
+  ];
+  expect(inferColumns(header)).toEqual({ date: 0, description: 2, amount: 3 });
+});
+
+test("toTransactions reads a real PT bank export (5 columns, EU amounts)", () => {
+  const csv = `Data mov.;Data-valor;Descrição;Montante;Saldo contabilístico após movimento
+14/07/2026;14/07/2026;MEO SA;-68,42;2.941,32
+13/07/2026;13/07/2026;TRF 08640;-777,77;3.089,96
+09/07/2026;09/07/2026;EDP COMERCIAL;-123,84;4.008,46
+04/07/2026;04/07/2026;CAR WAL;-500,00;7.671,42`;
+  const rows = parseCsv(csv);
+  const map = inferColumns(rows[0])!;
+  const t = toTransactions(rows, map);
+  expect(t.length).toBe(4);
+  expect(t[0]).toEqual({ date: "2026-07-14", description: "MEO SA", amount: -68.42 });
+  expect(t[3].amount).toBe(-500);
+});
+
 test("inferColumns + toTransactions parse the statement", () => {
   const t = txns();
   expect(t.length).toBe(22);
