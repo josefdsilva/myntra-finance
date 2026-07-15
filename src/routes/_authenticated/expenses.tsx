@@ -25,7 +25,7 @@ import { FileUp, Loader2, Trash2, Sparkles } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
-  head: () => ({ meta: [{ title: "Expenses · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Expenses · bynku" }] }),
   component: ExpensesPage,
 });
 

@@ -29,7 +29,7 @@ import { Plus, Loader2, Check, PiggyBank, Wallet, Receipt, Home, Users, Sparkles
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
-  head: () => ({ meta: [{ title: "Welcome · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Welcome · bynku" }] }),
   component: OnboardingPage,
 });
 

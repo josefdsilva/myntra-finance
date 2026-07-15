@@ -77,7 +77,7 @@ function ExportDataRow() {
       const a = document.createElement("a");
       a.href = url;
       const ts = new Date().toISOString().slice(0, 10);
-      a.download = `myntra-export-${ts}.json`;
+      a.download = `bynku-export-${ts}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();

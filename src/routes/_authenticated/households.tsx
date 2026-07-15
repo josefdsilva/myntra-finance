@@ -27,7 +27,7 @@ import { setActiveHouseholdId, useActiveHouseholdId } from "@/lib/active-househo
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/households")({
-  head: () => ({ meta: [{ title: "Households · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Households · bynku" }] }),
   component: HouseholdsPage,
 });
 

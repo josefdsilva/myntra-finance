@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 const KEY = "active-household-id";
-const EVENT = "myntra:active-household-change";
+const EVENT = "bynku:active-household-change";
 
 function read(): string | null {
   if (typeof window === "undefined") return null;

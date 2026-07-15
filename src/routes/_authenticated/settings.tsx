@@ -47,7 +47,7 @@ import { useCategoryNames } from "@/hooks/use-categories";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Settings · bynku" }] }),
   component: SettingsPage,
 });
 

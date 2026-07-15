@@ -22,7 +22,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
       "A complete guide to every screen, field and formula. Skim the table of contents or jump straight to the section you need.",
     "header.tocTitle": "Table of contents",
     "overview.p1a":
-      "Myntra helps a couple (or small family) plan and manage monthly money together. Instead of tracking every cent against a calendar month, the app works in ",
+      "bynku helps a couple (or small family) plan and manage monthly money together. Instead of tracking every cent against a calendar month, the app works in ",
     "overview.term1": "pay cycles",
     "overview.p1b":
       " — the window between two consecutive salary deposits — and answers one core question every day:",
@@ -197,7 +197,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "privacy.p3":
       "Access is restricted to allow-listed emails. Sign-ups are disabled; new members join by invitation only.",
     "credits.p1a":
-      "Some Myntra features are powered by AI models (the financial coach, voice/text/photo/bank-statement parsing). Every call to those models has a real cost, which we measure in ",
+      "Some bynku features are powered by AI models (the financial coach, voice/text/photo/bank-statement parsing). Every call to those models has a real cost, which we measure in ",
     "credits.p1strong": "credits",
     "credits.p1b": ". Each household gets a cap of ",
     "credits.p1strong2": "10 credits per month",
@@ -219,7 +219,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "credits.tokenP2strong2": "output tokens",
     "credits.tokenP2end":
       " (what the model writes back — the parsed JSON or the coach's answer). Both are billed, and output tokens are usually more expensive per token than input.",
-    "credits.howHeading": "How Myntra turns tokens into credits",
+    "credits.howHeading": "How bynku turns tokens into credits",
     "credits.howP1a":
       "After every AI call we log the token counts, convert them to a fractional credit cost using the model's pricing, and store that against your household in the ",
     "credits.howCode": "credit_usage",
@@ -294,7 +294,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
       "Um guia completo para cada ecrã, campo e fórmula. Percorra o índice ou vá diretamente à secção que precisa.",
     "header.tocTitle": "Índice",
     "overview.p1a":
-      "O Myntra ajuda um casal (ou pequena família) a planear e gerir o dinheiro mensal em conjunto. Em vez de acompanhar cada cêntimo face a um mês de calendário, a app funciona em ",
+      "O bynku ajuda um casal (ou pequena família) a planear e gerir o dinheiro mensal em conjunto. Em vez de acompanhar cada cêntimo face a um mês de calendário, a app funciona em ",
     "overview.term1": "ciclos de pagamento",
     "overview.p1b":
       " — o intervalo entre dois depósitos de salário consecutivos — e responde a uma pergunta central todos os dias:",
@@ -469,7 +469,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "privacy.p3":
       "O acesso está restrito a emails autorizados. Os registos estão desativados; novos membros só entram por convite.",
     "credits.p1a":
-      "Algumas funcionalidades do Myntra são alimentadas por modelos de IA (o coach financeiro, análise de voz/texto/foto/extrato bancário). Cada chamada a esses modelos tem um custo real, que medimos em ",
+      "Algumas funcionalidades do bynku são alimentadas por modelos de IA (o coach financeiro, análise de voz/texto/foto/extrato bancário). Cada chamada a esses modelos tem um custo real, que medimos em ",
     "credits.p1strong": "créditos",
     "credits.p1b": ". Cada agregado tem um limite de ",
     "credits.p1strong2": "10 créditos por mês",
@@ -491,7 +491,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "credits.tokenP2strong2": "tokens de saída",
     "credits.tokenP2end":
       " (o que o modelo devolve — o JSON analisado ou a resposta do coach). Ambos são cobrados, e os tokens de saída são geralmente mais caros por token do que os de entrada.",
-    "credits.howHeading": "Como o Myntra transforma tokens em créditos",
+    "credits.howHeading": "Como o bynku transforma tokens em créditos",
     "credits.howP1a":
       "Depois de cada chamada de IA registamos as contagens de tokens, convertemo-las num custo fracionário de créditos usando os preços do modelo, e guardamos isso associado ao seu agregado na tabela ",
     "credits.howCode": "credit_usage",
@@ -567,7 +567,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
       "Una guía completa de cada pantalla, campo y fórmula. Recorre el índice o salta directamente a la sección que necesitas.",
     "header.tocTitle": "Índice",
     "overview.p1a":
-      "Myntra ayuda a una pareja (o familia pequeña) a planificar y gestionar el dinero mensual juntos. En lugar de seguir cada céntimo frente a un mes de calendario, la app funciona en ",
+      "bynku ayuda a una pareja (o familia pequeña) a planificar y gestionar el dinero mensual juntos. En lugar de seguir cada céntimo frente a un mes de calendario, la app funciona en ",
     "overview.term1": "ciclos de pago",
     "overview.p1b":
       " — el intervalo entre dos depósitos de nómina consecutivos — y responde a una pregunta central cada día:",
@@ -742,7 +742,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "privacy.p3":
       "El acceso está restringido a correos en lista blanca. Los registros están desactivados; los nuevos miembros solo se unen por invitación.",
     "credits.p1a":
-      "Algunas funciones de Myntra funcionan con modelos de IA (el coach financiero, el análisis de voz/texto/foto/extracto bancario). Cada llamada a esos modelos tiene un coste real, que medimos en ",
+      "Algunas funciones de bynku funcionan con modelos de IA (el coach financiero, el análisis de voz/texto/foto/extracto bancario). Cada llamada a esos modelos tiene un coste real, que medimos en ",
     "credits.p1strong": "créditos",
     "credits.p1b": ". Cada hogar tiene un límite de ",
     "credits.p1strong2": "10 créditos al mes",
@@ -764,7 +764,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "credits.tokenP2strong2": "tokens de salida",
     "credits.tokenP2end":
       " (lo que devuelve el modelo — el JSON analizado o la respuesta del coach). Ambos se facturan, y los tokens de salida suelen ser más caros por token que los de entrada.",
-    "credits.howHeading": "Cómo convierte Myntra los tokens en créditos",
+    "credits.howHeading": "Cómo convierte bynku los tokens en créditos",
     "credits.howP1a":
       "Tras cada llamada de IA registramos el recuento de tokens, los convertimos en un coste fraccional de créditos usando el precio del modelo, y lo almacenamos junto a tu hogar en la tabla ",
     "credits.howCode": "credit_usage",
@@ -840,7 +840,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
       "Ein vollständiger Leitfaden zu jedem Bildschirm, jedem Feld und jeder Formel. Überfliege das Inhaltsverzeichnis oder springe direkt zum gewünschten Abschnitt.",
     "header.tocTitle": "Inhaltsverzeichnis",
     "overview.p1a":
-      "Myntra hilft einem Paar (oder einer kleinen Familie), das monatliche Geld gemeinsam zu planen und zu verwalten. Statt jeden Cent gegen einen Kalendermonat zu verfolgen, arbeitet die App in ",
+      "bynku hilft einem Paar (oder einer kleinen Familie), das monatliche Geld gemeinsam zu planen und zu verwalten. Statt jeden Cent gegen einen Kalendermonat zu verfolgen, arbeitet die App in ",
     "overview.term1": "Zahlungszyklen",
     "overview.p1b":
       " — dem Zeitraum zwischen zwei aufeinanderfolgenden Gehaltseingängen — und beantwortet jeden Tag eine zentrale Frage:",
@@ -1020,7 +1020,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "privacy.p3":
       "Der Zugriff ist auf freigegebene E-Mail-Adressen beschränkt. Registrierungen sind deaktiviert; neue Mitglieder treten nur per Einladung bei.",
     "credits.p1a":
-      "Einige Myntra-Funktionen werden von KI-Modellen angetrieben (der Finanzcoach, Sprach-/Text-/Foto-/Kontoauszug-Analyse). Jeder Aufruf dieser Modelle hat echte Kosten, die wir in ",
+      "Einige bynku-Funktionen werden von KI-Modellen angetrieben (der Finanzcoach, Sprach-/Text-/Foto-/Kontoauszug-Analyse). Jeder Aufruf dieser Modelle hat echte Kosten, die wir in ",
     "credits.p1strong": "Guthaben",
     "credits.p1b": " messen. Jeder Haushalt hat ein Limit von ",
     "credits.p1strong2": "10 Guthaben pro Monat",
@@ -1042,7 +1042,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "credits.tokenP2strong2": "Ausgabe-Tokens",
     "credits.tokenP2end":
       " (was das Modell zurückschreibt — das analysierte JSON oder die Antwort des Coaches). Beide werden abgerechnet, und Ausgabe-Tokens sind pro Token meist teurer als Eingabe-Tokens.",
-    "credits.howHeading": "Wie Myntra Tokens in Guthaben umwandelt",
+    "credits.howHeading": "Wie bynku Tokens in Guthaben umwandelt",
     "credits.howP1a":
       "Nach jedem KI-Aufruf protokollieren wir die Token-Anzahl, rechnen sie anhand der Preise des Modells in einen anteiligen Guthaben-Betrag um und speichern diesen für deinen Haushalt in der Tabelle ",
     "credits.howCode": "credit_usage",
@@ -1119,7 +1119,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
       "Un guide complet pour chaque écran, champ et formule. Parcourez le sommaire ou allez directement à la section voulue.",
     "header.tocTitle": "Sommaire",
     "overview.p1a":
-      "Myntra aide un couple (ou une petite famille) à planifier et gérer l'argent mensuel ensemble. Plutôt que de suivre chaque centime par rapport à un mois civil, l'application fonctionne en ",
+      "bynku aide un couple (ou une petite famille) à planifier et gérer l'argent mensuel ensemble. Plutôt que de suivre chaque centime par rapport à un mois civil, l'application fonctionne en ",
     "overview.term1": "cycles de paie",
     "overview.p1b":
       " — l'intervalle entre deux versements de salaire consécutifs — et répond chaque jour à une question centrale :",
@@ -1300,7 +1300,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "privacy.p3":
       "L'accès est limité aux e-mails autorisés. Les inscriptions sont désactivées ; les nouveaux membres ne rejoignent que sur invitation.",
     "credits.p1a":
-      "Certaines fonctionnalités de Myntra sont alimentées par des modèles d'IA (le coach financier, l'analyse vocale/texte/photo/relevé bancaire). Chaque appel à ces modèles a un coût réel, que nous mesurons en ",
+      "Certaines fonctionnalités de bynku sont alimentées par des modèles d'IA (le coach financier, l'analyse vocale/texte/photo/relevé bancaire). Chaque appel à ces modèles a un coût réel, que nous mesurons en ",
     "credits.p1strong": "crédits",
     "credits.p1b": ". Chaque foyer a un plafond de ",
     "credits.p1strong2": "10 crédits par mois",
@@ -1323,7 +1323,7 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "credits.tokenP2strong2": "tokens de sortie",
     "credits.tokenP2end":
       " (ce que le modèle renvoie — le JSON analysé ou la réponse du coach). Les deux sont facturés, et les tokens de sortie sont généralement plus chers par token que ceux d'entrée.",
-    "credits.howHeading": "Comment Myntra transforme les tokens en crédits",
+    "credits.howHeading": "Comment bynku transforme les tokens en crédits",
     "credits.howP1a":
       "Après chaque appel IA, nous enregistrons le nombre de tokens, les convertissons en un coût fractionnaire de crédits selon la tarification du modèle, et stockons cela pour votre foyer dans la table ",
     "credits.howCode": "credit_usage",

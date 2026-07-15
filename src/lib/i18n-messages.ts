@@ -250,7 +250,7 @@ const en = {
   "danger.deleteAcc.body":
     "Erase your account, profile, notification preferences, and all households where you are the only owner. In shared households your membership is removed and the remaining owner keeps the data.",
   "danger.deleteAcc.button": "Delete my account",
-  "danger.deleteAcc.confirmTitle": "Erase your Myntra account?",
+  "danger.deleteAcc.confirmTitle": "Erase your bynku account?",
   "danger.deleteAcc.confirmBody":
     "This is your GDPR right to erasure. It cannot be undone. Households where you are the sole owner will also be deleted. Type DELETE MY ACCOUNT to confirm.",
   "danger.deleteAcc.action": "Permanently erase",
@@ -775,7 +775,7 @@ const en = {
   "auth.passwordLabel": "Password",
   "auth.signIn": "Sign in",
   "auth.inviteOnlyNote":
-    "Myntra is invite-only. After signing in, open the invite link your household admin sent you to join.",
+    "bynku is invite-only. After signing in, open the invite link your household admin sent you to join.",
   "auth.footerTagline": "Built for families. Private by design. €·EUR.",
   "auth.privacyLink": "Privacy & data",
   "auth.googleSignInFailedToast": "Google sign-in failed",
@@ -1165,7 +1165,7 @@ const pt: Record<MessageKey, string> = {
   "danger.deleteAcc.body":
     "Apaga a sua conta, perfil, preferências de notificação e todos os agregados onde é o único proprietário. Em agregados partilhados a sua associação é removida e o proprietário restante mantém os dados.",
   "danger.deleteAcc.button": "Eliminar a minha conta",
-  "danger.deleteAcc.confirmTitle": "Apagar a sua conta Myntra?",
+  "danger.deleteAcc.confirmTitle": "Apagar a sua conta bynku?",
   "danger.deleteAcc.confirmBody":
     "Este é o seu direito ao apagamento (RGPD). Não pode ser desfeito. Agregados onde é o único proprietário também serão eliminados. Escreva DELETE MY ACCOUNT para confirmar.",
   "danger.deleteAcc.action": "Apagar permanentemente",
@@ -1696,7 +1696,7 @@ const pt: Record<MessageKey, string> = {
   "auth.passwordLabel": "Palavra-passe",
   "auth.signIn": "Iniciar sessão",
   "auth.inviteOnlyNote":
-    "O Myntra é apenas por convite. Depois de iniciar sessão, abra o link de convite que o administrador do seu agregado lhe enviou para entrar.",
+    "O bynku é apenas por convite. Depois de iniciar sessão, abra o link de convite que o administrador do seu agregado lhe enviou para entrar.",
   "auth.footerTagline": "Feito para famílias. Privado por design. €·EUR.",
   "auth.privacyLink": "Privacidade & dados",
   "auth.googleSignInFailedToast": "Falha no início de sessão com o Google",
@@ -2081,7 +2081,7 @@ const es: Record<MessageKey, string> = {
   "danger.deleteAcc.body":
     "Borra tu cuenta, perfil, preferencias de notificaciones y todos los hogares donde eres el único propietario. En hogares compartidos se elimina tu membresía y el propietario restante conserva los datos.",
   "danger.deleteAcc.button": "Eliminar mi cuenta",
-  "danger.deleteAcc.confirmTitle": "¿Borrar tu cuenta Myntra?",
+  "danger.deleteAcc.confirmTitle": "¿Borrar tu cuenta bynku?",
   "danger.deleteAcc.confirmBody":
     "Es tu derecho de supresión (RGPD). No se puede deshacer. Los hogares donde eres el único propietario también se eliminarán. Escribe DELETE MY ACCOUNT para confirmar.",
   "danger.deleteAcc.action": "Borrar permanentemente",
@@ -2612,7 +2612,7 @@ const es: Record<MessageKey, string> = {
   "auth.passwordLabel": "Contraseña",
   "auth.signIn": "Iniciar sesión",
   "auth.inviteOnlyNote":
-    "Myntra es solo por invitación. Después de iniciar sesión, abre el enlace de invitación que te envió el administrador de tu hogar para unirte.",
+    "bynku es solo por invitación. Después de iniciar sesión, abre el enlace de invitación que te envió el administrador de tu hogar para unirte.",
   "auth.footerTagline": "Hecho para familias. Privado por diseño. €·EUR.",
   "auth.privacyLink": "Privacidad y datos",
   "auth.googleSignInFailedToast": "Error al iniciar sesión con Google",
@@ -2999,7 +2999,7 @@ const de: Record<MessageKey, string> = {
   "danger.deleteAcc.body":
     "Löscht dein Konto, Profil, Benachrichtigungseinstellungen und alle Haushalte, in denen du einziger Eigentümer bist. In geteilten Haushalten wird deine Mitgliedschaft entfernt, der verbleibende Eigentümer behält die Daten.",
   "danger.deleteAcc.button": "Mein Konto löschen",
-  "danger.deleteAcc.confirmTitle": "Myntra-Konto löschen?",
+  "danger.deleteAcc.confirmTitle": "bynku-Konto löschen?",
   "danger.deleteAcc.confirmBody":
     "Dein Recht auf Löschung (DSGVO). Nicht rückgängig zu machen. Haushalte, in denen du einziger Eigentümer bist, werden ebenfalls gelöscht. Zum Bestätigen DELETE MY ACCOUNT eingeben.",
   "danger.deleteAcc.action": "Endgültig löschen",
@@ -3534,7 +3534,7 @@ const de: Record<MessageKey, string> = {
   "auth.passwordLabel": "Passwort",
   "auth.signIn": "Anmelden",
   "auth.inviteOnlyNote":
-    "Myntra ist nur auf Einladung. Öffne nach der Anmeldung den Einladungslink, den dir dein Haushaltsadministrator geschickt hat, um beizutreten.",
+    "bynku ist nur auf Einladung. Öffne nach der Anmeldung den Einladungslink, den dir dein Haushaltsadministrator geschickt hat, um beizutreten.",
   "auth.footerTagline": "Für Familien gemacht. Privat by Design. €·EUR.",
   "auth.privacyLink": "Datenschutz & Daten",
   "auth.googleSignInFailedToast": "Google-Anmeldung fehlgeschlagen",
@@ -3922,7 +3922,7 @@ const fr: Record<MessageKey, string> = {
   "danger.deleteAcc.body":
     "Efface votre compte, profil, préférences de notifications et tous les foyers dont vous êtes le seul propriétaire. Dans les foyers partagés, votre adhésion est retirée et le propriétaire restant conserve les données.",
   "danger.deleteAcc.button": "Supprimer mon compte",
-  "danger.deleteAcc.confirmTitle": "Effacer votre compte Myntra ?",
+  "danger.deleteAcc.confirmTitle": "Effacer votre compte bynku ?",
   "danger.deleteAcc.confirmBody":
     "C'est votre droit à l'effacement (RGPD). Irréversible. Les foyers dont vous êtes le seul propriétaire seront aussi supprimés. Tapez DELETE MY ACCOUNT pour confirmer.",
   "danger.deleteAcc.action": "Effacer définitivement",
@@ -4457,7 +4457,7 @@ const fr: Record<MessageKey, string> = {
   "auth.passwordLabel": "Mot de passe",
   "auth.signIn": "Se connecter",
   "auth.inviteOnlyNote":
-    "Myntra fonctionne uniquement sur invitation. Après connexion, ouvrez le lien d'invitation envoyé par l'administrateur de votre foyer pour le rejoindre.",
+    "bynku fonctionne uniquement sur invitation. Après connexion, ouvrez le lien d'invitation envoyé par l'administrateur de votre foyer pour le rejoindre.",
   "auth.footerTagline": "Conçu pour les familles. Privé par conception. €·EUR.",
   "auth.privacyLink": "Confidentialité & données",
   "auth.googleSignInFailedToast": "Échec de la connexion avec Google",

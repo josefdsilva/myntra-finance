@@ -27,11 +27,11 @@ import { WIKI_STRINGS } from "@/lib/wiki-content";
 export const Route = createFileRoute("/_authenticated/wiki")({
   head: () => ({
     meta: [
-      { title: "Wiki — Myntra" },
+      { title: "Wiki — bynku" },
       {
         name: "description",
         content:
-          "Complete guide to the Myntra app: pay cycles, safe-to-spend, allocations, analytics, notifications and more.",
+          "Complete guide to the bynku app: pay cycles, safe-to-spend, allocations, analytics, notifications and more.",
       },
     ],
   }),

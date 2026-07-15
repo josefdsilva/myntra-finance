@@ -89,7 +89,7 @@ export const exportMyData = createServerFn({ method: "POST" })
 
     return {
       exportedAt: new Date().toISOString(),
-      format: "myntra.export.v1",
+      format: "bynku.export.v1",
       account: {
         userId,
         email: (claims as { email?: string } | undefined)?.email ?? null,

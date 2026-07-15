@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/allocations")({
-  head: () => ({ meta: [{ title: "Allocations · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Allocations · bynku" }] }),
   component: AllocationsPage,
 });
 

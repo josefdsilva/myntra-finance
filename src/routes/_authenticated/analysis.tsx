@@ -37,7 +37,7 @@ import { BenchmarksCard } from "@/components/benchmarks-card";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
-  head: () => ({ meta: [{ title: "Analysis · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Analysis · bynku" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     ask: typeof search.ask === "string" ? search.ask : undefined,
   }),

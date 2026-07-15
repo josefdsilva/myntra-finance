@@ -20,7 +20,7 @@ import { IncomeAllocationSuggestion } from "@/components/income-allocation-sugge
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Dashboard · bynku" }] }),
   component: Dashboard,
 });
 

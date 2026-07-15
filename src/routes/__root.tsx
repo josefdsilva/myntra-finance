@@ -83,26 +83,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Myntra — daily safe-to-spend & household allocations" },
+      { title: "bynku — daily safe-to-spend & household allocations" },
       {
         name: "description",
         content:
-          "Myntra: shared household budgeting with daily safe-to-spend, configurable allocation buckets, and AI expense capture.",
+          "bynku: shared household budgeting with daily safe-to-spend, configurable allocation buckets, and AI expense capture.",
       },
-      { name: "author", content: "Myntra" },
-      { property: "og:title", content: "Myntra — daily safe-to-spend & household allocations" },
+      { name: "author", content: "bynku" },
+      { property: "og:title", content: "bynku — daily safe-to-spend & household allocations" },
       {
         property: "og:description",
         content:
-          "Myntra: shared household budgeting with daily safe-to-spend, configurable allocation buckets, and AI expense capture.",
+          "bynku: shared household budgeting with daily safe-to-spend, configurable allocation buckets, and AI expense capture.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Myntra — daily safe-to-spend & household allocations" },
+      { name: "twitter:title", content: "bynku — daily safe-to-spend & household allocations" },
       {
         name: "twitter:description",
         content:
-          "Myntra: shared household budgeting with daily safe-to-spend, configurable allocation buckets, and AI expense capture.",
+          "bynku: shared household budgeting with daily safe-to-spend, configurable allocation buckets, and AI expense capture.",
       },
       { property: "og:image", content: appIcon.url },
       { name: "twitter:image", content: appIcon.url },

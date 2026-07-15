@@ -7,7 +7,7 @@ import { useT } from "@/lib/i18n";
 import { StatementImportFlow } from "@/components/statement-import-flow";
 
 export const Route = createFileRoute("/_authenticated/statement-import")({
-  head: () => ({ meta: [{ title: "Import statement · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Import statement · bynku" }] }),
   component: StatementImportPage,
 });
 

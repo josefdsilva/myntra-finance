@@ -34,7 +34,7 @@ import { Printer, RefreshCw, Loader2, PiggyBank, Wallet, Check } from "lucide-re
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/cycle-report")({
-  head: () => ({ meta: [{ title: "Cycle report · Myntra" }] }),
+  head: () => ({ meta: [{ title: "Cycle report · bynku" }] }),
   component: CycleReportPage,
 });
 

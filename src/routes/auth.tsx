@@ -23,7 +23,7 @@ import { useT } from "@/lib/i18n";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in · Myntra" },
+      { title: "Sign in · bynku" },
       { name: "description", content: "Sign in to your shared household budget" },
     ],
   }),
@@ -71,8 +71,8 @@ function AuthPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <img src={appIcon.url} alt="Myntra" className="size-11 rounded-xl shadow-lg" />
-            <span className="font-display text-2xl tracking-tight">Myntra</span>
+            <img src={appIcon.url} alt="bynku" className="size-11 rounded-xl shadow-lg" />
+            <span className="font-display text-2xl tracking-tight">bynku</span>
           </div>
         </div>
 
@@ -163,8 +163,8 @@ function AuthPage() {
       <div className="flex items-center justify-center px-4 py-12 sm:px-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col items-center mb-6 lg:hidden">
-            <img src={appIcon.url} alt="Myntra" className="size-14 rounded-2xl mb-3 shadow-lg" />
-            <h1 className="font-display text-3xl tracking-tight">Myntra</h1>
+            <img src={appIcon.url} alt="bynku" className="size-14 rounded-2xl mb-3 shadow-lg" />
+            <h1 className="font-display text-3xl tracking-tight">bynku</h1>
             <p className="text-sm text-muted-foreground mt-1.5 text-center">
               {t("auth.mobileHeroSubtitle")}
             </p>

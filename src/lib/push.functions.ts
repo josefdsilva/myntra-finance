@@ -179,7 +179,7 @@ export const sendTestPush = createServerFn({ method: "POST" })
       })();
       const r = await sendWebPush(s, {
         title: "Notifications enabled ✓",
-        body: "You'll now receive selected alerts from Myntra.",
+        body: "You'll now receive selected alerts from bynku.",
         url: "/dashboard",
         tag: "test",
       });

@@ -3,17 +3,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy & data — Myntra" },
+      { title: "Privacy & data — bynku" },
       {
         name: "description",
         content:
-          "How Myntra collects, stores, and protects your household's financial data. GDPR rights, data-sharing scope, and account deletion.",
+          "How bynku collects, stores, and protects your household's financial data. GDPR rights, data-sharing scope, and account deletion.",
       },
-      { property: "og:title", content: "Privacy & data — Myntra" },
+      { property: "og:title", content: "Privacy & data — bynku" },
       {
         property: "og:description",
         content:
-          "How Myntra collects, stores, and protects your household's financial data. GDPR rights, data-sharing scope, and account deletion.",
+          "How bynku collects, stores, and protects your household's financial data. GDPR rights, data-sharing scope, and account deletion.",
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
@@ -36,19 +36,19 @@ function PrivacyPage() {
 
         <header className="mb-10">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Maintained by the Myntra app owner
+            Maintained by the bynku app owner
           </p>
           <h1 className="mt-2 font-display text-4xl md:text-5xl">Privacy &amp; data</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Last updated: {UPDATED}. This page explains what Myntra stores, who can see it, and how
+            Last updated: {UPDATED}. This page explains what bynku stores, who can see it, and how
             to erase it. It is written to comply with the EU General Data Protection Regulation
             (GDPR).
           </p>
         </header>
 
-        <Section title="Who runs Myntra">
+        <Section title="Who runs bynku">
           <p>
-            Myntra is a small, self-hosted household budgeting app. The developer operates it as a
+            bynku is a small, self-hosted household budgeting app. The developer operates it as a
             personal / test project and is the <strong>data controller</strong> for the purposes of
             GDPR. Contact for privacy requests: use the email address you signed in with — the
             developer will reply to that account.
