@@ -336,11 +336,11 @@ export type Database = {
       debts: {
         Row: {
           created_at: string
+          deduced_rate_pct: number | null
           household_id: string
           id: string
           kind: string
           label: string
-          deduced_rate_pct: number | null
           last_recompute_at: string | null
           maturity_date: string | null
           monthly_amount: number
@@ -355,11 +355,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deduced_rate_pct?: number | null
           household_id: string
           id?: string
           kind?: string
           label: string
-          deduced_rate_pct?: number | null
           last_recompute_at?: string | null
           maturity_date?: string | null
           monthly_amount?: number
@@ -374,11 +374,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deduced_rate_pct?: number | null
           household_id?: string
           id?: string
           kind?: string
           label?: string
-          deduced_rate_pct?: number | null
           last_recompute_at?: string | null
           maturity_date?: string | null
           monthly_amount?: number
