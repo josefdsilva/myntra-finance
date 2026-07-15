@@ -62,9 +62,11 @@ type CoachContext = {
     maturity_date: string | null;
   }>;
   variableEstimateMonthly: number;
+  /** Canonical monthly income = sum of Settings incomes (matches the app screens). */
+  settingsIncome: number;
   /** Rough recurring income per month, averaged from up to 6 recent salary events. */
   estimatedMonthlyIncome: number;
-  /** estimatedMonthlyIncome - fixedMonthly - variableEstimateMonthly. Room for new commitments. */
+  /** Settings income − baseline (baseline includes fixed + debt + variable + margin). */
   monthlySurplus: number;
   /** Conservative safe monthly payment for a new recurring commitment (rent, loan, lease). */
   safeNewMonthlyCommitment: number;
@@ -215,6 +217,15 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const debtMonthly = sumMonthly(debtsData);
   const fixedMonthly = fixedExpensesMonthly + debtMonthly;
   const variableEstimateMonthly = sumMonthly(varEst);
+  // Canonical income = sum of Settings incomes, matching the Dashboard/Allocations
+  // screens. estimatedMonthlyIncome (from salary events) stays for the burndown and
+  // benchmark, but surplus uses the same basis the app displays.
+  const { data: incomesRows } = await supabase
+    .from("incomes")
+    .select("monthly_amount")
+    .eq("household_id", householdId);
+  const settingsIncome = sumMonthly(incomesRows);
+  const baseline = Number(hh?.baseline_budget ?? 0);
   type DebtRow = {
     label: string;
     kind: string;
@@ -350,10 +361,9 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     estimatedMonthlyIncome = received;
   }
 
-  const monthlySurplus = Math.max(
-    0,
-    estimatedMonthlyIncome - fixedMonthly - variableEstimateMonthly,
-  );
+  // Surplus matches the app: Settings income − baseline (baseline already includes
+  // fixed + debt + variable + safety margin).
+  const monthlySurplus = Math.max(0, settingsIncome - baseline);
   // Conservative: leave 25% of surplus as buffer for savings / unexpected.
   const safeNewMonthlyCommitment = Math.round(monthlySurplus * 0.75 * 100) / 100;
 
@@ -361,13 +371,9 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const emergencyFundMonths =
     essentialsMonthly > 0 ? Math.round((totalSavings / essentialsMonthly) * 10) / 10 : null;
   const savingsRatePct =
-    estimatedMonthlyIncome > 0
-      ? Math.round((monthlySurplus / estimatedMonthlyIncome) * 1000) / 10
-      : null;
+    settingsIncome > 0 ? Math.round((monthlySurplus / settingsIncome) * 1000) / 10 : null;
   const debtToIncomePct =
-    estimatedMonthlyIncome > 0
-      ? Math.round((debtMonthly / estimatedMonthlyIncome) * 1000) / 10
-      : null;
+    settingsIncome > 0 ? Math.round((debtMonthly / settingsIncome) * 1000) / 10 : null;
 
   // Normalize this cycle's category spend to a monthly footing so we can
   // compare against national category shares fairly.
@@ -394,7 +400,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   return {
     today: new Date().toISOString(),
     currency: hh?.currency ?? "EUR",
-    baseline: Number(hh?.baseline_budget ?? 0),
+    baseline,
     marginPct: Number(hh?.margin_pct ?? 0),
     cycle: {
       source: cycle.source,
@@ -410,6 +416,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     debts,
     debtPrincipalOutstanding,
     variableEstimateMonthly,
+    settingsIncome,
     estimatedMonthlyIncome,
     monthlySurplus,
     safeNewMonthlyCommitment,
@@ -482,7 +489,7 @@ function buildSystem(ctx: CoachContext, locale?: string): string {
   return `You are a warm, practical household financial coach for a ${ctx.currency} household in ${cc}.
 Ground EVERY answer in the JSON snapshot provided — never invent numbers, and never redo arithmetic the snapshot already did.
 The snapshot pre-computes the key figures; quote them verbatim rather than deriving your own:
-- monthlySurplus, safeNewMonthlyCommitment, savingsRatePct, emergencyFundMonths, debtToIncomePct.
+- settingsIncome (monthly income), baseline (target cost of living), monthlySurplus (= settingsIncome − baseline), safeNewMonthlyCommitment, savingsRatePct, emergencyFundMonths, debtToIncomePct.
 - debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
 - avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
 - benchmark — national averages from Eurostat / national statistics, never other users.
