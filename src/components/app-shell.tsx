@@ -22,6 +22,7 @@ import {
   ChevronsUpDown,
   Plus,
   FileText,
+  Upload,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,6 +47,7 @@ const NAV = [
   { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
   { to: "/cycle-report", labelKey: "nav.cycleReport", icon: FileText },
   { to: "/households", labelKey: "nav.households", icon: Users },
+  { to: "/statement-import", labelKey: "nav.statementImport", icon: Upload },
   { to: "/settings", labelKey: "nav.settings", icon: Settings },
   { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
   { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },

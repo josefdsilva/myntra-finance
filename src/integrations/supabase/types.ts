@@ -333,6 +333,44 @@ export type Database = {
           },
         ]
       }
+      merchant_rules: {
+        Row: {
+          category: string
+          created_at: string
+          household_id: string
+          id: string
+          merchant_key: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          household_id: string
+          id?: string
+          merchant_key: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          merchant_key?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_rules_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       debts: {
         Row: {
           created_at: string
