@@ -5,8 +5,10 @@ import { z } from "zod";
 import { computeCycle } from "@/lib/cycle";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
+import { addMonths } from "date-fns";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import { computeBenchmarkComparison, type BenchmarkComparison } from "./benchmarks";
+import { monthlyRateFromTaeg, monthlyRateFromNominalTan, termMonthsFor } from "./amortization";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
@@ -89,6 +91,31 @@ type CoachContext = {
   }>;
   topSpends: Array<{ amount: number; category: string; note: string | null; occurred_at: string }>;
   benchmark: BenchmarkComparison | null;
+  country: string;
+  countryName: string;
+  /** fixed (incl. debt) + variable estimate per month. */
+  essentialsMonthly: number;
+  /** totalSavings / essentialsMonthly, in months. Null if no expenses. */
+  emergencyFundMonths: number | null;
+  /** monthlySurplus / income, %. Null if no income. */
+  savingsRatePct: number | null;
+  /** debtMonthly / income, %. Null if no income. */
+  debtToIncomePct: number | null;
+  /** Per-debt payoff facts, pre-computed so the model never does amortization math. */
+  debtProjections: Array<{
+    label: string;
+    aprPct: number;
+    monthlyInstallment: number;
+    scheduledPayoff: string | null;
+    remainingInterest: number | null;
+    /** Effect of paying an extra €100/mo. */
+    overpay100MonthsSaved: number | null;
+    overpay100InterestSaved: number | null;
+  }>;
+  /** Debt labels ordered highest-APR-first (pay this order to minimise interest). */
+  avalancheOrder: string[];
+  /** Debt labels ordered smallest-balance-first (pay this order for quick wins). */
+  snowballOrder: string[];
   cycleStartKey: string; // yyyy-mm-dd for cache
 };
 
@@ -158,7 +185,9 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
     supabase
       .from("debts")
-      .select("label, kind, monthly_amount, taeg_pct, principal_remaining, maturity_date")
+      .select(
+        "label, kind, monthly_amount, taeg_pct, tan_pct, deduced_rate_pct, principal_remaining, maturity_date",
+      )
       .eq("household_id", householdId),
     supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
     supabase
@@ -191,6 +220,8 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     kind: string;
     monthly_amount: number | string;
     taeg_pct: number | string | null;
+    tan_pct: number | string | null;
+    deduced_rate_pct: number | string | null;
     principal_remaining: number | string | null;
     maturity_date: string | null;
   };
@@ -206,6 +237,56 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     (s, d) => s + (d.principal_remaining ?? 0),
     0,
   );
+
+  // Pre-compute debt payoff facts in code so the model never does amortization
+  // math itself. Rate preference mirrors the app: deduced > TAN > TAEG.
+  const debtRows = rowsOrEmpty<DebtRow>(debtsData);
+  const now = new Date();
+  const rateOf = (d: DebtRow): number => {
+    if (d.deduced_rate_pct != null) return monthlyRateFromTaeg(Number(d.deduced_rate_pct));
+    if (d.tan_pct != null) return monthlyRateFromNominalTan(Number(d.tan_pct));
+    return monthlyRateFromTaeg(Number(d.taeg_pct ?? 0));
+  };
+  const aprOf = (d: DebtRow): number =>
+    d.deduced_rate_pct != null
+      ? Number(d.deduced_rate_pct)
+      : d.taeg_pct != null
+        ? Number(d.taeg_pct)
+        : d.tan_pct != null
+          ? Number(d.tan_pct)
+          : 0;
+  const debtProjections = debtRows
+    .filter((d) => Number(d.principal_remaining ?? 0) > 0 && Number(d.monthly_amount) > 0)
+    .map((d) => {
+      const principal = Number(d.principal_remaining);
+      const installment = Number(d.monthly_amount);
+      const r = rateOf(d);
+      const n = termMonthsFor(principal, r, installment);
+      const nOver = termMonthsFor(principal, r, installment + 100);
+      return {
+        label: d.label,
+        aprPct: Math.round(aprOf(d) * 100) / 100,
+        monthlyInstallment: installment,
+        scheduledPayoff:
+          d.maturity_date ?? (n ? addMonths(now, Math.ceil(n)).toISOString().slice(0, 10) : null),
+        remainingInterest: n ? Math.round((installment * n - principal) * 100) / 100 : null,
+        overpay100MonthsSaved: n && nOver ? Math.round(n - nOver) : null,
+        overpay100InterestSaved:
+          n && nOver ? Math.round((installment * n - (installment + 100) * nOver) * 100) / 100 : null,
+      };
+    });
+  const avalancheOrder = debtRows
+    .slice()
+    .sort((a, b) => aprOf(b) - aprOf(a))
+    .map((d) => d.label);
+  const snowballOrder = debtRows
+    .slice()
+    .sort(
+      (a, b) =>
+        Number(a.principal_remaining ?? Number.POSITIVE_INFINITY) -
+        Number(b.principal_remaining ?? Number.POSITIVE_INFINITY),
+    )
+    .map((d) => d.label);
 
   const allocByBucket: Record<string, number> = {};
   for (const a of rowsOrEmpty<AllocRow>(allocs)) {
@@ -276,6 +357,18 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   // Conservative: leave 25% of surplus as buffer for savings / unexpected.
   const safeNewMonthlyCommitment = Math.round(monthlySurplus * 0.75 * 100) / 100;
 
+  const essentialsMonthly = Math.round((fixedMonthly + variableEstimateMonthly) * 100) / 100;
+  const emergencyFundMonths =
+    essentialsMonthly > 0 ? Math.round((totalSavings / essentialsMonthly) * 10) / 10 : null;
+  const savingsRatePct =
+    estimatedMonthlyIncome > 0
+      ? Math.round((monthlySurplus / estimatedMonthlyIncome) * 1000) / 10
+      : null;
+  const debtToIncomePct =
+    estimatedMonthlyIncome > 0
+      ? Math.round((debtMonthly / estimatedMonthlyIncome) * 1000) / 10
+      : null;
+
   // Normalize this cycle's category spend to a monthly footing so we can
   // compare against national category shares fairly.
   const cycleDays = Math.max(1, cycle.daysTotal || 30);
@@ -333,26 +426,81 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     })),
     topSpends: spendsForTop.slice(0, 8),
     benchmark,
+    country: (hh?.country ?? "PT").toUpperCase(),
+    countryName: COUNTRY_NAMES[(hh?.country ?? "PT").toUpperCase()] ?? (hh?.country ?? "PT"),
+    essentialsMonthly,
+    emergencyFundMonths,
+    savingsRatePct,
+    debtToIncomePct,
+    debtProjections,
+    avalancheOrder,
+    snowballOrder,
     cycleStartKey: cycle.start.toISOString().slice(0, 10),
   };
 }
 
 
-const SYSTEM_BASE = `You are a warm, practical household financial coach for a family of four in Portugal. Currency EUR.
-Ground every answer in the JSON snapshot the user provides — never invent numbers. If a number is missing say so and explain what you'd need.
-Format money as €X,XXX.XX. Use markdown. Be concrete: give ranges, not vague advice.
+const RATES_AS_OF = "July 2026";
 
-You help with big life decisions as well as day-to-day budgeting. Common questions:
-- Housing: "how much rent/mortgage can we afford?" — anchor on \`safeNewMonthlyCommitment\` and \`monthlySurplus\`; mention the 28/36 rule (housing ≤ ~28% of gross monthly income, total debt ≤ ~36%). Give a comfortable range and a stretch range. Flag if emergency savings are thin.
-- Buying vs financing (car, appliance, etc.): compare (a) paying cash from savings (name the bucket, show remaining after purchase, note the emergency-fund impact), (b) a loan at a reasonable market rate (assume typical Portugal auto loan 7–10% APR, personal loan 8–12% APR, mortgage 3.5–5% — always caveat "typical, check current offers"), (c) leasing. Show approximate monthly payment ranges and total interest.
-- Credit / debt: never encourage taking on debt that pushes total monthly commitments above \`safeNewMonthlyCommitment\`. Suggest concrete steps to free room (reduce a category, pause a bucket, delay purchase N months).
-- Existing debt (\`debts\` array with \`kind\`, \`monthly_amount\`, \`taeg_pct\`, \`principal_remaining\`, \`maturity_date\`; \`debtMonthly\` and \`debtPrincipalOutstanding\` are pre-summed): when the user asks about early repayment, refinancing, or renegotiation — rank debts by TAEG (highest first is the avalanche method; smallest principal first is the snowball method), and show approximate interest savings from an extra €X monthly overpayment using the standard amortization delta. Flag Portuguese-mortgage specifics: early-repayment fees are legally capped (0.5% variable, 2% fixed) — mention that any lump-sum decision is usually worth it if the TAEG exceeds risk-free savings alternatives (currently ~2.5–3.5% net). When the user shares a competing offer for the same debt, compare TAEG side-by-side and compute total remaining cost under each; a refinance is worth it only if lifetime savings after fees clearly beat staying put.
-- Comparing credit / loan offers: when the user shares two or more offers (or asks you to size one up), always compare on the same footing. Show a small markdown table with columns: Offer, APR (TAEG in Portugal), monthly payment, total interest, total cost, term. Compute monthly payment with the standard amortization formula P = L · r / (1 − (1+r)^-n) where r = APR/12 and n = months; total cost = monthly · n. Call out fees, insurance requirements, early-repayment penalties, and variable-vs-fixed rate risk. Flag the "spread + Euribor" structure for Portuguese mortgages. Recommend the offer with the lowest total cost that still fits \`safeNewMonthlyCommitment\`, and remind the user that TAEG is the fair comparison metric (not the nominal rate).
-- Comparing products / purchases (phones, appliances, cars, subscriptions, insurance, energy plans, etc.): put options side-by-side in a markdown table with price, key specs the user cares about, expected lifespan or contract length, and cost per year / per use. Include running costs (fuel/energy, subscription, maintenance) when they matter. End with one clear recommendation tied to the household's budget room and goals; suggest a "good enough" pick if the top option strains \`safeNewMonthlyCommitment\`. If the user hasn't shared numbers, ask for the 2–3 fields that would most change the answer.
-- Savings goals: use bucket \`totalSaved\` and \`allocatedThisCycle\` to project when a goal is reachable.
-- National benchmarks (\`benchmark\` in the snapshot, sourced from Eurostat/INE, NOT other households): when relevant, compare the household to its country's average. Use \`benchmark.incomePercentile\` to describe income position ("around the Xth percentile for a household your size in {countryName}"), \`benchmark.savingsRatePct\` vs \`benchmark.nationalSavingsRatePct\` for savings comparison, and \`benchmark.categories\` (flagged items first) for category deviations — e.g. "your dining is 2× the {countryName} average, cutting to average would free ~€X/mo". Always attribute to the country name and note it's a public reference average, never other users' data. Do not invent benchmark numbers; if \`benchmark\` is null, say so.
+const COUNTRY_NAMES: Record<string, string> = {
+  PT: "Portugal",
+  ES: "Spain",
+  FR: "France",
+  DE: "Germany",
+  IT: "Italy",
+  NL: "Netherlands",
+  IE: "Ireland",
+  BE: "Belgium",
+  AT: "Austria",
+  LU: "Luxembourg",
+};
 
-When giving rate/market figures, always label them as typical benchmarks and remind the user to compare live quotes. Keep answers scannable: short intro, a small table when comparing 2+ options, 2–4 bullet points, one clear recommendation. Prefer 4–8 sentences for simple questions; go longer only when a comparison genuinely needs it.`;
+type RateBlock = { auto: string; personal: string; mortgage: string; savings: string; note?: string };
+const GENERIC_RATES: RateBlock = {
+  auto: "~7-11% APR",
+  personal: "~8-13% APR",
+  mortgage: "~3.5-5.5%",
+  savings: "~2-3.5% net",
+};
+const MARKET_RATES: Record<string, RateBlock> = {
+  PT: {
+    auto: "7-10% APR",
+    personal: "8-12% APR",
+    mortgage: "3.5-5% (Euribor + spread)",
+    savings: "~2.5-3.5% net",
+    note: "Portuguese mortgage early-repayment fees are legally capped at 0.5% (variable rate) / 2% (fixed rate).",
+  },
+};
+
+/** Country-aware system prompt that points the model at the pre-computed facts. */
+function buildSystem(ctx: CoachContext, locale?: string): string {
+  const cc = ctx.countryName;
+  const isPT = ctx.country === "PT";
+  const m = MARKET_RATES[ctx.country] ?? GENERIC_RATES;
+  const market = `Typical financing rates in ${cc} (rough benchmarks as of ${RATES_AS_OF} — always tell the user to check live quotes): auto ${m.auto}, personal loan ${m.personal}, mortgage ${m.mortgage}, savings ${m.savings}.${m.note ? " " + m.note : ""}`;
+
+  return `You are a warm, practical household financial coach for a ${ctx.currency} household in ${cc}.
+Ground EVERY answer in the JSON snapshot provided — never invent numbers, and never redo arithmetic the snapshot already did.
+The snapshot pre-computes the key figures; quote them verbatim rather than deriving your own:
+- monthlySurplus, safeNewMonthlyCommitment, savingsRatePct, emergencyFundMonths, debtToIncomePct.
+- debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
+- avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
+- benchmark — national averages from Eurostat / national statistics, never other users.
+If a needed number is not in the snapshot, say what you'd need instead of guessing. Income is take-home (net), so treat the 28/36 rule as a conservative guide.
+Format money in ${ctx.currency}, use markdown, and cite the figures you used in parentheses, e.g. "(surplus €X, safe €Y)". Be concrete: ranges, not vague advice.
+
+Guidance by topic:
+- Housing / new recurring commitment: anchor on safeNewMonthlyCommitment and monthlySurplus; give a comfortable and a stretch range; flag thin savings when emergencyFundMonths < 3.
+- Buying vs financing: compare paying from a named savings bucket (show remaining balance and emergency-fund impact) vs a loan (use the market rates below) vs leasing; show monthly and total interest.
+- Existing debt / early repayment: rank using avalancheOrder or snowballOrder and quote the overpayment savings straight from debtProjections — do not recompute amortization. A lump sum usually beats saving when a debt's APR exceeds the savings rate below.${isPT ? " For Portuguese mortgages, mention the capped early-repayment fee (0.5% variable / 2% fixed)." : ""}
+- Comparing loan / product offers: put them in a markdown table on a common footing (loans: Offer, APR, monthly, total interest, total cost, term; products: price, key specs, lifespan/contract, cost per year). Recommend the lowest total cost that still fits safeNewMonthlyCommitment; APR is the fair comparison metric, not the nominal rate.
+- Savings goals: use each bucket's totalSaved and allocatedThisCycle to project when it is reachable.
+- Benchmarks: compare to ${cc} averages via benchmark.incomePercentile, benchmark.savingsRatePct vs nationalSavingsRatePct, and benchmark.categories (flagged first). Attribute to ${cc} and note it is a public reference average; if benchmark is null, say so.
+
+${market}
+
+Guardrails: you are a budgeting coach, not a licensed financial, tax, or legal advisor. For regulated investments, tax wrappers, or legal specifics, give general context and recommend a qualified professional. Keep answers scannable: short intro, a table when comparing 2+ options, 2-4 bullets, one clear recommendation. 4-8 sentences for simple questions; longer only when a comparison genuinely needs it.${langInstruction(locale)}`;
+}
 
 
 const OVERVIEW_PROMPT = `Write a friendly financial overview in markdown with these sections:
@@ -421,7 +569,8 @@ export const generateOverview = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
     const result = await generateText({
       model: gateway(MODEL),
-      system: SYSTEM_BASE + langInstruction(data.locale),
+      system: buildSystem(ctx, data.locale),
+      temperature: 0.2,
       prompt: `Household snapshot (JSON):\n${JSON.stringify(ctx)}\n\n${OVERVIEW_PROMPT}`,
     });
 
@@ -478,12 +627,13 @@ export const chatWithCoach = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
     const result = await generateText({
       model: gateway(MODEL),
-      system: `${SYSTEM_BASE}${langInstruction(data.locale)}
+      system: `${buildSystem(ctx, data.locale)}
 
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(ctx)}
 
 Answer the user's questions grounded in this snapshot. Use markdown when helpful. For quick questions stay short (2–5 sentences); for life-decision questions (housing, buying vs financing, taking on debt, big savings goals) give a more thorough answer with a range, an assumption line, and a clear recommendation.`,
+      temperature: 0.2,
       messages: [
         ...data.history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: data.message },
