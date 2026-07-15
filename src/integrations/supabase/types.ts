@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_movements: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          from_id: string | null
+          from_type: Database["public"]["Enums"]["movement_account_type"] | null
+          household_id: string
+          id: string
+          kind: Database["public"]["Enums"]["movement_kind"]
+          note: string | null
+          period: string
+          principal_after: number | null
+          principal_before: number | null
+          reason: string | null
+          recompute_mode: string | null
+          to_id: string | null
+          to_type: Database["public"]["Enums"]["movement_account_type"] | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          from_id?: string | null
+          from_type?:
+            | Database["public"]["Enums"]["movement_account_type"]
+            | null
+          household_id: string
+          id?: string
+          kind: Database["public"]["Enums"]["movement_kind"]
+          note?: string | null
+          period: string
+          principal_after?: number | null
+          principal_before?: number | null
+          reason?: string | null
+          recompute_mode?: string | null
+          to_id?: string | null
+          to_type?: Database["public"]["Enums"]["movement_account_type"] | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          from_id?: string | null
+          from_type?:
+            | Database["public"]["Enums"]["movement_account_type"]
+            | null
+          household_id?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["movement_kind"]
+          note?: string | null
+          period?: string
+          principal_after?: number | null
+          principal_before?: number | null
+          reason?: string | null
+          recompute_mode?: string | null
+          to_id?: string | null
+          to_type?: Database["public"]["Enums"]["movement_account_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_movements_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analysis_overviews: {
         Row: {
           content: string
@@ -257,71 +326,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cycle_reports_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      account_movements: {
-        Row: {
-          amount: number
-          created_at: string
-          created_by: string
-          from_id: string | null
-          from_type: Database["public"]["Enums"]["movement_account_type"] | null
-          household_id: string
-          id: string
-          kind: Database["public"]["Enums"]["movement_kind"]
-          note: string | null
-          period: string
-          principal_after: number | null
-          principal_before: number | null
-          reason: string | null
-          recompute_mode: string | null
-          to_id: string | null
-          to_type: Database["public"]["Enums"]["movement_account_type"] | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          created_by: string
-          from_id?: string | null
-          from_type?: Database["public"]["Enums"]["movement_account_type"] | null
-          household_id: string
-          id?: string
-          kind: Database["public"]["Enums"]["movement_kind"]
-          note?: string | null
-          period: string
-          principal_after?: number | null
-          principal_before?: number | null
-          reason?: string | null
-          recompute_mode?: string | null
-          to_id?: string | null
-          to_type?: Database["public"]["Enums"]["movement_account_type"] | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          created_by?: string
-          from_id?: string | null
-          from_type?: Database["public"]["Enums"]["movement_account_type"] | null
-          household_id?: string
-          id?: string
-          kind?: Database["public"]["Enums"]["movement_kind"]
-          note?: string | null
-          period?: string
-          principal_after?: number | null
-          principal_before?: number | null
-          reason?: string | null
-          recompute_mode?: string | null
-          to_id?: string | null
-          to_type?: Database["public"]["Enums"]["movement_account_type"] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "account_movements_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
@@ -837,53 +841,53 @@ export type Database = {
     Functions: {
       fund_deposit: {
         Args: {
-          p_household: string
-          p_bucket: string
           p_amount: number
-          p_reason?: string
-          p_period?: string
-          p_note?: string
-        }
-        Returns: string
-      }
-      fund_withdrawal: {
-        Args: {
-          p_household: string
           p_bucket: string
-          p_amount: number
-          p_reason?: string
-          p_period?: string
+          p_household: string
           p_note?: string
+          p_period?: string
+          p_reason?: string
         }
         Returns: string
       }
       fund_transfer: {
         Args: {
-          p_household: string
-          p_from_bucket: string
-          p_to_bucket: string
           p_amount: number
-          p_reason?: string
-          p_period?: string
+          p_from_bucket: string
+          p_household: string
           p_note?: string
+          p_period?: string
+          p_reason?: string
+          p_to_bucket: string
+        }
+        Returns: string
+      }
+      fund_withdrawal: {
+        Args: {
+          p_amount: number
+          p_bucket: string
+          p_household: string
+          p_note?: string
+          p_period?: string
+          p_reason?: string
         }
         Returns: string
       }
       service_debt: {
         Args: {
-          p_household: string
-          p_debt: string
           p_amount: number
-          p_source_type: string
-          p_source_bucket?: string
-          p_new_principal?: number
+          p_as_of?: string
+          p_debt: string
+          p_household: string
           p_new_installment?: number
           p_new_maturity?: string
-          p_recompute_mode?: string
-          p_reason?: string
+          p_new_principal?: number
           p_note?: string
           p_period?: string
-          p_as_of?: string
+          p_reason?: string
+          p_recompute_mode?: string
+          p_source_bucket?: string
+          p_source_type: string
         }
         Returns: string
       }
