@@ -28,6 +28,12 @@ import {
 import { useLocale } from "@/lib/i18n";
 import { WIKI_STRINGS } from "@/lib/wiki-content";
 import { pageShellClass } from "@/components/page-shell";
+import {
+  BaselineDiagram,
+  CycleDiagram,
+  WaterfallDiagram,
+  LadderDiagram,
+} from "@/components/wiki-diagrams";
 
 export const Route = createFileRoute("/_authenticated/wiki")({
   head: () => ({
@@ -215,6 +221,13 @@ function WikiPage() {
         </Section>
 
         <Section id="cycles" icon={Calendar} title={w("toc.cycles")}>
+          <CycleDiagram
+            salary={w("diag.salary")}
+            today={w("diag.today")}
+            nextSalary={w("diag.nextSalary")}
+            cycle={w("diag.cycle")}
+            caption={w("diag.cycleCap")}
+          />
           <p>
             {w("cycles.p1a")}
             <Term>{w("cycles.term1")}</Term>
@@ -237,6 +250,14 @@ function WikiPage() {
         </Section>
 
         <Section id="baseline" icon={Wallet} title={w("toc.baseline")}>
+          <BaselineDiagram
+            fixed={w("diag.lFixed")}
+            debt={w("diag.lDebt")}
+            variable={w("diag.lVariable")}
+            margin={w("diag.lMargin")}
+            baseline={w("diag.lBaseline")}
+            caption={w("diag.baselineCap")}
+          />
           <p>
             {w("baseline.p1a")}
             <Term>{w("baseline.term1")}</Term>
@@ -363,6 +384,59 @@ safe_today    = remaining / days_left_in_cycle`}
         </Section>
 
         <Section id="allocations" icon={PiggyBank} title={w("toc.allocations")}>
+          <WaterfallDiagram
+            surplus={w("diag.lSurplus")}
+            realAlloc={w("diag.lRealAlloc")}
+            realSurplus={w("diag.lRealSurplus")}
+            caption={w("diag.waterfallCap")}
+          />
+          <div className="overflow-x-auto">
+            <p className="font-medium text-foreground">{w("tbl.typesTitle")}</p>
+            <table className="mt-1 w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="py-1 pr-3 font-medium">{w("tbl.colType")}</th>
+                  <th className="py-1 font-medium">{w("tbl.colRole")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["tbl.savings", "tbl.savingsRole"],
+                  ["tbl.emergency", "tbl.emergencyRole"],
+                  ["tbl.investment", "tbl.investmentRole"],
+                ].map(([k, v]) => (
+                  <tr key={k} className="border-b last:border-0">
+                    <td className="py-1 pr-3 font-medium text-foreground align-top">{w(k)}</td>
+                    <td className="py-1">{w(v)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="overflow-x-auto">
+            <p className="font-medium text-foreground">{w("tbl.targetsTitle")}</p>
+            <table className="mt-1 w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="py-1 pr-3 font-medium">{w("tbl.colType")}</th>
+                  <th className="py-1 font-medium">{w("tbl.colMeaning")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["tbl.tPct", "tbl.tPctM"],
+                  ["tbl.tMonthly", "tbl.tMonthlyM"],
+                  ["tbl.tYearly", "tbl.tYearlyM"],
+                  ["tbl.tGoal", "tbl.tGoalM"],
+                ].map(([k, v]) => (
+                  <tr key={k} className="border-b last:border-0">
+                    <td className="py-1 pr-3 font-medium text-foreground align-top">{w(k)}</td>
+                    <td className="py-1">{w(v)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <p>
             {w("allocations.p1a")}
             <Term>{w("allocations.term1")}</Term>
@@ -424,6 +498,12 @@ safe_today    = remaining / days_left_in_cycle`}
 
         <Section id="principles" icon={Sparkles} title={w("toc.principles")}>
           <p>{w("principles.intro")}</p>
+          <LadderDiagram
+            step1={w("diag.step1")}
+            step2={w("diag.step2")}
+            step3={w("diag.step3")}
+            caption={w("diag.ladderCap")}
+          />
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((n) => (
               <div key={n}>
