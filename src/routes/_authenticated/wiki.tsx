@@ -32,7 +32,7 @@ import { pageShellClass } from "@/components/page-shell";
 export const Route = createFileRoute("/_authenticated/wiki")({
   head: () => ({
     meta: [
-      { title: "Wiki — bynku" },
+      { title: "Wiki · bynku" },
       {
         name: "description",
         content:
@@ -122,6 +122,7 @@ function WikiPage() {
     { id: "expenses", label: w("toc.expenses") },
     { id: "allocations", label: w("toc.allocations") },
     { id: "glossary", label: w("toc.glossary") },
+    { id: "principles", label: w("toc.principles") },
     { id: "analysis", label: w("toc.analysis") },
     { id: "settings", label: w("toc.settings") },
     { id: "notifications", label: w("toc.notifications") },
@@ -410,7 +411,7 @@ safe_today    = remaining / days_left_in_cycle`}
             {glossary.map((g) => (
               <div key={g.id}>
                 <p>
-                  <strong className="text-foreground">{w(`glossary.${g.id}.term`)}</strong> —{" "}
+                  <strong className="text-foreground">{w(`glossary.${g.id}.term`)}</strong>:{" "}
                   {w(`glossary.${g.id}.desc`)}
                 </p>
                 <pre className="mt-1 rounded-lg border bg-muted/40 p-2 text-xs text-foreground overflow-x-auto">
@@ -419,6 +420,19 @@ safe_today    = remaining / days_left_in_cycle`}
               </div>
             ))}
           </div>
+        </Section>
+
+        <Section id="principles" icon={Sparkles} title={w("toc.principles")}>
+          <p>{w("principles.intro")}</p>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <div key={n}>
+                <p className="font-medium text-foreground">{w(`principles.p${n}.h`)}</p>
+                <p>{w(`principles.p${n}.b`)}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs">{w("principles.note")}</p>
         </Section>
 
         <Section id="analysis" icon={BarChart3} title={w("toc.analysis")}>
