@@ -9,7 +9,14 @@ const expenseInput = z.object({
   amount: z.number().positive().max(1_000_000),
   category: z.string().min(1).max(50),
   merchant: z.string().max(120).optional().nullable(),
-  occurred_at: z.string().datetime().optional(),
+  occurred_at: z
+    .string()
+    .optional()
+    .transform((v) => {
+      if (!v) return undefined;
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? undefined : d.toISOString();
+    }),
   note: z.string().max(500).optional().nullable(),
   source: z.enum(["manual", "ai_memo", "ai_voice", "ai_photo", "statement"]).default("manual"),
   source_meta: z.record(z.unknown()).optional(),
