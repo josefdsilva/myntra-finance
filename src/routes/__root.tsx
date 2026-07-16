@@ -11,9 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { enforceAllowlist } from "@/lib/allowlist.functions";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import appIcon from "@/assets/app-icon.svg.asset.json";
@@ -155,23 +153,8 @@ function RootComponent() {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      if (event === "SIGNED_IN") {
-        enforceAllowlist()
-          .then((res) => {
-            if (!res.allowed) {
-              toast.error("This email isn't authorised for this household.");
-              supabase.auth.signOut();
-              return;
-            }
-            router.invalidate();
-            queryClient.invalidateQueries();
-          })
-          .catch((e) => {
-            console.error(e);
-            supabase.auth.signOut();
-          });
-        return;
-      }
+      // Access is gated by the beta code (see getOrCreateHousehold / BetaGate),
+      // not by a fixed email allowlist. Just refresh on any auth change.
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
