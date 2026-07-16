@@ -318,12 +318,16 @@ function AllocationsPage() {
                         </div>
                         <span className="mt-0.5 block text-xs text-muted-foreground">
                           {b.target_type === "pct_surplus"
-                            ? `${b.target_value}% of surplus`
+                            ? t("alloc.target.pctSurplus", { pct: b.target_value })
                             : b.target_type === "fixed_monthly"
-                              ? `${money(b.target_value)} / month`
+                              ? t("alloc.target.perMonth", { amount: money(b.target_value) })
                               : b.target_type === "fixed_yearly"
-                                ? `${money(b.target_value)} / year`
-                                : `${money(b.target_value)} by ${b.target_deadline ?? "—"} (${monthsUntil(b.target_deadline)} mo left)`}
+                                ? t("alloc.target.perYear", { amount: money(b.target_value) })
+                                : t("alloc.target.byDate", {
+                                    amount: money(b.target_value),
+                                    date: b.target_deadline ?? "—",
+                                    months: monthsUntil(b.target_deadline),
+                                  })}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -359,7 +363,7 @@ function AllocationsPage() {
                       <div className="mt-2 rounded-md bg-muted/40 px-3 py-2 space-y-1">
                         <div className="flex justify-between text-xs">
                           <span className="flex items-center gap-1.5 text-muted-foreground">
-                            <Target className="size-3.5" /> Goal progress
+                            <Target className="size-3.5" /> {t("alloc.goalProgress")}
                           </span>
                           <span className="tabular-nums">
                             <span className="font-medium">{money(saved)}</span>
@@ -444,6 +448,7 @@ function YearToDate({
   ytdTotals: Record<string, number>;
   allTimeTotals: Record<string, number>;
 }) {
+  const t = useT();
   const now = new Date();
   const year = now.getFullYear();
   const start =
@@ -459,12 +464,9 @@ function YearToDate({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <PiggyBank className="size-5" /> Year-to-date (actuals)
+          <PiggyBank className="size-5" /> {t("alloc.ytd.title")}
         </CardTitle>
-        <CardDescription>
-          Sum of allocations you confirmed this year (since {startLabel}). Projection assumes
-          current monthly target continues until year end.
-        </CardDescription>
+        <CardDescription>{t("alloc.ytd.desc", { date: startLabel })}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!buckets.length ? (
@@ -489,11 +491,10 @@ function YearToDate({
                     </div>
                     <p className="text-2xl font-display tabular-nums">{money(currentBalance)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {money(confirmed)} confirmed this year
+                      {t("alloc.ytd.confirmedThisYear", { amount: money(confirmed) })}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      On pace for <span className="tabular-nums">{money(projected)}</span> by year
-                      end
+                      {t("alloc.ytd.pace", { value: money(projected) })}
                     </p>
                   </div>
                 );
@@ -501,7 +502,7 @@ function YearToDate({
             </div>
             <div className="pt-3 border-t flex justify-between text-sm">
               <span className="text-muted-foreground">
-                Total confirmed YTD ({monthsElapsed.toFixed(1)} mo)
+                {t("alloc.ytd.total", { months: monthsElapsed.toFixed(1) })}
               </span>
               <span className="tabular-nums font-medium">{money(ytdConfirmedTotal)}</span>
             </div>
@@ -880,14 +881,12 @@ function AllocationHistory({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Confirmation history</CardTitle>
-        <CardDescription>
-          Track which bucket allocations you actually moved each month.
-        </CardDescription>
+        <CardTitle>{t("alloc.history.title")}</CardTitle>
+        <CardDescription>{t("alloc.history.desc")}</CardDescription>
       </CardHeader>
       <CardContent>
         {!periods.length ? (
-          <p className="text-sm text-muted-foreground py-4">No confirmations yet.</p>
+          <p className="text-sm text-muted-foreground py-4">{t("alloc.history.empty")}</p>
         ) : (
           <div className="space-y-4">
             {periods.map((p) => {
