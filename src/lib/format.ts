@@ -21,13 +21,17 @@ const DATE_PATTERNS: Record<LocaleCode, { date: string; dateTime: string }> = {
   fr: { date: "dd/MM/yyyy", dateTime: "dd/MM/yyyy HH:mm:ss" },
 };
 
-let currentLocale: LocaleCode = "en";
-let currencyFormatter: Intl.NumberFormat = buildCurrencyFormatter(currentLocale);
+export const SUPPORTED_CURRENCIES = ["EUR", "USD", "GBP"] as const;
+export type CurrencyCode = (typeof SUPPORTED_CURRENCIES)[number];
 
-function buildCurrencyFormatter(l: LocaleCode) {
+let currentLocale: LocaleCode = "en";
+let currentCurrency: CurrencyCode = "EUR";
+let currencyFormatter: Intl.NumberFormat = buildCurrencyFormatter(currentLocale, currentCurrency);
+
+function buildCurrencyFormatter(l: LocaleCode, currency: CurrencyCode) {
   return new Intl.NumberFormat(INTL_MAP[l], {
     style: "currency",
-    currency: "EUR",
+    currency,
     maximumFractionDigits: 2,
   });
 }
@@ -39,7 +43,15 @@ export function setCurrentLocale(l: string) {
     : "en";
   if (safe === currentLocale) return;
   currentLocale = safe;
-  currencyFormatter = buildCurrencyFormatter(safe);
+  currencyFormatter = buildCurrencyFormatter(safe, currentCurrency);
+}
+
+/** Set the currency used by money() — driven by the active household's currency. */
+export function setCurrentCurrency(c: string | null | undefined) {
+  const safe = SUPPORTED_CURRENCIES.includes(c as CurrencyCode) ? (c as CurrencyCode) : "EUR";
+  if (safe === currentCurrency) return;
+  currentCurrency = safe;
+  currencyFormatter = buildCurrencyFormatter(currentLocale, safe);
 }
 
 // Kept for compatibility with existing imports.

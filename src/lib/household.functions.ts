@@ -135,6 +135,7 @@ export const updateHousehold = createServerFn({ method: "POST" })
         margin_pct: z.number().min(0).max(100).optional(),
         credit_cap: z.number().min(0).max(10000).optional(),
         country: z.string().min(2).max(2).optional(),
+        currency: z.enum(["EUR", "USD", "GBP"]).optional(),
         adults: z.number().int().min(1).max(20).optional(),
         children: z.number().int().min(0).max(20).optional(),
       })

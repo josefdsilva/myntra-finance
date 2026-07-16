@@ -27,6 +27,7 @@ import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.functions";
+import { setCurrentCurrency } from "@/lib/format";
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -73,6 +74,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   });
   const householdName = hh?.household?.name?.trim() || "Household";
   const resolvedId = hh?.household?.id ?? null;
+
+  // Drive money() formatting from the active household's currency. Set during
+  // render so child screens format amounts in the right currency immediately.
+  setCurrentCurrency(hh?.household?.currency);
 
   // If the stored active id no longer points at a household we belong to,
   // sync it to whatever the server picked so future queries stay consistent.

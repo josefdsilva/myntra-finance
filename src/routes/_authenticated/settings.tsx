@@ -35,7 +35,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { money } from "@/lib/format";
+import { money, setCurrentCurrency } from "@/lib/format";
 import { impliedAnnualRate } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
@@ -287,6 +287,9 @@ function HouseholdSection({
   const [country, setCountry] = useState((household.country ?? "PT").toUpperCase());
   const [adults, setAdults] = useState(Number(household.adults ?? 2));
   const [children, setChildren] = useState(Number(household.children ?? 0));
+  const [currency, setCurrency] = useState<"EUR" | "USD" | "GBP">(
+    (String(household.currency ?? "EUR").toUpperCase() as "EUR" | "USD" | "GBP") ?? "EUR",
+  );
 
   const { data: fixedRows } = useQuery({
     queryKey: ["fixed-total", household.id],
@@ -362,6 +365,20 @@ function HouseholdSection({
     }
   }
 
+  async function saveCurrency(next: "EUR" | "USD" | "GBP") {
+    setCurrency(next);
+    setCurrentCurrency(next); // update money() formatting immediately
+    try {
+      await update({ data: { household_id: household.id, currency: next } });
+      onChange();
+      qc.invalidateQueries({ queryKey: ["household", household.id] });
+      qc.invalidateQueries({ queryKey: ["household"] });
+      toast.success(t("hh.savedToast"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
+    }
+  }
+
   async function saveProfile() {
     try {
       await update({
@@ -408,6 +425,20 @@ function HouseholdSection({
               onValueChange={(v) => setMargin(v[0])}
               className="mt-3"
             />
+          </div>
+          <div>
+            <Label>{t("hh.currency")}</Label>
+            <Select value={currency} onValueChange={(v) => saveCurrency(v as "EUR" | "USD" | "GBP")}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EUR">€ EUR</SelectItem>
+                <SelectItem value="USD">$ USD</SelectItem>
+                <SelectItem value="GBP">£ GBP</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">{t("hh.currencyHint")}</p>
           </div>
         </div>
         <div className="rounded-lg border p-4 space-y-3">
