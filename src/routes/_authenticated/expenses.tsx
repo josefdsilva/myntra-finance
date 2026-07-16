@@ -214,28 +214,30 @@ function ExpensesPage() {
                 {received > 0 ? ` · ${t("exp.subtitle.net", { value: money(net) })}` : ""}
               </CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o - 1)}>
-                {t("exp.prev")}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCycleOffset(0)}
-                disabled={cycleOffset === 0}
-              >
-                {t("exp.current")}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCycleOffset((o) => o + 1)}
-                disabled={cycleOffset >= 0}
-              >
-                {t("exp.next")}
-              </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setCycleOffset((o) => o - 1)}>
+                  {t("exp.prev")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCycleOffset(0)}
+                  disabled={cycleOffset === 0}
+                >
+                  {t("exp.current")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCycleOffset((o) => o + 1)}
+                  disabled={cycleOffset >= 0}
+                >
+                  {t("exp.next")}
+                </Button>
+              </div>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -248,7 +250,7 @@ function ExpensesPage() {
               </Select>
               {recentLabels.length > 0 && (
                 <Select value={labelFilter} onValueChange={setLabelFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder={t("exp.allLabels")} />
                   </SelectTrigger>
                   <SelectContent>

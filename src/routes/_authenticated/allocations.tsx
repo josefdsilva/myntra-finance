@@ -274,7 +274,7 @@ function AllocationsPage() {
                       );
                     })}
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>
                       {t("alloc.summary.allocated", {
                         allocated: money(Math.min(totalAllocated, surplus)),
@@ -307,7 +307,7 @@ function AllocationsPage() {
                 const onTrack = isGoal ? saved >= expectedByNow - 0.01 : true;
                 return (
                   <div key={b.id} className="space-y-1.5">
-                    <div className="flex justify-between items-start gap-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 min-w-0">
                           <span
@@ -330,7 +330,7 @@ function AllocationsPage() {
                                   })}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:shrink-0 sm:justify-end">
                         <span className="font-medium tabular-nums">{money(amount)}</span>
                         <ConfirmAllocationButton
                           householdId={householdId!}
@@ -658,7 +658,7 @@ function ConfirmAllocationButton({
   return (
     <>
       {confirmed ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
             <Check className="size-3.5" /> {t("alloc.movedLabel", { amount: money(alreadyMoved) })}
           </span>
