@@ -6,9 +6,28 @@
 // these shared query keys (via queryClient.fetchQuery) means each table is
 // fetched once and reused from cache across every consumer.
 
+import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const FRESH = 60_000;
+
+/**
+ * Invalidate the shared base-table caches plus the screens that read them, so an
+ * edit in Settings/onboarding/import reflects on the Dashboard immediately rather
+ * than after the staleTime window.
+ */
+export function invalidateHouseholdData(qc: QueryClient) {
+  const keys = [
+    ["household-buckets"],
+    ["household-incomes"],
+    ["household-fixed-expenses"],
+    ["household-debts"],
+    ["household-variable-estimates"],
+    ["dashboard"],
+    ["dashboard-tips"],
+  ];
+  return Promise.all(keys.map((queryKey) => qc.invalidateQueries({ queryKey })));
+}
 
 export function bucketsQuery(householdId: string) {
   return {

@@ -5,6 +5,7 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { useT } from "@/lib/i18n";
 import { StatementImportFlow } from "@/components/statement-import-flow";
+import { pageShellClass } from "@/components/page-shell";
 
 export const Route = createFileRoute("/_authenticated/statement-import")({
   head: () => ({ meta: [{ title: "Import statement · bynku" }] }),
@@ -23,7 +24,7 @@ function StatementImportPage() {
   const householdId = hh?.household?.id;
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+    <div className={pageShellClass("4xl")}>
       <header>
         <h1 className="text-3xl font-display">{t("stmt.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("stmt.subtitle")}</p>

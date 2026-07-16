@@ -6,6 +6,7 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { confirmBucketAllocation, undoBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { DebtsSection } from "@/components/debts-section";
+import { pageShellClass } from "@/components/page-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
@@ -213,7 +214,7 @@ function AllocationsPage() {
   const realSurplus = surplus - realAllocated;
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
+    <div className={pageShellClass("5xl")}>
       <header>
         <h1 className="text-3xl font-display">{t("alloc.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("alloc.subtitle")}</p>

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
+import { pageShellClass } from "@/components/page-shell";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { buildCyclesFromSalaries, type CycleSpan } from "@/lib/cycle";
@@ -160,7 +161,7 @@ function CycleReportPage() {
 
   if (householdId && closedCycles.length === 0) {
     return (
-      <div className="p-4 md:p-8 max-w-3xl mx-auto">
+      <div className={pageShellClass("3xl")}>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -174,7 +175,7 @@ function CycleReportPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+    <div className={pageShellClass("4xl")}>
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
           <h1 className="font-display text-2xl">{t("cycleReport.title")}</h1>

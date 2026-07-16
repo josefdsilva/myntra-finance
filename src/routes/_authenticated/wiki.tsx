@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
 import { WIKI_STRINGS } from "@/lib/wiki-content";
+import { pageShellClass } from "@/components/page-shell";
 
 export const Route = createFileRoute("/_authenticated/wiki")({
   head: () => ({
@@ -113,7 +114,7 @@ function WikiPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-4xl p-4 md:p-8 space-y-6">
+      <div className={pageShellClass("4xl")}>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <BookOpen className="size-3.5" />

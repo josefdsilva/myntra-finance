@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold, updateHousehold, inviteMember } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
+import { invalidateHouseholdData } from "@/lib/household-queries";
+import { pageShellClass } from "@/components/page-shell";
 import {
   upsertIncome,
   deleteIncome,
@@ -69,7 +71,7 @@ function SettingsPage() {
   const householdId = hh?.household?.id;
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+    <div className={pageShellClass("4xl")}>
       <header>
         <h1 className="text-3xl font-display">{t("settings.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("settings.subtitle")}</p>
@@ -341,7 +343,7 @@ function HouseholdSection({
     })
       .then(() => {
         onChange();
-        qc.invalidateQueries({ queryKey: ["dashboard"] });
+        invalidateHouseholdData(qc);
         qc.invalidateQueries({ queryKey: ["allocations"] });
       })
       .catch(() => {});
@@ -517,14 +519,14 @@ function VariableEstimatesSection({ householdId }: { householdId: string }) {
     refetch();
     qc.invalidateQueries({ queryKey: ["variable-estimates-total", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    invalidateHouseholdData(qc);
   }
   async function remove(id: string) {
     await del({ data: { id } });
     refetch();
     qc.invalidateQueries({ queryKey: ["variable-estimates-total", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    invalidateHouseholdData(qc);
   }
 
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
@@ -621,13 +623,13 @@ function IncomesSection({ householdId }: { householdId: string }) {
     setLabel("");
     setAmount("");
     refetch();
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    invalidateHouseholdData(qc);
     qc.invalidateQueries({ queryKey: ["allocations"] });
   }
   async function remove(id: string) {
     await del({ data: { id } });
     refetch();
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    invalidateHouseholdData(qc);
     qc.invalidateQueries({ queryKey: ["allocations"] });
   }
 
@@ -720,14 +722,14 @@ function FixedExpensesSection({ householdId }: { householdId: string }) {
     refetch();
     qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    invalidateHouseholdData(qc);
   }
   async function remove(id: string) {
     await del({ data: { id } });
     refetch();
     qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    invalidateHouseholdData(qc);
   }
 
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
@@ -830,12 +832,14 @@ function BucketsSection({ householdId }: { householdId: string }) {
       },
     });
     qc.invalidateQueries({ queryKey: ["allocations"] });
+    invalidateHouseholdData(qc);
     refetch();
   }
   async function remove(id: string) {
     await del({ data: { id } });
     refetch();
     qc.invalidateQueries({ queryKey: ["allocations"] });
+    invalidateHouseholdData(qc);
   }
   async function addNew() {
     await upsert({
@@ -850,6 +854,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
         kind: "savings",
       },
     });
+    invalidateHouseholdData(qc);
     refetch();
   }
 
@@ -1181,7 +1186,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
   function bumpCaches() {
     qc.invalidateQueries({ queryKey: ["debts-total", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    invalidateHouseholdData(qc);
     qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
     qc.invalidateQueries({ queryKey: ["fixed-rows", householdId] });
   }

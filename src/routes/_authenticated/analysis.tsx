@@ -34,6 +34,7 @@ import { format as fmt } from "date-fns";
 import { computeCycle } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
 import { BenchmarksCard } from "@/components/benchmarks-card";
+import { pageShellClass } from "@/components/page-shell";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
@@ -459,7 +460,7 @@ function AnalysisPage() {
   const cycleLabel = cycleCount === 1 ? "cycle" : "cycles";
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+    <div className={pageShellClass("6xl")}>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-display">{t("ana.title")}</h1>

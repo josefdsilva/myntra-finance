@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageShellClass } from "@/components/page-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
@@ -165,7 +166,7 @@ function ExpensesPage() {
     : t("exp.cycleLabel", { start: "", end: "" });
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
+    <div className={pageShellClass("5xl")}>
       <header>
         <h1 className="text-3xl font-display">{t("exp.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("exp.subtitle")}</p>

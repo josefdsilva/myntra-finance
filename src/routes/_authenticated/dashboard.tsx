@@ -22,6 +22,7 @@ import { markSalaryReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
+import { pageShellClass } from "@/components/page-shell";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 import { useT } from "@/lib/i18n";
 
@@ -261,7 +262,7 @@ function Dashboard() {
   const isLoading = !hh || dashboardLoading || !dashboard;
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
+    <div className={pageShellClass("5xl")}>
       <header>
         <p className="text-sm text-muted-foreground">{cycleLabel}</p>
         <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
