@@ -55,13 +55,14 @@ export function DebtsSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-        <div>
+        <div className="min-w-0">
           <CardTitle>{t("debt.sectionTitle")}</CardTitle>
           <CardDescription>{t("debt.sectionDesc")}</CardDescription>
         </div>
         <Button
           size="sm"
           variant="outline"
+          className="shrink-0 whitespace-nowrap"
           disabled={buckets.length === 0}
           onClick={() => setMoveOpen(true)}
         >

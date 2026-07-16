@@ -216,7 +216,7 @@ function AllocationsPage() {
   return (
     <div className={pageShellClass("5xl")}>
       <header>
-        <h1 className="text-3xl font-display">{t("alloc.title")}</h1>
+        <h1 className="text-3xl md:text-4xl font-display">{t("alloc.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("alloc.subtitle")}</p>
       </header>
 
@@ -307,14 +307,16 @@ function AllocationsPage() {
                 const onTrack = isGoal ? saved >= expectedByNow - 0.01 : true;
                 return (
                   <div key={b.id} className="space-y-1.5">
-                    <div className="flex justify-between items-baseline gap-3 flex-wrap">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className="size-2.5 rounded-full shrink-0"
-                          style={{ background: b.color ?? "var(--primary)" }}
-                        />
-                        <span className="font-medium">{b.name}</span>
-                        <span className="text-xs text-muted-foreground">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="size-2.5 rounded-full shrink-0"
+                            style={{ background: b.color ?? "var(--primary)" }}
+                          />
+                          <span className="font-medium truncate">{b.name}</span>
+                        </div>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
                           {b.target_type === "pct_surplus"
                             ? `${b.target_value}% of surplus`
                             : b.target_type === "fixed_monthly"
@@ -324,7 +326,7 @@ function AllocationsPage() {
                                 : `${money(b.target_value)} by ${b.target_deadline ?? "—"} (${monthsUntil(b.target_deadline)} mo left)`}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="font-medium tabular-nums">{money(amount)}</span>
                         <ConfirmAllocationButton
                           householdId={householdId!}
