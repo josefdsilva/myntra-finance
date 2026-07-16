@@ -651,11 +651,12 @@ const en = {
   "expQuick.invalidAmount": "Enter a valid amount",
   "expQuick.moneyReceivedAdded": "Money received added",
   "expQuick.expenseAdded": "Expense added",
-  "expQuick.failed": "Failed",
+  "expQuick.failed": "Something went wrong. Please try again.",
   "expQuick.aiPlaceholder":
     'e.g. "Spent 42€ at Lidl for groceries yesterday, and 18€ on lunch today"',
   "expQuick.parseWithAi": "Parse with AI",
-  "expQuick.parsingFailed": "Parsing failed",
+  "expQuick.parsingFailed":
+    "We couldn't read that note. Try rephrasing it, or add the expense by hand.",
   "expQuick.addedExpenseSingular": "Added 1 expense",
   "expQuick.addedExpensesPlural": "Added {count} expenses",
   "expQuick.startRecording": "Start recording",
@@ -663,7 +664,8 @@ const en = {
   "expQuick.listening": "Listening…",
   "expQuick.transcript": "Transcript",
   "expQuick.micPermissionNeeded": "Microphone permission needed",
-  "expQuick.voiceParsingFailed": "Voice parsing failed",
+  "expQuick.voiceParsingFailed":
+    "We couldn't understand the recording. Try again, or add the expense by hand.",
   "expQuick.nothingDetected": "Nothing detected. Try rephrasing.",
   "expQuick.reviewOneExpense": "Review 1 parsed expense:",
   "expQuick.reviewExpenses": "Review {count} parsed expenses:",
@@ -676,7 +678,8 @@ const en = {
   "expQuick.parseReceipt": "Parse receipt",
   "expQuick.pickImage": "Please pick an image",
   "expQuick.imageTooLarge": "Image too large (max 8MB)",
-  "expQuick.photoParsingFailed": "Photo parsing failed",
+  "expQuick.photoParsingFailed":
+    "We couldn't read that receipt. Try a clearer, well-lit photo, or add it by hand.",
   "households.title": "Households",
   "households.description":
     "You can belong to multiple households — for example your personal budget and a shared family budget. Data never crosses between them.",
@@ -1615,10 +1618,11 @@ const pt: Record<MessageKey, string> = {
   "expQuick.invalidAmount": "Introduza um valor válido",
   "expQuick.moneyReceivedAdded": "Dinheiro recebido adicionado",
   "expQuick.expenseAdded": "Despesa adicionada",
-  "expQuick.failed": "Falhou",
+  "expQuick.failed": "Algo correu mal. Tente novamente.",
   "expQuick.aiPlaceholder": 'ex.: "Gastei 42€ no Lidl em compras ontem e 18€ no almoço hoje"',
   "expQuick.parseWithAi": "Analisar com IA",
-  "expQuick.parsingFailed": "Falha na análise",
+  "expQuick.parsingFailed":
+    "Não conseguimos ler essa nota. Tente reformular ou adicione a despesa manualmente.",
   "expQuick.addedExpenseSingular": "1 despesa adicionada",
   "expQuick.addedExpensesPlural": "{count} despesas adicionadas",
   "expQuick.startRecording": "Iniciar gravação",
@@ -1626,7 +1630,8 @@ const pt: Record<MessageKey, string> = {
   "expQuick.listening": "A ouvir…",
   "expQuick.transcript": "Transcrição",
   "expQuick.micPermissionNeeded": "É necessária permissão para o microfone",
-  "expQuick.voiceParsingFailed": "Falha na análise de voz",
+  "expQuick.voiceParsingFailed":
+    "Não conseguimos perceber a gravação. Tente de novo ou adicione a despesa manualmente.",
   "expQuick.nothingDetected": "Nada detetado. Tente reformular.",
   "expQuick.reviewOneExpense": "Reveja 1 despesa analisada:",
   "expQuick.reviewExpenses": "Reveja {count} despesas analisadas:",
@@ -1639,7 +1644,8 @@ const pt: Record<MessageKey, string> = {
   "expQuick.parseReceipt": "Analisar recibo",
   "expQuick.pickImage": "Escolha uma imagem",
   "expQuick.imageTooLarge": "Imagem muito grande (máx. 8MB)",
-  "expQuick.photoParsingFailed": "Falha na análise da foto",
+  "expQuick.photoParsingFailed":
+    "Não conseguimos ler esse recibo. Tente uma foto mais nítida e bem iluminada, ou adicione manualmente.",
   "households.title": "Agregados",
   "households.description":
     "Pode pertencer a vários agregados — por exemplo, o seu orçamento pessoal e um orçamento familiar partilhado. Os dados nunca se cruzam entre eles.",
@@ -2574,10 +2580,11 @@ const es: Record<MessageKey, string> = {
   "expQuick.invalidAmount": "Introduce un importe válido",
   "expQuick.moneyReceivedAdded": "Dinero recibido añadido",
   "expQuick.expenseAdded": "Gasto añadido",
-  "expQuick.failed": "Falló",
+  "expQuick.failed": "Algo salió mal. Inténtalo de nuevo.",
   "expQuick.aiPlaceholder": 'p. ej. "Gasté 42€ en Lidl en la compra ayer, y 18€ en la comida hoy"',
   "expQuick.parseWithAi": "Analizar con IA",
-  "expQuick.parsingFailed": "Error al analizar",
+  "expQuick.parsingFailed":
+    "No pudimos leer esa nota. Prueba a reformularla o añade el gasto a mano.",
   "expQuick.addedExpenseSingular": "1 gasto añadido",
   "expQuick.addedExpensesPlural": "{count} gastos añadidos",
   "expQuick.startRecording": "Iniciar grabación",
@@ -2585,7 +2592,8 @@ const es: Record<MessageKey, string> = {
   "expQuick.listening": "Escuchando…",
   "expQuick.transcript": "Transcripción",
   "expQuick.micPermissionNeeded": "Se necesita permiso del micrófono",
-  "expQuick.voiceParsingFailed": "Error al analizar la voz",
+  "expQuick.voiceParsingFailed":
+    "No pudimos entender la grabación. Inténtalo de nuevo o añade el gasto a mano.",
   "expQuick.nothingDetected": "No se detectó nada. Intenta reformular.",
   "expQuick.reviewOneExpense": "Revisa 1 gasto analizado:",
   "expQuick.reviewExpenses": "Revisa {count} gastos analizados:",
@@ -2598,7 +2606,8 @@ const es: Record<MessageKey, string> = {
   "expQuick.parseReceipt": "Analizar recibo",
   "expQuick.pickImage": "Elige una imagen",
   "expQuick.imageTooLarge": "Imagen demasiado grande (máx. 8MB)",
-  "expQuick.photoParsingFailed": "Error al analizar la foto",
+  "expQuick.photoParsingFailed":
+    "No pudimos leer ese recibo. Prueba una foto más nítida y bien iluminada, o añádelo a mano.",
   "households.title": "Hogares",
   "households.description":
     "Puedes pertenecer a varios hogares — por ejemplo, tu presupuesto personal y un presupuesto familiar compartido. Los datos nunca se cruzan entre ellos.",
@@ -3538,11 +3547,12 @@ const de: Record<MessageKey, string> = {
   "expQuick.invalidAmount": "Gib einen gültigen Betrag ein",
   "expQuick.moneyReceivedAdded": "Erhaltenes Geld hinzugefügt",
   "expQuick.expenseAdded": "Ausgabe hinzugefügt",
-  "expQuick.failed": "Fehlgeschlagen",
+  "expQuick.failed": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
   "expQuick.aiPlaceholder":
     "z. B. „Habe gestern 42€ bei Lidl für Lebensmittel und heute 18€ zum Mittagessen ausgegeben“",
   "expQuick.parseWithAi": "Mit KI analysieren",
-  "expQuick.parsingFailed": "Analyse fehlgeschlagen",
+  "expQuick.parsingFailed":
+    "Wir konnten diese Notiz nicht lesen. Formuliere sie um oder trage die Ausgabe von Hand ein.",
   "expQuick.addedExpenseSingular": "1 Ausgabe hinzugefügt",
   "expQuick.addedExpensesPlural": "{count} Ausgaben hinzugefügt",
   "expQuick.startRecording": "Aufnahme starten",
@@ -3550,7 +3560,8 @@ const de: Record<MessageKey, string> = {
   "expQuick.listening": "Höre zu…",
   "expQuick.transcript": "Transkript",
   "expQuick.micPermissionNeeded": "Mikrofonzugriff erforderlich",
-  "expQuick.voiceParsingFailed": "Sprachanalyse fehlgeschlagen",
+  "expQuick.voiceParsingFailed":
+    "Wir konnten die Aufnahme nicht verstehen. Versuche es erneut oder trage die Ausgabe von Hand ein.",
   "expQuick.nothingDetected": "Nichts erkannt. Versuche es anders zu formulieren.",
   "expQuick.reviewOneExpense": "1 erkannte Ausgabe überprüfen:",
   "expQuick.reviewExpenses": "{count} erkannte Ausgaben überprüfen:",
@@ -3563,7 +3574,8 @@ const de: Record<MessageKey, string> = {
   "expQuick.parseReceipt": "Beleg analysieren",
   "expQuick.pickImage": "Bitte ein Bild auswählen",
   "expQuick.imageTooLarge": "Bild zu groß (max. 8MB)",
-  "expQuick.photoParsingFailed": "Fotoanalyse fehlgeschlagen",
+  "expQuick.photoParsingFailed":
+    "Wir konnten diesen Beleg nicht lesen. Mach ein schärferes, gut beleuchtetes Foto oder trage ihn von Hand ein.",
   "households.title": "Haushalte",
   "households.description":
     "Du kannst zu mehreren Haushalten gehören — zum Beispiel deinem persönlichen Budget und einem gemeinsamen Familienbudget. Daten überschneiden sich nie zwischen ihnen.",
@@ -4506,11 +4518,12 @@ const fr: Record<MessageKey, string> = {
   "expQuick.invalidAmount": "Entrez un montant valide",
   "expQuick.moneyReceivedAdded": "Argent reçu ajouté",
   "expQuick.expenseAdded": "Dépense ajoutée",
-  "expQuick.failed": "Échec",
+  "expQuick.failed": "Une erreur est survenue. Veuillez réessayer.",
   "expQuick.aiPlaceholder":
     "ex. « J'ai dépensé 42€ chez Lidl pour les courses hier, et 18€ pour le déjeuner aujourd'hui »",
   "expQuick.parseWithAi": "Analyser avec l'IA",
-  "expQuick.parsingFailed": "Échec de l'analyse",
+  "expQuick.parsingFailed":
+    "Nous n'avons pas pu lire cette note. Reformulez-la ou ajoutez la dépense à la main.",
   "expQuick.addedExpenseSingular": "1 dépense ajoutée",
   "expQuick.addedExpensesPlural": "{count} dépenses ajoutées",
   "expQuick.startRecording": "Démarrer l'enregistrement",
@@ -4518,7 +4531,8 @@ const fr: Record<MessageKey, string> = {
   "expQuick.listening": "Écoute…",
   "expQuick.transcript": "Transcription",
   "expQuick.micPermissionNeeded": "Autorisation du microphone requise",
-  "expQuick.voiceParsingFailed": "Échec de l'analyse vocale",
+  "expQuick.voiceParsingFailed":
+    "Nous n'avons pas compris l'enregistrement. Réessayez ou ajoutez la dépense à la main.",
   "expQuick.nothingDetected": "Rien détecté. Essayez de reformuler.",
   "expQuick.reviewOneExpense": "Vérifiez 1 dépense analysée :",
   "expQuick.reviewExpenses": "Vérifiez {count} dépenses analysées :",
@@ -4531,7 +4545,8 @@ const fr: Record<MessageKey, string> = {
   "expQuick.parseReceipt": "Analyser le reçu",
   "expQuick.pickImage": "Veuillez choisir une image",
   "expQuick.imageTooLarge": "Image trop volumineuse (max 8 Mo)",
-  "expQuick.photoParsingFailed": "Échec de l'analyse de la photo",
+  "expQuick.photoParsingFailed":
+    "Nous n'avons pas pu lire ce reçu. Essayez une photo plus nette et bien éclairée, ou ajoutez-le à la main.",
   "households.title": "Foyers",
   "households.description":
     "Vous pouvez appartenir à plusieurs foyers — par exemple votre budget personnel et un budget familial partagé. Les données ne se mélangent jamais entre eux.",

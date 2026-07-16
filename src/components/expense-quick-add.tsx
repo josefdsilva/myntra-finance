@@ -37,6 +37,25 @@ import { LabelsInput } from "@/components/labels-input";
 import { useRecentLabels } from "@/hooks/use-labels";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 
+// Show a short, human-readable error when the server gave one (e.g. "You are out
+// of AI credits"), but fall back to a friendly localized message when the error
+// is a raw JSON dump, a Zod validation blob, or otherwise technical.
+function humanError(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) {
+    const m = err.message.trim();
+    const technical =
+      m.length > 120 ||
+      m.startsWith("{") ||
+      m.startsWith("[") ||
+      m.includes('"code"') ||
+      m.includes("ZodError") ||
+      m.toLowerCase().includes("valid json") ||
+      m.includes("\n");
+    if (!technical) return m;
+  }
+  return fallback;
+}
+
 const DEFAULT_CATEGORIES = [
   "groceries",
   "dining",
@@ -161,7 +180,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
         setSuggestOpen(true);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
+      toast.error(humanError(err, t("expQuick.failed")));
     } finally {
       setLoading(false);
     }
@@ -305,7 +324,7 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       const res = await parse({ data: { text, householdId } });
       setItems(res.items);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("expQuick.parsingFailed"));
+      toast.error(humanError(err, t("expQuick.parsingFailed")));
     } finally {
       setLoading(false);
     }
@@ -337,7 +356,7 @@ function AiMemoForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       setText("");
       onAdded?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
+      toast.error(humanError(err, t("expQuick.failed")));
     } finally {
       setLoading(false);
     }
@@ -401,7 +420,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
           setTranscript(res.transcript);
           setItems(res.items);
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : t("expQuick.voiceParsingFailed"));
+          toast.error(humanError(err, t("expQuick.voiceParsingFailed")));
         } finally {
           setLoading(false);
         }
@@ -445,7 +464,7 @@ function VoiceForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
       setTranscript("");
       onAdded?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
+      toast.error(humanError(err, t("expQuick.failed")));
     } finally {
       setLoading(false);
     }
@@ -619,7 +638,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
       const res = await parse({ data: { image_base64: base64, mime_type: mime, householdId } });
       setItems(res.items);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("expQuick.photoParsingFailed"));
+      toast.error(humanError(err, t("expQuick.photoParsingFailed")));
     } finally {
       setLoading(false);
     }
@@ -650,7 +669,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
       clear();
       onAdded?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("expQuick.failed"));
+      toast.error(humanError(err, t("expQuick.failed")));
     } finally {
       setLoading(false);
     }
