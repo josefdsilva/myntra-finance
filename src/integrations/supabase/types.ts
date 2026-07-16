@@ -153,6 +153,21 @@ export type Database = {
           },
         ]
       }
+      beta_members: {
+        Row: {
+          activated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bucket_allocations: {
         Row: {
           amount: number

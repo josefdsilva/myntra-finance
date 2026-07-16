@@ -28,6 +28,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.functions";
 import { setCurrentCurrency } from "@/lib/format";
+import { BetaGate } from "@/components/beta-gate";
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -168,6 +169,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     queryClient.clear();
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
+  }
+
+  // Signed in but not yet allowed into the beta (no code redeemed, no invite):
+  // show the access-code gate instead of the app.
+  if (hh?.needsBetaCode) {
+    return <BetaGate onSignOut={signOut} />;
   }
 
   const hasMultiple = (households?.length ?? 0) > 1;

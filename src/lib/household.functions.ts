@@ -54,7 +54,8 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
         .eq("household_id", data.household_id)
         .eq("user_id", userId)
         .maybeSingle();
-      if (mem?.households) return { household: mem.households, role: mem.role };
+      if (mem?.households)
+        return { household: mem.households, role: mem.role, needsBetaCode: false as const };
     }
 
     // Prefer a shared household (member role) over a self-created empty one.
@@ -70,7 +71,8 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
         return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
       });
       const pick = sorted[0];
-      if (pick?.households) return { household: pick.households, role: pick.role };
+      if (pick?.households)
+        return { household: pick.households, role: pick.role, needsBetaCode: false as const };
     }
 
     // Before creating a fresh household, check for a pending invitation by email.
@@ -98,8 +100,19 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
           .select("*")
           .eq("id", invite.household_id)
           .single();
-        if (hh) return { household: hh, role: "member" as const };
+        if (hh) return { household: hh, role: "member" as const, needsBetaCode: false as const };
       }
+    }
+
+    // Beta gate: only users who redeemed the shared beta code may create a
+    // brand-new household. Invited users returned above and never reach here.
+    const { data: betaRow } = await supabaseAdmin
+      .from("beta_members")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!betaRow) {
+      return { household: null, role: null, needsBetaCode: true as const };
     }
 
     // Create a fresh household with admin client — user is already verified by requireSupabaseAuth
@@ -121,7 +134,31 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
       .from("buckets")
       .insert(DEFAULT_BUCKETS.map((b) => ({ ...b, household_id: household.id })));
 
-    return { household, role: "owner" as const };
+    return { household, role: "owner" as const, needsBetaCode: false as const };
+  });
+
+/**
+ * Redeem the shared beta access code. On success the caller is recorded in
+ * beta_members and may then create a household. The code is checked server-side
+ * against the BETA_ACCESS_CODE env var and is never exposed to the client.
+ */
+export const redeemBetaCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ code: z.string().min(1).max(200) }).parse(input))
+  .handler(async ({ context, data }) => {
+    const expected = process.env.BETA_ACCESS_CODE;
+    if (!expected) {
+      throw new Error("Beta access is not configured yet. Set the BETA_ACCESS_CODE env var.");
+    }
+    if (data.code.trim() !== expected) {
+      return { ok: false as const };
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("beta_members")
+      .upsert({ user_id: context.userId }, { onConflict: "user_id" });
+    if (error) throw error;
+    return { ok: true as const };
   });
 
 export const updateHousehold = createServerFn({ method: "POST" })
