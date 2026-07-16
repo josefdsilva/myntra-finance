@@ -917,6 +917,10 @@ export type Database = {
         }
         Returns: string
       }
+      recompute_household_baseline: {
+        Args: { _household_id: string }
+        Returns: undefined
+      }
       service_debt: {
         Args: {
           p_amount: number
