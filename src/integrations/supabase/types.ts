@@ -214,6 +214,7 @@ export type Database = {
           household_id: string
           id: string
           initial_balance: number
+          kind: Database["public"]["Enums"]["bucket_kind"]
           name: string
           sort_order: number
           target_deadline: string | null
@@ -227,6 +228,7 @@ export type Database = {
           household_id: string
           id?: string
           initial_balance?: number
+          kind?: Database["public"]["Enums"]["bucket_kind"]
           name: string
           sort_order?: number
           target_deadline?: string | null
@@ -240,6 +242,7 @@ export type Database = {
           household_id?: string
           id?: string
           initial_balance?: number
+          kind?: Database["public"]["Enums"]["bucket_kind"]
           name?: string
           sort_order?: number
           target_deadline?: string | null
@@ -941,6 +944,7 @@ export type Database = {
       }
     }
     Enums: {
+      bucket_kind: "savings" | "emergency" | "investment"
       bucket_target_type:
         | "pct_surplus"
         | "fixed_monthly"
@@ -1084,6 +1088,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      bucket_kind: ["savings", "emergency", "investment"],
       bucket_target_type: [
         "pct_surplus",
         "fixed_monthly",

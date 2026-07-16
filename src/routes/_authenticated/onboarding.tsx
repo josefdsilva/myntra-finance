@@ -490,7 +490,8 @@ function DebtStep({ householdId }: { householdId: string }) {
 
 // ---- Projects / allocations ----------------------------------------------
 
-type Suggestion = { name: string; target_type: "pct_surplus" | "fixed_monthly"; target_value: number; why: string };
+type BucketKind = "savings" | "emergency" | "investment";
+type Suggestion = { name: string; target_type: "pct_surplus" | "fixed_monthly"; target_value: number; why: string; kind: BucketKind };
 
 function ProjectsStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
@@ -521,11 +522,11 @@ function ProjectsStep({ householdId }: { householdId: string }) {
   const existing = new Set((data?.buckets ?? []).map((b) => b.name.toLowerCase()));
 
   const suggestions: Suggestion[] = [
-    { name: "Emergency fund", target_type: "pct_surplus", target_value: 30, why: "Aim for 3–6 months of expenses." },
-    { name: "Investments", target_type: "pct_surplus", target_value: 20, why: "Long-term growth." },
-    { name: "Holidays", target_type: "fixed_monthly", target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5), why: "Set aside a little each month." },
+    { name: "Emergency fund", target_type: "pct_surplus", target_value: 30, why: "Aim for 3–6 months of expenses.", kind: "emergency" },
+    { name: "Investments", target_type: "pct_surplus", target_value: 20, why: "Long-term growth.", kind: "investment" },
+    { name: "Holidays", target_type: "fixed_monthly", target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5), why: "Set aside a little each month.", kind: "savings" },
     ...(data && data.children > 0
-      ? [{ name: "Kids & education", target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5), why: "For childcare, school and activities." }]
+      ? [{ name: "Kids & education", target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5), why: "For childcare, school and activities.", kind: "savings" as const }]
       : []),
   ];
 
@@ -534,7 +535,7 @@ function ProjectsStep({ householdId }: { householdId: string }) {
   const [target, setTarget] = useState("");
   const [saving, setSaving] = useState(false);
 
-  async function addBucket(s: { name: string; target_type: Suggestion["target_type"]; target_value: number; initial_balance?: number }) {
+  async function addBucket(s: { name: string; target_type: Suggestion["target_type"]; target_value: number; initial_balance?: number; kind?: BucketKind }) {
     await add({
       data: {
         household_id: householdId,
@@ -542,6 +543,7 @@ function ProjectsStep({ householdId }: { householdId: string }) {
         target_type: s.target_type,
         target_value: s.target_value,
         initial_balance: s.initial_balance ?? 0,
+        kind: s.kind ?? "savings",
       },
     });
     qc.invalidateQueries({ queryKey: ["ob-projects", householdId] });

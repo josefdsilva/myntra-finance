@@ -126,6 +126,11 @@ const en = {
   "buckets.name": "Name",
   "buckets.color": "Color",
   "buckets.targetType": "Target type",
+  "buckets.kindLabel": "Project type",
+  "buckets.kindSavings": "Savings goal",
+  "buckets.kindEmergency": "Emergency fund",
+  "buckets.kindInvestment": "Investment",
+  "buckets.kindHint": "Helps the coach prioritise: emergency fund first, then invest.",
   "buckets.pctSurplus": "% of monthly surplus",
   "buckets.fixedMonthly": "Fixed € per month",
   "buckets.fixedYearly": "Fixed € per year",
@@ -382,6 +387,16 @@ const en = {
     "You don't have a bucket earmarked for emergencies. Renaming or repurposing an existing bucket (not adding new money) gives that safety net a clear home — a common target is 3–6× monthly baseline ({low}–{high}).",
   "tips.noEmergency.chat":
     "I don't have a dedicated emergency fund bucket. How large should it be for a family of four in Portugal, and how should I fund it without hurting my other goals?",
+  "tips.overInvest.title": "Emergency fund is thin",
+  "tips.overInvest.detail":
+    "You're adding to investments while your safety net covers only {months} months of baseline. Topping the emergency fund toward {target} usually comes first — investments shouldn't be your fallback for a rainy day.",
+  "tips.overInvest.chat":
+    "I'm investing but my emergency fund feels thin. Should I pause investing to build it up first?",
+  "tips.underInvest.title": "Put idle surplus to work?",
+  "tips.underInvest.detail":
+    "Your emergency fund looks healthy and about {surplus}/mo of surplus is sitting idle. Once any high-interest debt is cleared, investing it could grow your money over the long term.",
+  "tips.underInvest.chat":
+    "My emergency fund is set and I have surplus left over. How should I start investing it?",
   "tips.goalClose.title": 'Goal "{name}" deadline is close',
   "tips.goalClose.detail": "{months} months left — check whether the target is reachable.",
   "tips.goalClose.chat":
@@ -399,6 +414,9 @@ const en = {
   "incomeSuggestion.title": "What should we do with {amount}?",
   "incomeSuggestion.description":
     "A suggested split based on your buckets and debts this cycle. Tweak any row before confirming — anything left over stays in your bank account.",
+  "incomeSuggestion.priorityTitle": "A good order to think about it",
+  "incomeSuggestion.priorityBody":
+    "Top up your emergency fund first, then pay down high-interest debt, then invest the rest for long-term growth. There's no single right answer — adjust the amounts to fit your situation.",
   "incomeSuggestion.moveToBuckets": "Move to buckets",
   "incomeSuggestion.noBuckets":
     "No buckets set up yet — the full amount will stay in your account. Create buckets on the Allocations page to see suggestions here.",
@@ -536,6 +554,8 @@ const en = {
   "benchmarks.spendBandMore": "You spend {pct}% more than similar {band}-income households",
   "benchmarks.spendBandDetail":
     "{user}/mo vs an expected {expected}/mo for your income band and household size ({sign}{diff}).",
+  "benchmarks.investNote":
+    "Averages show saving, not investing. Once your emergency fund is set, putting surplus into investments is how it grows — ask the coach for a plan that fits you.",
   "benchmarks.coverageNote": "Matched {pct}% of your tracked spending to national benchmark categories.",
   "benchmarks.coverageLow": "Add or categorise more expenses for a fuller comparison.",
   "benchmarks.excludedNote":
@@ -1048,6 +1068,11 @@ const pt: Record<MessageKey, string> = {
   "buckets.name": "Nome",
   "buckets.color": "Cor",
   "buckets.targetType": "Tipo de objetivo",
+  "buckets.kindLabel": "Tipo de projeto",
+  "buckets.kindSavings": "Meta de poupança",
+  "buckets.kindEmergency": "Fundo de emergência",
+  "buckets.kindInvestment": "Investimento",
+  "buckets.kindHint": "Ajuda o coach a priorizar: primeiro o fundo de emergência, depois investir.",
   "buckets.pctSurplus": "% do excedente mensal",
   "buckets.fixedMonthly": "€ fixo por mês",
   "buckets.fixedYearly": "€ fixo por ano",
@@ -1305,6 +1330,16 @@ const pt: Record<MessageKey, string> = {
     "Não tem um balde reservado para emergências. Renomear ou reutilizar um balde existente (sem adicionar dinheiro novo) dá a essa rede de segurança um lugar claro — um objetivo comum é 3–6× a base mensal ({low}–{high}).",
   "tips.noEmergency.chat":
     "Não tenho um balde dedicado a fundo de emergência. Qual deve ser o tamanho para uma família de quatro pessoas em Portugal, e como devo financiá-lo sem prejudicar os meus outros objetivos?",
+  "tips.overInvest.title": "Fundo de emergência reduzido",
+  "tips.overInvest.detail":
+    "Está a reforçar investimentos enquanto a sua rede de segurança cobre apenas {months} meses da base. Reforçar o fundo de emergência até {target} costuma vir primeiro — os investimentos não devem ser o recurso para um imprevisto.",
+  "tips.overInvest.chat":
+    "Estou a investir mas o meu fundo de emergência parece reduzido. Devo pausar os investimentos para o reforçar primeiro?",
+  "tips.underInvest.title": "Pôr o excedente a render?",
+  "tips.underInvest.detail":
+    "O seu fundo de emergência parece saudável e cerca de {surplus}/mês de excedente está parado. Depois de liquidar dívida de juro alto, investi-lo pode fazer crescer o seu dinheiro a longo prazo.",
+  "tips.underInvest.chat":
+    "O meu fundo de emergência está feito e sobra excedente. Como devo começar a investi-lo?",
   "tips.goalClose.title": 'O prazo do objetivo "{name}" está próximo',
   "tips.goalClose.detail": "Faltam {months} meses — verifique se o objetivo é alcançável.",
   "tips.goalClose.chat":
@@ -1322,6 +1357,9 @@ const pt: Record<MessageKey, string> = {
   "incomeSuggestion.title": "O que devemos fazer com {amount}?",
   "incomeSuggestion.description":
     "Uma divisão sugerida com base nas suas reservas e dívidas deste ciclo. Ajuste qualquer linha antes de confirmar — o que sobrar permanece na sua conta bancária.",
+  "incomeSuggestion.priorityTitle": "Uma boa ordem para pensar nisto",
+  "incomeSuggestion.priorityBody":
+    "Reforce primeiro o fundo de emergência, depois amortize dívida de juro alto e por fim invista o restante para crescimento a longo prazo. Não há uma resposta única — ajuste os valores à sua situação.",
   "incomeSuggestion.moveToBuckets": "Mover para reservas",
   "incomeSuggestion.noBuckets":
     "Ainda não há reservas configuradas — o valor total permanecerá na sua conta. Crie reservas na página de Alocações para ver sugestões aqui.",
@@ -1462,6 +1500,8 @@ const pt: Record<MessageKey, string> = {
   "benchmarks.spendBandMore": "Gasta {pct}% mais do que agregados semelhantes de rendimento {band}",
   "benchmarks.spendBandDetail":
     "{user}/mês face a um valor esperado de {expected}/mês para o seu escalão de rendimento e dimensão do agregado ({sign}{diff}).",
+  "benchmarks.investNote":
+    "As médias mostram poupança, não investimento. Depois de ter o fundo de emergência, pôr o excedente em investimentos é como ele cresce — peça um plano ao coach.",
   "benchmarks.coverageNote": "Foram associados {pct}% das suas despesas registadas às categorias de referência nacionais.",
   "benchmarks.coverageLow": "Adicione ou categorize mais despesas para uma comparação mais completa.",
   "benchmarks.excludedNote":
@@ -1971,6 +2011,11 @@ const es: Record<MessageKey, string> = {
   "buckets.name": "Nombre",
   "buckets.color": "Color",
   "buckets.targetType": "Tipo de objetivo",
+  "buckets.kindLabel": "Tipo de proyecto",
+  "buckets.kindSavings": "Meta de ahorro",
+  "buckets.kindEmergency": "Fondo de emergencia",
+  "buckets.kindInvestment": "Inversión",
+  "buckets.kindHint": "Ayuda al coach a priorizar: primero el fondo de emergencia, luego invertir.",
   "buckets.pctSurplus": "% del excedente mensual",
   "buckets.fixedMonthly": "€ fijo al mes",
   "buckets.fixedYearly": "€ fijo al año",
@@ -2225,6 +2270,16 @@ const es: Record<MessageKey, string> = {
     "No tiene un cubo reservado para emergencias. Renombrar o reutilizar un cubo existente (sin añadir dinero nuevo) le da a esa red de seguridad un lugar claro — un objetivo común es 3–6× la base mensual ({low}–{high}).",
   "tips.noEmergency.chat":
     "No tengo un cubo dedicado a fondo de emergencia. ¿Qué tamaño debería tener para una familia de cuatro en Portugal, y cómo debería financiarlo sin perjudicar mis otras metas?",
+  "tips.overInvest.title": "Fondo de emergencia escaso",
+  "tips.overInvest.detail":
+    "Estás aportando a inversiones mientras tu red de seguridad cubre solo {months} meses de la base. Reforzar el fondo de emergencia hasta {target} suele ir primero — las inversiones no deberían ser tu recurso ante un imprevisto.",
+  "tips.overInvest.chat":
+    "Estoy invirtiendo pero mi fondo de emergencia parece escaso. ¿Debería pausar las inversiones para reforzarlo primero?",
+  "tips.underInvest.title": "¿Poner a trabajar el excedente?",
+  "tips.underInvest.detail":
+    "Tu fondo de emergencia parece saludable y unos {surplus}/mes de excedente están parados. Tras saldar la deuda de interés alto, invertirlo podría hacer crecer tu dinero a largo plazo.",
+  "tips.underInvest.chat":
+    "Mi fondo de emergencia está listo y me sobra excedente. ¿Cómo debería empezar a invertirlo?",
   "tips.goalClose.title": 'El plazo de la meta "{name}" está cerca',
   "tips.goalClose.detail": "Quedan {months} meses — verifique si la meta es alcanzable.",
   "tips.goalClose.chat":
@@ -2242,6 +2297,9 @@ const es: Record<MessageKey, string> = {
   "incomeSuggestion.title": "¿Qué deberíamos hacer con {amount}?",
   "incomeSuggestion.description":
     "Una distribución sugerida según tus reservas y deudas de este ciclo. Ajusta cualquier fila antes de confirmar — lo que sobre permanecerá en tu cuenta bancaria.",
+  "incomeSuggestion.priorityTitle": "Un buen orden para pensarlo",
+  "incomeSuggestion.priorityBody":
+    "Refuerza primero el fondo de emergencia, luego amortiza la deuda de interés alto y por último invierte el resto para crecimiento a largo plazo. No hay una única respuesta correcta — ajusta los importes a tu situación.",
   "incomeSuggestion.moveToBuckets": "Mover a reservas",
   "incomeSuggestion.noBuckets":
     "Aún no hay reservas configuradas — el monto total permanecerá en tu cuenta. Crea reservas en la página de Asignaciones para ver sugerencias aquí.",
@@ -2383,6 +2441,8 @@ const es: Record<MessageKey, string> = {
   "benchmarks.spendBandMore": "Gastas un {pct}% más que hogares similares de renta {band}",
   "benchmarks.spendBandDetail":
     "{user}/mes frente a un esperado {expected}/mes para tu nivel de renta y tamaño de hogar ({sign}{diff}).",
+  "benchmarks.investNote":
+    "Las medias muestran ahorro, no inversión. Cuando tengas el fondo de emergencia, poner el excedente en inversiones es como crece — pídele un plan al coach.",
   "benchmarks.coverageNote": "Se ha asociado el {pct}% de tu gasto registrado a categorías de referencia nacionales.",
   "benchmarks.coverageLow": "Añade o categoriza más gastos para una comparación más completa.",
   "benchmarks.excludedNote":
@@ -2894,6 +2954,11 @@ const de: Record<MessageKey, string> = {
   "buckets.name": "Name",
   "buckets.color": "Farbe",
   "buckets.targetType": "Zielart",
+  "buckets.kindLabel": "Projektart",
+  "buckets.kindSavings": "Sparziel",
+  "buckets.kindEmergency": "Notgroschen",
+  "buckets.kindInvestment": "Investition",
+  "buckets.kindHint": "Hilft dem Coach zu priorisieren: erst der Notgroschen, dann investieren.",
   "buckets.pctSurplus": "% des monatlichen Überschusses",
   "buckets.fixedMonthly": "Fixe € pro Monat",
   "buckets.fixedYearly": "Fixe € pro Jahr",
@@ -3151,6 +3216,16 @@ const de: Record<MessageKey, string> = {
     "Sie haben keinen Topf für Notfälle reserviert. Einen bestehenden Topf umzubenennen oder umzuwidmen (ohne neues Geld hinzuzufügen) gibt diesem Sicherheitsnetz einen klaren Platz — ein üblicher Zielwert ist das 3- bis 6-Fache des monatlichen Grundbudgets ({low}–{high}).",
   "tips.noEmergency.chat":
     "Ich habe keinen eigenen Notgroschen-Topf. Wie groß sollte er für eine vierköpfige Familie in Portugal sein, und wie sollte ich ihn finanzieren, ohne meine anderen Ziele zu beeinträchtigen?",
+  "tips.overInvest.title": "Notgroschen ist knapp",
+  "tips.overInvest.detail":
+    "Du investierst, während dein Sicherheitspolster nur {months} Monate der Basis abdeckt. Den Notgroschen bis {target} aufzufüllen geht meist vor — Investitionen sollten nicht dein Rückgriff für einen Notfall sein.",
+  "tips.overInvest.chat":
+    "Ich investiere, aber mein Notgroschen wirkt knapp. Sollte ich das Investieren pausieren, um ihn zuerst aufzubauen?",
+  "tips.underInvest.title": "Überschuss arbeiten lassen?",
+  "tips.underInvest.detail":
+    "Dein Notgroschen wirkt gesund und rund {surplus}/Monat Überschuss liegt ungenutzt. Sobald hochverzinste Schulden getilgt sind, könnte investieren dein Geld langfristig wachsen lassen.",
+  "tips.underInvest.chat":
+    "Mein Notgroschen steht und ich habe Überschuss übrig. Wie sollte ich mit dem Investieren beginnen?",
   "tips.goalClose.title": 'Die Frist für das Ziel "{name}" naht',
   "tips.goalClose.detail": "Noch {months} Monate — prüfen Sie, ob das Ziel erreichbar ist.",
   "tips.goalClose.chat":
@@ -3168,6 +3243,9 @@ const de: Record<MessageKey, string> = {
   "incomeSuggestion.title": "Was sollen wir mit {amount} tun?",
   "incomeSuggestion.description":
     "Ein vorgeschlagener Split basierend auf deinen Töpfen und Schulden in diesem Zyklus. Passe jede Zeile vor der Bestätigung an — alles, was übrig bleibt, verbleibt auf deinem Bankkonto.",
+  "incomeSuggestion.priorityTitle": "Eine gute Reihenfolge dafür",
+  "incomeSuggestion.priorityBody":
+    "Fülle zuerst den Notgroschen auf, tilge dann hochverzinste Schulden und investiere zuletzt den Rest für langfristiges Wachstum. Es gibt keine einzige richtige Antwort — passe die Beträge an deine Situation an.",
   "incomeSuggestion.moveToBuckets": "In Töpfe verschieben",
   "incomeSuggestion.noBuckets":
     "Noch keine Töpfe eingerichtet — der gesamte Betrag verbleibt auf deinem Konto. Erstelle Töpfe auf der Zuweisungsseite, um hier Vorschläge zu sehen.",
@@ -3309,6 +3387,8 @@ const de: Record<MessageKey, string> = {
   "benchmarks.spendBandMore": "Du gibst {pct}% mehr aus als vergleichbare Haushalte der {band} Einkommensgruppe",
   "benchmarks.spendBandDetail":
     "{user}/Monat gegenüber erwarteten {expected}/Monat für deine Einkommensgruppe und Haushaltsgröße ({sign}{diff}).",
+  "benchmarks.investNote":
+    "Durchschnitte zeigen Sparen, nicht Investieren. Sobald dein Notgroschen steht, lässt du Überschuss durch Investieren wachsen — frag den Coach nach einem Plan.",
   "benchmarks.coverageNote": "{pct}% deiner erfassten Ausgaben wurden nationalen Vergleichskategorien zugeordnet.",
   "benchmarks.coverageLow": "Erfasse oder kategorisiere mehr Ausgaben für einen vollständigeren Vergleich.",
   "benchmarks.excludedNote":
@@ -3824,6 +3904,11 @@ const fr: Record<MessageKey, string> = {
   "buckets.name": "Nom",
   "buckets.color": "Couleur",
   "buckets.targetType": "Type d'objectif",
+  "buckets.kindLabel": "Type de projet",
+  "buckets.kindSavings": "Objectif d'épargne",
+  "buckets.kindEmergency": "Fonds d'urgence",
+  "buckets.kindInvestment": "Investissement",
+  "buckets.kindHint": "Aide le coach à prioriser : d'abord le fonds d'urgence, puis investir.",
   "buckets.pctSurplus": "% de l'excédent mensuel",
   "buckets.fixedMonthly": "€ fixes par mois",
   "buckets.fixedYearly": "€ fixes par an",
@@ -4080,6 +4165,16 @@ const fr: Record<MessageKey, string> = {
     "Vous n'avez pas de panier réservé aux urgences. Renommer ou réaffecter un panier existant (sans ajouter de nouvel argent) donne à ce filet de sécurité une place claire — un objectif courant est 3 à 6× la base mensuelle ({low}–{high}).",
   "tips.noEmergency.chat":
     "Je n'ai pas de panier dédié au fonds d'urgence. Quelle taille devrait-il avoir pour une famille de quatre personnes au Portugal, et comment devrais-je le financer sans nuire à mes autres objectifs ?",
+  "tips.overInvest.title": "Fonds d'urgence trop mince",
+  "tips.overInvest.detail":
+    "Vous alimentez des investissements alors que votre filet de sécurité ne couvre que {months} mois de la base. Renforcer le fonds d'urgence jusqu'à {target} passe généralement d'abord — les investissements ne devraient pas être votre recours en cas d'imprévu.",
+  "tips.overInvest.chat":
+    "J'investis mais mon fonds d'urgence semble mince. Devrais-je suspendre les investissements pour le renforcer d'abord ?",
+  "tips.underInvest.title": "Faire travailler l'excédent ?",
+  "tips.underInvest.detail":
+    "Votre fonds d'urgence semble sain et environ {surplus}/mois d'excédent dort. Une fois toute dette à taux élevé remboursée, l'investir pourrait faire croître votre argent à long terme.",
+  "tips.underInvest.chat":
+    "Mon fonds d'urgence est constitué et il me reste de l'excédent. Comment devrais-je commencer à l'investir ?",
   "tips.goalClose.title": "L'échéance de l'objectif « {name} » approche",
   "tips.goalClose.detail": "Il reste {months} mois — vérifiez si l'objectif est atteignable.",
   "tips.goalClose.chat":
@@ -4097,6 +4192,9 @@ const fr: Record<MessageKey, string> = {
   "incomeSuggestion.title": "Que devrions-nous faire de {amount} ?",
   "incomeSuggestion.description":
     "Une répartition suggérée en fonction de vos réserves et dettes de ce cycle. Ajustez chaque ligne avant de confirmer — ce qui reste restera sur votre compte bancaire.",
+  "incomeSuggestion.priorityTitle": "Un bon ordre pour y réfléchir",
+  "incomeSuggestion.priorityBody":
+    "Renflouez d'abord le fonds d'urgence, remboursez ensuite les dettes à taux élevé, puis investissez le reste pour une croissance à long terme. Il n'y a pas de réponse unique — ajustez les montants à votre situation.",
   "incomeSuggestion.moveToBuckets": "Transférer vers les réserves",
   "incomeSuggestion.noBuckets":
     "Aucune réserve configurée pour l'instant — le montant total restera sur votre compte. Créez des réserves sur la page Allocations pour voir des suggestions ici.",
@@ -4239,6 +4337,8 @@ const fr: Record<MessageKey, string> = {
   "benchmarks.spendBandMore": "Vous dépensez {pct}% de plus que des foyers similaires de la tranche {band}",
   "benchmarks.spendBandDetail":
     "{user}/mois contre {expected}/mois attendus pour votre tranche de revenu et la taille de votre foyer ({sign}{diff}).",
+  "benchmarks.investNote":
+    "Les moyennes montrent l'épargne, pas l'investissement. Une fois votre fonds d'urgence constitué, investir l'excédent est ce qui le fait croître — demandez un plan au coach.",
   "benchmarks.coverageNote": "{pct}% de vos dépenses enregistrées ont été associées aux catégories de référence nationales.",
   "benchmarks.coverageLow": "Ajoutez ou catégorisez davantage de dépenses pour une comparaison plus complète.",
   "benchmarks.excludedNote":

@@ -51,6 +51,15 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
       "Ad-hoc money in during the cycle (refunds, gifts, bonuses). It raises what you can spend this cycle, but it does not change your recurring Income or Surplus.",
     "glossary.realExpenses.term": "Real Expenses",
     "glossary.realExpenses.desc": "The money-out you have actually recorded this cycle.",
+    "glossary.projectType.term": "Project type",
+    "glossary.projectType.desc":
+      "Each project is a Savings goal, your Emergency fund, or an Investment. The type tells the coach how to prioritise — and it never treats investments as spare cash to raid.",
+    "glossary.emergencyFund.term": "Emergency fund coverage",
+    "glossary.emergencyFund.desc":
+      "How many months of essential spending your liquid reserve covers. The reserve is your emergency projects (or all non-investment savings if none is tagged); investments are excluded on purpose.",
+    "glossary.moneyPriority.term": "Saving vs. investing vs. debt",
+    "glossary.moneyPriority.desc":
+      "A rough order for spare money: build a healthy emergency fund first, then clear high-interest debt, then invest for long-term growth. The right mix depends on your situation — the coach weighs it case by case.",
     "header.eyebrow": "Wiki",
     "header.title": "How this app works",
     "header.subtitle":

@@ -106,6 +106,9 @@ function WikiPage() {
     { id: "realSurplus", formula: "Real Surplus = Surplus − Real Allocations" },
     { id: "received", formula: "Received = Σ money-in operations (this cycle)" },
     { id: "realExpenses", formula: "Real Expenses = Σ money-out operations (this cycle)" },
+    { id: "projectType", formula: "Project type ∈ Savings | Emergency | Investment" },
+    { id: "emergencyFund", formula: "Coverage (months) = liquid reserve ÷ monthly essentials" },
+    { id: "moneyPriority", formula: "Priority: emergency fund → high-interest debt → invest" },
   ];
 
   return (

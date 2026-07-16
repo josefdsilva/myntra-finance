@@ -33,6 +33,7 @@ type BucketRow = {
   target_value: number | string;
   target_deadline: string | null;
   initial_balance: number | string;
+  kind: "savings" | "emergency" | "investment" | null;
 };
 type AllocRow = { bucket_id: string; amount: number | string; confirmed_at: string };
 type AllAllocRow = { bucket_id: string; amount: number | string };
@@ -77,8 +78,18 @@ type CoachContext = {
   monthlySurplus: number;
   /** Conservative safe monthly payment for a new recurring commitment (rent, loan, lease). */
   safeNewMonthlyCommitment: number;
-  /** Lifetime savings across all buckets (sum of confirmed allocations). */
+  /** Real balance across ALL projects (initial + allocations + net movements). */
   totalSavings: number;
+  /** Real balance of emergency-tagged projects. */
+  emergencyBalance: number;
+  /** Real balance of investment-tagged projects — do not treat as spare liquidity. */
+  investmentBalance: number;
+  /** Real balance of ordinary savings-goal projects. */
+  savingsBalance: number;
+  /** Liquid safety reserve (emergency projects if any, else all non-investment savings). */
+  liquidReserve: number;
+  /** True if the household has at least one project tagged as its emergency fund. */
+  hasEmergencyBucket: boolean;
   cycleTotals: {
     spent: number;
     received: number;
@@ -92,6 +103,7 @@ type CoachContext = {
   } | null;
   buckets: Array<{
     name: string;
+    kind: "savings" | "emergency" | "investment";
     target_type: string;
     target_value: number;
     target_deadline: string | null;
@@ -104,7 +116,7 @@ type CoachContext = {
   countryName: string;
   /** fixed (incl. debt) + variable estimate per month. */
   essentialsMonthly: number;
-  /** totalSavings / essentialsMonthly, in months. Null if no expenses. */
+  /** liquidReserve / essentialsMonthly, in months (excludes investments). Null if no expenses. */
   emergencyFundMonths: number | null;
   /** Realized savings rate: avg real allocations ÷ avg income per cycle, %. Null if no income history. */
   savingsRatePct: number | null;
@@ -210,7 +222,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
     supabase
       .from("buckets")
-      .select("id, name, target_type, target_value, target_deadline, initial_balance")
+      .select("id, name, target_type, target_value, target_deadline, initial_balance, kind")
       .eq("household_id", householdId),
     supabase
       .from("bucket_allocations")
@@ -345,6 +357,32 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   }
   const totalSavings = Object.values(totalByBucket).reduce((s, v) => s + v, 0);
 
+  // Split balances by project type so the coach can honour the emergency-fund-
+  // first, then-invest priority and never treat investments as spare liquidity.
+  const kindOf: Record<string, "savings" | "emergency" | "investment"> = {};
+  let hasEmergencyBucket = false;
+  for (const b of rowsOrEmpty<BucketRow>(buckets)) {
+    const k = b.kind ?? "savings";
+    kindOf[b.id] = k;
+    if (k === "emergency") hasEmergencyBucket = true;
+  }
+  let emergencyBalance = 0,
+    investmentBalance = 0,
+    savingsBalance = 0;
+  for (const [id, bal] of Object.entries(totalByBucket)) {
+    const k = kindOf[id] ?? "savings";
+    if (k === "emergency") emergencyBalance += bal;
+    else if (k === "investment") investmentBalance += bal;
+    else savingsBalance += bal;
+  }
+  emergencyBalance = Math.round(emergencyBalance * 100) / 100;
+  investmentBalance = Math.round(investmentBalance * 100) / 100;
+  savingsBalance = Math.round(savingsBalance * 100) / 100;
+  // Liquid safety reserve = money the household can reach without selling
+  // investments: the emergency-tagged projects if any exist, otherwise all
+  // non-investment savings. Investments are deliberately excluded.
+  const liquidReserve = hasEmergencyBucket ? emergencyBalance : savingsBalance + emergencyBalance;
+
   let spent = 0,
     received = 0;
   const byCategory: Record<string, number> = {};
@@ -378,7 +416,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
 
   const essentialsMonthly = Math.round((fixedMonthly + variableEstimateMonthly) * 100) / 100;
   const emergencyFundMonths =
-    essentialsMonthly > 0 ? Math.round((totalSavings / essentialsMonthly) * 10) / 10 : null;
+    essentialsMonthly > 0 ? Math.round((liquidReserve / essentialsMonthly) * 10) / 10 : null;
   // Realized savings rate: what you actually set aside vs. what you actually
   // earned, averaged over recent complete months. Real allocations = confirmed
   // allocations + net bucket movements. Income = actual income events recorded.
@@ -488,10 +526,16 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     monthlySurplus,
     safeNewMonthlyCommitment,
     totalSavings,
+    emergencyBalance,
+    investmentBalance,
+    savingsBalance,
+    liquidReserve,
+    hasEmergencyBucket,
     cycleTotals: { spent, received, net: spent - received, byCategory },
     previousCycleTotals,
     buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
       name: b.name,
+      kind: (b.kind ?? "savings") as "savings" | "emergency" | "investment",
       target_type: b.target_type,
       target_value: Number(b.target_value),
       target_deadline: b.target_deadline,
@@ -563,6 +607,7 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - settingsIncome (monthly income), baseline (target cost of living), monthlySurplus (= settingsIncome − baseline), safeNewMonthlyCommitment, emergencyFundMonths, debtToIncomePct.
 - savingsRatePct is the REALIZED savings rate: what the household actually set aside vs. what it actually earned (avgRealAllocPerCycle ÷ avgIncomePerCycle over savingsRateCycles complete months). This is the headline rate — quote it as the savings rate. If savingsRatePct is null, there isn't a full month of income history yet; say so and lean on potentialSavingsRatePct instead of inventing a rate.
 - potentialSavingsRatePct is the household's CAPACITY to save (monthlySurplus ÷ income). Use it to contrast with the realized rate: when potential exceeds realized, encourage saving/investing more of the headroom; when they are close, acknowledge they're already converting most of their surplus. emergencyFundMonths already counts pre-funded project balances, so trust it.
+- Projects are typed: each buckets[] item has kind ∈ savings | emergency | investment. Balances are split into emergencyBalance, savingsBalance and investmentBalance; liquidReserve is the safety cushion (emergency projects if hasEmergencyBucket, else all non-investment savings) and is what emergencyFundMonths measures — investments are excluded on purpose because they shouldn't be raided.
 - debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
 - avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
 - benchmark — national averages from Eurostat / national statistics, never other users.
@@ -575,6 +620,7 @@ Guidance by topic:
 - Existing debt / early repayment: rank using avalancheOrder or snowballOrder and quote the overpayment savings straight from debtProjections — do not recompute amortization. A lump sum usually beats saving when a debt's APR exceeds the savings rate below.${isPT ? " For Portuguese mortgages, mention the capped early-repayment fee (0.5% variable / 2% fixed)." : ""}
 - Comparing loan / product offers: put them in a markdown table on a common footing (loans: Offer, APR, monthly, total interest, total cost, term; products: price, key specs, lifespan/contract, cost per year). Recommend the lowest total cost that still fits safeNewMonthlyCommitment; APR is the fair comparison metric, not the nominal rate.
 - Savings goals: use each bucket's totalSaved and allocatedThisCycle to project when it is reachable.
+- Saving vs investing vs debt (use whenever the user asks what to do with spare money, a windfall, or how to set up projects): there is no single answer — weigh the household's situation. Rough priority: (1) build the emergency fund toward a healthy cushion — for this household ${ctx.emergencyFundMonths == null ? "coverage is unknown" : `it currently covers ${ctx.emergencyFundMonths} months`}, and a thin reserve (roughly under 3 months of essentials) takes priority over new investing; (2) clear high-APR debt — money guaranteed-earns the debt's APR by paying it down, which usually beats investing when the APR exceeds expected after-tax investment returns (see market savings/loan rates); (3) once the cushion is adequate and expensive debt is gone, invest the surplus for long-term growth. Then judge the specific case: if emergencyFundMonths is comfortable and investmentBalance/allocations look light relative to their surplus and savingsRatePct, they are likely UNDER-investing — encourage putting idle surplus to work. If they are investing while the emergency fund is thin or high-APR debt is outstanding, they may be OVER-investing — gently suggest rebalancing toward the reserve or the debt first. Never recommend pulling money OUT of investments (investmentBalance) unless it is truly necessary — e.g. no other way to cover an emergency or stop punishing high-interest debt; say so explicitly when you do. Frame all of this as trade-offs, cite the figures, and recommend a professional for regulated investment products.
 - Benchmarks: compare to ${cc} averages via benchmark.incomePercentile, benchmark.savingsRatePct vs nationalSavingsRatePct, and benchmark.categories (flagged first). Attribute to ${cc} and note it is a public reference average; if benchmark is null, say so.
 
 ${market}

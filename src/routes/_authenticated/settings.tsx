@@ -826,6 +826,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
         color: b.color,
         sort_order: b.sort_order,
         initial_balance: Number(b.initial_balance ?? 0),
+        kind: (b.kind as "savings" | "emergency" | "investment") ?? "savings",
       },
     });
     qc.invalidateQueries({ queryKey: ["allocations"] });
@@ -846,6 +847,7 @@ function BucketsSection({ householdId }: { householdId: string }) {
         color: "#2c6e6b",
         sort_order: rows?.length ?? 0,
         initial_balance: 0,
+        kind: "savings",
       },
     });
     refetch();
@@ -898,6 +900,7 @@ type BucketRowShape = {
   target_deadline: string | null;
   priority?: number | null;
   initial_balance?: number | string | null;
+  kind?: "savings" | "emergency" | "investment" | null;
   [key: string]: unknown;
 };
 
@@ -935,6 +938,25 @@ function BucketRow<T extends BucketRowShape>({
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label>{t("buckets.kindLabel")}</Label>
+          <Select
+            value={b.kind ?? "savings"}
+            onValueChange={(v) =>
+              setB({ ...b, kind: v as "savings" | "emergency" | "investment" })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="savings">{t("buckets.kindSavings")}</SelectItem>
+              <SelectItem value="emergency">{t("buckets.kindEmergency")}</SelectItem>
+              <SelectItem value="investment">{t("buckets.kindInvestment")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">{t("buckets.kindHint")}</p>
+        </div>
         <div>
           <Label>{t("buckets.targetType")}</Label>
           <Select value={b.target_type} onValueChange={(v) => setB({ ...b, target_type: v })}>

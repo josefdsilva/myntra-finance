@@ -26,6 +26,7 @@ type Bucket = {
   target_value: number;
   target_deadline: string | null;
   color: string | null;
+  kind: "savings" | "emergency" | "investment" | null;
 };
 
 type Debt = {
@@ -69,7 +70,7 @@ export function IncomeAllocationSuggestion({
       const [buckets, allocs, debts, hh] = await Promise.all([
         supabase
           .from("buckets")
-          .select("id, name, target_type, target_value, target_deadline, color")
+          .select("id, name, target_type, target_value, target_deadline, color, kind")
           .eq("household_id", householdId)
           .order("sort_order"),
         supabase
@@ -223,6 +224,14 @@ export function IncomeAllocationSuggestion({
 
   const chosenDebt = data?.debts.find((d) => d.id === debtId) ?? null;
 
+  // Short badge for the projects that matter to the save-vs-invest priority.
+  const kindBadge = (k: Bucket["kind"]): string | null =>
+    k === "emergency"
+      ? t("buckets.kindEmergency")
+      : k === "investment"
+        ? t("buckets.kindInvestment")
+        : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -240,6 +249,13 @@ export function IncomeAllocationSuggestion({
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground flex items-center gap-1.5">
+                <Sparkles className="size-3.5 text-primary" />
+                {t("incomeSuggestion.priorityTitle")}
+              </p>
+              <p className="mt-1">{t("incomeSuggestion.priorityBody")}</p>
+            </div>
             {data.buckets.length === 0 ? (
               <p className="text-sm text-muted-foreground rounded-md bg-muted/40 p-3">
                 {t("incomeSuggestion.noBuckets")}
@@ -256,6 +272,11 @@ export function IncomeAllocationSuggestion({
                       style={{ background: b.color ?? "var(--primary)" }}
                     />
                     <span className="text-sm flex-1 truncate">{b.name}</span>
+                    {kindBadge(b.kind) && (
+                      <span className="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 bg-muted text-muted-foreground shrink-0">
+                        {kindBadge(b.kind)}
+                      </span>
+                    )}
                     <div className="w-28">
                       <Input
                         inputMode="decimal"

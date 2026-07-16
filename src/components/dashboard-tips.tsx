@@ -107,7 +107,7 @@ export function DashboardTips({
       ] = await Promise.all([
         supabase
           .from("buckets")
-          .select("id, name, target_type, target_value, target_deadline, initial_balance")
+          .select("id, name, target_type, target_value, target_deadline, initial_balance, kind")
           .eq("household_id", householdId),
         supabase
           .from("incomes")
@@ -391,12 +391,38 @@ export function DashboardTips({
     }
   }
 
-  // ---- Emergency bucket coverage (framed correctly) ----
-  if (baseline > 0 && data.buckets.length) {
-    const hasEmergency = data.buckets.some((b) =>
-      EMERGENCY_HINTS.some((h) => b.name.toLowerCase().includes(h)),
-    );
-    if (!hasEmergency && surplus > 0) {
+  // ---- Project balances split by type (emergency / investment / savings) ----
+  const balOf = (b: (typeof data.buckets)[number]) =>
+    Number(b.initial_balance ?? 0) + (data.allTimeTotals[b.id] ?? 0);
+  const kindOf = (b: (typeof data.buckets)[number]): "savings" | "emergency" | "investment" =>
+    (b.kind as "savings" | "emergency" | "investment" | null) ?? "savings";
+  let emergencyBal = 0;
+  let investmentBal = 0;
+  let savingsBal = 0;
+  let hasEmergencyKind = false;
+  let hasInvestmentKind = false;
+  for (const b of data.buckets) {
+    const bal = balOf(b);
+    const k = kindOf(b);
+    if (k === "emergency") {
+      emergencyBal += bal;
+      hasEmergencyKind = true;
+    } else if (k === "investment") {
+      investmentBal += bal;
+      hasInvestmentKind = true;
+    } else savingsBal += bal;
+  }
+  // Liquid reserve excludes investments (shouldn't be raided). Fall back to the
+  // name heuristic only when no project is explicitly tagged as the emergency fund.
+  const hasEmergency =
+    hasEmergencyKind ||
+    data.buckets.some((b) => EMERGENCY_HINTS.some((h) => b.name.toLowerCase().includes(h)));
+  const liquidReserve = hasEmergencyKind ? emergencyBal : savingsBal + emergencyBal;
+  const reserveMonths = baseline > 0 ? liquidReserve / baseline : 0;
+
+  // ---- Emergency fund (framed correctly) ----
+  if (baseline > 0 && data.buckets.length && surplus > 0) {
+    if (!hasEmergency) {
       tips.push({
         id: "no-emergency-bucket",
         severity: "info",
@@ -407,6 +433,34 @@ export function DashboardTips({
         }),
         cta: { label: t("tips.cta.manageBuckets"), to: "/settings" },
         chatPrompt: t("tips.noEmergency.chat"),
+      });
+    }
+  }
+
+  // ---- Investment balance vs. emergency-first priority ----
+  if (baseline > 0 && surplus > 0) {
+    if (hasInvestmentKind && investmentBal > 0 && reserveMonths < 3) {
+      // Investing while the safety net is thin — suggest rebalancing.
+      tips.push({
+        id: "over-investing",
+        severity: "warning",
+        title: t("tips.overInvest.title"),
+        detail: t("tips.overInvest.detail", {
+          months: reserveMonths.toFixed(1),
+          target: money(baseline * 3),
+        }),
+        cta: { label: t("tips.cta.manageBuckets"), to: "/settings" },
+        chatPrompt: t("tips.overInvest.chat"),
+      });
+    } else if (hasEmergency && reserveMonths >= 3 && investmentBal <= liquidReserve * 0.25) {
+      // Healthy cushion but little put to work — nudge toward investing the surplus.
+      tips.push({
+        id: "under-investing",
+        severity: "info",
+        title: t("tips.underInvest.title"),
+        detail: t("tips.underInvest.detail", { surplus: money(surplus) }),
+        cta: { label: t("tips.cta.manageBuckets"), to: "/settings" },
+        chatPrompt: t("tips.underInvest.chat"),
       });
     }
   }

@@ -155,6 +155,11 @@ export function BenchmarksCard({
                 detail={savingsStory.detail}
               />
             )}
+            {savingsStory && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                {t("benchmarks.investNote")}
+              </p>
+            )}
             <StoryTile
               tone={spendStory.tone}
               headline={spendStory.headline}
