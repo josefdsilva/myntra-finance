@@ -32,9 +32,18 @@ type BucketRow = {
   target_type: string;
   target_value: number | string;
   target_deadline: string | null;
+  initial_balance: number | string;
 };
 type AllocRow = { bucket_id: string; amount: number | string; confirmed_at: string };
 type AllAllocRow = { bucket_id: string; amount: number | string };
+type BucketMoveRow = {
+  amount: number | string;
+  to_type: string | null;
+  to_id: string | null;
+  from_type: string | null;
+  from_id: string | null;
+  created_at: string | null;
+};
 
 type CoachContext = {
   today: string;
@@ -97,8 +106,16 @@ type CoachContext = {
   essentialsMonthly: number;
   /** totalSavings / essentialsMonthly, in months. Null if no expenses. */
   emergencyFundMonths: number | null;
-  /** monthlySurplus / income, %. Null if no income. */
+  /** Realized savings rate: avg real allocations ÷ avg income per cycle, %. Null if no income history. */
   savingsRatePct: number | null;
+  /** Potential savings rate: monthlySurplus ÷ income, % — the capacity, not what was saved. */
+  potentialSavingsRatePct: number | null;
+  /** Avg income per cycle (actual income events) over the trailing window. */
+  avgIncomePerCycle: number;
+  /** Avg real allocations per cycle (confirmations + net movements) over the window. */
+  avgRealAllocPerCycle: number;
+  /** Number of complete months of income history the realized rate is based on. */
+  savingsRateCycles: number;
   /** debtMonthly / income, %. Null if no income. */
   debtToIncomePct: number | null;
   /** Per-debt payoff facts, pre-computed so the model never does amortization math. */
@@ -181,6 +198,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     { data: buckets },
     { data: allocs },
     { data: allAllocs },
+    { data: bucketMoves },
   ] = await Promise.all([
     supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
     supabase
@@ -192,7 +210,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
     supabase
       .from("buckets")
-      .select("id, name, target_type, target_value, target_deadline")
+      .select("id, name, target_type, target_value, target_deadline, initial_balance")
       .eq("household_id", householdId),
     supabase
       .from("bucket_allocations")
@@ -204,6 +222,13 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       .from("bucket_allocations")
       .select("bucket_id, amount")
       .eq("household_id", householdId),
+    // All-time movements touching buckets, so bucket balances fold in
+    // deposits, withdrawals and transfers — not just confirmed allocations.
+    supabase
+      .from("account_movements")
+      .select("amount, to_type, to_id, from_type, from_id, created_at")
+      .eq("household_id", householdId)
+      .or("to_type.eq.bucket,from_type.eq.bucket"),
   ]);
 
   const sumMonthly = (rows: unknown): number =>
@@ -300,13 +325,25 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   for (const a of rowsOrEmpty<AllocRow>(allocs)) {
     allocByBucket[a.bucket_id] = (allocByBucket[a.bucket_id] ?? 0) + Number(a.amount);
   }
+  // A bucket's real balance = seeded initial_balance + all-time confirmed
+  // allocations + net movements (deposits/transfers in − withdrawals/payments
+  // out). This matches the balance the app shows and the amount the user has
+  // truly set aside — so the coach no longer undercounts pre-funded projects.
   const totalByBucket: Record<string, number> = {};
-  let totalSavings = 0;
-  for (const a of rowsOrEmpty<AllAllocRow>(allAllocs)) {
-    const amt = Number(a.amount);
-    totalByBucket[a.bucket_id] = (totalByBucket[a.bucket_id] ?? 0) + amt;
-    totalSavings += amt;
+  for (const b of rowsOrEmpty<BucketRow>(buckets)) {
+    totalByBucket[b.id] = Number(b.initial_balance ?? 0);
   }
+  for (const a of rowsOrEmpty<AllAllocRow>(allAllocs)) {
+    totalByBucket[a.bucket_id] = (totalByBucket[a.bucket_id] ?? 0) + Number(a.amount);
+  }
+  for (const m of rowsOrEmpty<BucketMoveRow>(bucketMoves)) {
+    const amt = Number(m.amount) || 0;
+    if (m.to_type === "bucket" && m.to_id)
+      totalByBucket[m.to_id] = (totalByBucket[m.to_id] ?? 0) + amt;
+    if (m.from_type === "bucket" && m.from_id)
+      totalByBucket[m.from_id] = (totalByBucket[m.from_id] ?? 0) - amt;
+  }
+  const totalSavings = Object.values(totalByBucket).reduce((s, v) => s + v, 0);
 
   let spent = 0,
     received = 0;
@@ -342,7 +379,64 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const essentialsMonthly = Math.round((fixedMonthly + variableEstimateMonthly) * 100) / 100;
   const emergencyFundMonths =
     essentialsMonthly > 0 ? Math.round((totalSavings / essentialsMonthly) * 10) / 10 : null;
+  // Realized savings rate: what you actually set aside vs. what you actually
+  // earned, averaged over recent complete months. Real allocations = confirmed
+  // allocations + net bucket movements. Income = actual income events recorded.
+  // Falls back to null when there isn't a complete month of income history yet.
+  const RATE_WINDOW_MONTHS = 6;
+  const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const windowStart = new Date(now.getFullYear(), now.getMonth() - RATE_WINDOW_MONTHS, 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const windowStartPeriod = `${windowStart.getFullYear()}-${pad(windowStart.getMonth() + 1)}-01`;
+  const curPeriod = `${curMonthStart.getFullYear()}-${pad(curMonthStart.getMonth() + 1)}-01`;
+
+  const [{ data: histAllocRows }, { data: histIncomeRows }] = await Promise.all([
+    supabase
+      .from("bucket_allocations")
+      .select("amount, period")
+      .eq("household_id", householdId)
+      .gte("period", windowStartPeriod)
+      .lt("period", curPeriod),
+    supabase
+      .from("expenses")
+      .select("amount, occurred_at")
+      .eq("household_id", householdId)
+      .eq("kind", "income")
+      .gte("occurred_at", windowStart.toISOString())
+      .lt("occurred_at", curMonthStart.toISOString()),
+  ]);
+
+  let realAllocWindow = 0;
+  for (const a of rowsOrEmpty<{ amount: number | string }>(histAllocRows)) {
+    realAllocWindow += Number(a.amount) || 0;
+  }
+  const winStartISO = windowStart.toISOString();
+  const curMonthISO = curMonthStart.toISOString();
+  for (const m of rowsOrEmpty<BucketMoveRow>(bucketMoves)) {
+    if (!m.created_at || m.created_at < winStartISO || m.created_at >= curMonthISO) continue;
+    const amt = Number(m.amount) || 0;
+    if (m.to_type === "bucket") realAllocWindow += amt;
+    if (m.from_type === "bucket") realAllocWindow -= amt;
+  }
+
+  let incomeWindow = 0;
+  const incomeMonths = new Set<string>();
+  for (const e of rowsOrEmpty<{ amount: number | string; occurred_at: string }>(histIncomeRows)) {
+    incomeWindow += Number(e.amount) || 0;
+    const d = new Date(e.occurred_at);
+    incomeMonths.add(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+  }
+  const savingsRateCycles = incomeMonths.size;
+  const avgIncomePerCycle =
+    savingsRateCycles > 0 ? Math.round((incomeWindow / savingsRateCycles) * 100) / 100 : 0;
+  const avgRealAllocPerCycle =
+    savingsRateCycles > 0 ? Math.round((realAllocWindow / savingsRateCycles) * 100) / 100 : 0;
+  // Headline rate = realized (actual money set aside ÷ actual income).
   const savingsRatePct =
+    incomeWindow > 0 ? Math.round((realAllocWindow / incomeWindow) * 1000) / 10 : null;
+  // Potential rate = capacity (surplus ÷ income) — for the coach to contrast with
+  // the realized rate and nudge toward saving/investing more of the headroom.
+  const potentialSavingsRatePct =
     settingsIncome > 0 ? Math.round((monthlySurplus / settingsIncome) * 1000) / 10 : null;
   const debtToIncomePct =
     settingsIncome > 0 ? Math.round((debtMonthly / settingsIncome) * 1000) / 10 : null;
@@ -411,6 +505,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     essentialsMonthly,
     emergencyFundMonths,
     savingsRatePct,
+    potentialSavingsRatePct,
+    avgIncomePerCycle,
+    avgRealAllocPerCycle,
+    savingsRateCycles,
     debtToIncomePct,
     debtProjections,
     avalancheOrder,
@@ -462,7 +560,9 @@ function buildSystem(ctx: CoachContext, locale?: string): string {
   return `You are a warm, practical household financial coach for a ${ctx.currency} household in ${cc}.
 Ground EVERY answer in the JSON snapshot provided — never invent numbers, and never redo arithmetic the snapshot already did.
 The snapshot pre-computes the key figures; quote them verbatim rather than deriving your own:
-- settingsIncome (monthly income), baseline (target cost of living), monthlySurplus (= settingsIncome − baseline), safeNewMonthlyCommitment, savingsRatePct, emergencyFundMonths, debtToIncomePct.
+- settingsIncome (monthly income), baseline (target cost of living), monthlySurplus (= settingsIncome − baseline), safeNewMonthlyCommitment, emergencyFundMonths, debtToIncomePct.
+- savingsRatePct is the REALIZED savings rate: what the household actually set aside vs. what it actually earned (avgRealAllocPerCycle ÷ avgIncomePerCycle over savingsRateCycles complete months). This is the headline rate — quote it as the savings rate. If savingsRatePct is null, there isn't a full month of income history yet; say so and lean on potentialSavingsRatePct instead of inventing a rate.
+- potentialSavingsRatePct is the household's CAPACITY to save (monthlySurplus ÷ income). Use it to contrast with the realized rate: when potential exceeds realized, encourage saving/investing more of the headroom; when they are close, acknowledge they're already converting most of their surplus. emergencyFundMonths already counts pre-funded project balances, so trust it.
 - debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
 - avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
 - benchmark — national averages from Eurostat / national statistics, never other users.
