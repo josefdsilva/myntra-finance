@@ -6,6 +6,8 @@ import type { Locale } from "@/lib/i18n";
 export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
   en: {
     "toc.overview": "Overview",
+    "search.placeholder": "Search the manual",
+    "search.noResults": "No results for",
     "toc.cycles": "Pay cycles",
     "toc.baseline": "Baseline & safe-to-spend",
     "toc.expenses": "Expenses & capture",
@@ -322,6 +324,8 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
   },
   pt: {
     "toc.overview": "Visão geral",
+    "search.placeholder": "Pesquisar no manual",
+    "search.noResults": "Sem resultados para",
     "toc.cycles": "Ciclos de pagamento",
     "toc.baseline": "Base & seguro-para-gastar",
     "toc.expenses": "Despesas & captura",
@@ -595,6 +599,8 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
   },
   es: {
     "toc.overview": "Resumen",
+    "search.placeholder": "Buscar en el manual",
+    "search.noResults": "Sin resultados para",
     "toc.cycles": "Ciclos de pago",
     "toc.baseline": "Base & seguro para gastar",
     "toc.expenses": "Gastos & captura",
@@ -868,6 +874,8 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
   },
   de: {
     "toc.overview": "Überblick",
+    "search.placeholder": "Handbuch durchsuchen",
+    "search.noResults": "Keine Ergebnisse für",
     "toc.cycles": "Zahlungszyklen",
     "toc.baseline": "Basis & sicher ausgeben",
     "toc.expenses": "Ausgaben & Erfassung",
@@ -1147,6 +1155,8 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
   },
   fr: {
     "toc.overview": "Vue d'ensemble",
+    "search.placeholder": "Rechercher dans le manuel",
+    "search.noResults": "Aucun résultat pour",
     "toc.cycles": "Cycles de paie",
     "toc.baseline": "Base & sécurisé à dépenser",
     "toc.expenses": "Dépenses & saisie",

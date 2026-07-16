@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Accordion,
   AccordionContent,
@@ -21,6 +23,7 @@ import {
   Eye,
   Sparkles,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
 import { WIKI_STRINGS } from "@/lib/wiki-content";
@@ -52,7 +55,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <Card id={id} className="scroll-mt-20">
+    <Card id={id} data-wiki-section={id} className="scroll-mt-20">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
           <Icon className="size-5 text-primary" />
@@ -77,6 +80,40 @@ function Term({ children }: { children: React.ReactNode }) {
 function WikiPage() {
   const locale = useLocale();
   const w = (key: string) => WIKI_STRINGS[locale]?.[key] ?? WIKI_STRINGS.en[key] ?? key;
+
+  const [query, setQuery] = useState("");
+  const [noResults, setNoResults] = useState(false);
+
+  // Per-section search index from the current locale's strings. Keys are
+  // namespaced by section (overview.*, cycles.*, ...) and toc.<id> supplies the
+  // title, so grouping by key prefix yields searchable text for each section.
+  const searchIndex = useMemo(() => {
+    const dict = WIKI_STRINGS[locale] ?? WIKI_STRINGS.en;
+    const idx: Record<string, string> = {};
+    for (const [key, val] of Object.entries(dict)) {
+      const parts = key.split(".");
+      const bucket = parts[0] === "toc" ? parts[1] : parts[0];
+      if (!bucket) continue;
+      idx[bucket] = (idx[bucket] ? idx[bucket] + " " : "") + String(val).toLowerCase();
+    }
+    return idx;
+  }, [locale]);
+
+  useEffect(() => {
+    const q = query.trim().toLowerCase();
+    let anyVisible = false;
+    document.querySelectorAll<HTMLElement>("[data-wiki-section]").forEach((el) => {
+      const id = el.dataset.wikiSection ?? "";
+      const match = !q || (searchIndex[id]?.includes(q) ?? false);
+      el.style.display = match ? "" : "none";
+      if (match) anyVisible = true;
+    });
+    document.querySelectorAll<HTMLElement>("[data-wiki-toc]").forEach((el) => {
+      const id = el.dataset.wikiToc ?? "";
+      el.style.display = !q || (searchIndex[id]?.includes(q) ?? false) ? "" : "none";
+    });
+    setNoResults(q.length > 0 && !anyVisible);
+  }, [query, searchIndex]);
 
   const toc = [
     { id: "overview", label: w("toc.overview") },
@@ -124,6 +161,23 @@ function WikiPage() {
           <p className="text-muted-foreground">{w("header.subtitle")}</p>
         </div>
 
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={w("search.placeholder")}
+            aria-label={w("search.placeholder")}
+            className="pl-9"
+          />
+        </div>
+
+        {noResults && (
+          <p className="text-sm text-muted-foreground">
+            {w("search.noResults")} “{query.trim()}”.
+          </p>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{w("header.tocTitle")}</CardTitle>
@@ -131,7 +185,7 @@ function WikiPage() {
           <CardContent>
             <ul className="grid gap-1 sm:grid-cols-2 text-sm">
               {toc.map((t) => (
-                <li key={t.id}>
+                <li key={t.id} data-wiki-toc={t.id}>
                   <a href={`#${t.id}`} className="text-primary hover:underline">
                     {t.label}
                   </a>
