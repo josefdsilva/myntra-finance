@@ -1,8 +1,15 @@
 import type * as React from "react";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  bucketsQuery,
+  incomesQuery,
+  fixedExpensesQuery,
+  debtsQuery,
+  variableEstimatesQuery,
+} from "@/lib/household-queries";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
@@ -54,6 +61,7 @@ export function DashboardTips({
   avgDaily7,
 }: Props) {
   const t = useT();
+  const qc = useQueryClient();
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const navigate = useNavigate();
@@ -95,33 +103,23 @@ export function DashboardTips({
   const { data } = useQuery({
     queryKey: ["dashboard-tips", householdId, period],
     queryFn: async () => {
+      // Base tables come from the shared cache (already fetched by the Dashboard
+      // on this screen); only the allocation/expense counts are tips-specific.
       const [
-        { data: buckets },
-        { data: incomes },
-        { data: fixed },
-        { data: debts },
-        { data: variables },
+        buckets,
+        incomes,
+        fixed,
+        debts,
+        variables,
         { data: confirmations },
         { data: allTimeAllocations },
         { count: expenseCount },
       ] = await Promise.all([
-        supabase
-          .from("buckets")
-          .select("id, name, target_type, target_value, target_deadline, initial_balance, kind")
-          .eq("household_id", householdId),
-        supabase
-          .from("incomes")
-          .select("id, label, monthly_amount")
-          .eq("household_id", householdId),
-        supabase
-          .from("fixed_expenses")
-          .select("id, monthly_amount")
-          .eq("household_id", householdId),
-        supabase.from("debts").select("id, monthly_amount").eq("household_id", householdId),
-        supabase
-          .from("variable_estimates")
-          .select("id, monthly_amount")
-          .eq("household_id", householdId),
+        qc.fetchQuery(bucketsQuery(householdId)),
+        qc.fetchQuery(incomesQuery(householdId)),
+        qc.fetchQuery(fixedExpensesQuery(householdId)),
+        qc.fetchQuery(debtsQuery(householdId)),
+        qc.fetchQuery(variableEstimatesQuery(householdId)),
         supabase
           .from("bucket_allocations")
           .select("bucket_id, amount")
@@ -144,10 +142,10 @@ export function DashboardTips({
         allTimeTotals[r.bucket_id] = (allTimeTotals[r.bucket_id] ?? 0) + Number(r.amount);
       }
       return {
-        buckets: buckets ?? [],
-        incomes: incomes ?? [],
-        fixed: [...(fixed ?? []), ...(debts ?? [])],
-        variables: variables ?? [],
+        buckets,
+        incomes,
+        fixed: [...fixed, ...debts],
+        variables,
         confirmations: confirmations ?? [],
         allTimeTotals,
         expenseCount: expenseCount ?? 0,
