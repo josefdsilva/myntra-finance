@@ -62,6 +62,13 @@ function AuthPage() {
     if (result.error) toast.error(t("auth.googleSignInFailedToast"));
   }
 
+  async function apple() {
+    const result = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) toast.error("Apple sign-in failed");
+  }
+
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] bg-background">
       {/* Left: promo */}
