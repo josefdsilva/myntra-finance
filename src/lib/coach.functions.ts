@@ -538,7 +538,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       : null;
 
   // ---- Forward plans (future costs & income changes the household entered) ----
-  const planList = rowsOrEmpty<Plan>(plansData);
+  const planList = rowsOrEmpty<Plan>(plansData as Plan[] | null);
   const planForecast = buildForecast({
     plans: planList,
     baseline,

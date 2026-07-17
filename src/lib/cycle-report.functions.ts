@@ -323,7 +323,7 @@ export async function buildClosedCycleStats(
   const debtPaidTotal = Math.round(debtPayments.reduce((s, p) => s + p.amount, 0) * 100) / 100;
 
   // ---- Plans: what was resolved this cycle, and a look at the next one ----
-  const planList = rowsOrEmpty<Plan>(plansData);
+  const planList = rowsOrEmpty<Plan>(plansData as Plan[] | null);
   const resolvedPlans = planList
     .filter((p) => {
       if (!p.done) return false;
