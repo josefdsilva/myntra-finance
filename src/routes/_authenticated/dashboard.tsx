@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
-import { unfundedPlannedSpend, monthKey, type Plan } from "@/lib/plan";
+import { leftoverObligation, monthKey, type Plan } from "@/lib/plan";
 import {
   bucketsQuery,
   incomesQuery,
@@ -124,7 +124,7 @@ function Dashboard() {
           .eq("period", period),
         supabase
           .from("account_movements")
-          .select("amount, to_type, from_type")
+          .select("amount, to_type, from_type, reason")
           .eq("household_id", householdId!)
           .gte("created_at", monthStart)
           .lt("created_at", nextMonth)
@@ -132,6 +132,8 @@ function Dashboard() {
       ]);
       const confirmed = (confs ?? []).reduce((s, c) => s + Number(c.amount), 0);
       const movementsNet = (moves ?? []).reduce((s, m) => {
+        // A plan paid out of a project isn't a change in what's set aside.
+        if (m.reason === "plan_payment") return s;
         let d = 0;
         if (m.to_type === "bucket") d += Number(m.amount);
         if (m.from_type === "bucket") d -= Number(m.amount);
@@ -149,32 +151,39 @@ function Dashboard() {
     queryFn: async () => {
       const { data: rows } = await supabase
         .from("plans")
-        .select("id, label, amount, direction, month, recurrence, category, bucket_id, done")
+        .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
         .eq("household_id", householdId!);
-      return unfundedPlannedSpend((rows ?? []) as unknown as Plan[], monthKey(new Date()));
+      return leftoverObligation((rows ?? []) as unknown as Plan[], monthKey(new Date()));
     },
   });
 
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
+  const income = dashboard?.income ?? 0;
+  const surplus = Math.max(0, income - baseline);
+  const realAllocated = realAlloc ?? 0;
+
+  // Plans claim the unallocated leftover first; anything beyond it spills into
+  // the everyday budget (lowering safe-to-spend), never the other way round.
+  const leftover0 = Math.max(0, surplus - realAllocated);
+  const obligation = plannedThisCycle ?? 0;
+  const planOverflow = Math.max(0, obligation - leftover0);
+  const realSurplus = leftover0 - Math.min(obligation, leftover0);
+
   const variablePool = Math.max(0, baseline - (dashboard?.fixedTotal ?? 0));
   const spent = dashboard?.spent ?? 0;
   const received = dashboard?.received ?? 0;
   const netSpent = Math.max(0, spent - received);
-  const remaining = Math.max(0, variablePool - netSpent);
-  const overspent = netSpent > variablePool;
+  const dailyClaim = netSpent + planOverflow; // everyday spend plus any plan overflow
+  const remaining = Math.max(0, variablePool - dailyClaim);
+  const overspent = dailyClaim > variablePool;
   const cycle = dashboard?.cycle;
   const daysLeft = cycle?.daysLeft ?? 1;
   const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
-  const pctSpent = variablePool > 0 ? Math.min(100, (netSpent / variablePool) * 100) : 0;
+  const pctSpent = variablePool > 0 ? Math.min(100, (dailyClaim / variablePool) * 100) : 0;
 
-  const income = dashboard?.income ?? 0;
-  const surplus = Math.max(0, income - baseline);
-  const realAllocated = realAlloc ?? 0;
-  const planned = plannedThisCycle ?? 0;
-  const realSurplus = surplus - realAllocated - planned;
-  const overspendAmount = Math.max(0, netSpent - variablePool);
+  const overspendAmount = Math.max(0, dailyClaim - variablePool);
   const buckets = dashboard?.buckets ?? [];
 
   // Trend: compare with yesterday's safe-to-spend (spent through end of yesterday, days-left as of yesterday)
@@ -470,8 +479,8 @@ function Dashboard() {
           label={t("dashboard.stat.realSurplus")}
           value={money(realSurplus)}
           hint={
-            planned > 0
-              ? `${t("dashboard.stat.realSurplusHint")} · ${t("plan.dashThisCycle")} ${money(planned)}`
+            obligation > 0
+              ? `${t("dashboard.stat.realSurplusHint")} · ${t("plan.dashThisCycle")} ${money(obligation)}`
               : t("dashboard.stat.realSurplusHint")
           }
           tone={realSurplus < 0 ? "bad" : undefined}

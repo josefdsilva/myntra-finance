@@ -44,6 +44,7 @@ type BucketMoveRow = {
   from_type: string | null;
   from_id: string | null;
   created_at: string | null;
+  reason: string | null;
 };
 
 type CoachContext = {
@@ -238,7 +239,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     // deposits, withdrawals and transfers — not just confirmed allocations.
     supabase
       .from("account_movements")
-      .select("amount, to_type, to_id, from_type, from_id, created_at")
+      .select("amount, to_type, to_id, from_type, from_id, created_at, reason")
       .eq("household_id", householdId)
       .or("to_type.eq.bucket,from_type.eq.bucket"),
   ]);
@@ -452,6 +453,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const curMonthISO = curMonthStart.toISOString();
   for (const m of rowsOrEmpty<BucketMoveRow>(bucketMoves)) {
     if (!m.created_at || m.created_at < winStartISO || m.created_at >= curMonthISO) continue;
+    if (m.reason === "plan_payment") continue; // spending a plan from a project isn't dis-saving
     const amt = Number(m.amount) || 0;
     if (m.to_type === "bucket") realAllocWindow += amt;
     if (m.from_type === "bucket") realAllocWindow -= amt;

@@ -3,6 +3,7 @@ import { test, expect } from "bun:test";
 import {
   planAppliesToMonth,
   unfundedPlannedSpend,
+  leftoverObligation,
   buildForecast,
   type Plan,
 } from "./plan";
@@ -17,6 +18,7 @@ const p = (o: Partial<Plan>): Plan => ({
   category: o.category ?? null,
   bucket_id: o.bucket_id ?? null,
   done: o.done ?? false,
+  actual_amount: o.actual_amount ?? null,
 });
 
 test("one_off applies only to its month", () => {
@@ -49,6 +51,18 @@ test("unfundedPlannedSpend excludes funded plans and income", () => {
   ];
   expect(unfundedPlannedSpend(plans, "2026-08")).toBe(400);
   expect(unfundedPlannedSpend(plans, "2026-09")).toBe(0);
+});
+
+test("leftoverObligation counts open estimate + resolved actual, excludes project-paid", () => {
+  const plans = [
+    p({ id: "open", amount: 705, month: "2026-09-01" }), // open → estimate
+    p({ id: "done", amount: 705, actual_amount: 620, done: true, month: "2026-09-01" }), // resolved → actual
+    p({ id: "proj", amount: 400, month: "2026-09-01", bucket_id: "bk1" }), // paid from a project → excluded
+    p({ id: "inc", amount: 800, month: "2026-09-01", direction: "income" }), // income → excluded
+  ];
+  expect(leftoverObligation(plans, "2026-09")).toBe(1325); // 705 + 620
+  // A resolved plan only counts in its own month.
+  expect(leftoverObligation(plans, "2026-10")).toBe(0);
 });
 
 test("buildForecast overlays income and unfunded spend per month", () => {

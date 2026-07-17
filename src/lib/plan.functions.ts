@@ -67,14 +67,34 @@ export const resolvePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
-      .object({ id: z.string().uuid(), actual_amount: z.number().min(0).max(10_000_000) })
+      .object({
+        id: z.string().uuid(),
+        household_id: z.string().uuid(),
+        actual_amount: z.number().min(0).max(10_000_000),
+        // When set, the payment is taken out of this project (a withdrawal);
+        // otherwise it is drawn from the month's unallocated leftover.
+        source_bucket_id: z.string().uuid().nullable().optional(),
+      })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase
-      .from("plans")
-      .update({ done: true, actual_amount: data.actual_amount })
-      .eq("id", data.id);
+    const sb = context.supabase;
+    // Pay from a project: withdraw the actual amount from it (validates balance).
+    if (data.source_bucket_id && data.actual_amount > 0) {
+      const { error: wErr } = await sb.rpc("fund_withdrawal", {
+        p_household: data.household_id,
+        p_bucket: data.source_bucket_id,
+        p_amount: data.actual_amount,
+        p_reason: "plan_payment",
+      });
+      if (wErr) throw wErr;
+    }
+    const patch: { done: boolean; actual_amount: number; bucket_id?: string } = {
+      done: true,
+      actual_amount: data.actual_amount,
+    };
+    if (data.source_bucket_id) patch.bucket_id = data.source_bucket_id;
+    const { error } = await sb.from("plans").update(patch).eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });

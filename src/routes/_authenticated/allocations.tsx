@@ -158,7 +158,7 @@ function AllocationsPage() {
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
       const { data } = await supabase
         .from("account_movements")
-        .select("amount, to_type, from_type")
+        .select("amount, to_type, from_type, reason")
         .eq("household_id", householdId!)
         .gte("created_at", monthStart)
         .lt("created_at", nextMonth)
@@ -205,6 +205,7 @@ function AllocationsPage() {
   // Real money moved into projects this cycle = confirmed allocations + net account
   // movements (deposits + transfers-in − withdrawals − bucket-sourced debt payments).
   const movementsNetIntoBuckets = (bucketMovementsThisMonth ?? []).reduce((s, m) => {
+    if (m.reason === "plan_payment") return s; // paying a plan from a project isn't a net allocation
     let d = 0;
     if (m.to_type === "bucket") d += Number(m.amount);
     if (m.from_type === "bucket") d -= Number(m.amount);

@@ -14,6 +14,7 @@ import {
   reopenPlan,
 } from "@/lib/plan.functions";
 import { buildForecast, plansForMonth, monthKey, type Plan } from "@/lib/plan";
+import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { pageShellClass } from "@/components/page-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -82,18 +83,34 @@ function PlanPage() {
     enabled: !!householdId,
     queryKey: ["plans", householdId],
     queryFn: async () => {
-      const [{ data: plans }, { data: incomes }] = await Promise.all([
-        supabase.from("plans").select("*").eq("household_id", householdId!).order("month"),
-        supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
-      ]);
+      const [{ data: plans }, { data: incomes }, { data: buckets }, { data: allocs }, { data: moves }] =
+        await Promise.all([
+          supabase.from("plans").select("*").eq("household_id", householdId!).order("month"),
+          supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
+          supabase
+            .from("buckets")
+            .select("id, name, initial_balance")
+            .eq("household_id", householdId!)
+            .order("sort_order"),
+          supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId!),
+          supabase.from("account_movements").select("*").eq("household_id", householdId!),
+        ]);
+      const bucketRows = (buckets ?? []) as Array<{ id: string; name: string; initial_balance: number }>;
+      const balances = bucketBalancesFor(
+        bucketRows,
+        (allocs ?? []) as Array<{ bucket_id: string; amount: number }>,
+        (moves ?? []) as AccountMovement[],
+      );
       return {
         plans: (plans ?? []) as PlanRow[],
         monthlyIncome: (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0),
+        projects: bucketRows.map((b) => ({ id: b.id, name: b.name, balance: balances[b.id] ?? 0 })),
       };
     },
   });
 
   const plans = useMemo(() => data?.plans ?? [], [data?.plans]);
+  const projects = useMemo(() => data?.projects ?? [], [data?.projects]);
   const monthlyIncome = data?.monthlyIncome ?? 0;
   const forecast = useMemo(
     () => buildForecast({ plans, baseline, monthlyIncome, months: 6 }),
@@ -196,26 +213,37 @@ function PlanPage() {
     }
   }
 
-  // Resolve a plan against reality.
+  // Resolve a plan against reality. `payFrom` = "" means the unallocated
+  // leftover; otherwise it is a project the payment is withdrawn from.
   const [resolveRow, setResolveRow] = useState<PlanRow | null>(null);
   const [actual, setActual] = useState("");
+  const [payFrom, setPayFrom] = useState("");
 
   function openResolve(p: PlanRow) {
     setResolveRow(p);
     setActual(String(Number(p.amount)));
+    setPayFrom(p.bucket_id ?? "");
   }
 
   async function saveResolve(amountOverride?: number) {
-    if (!resolveRow) return;
+    if (!resolveRow || !householdId) return;
     const value = amountOverride ?? (parseFloat(actual) || 0);
     setBusy(true);
     try {
-      await resolveFn({ data: { id: resolveRow.id, actual_amount: value } });
+      await resolveFn({
+        data: {
+          id: resolveRow.id,
+          household_id: householdId,
+          actual_amount: value,
+          source_bucket_id: value > 0 ? payFrom || null : null,
+        },
+      });
       setResolveRow(null);
       refetch();
+      invalidateHouseholdData(qc);
       toast.success(t("plan.resolvedToast"));
-    } catch {
-      toast.error(t("plan.errGeneric"));
+    } catch (e) {
+      toast.error(e instanceof Error && e.message ? e.message : t("plan.errGeneric"));
     } finally {
       setBusy(false);
     }
@@ -584,6 +612,25 @@ function PlanPage() {
           <div>
             <Label className="text-xs">{t("plan.actualAmount")}</Label>
             <Input inputMode="decimal" value={actual} onChange={(e) => setActual(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">{t("plan.payFrom")}</Label>
+            <Select
+              value={payFrom || "leftover"}
+              onValueChange={(v) => setPayFrom(v === "leftover" ? "" : v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="leftover">{t("plan.payFromLeftover")}</SelectItem>
+                {projects.map((pr) => (
+                  <SelectItem key={pr.id} value={pr.id}>
+                    {pr.name} ({money(pr.balance)})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter className="gap-2 sm:justify-between">
             <Button variant="ghost" onClick={() => saveResolve(0)} disabled={busy}>

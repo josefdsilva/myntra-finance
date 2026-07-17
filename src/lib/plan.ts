@@ -64,6 +64,28 @@ export function unfundedPlannedSpend(plans: Plan[], ym: string): number {
   );
 }
 
+/**
+ * The claim that spend plans make on your unallocated leftover for a month.
+ * Includes plans paid from leftover only (no linked project), counting the
+ * estimate while open and the actual once resolved (in the plan's own month).
+ * The dashboard applies this to the leftover first; any excess spills into the
+ * everyday budget. Plans paid from a project are excluded — the project balance
+ * carries their cost instead.
+ */
+export function leftoverObligation(plans: Plan[], ym: string): number {
+  let sum = 0;
+  for (const p of plans) {
+    if (p.direction !== "spend" || p.bucket_id) continue;
+    const applies = p.done
+      ? String(p.month).slice(0, 7) === ym // resolved: only its own month
+      : planAppliesToMonth(p, ym); // open: by recurrence
+    if (!applies) continue;
+    const val = p.done ? Number(p.actual_amount ?? 0) : Math.abs(Number(p.amount) || 0);
+    if (val > 0) sum += val;
+  }
+  return round2(sum);
+}
+
 export type ForecastMonth = {
   ym: string;
   /** Recurring income plus any income plans landing this month. */
