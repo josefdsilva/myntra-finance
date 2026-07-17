@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   LineChart,
   Line,
@@ -10,6 +10,12 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { buildForecastSeries, type ProjectInput } from "@/lib/plan-forecast-series";
@@ -111,6 +117,19 @@ export function PlanCharts({
     return Array.from(map.entries());
   }, [defs]);
 
+  // Default view: only the project lines are shown; everything else starts
+  // hidden. Runs once when the series first become available, then leaves the
+  // user's own toggles alone. When there are no projects, fall back to showing
+  // income and surplus so the chart isn't blank.
+  const inited = useRef(false);
+  useEffect(() => {
+    if (inited.current || !defs.length) return;
+    const projKeys = defs.filter((d) => d.key.startsWith("proj_")).map((d) => d.key);
+    const shown = projKeys.length ? projKeys : ["income", "surplus"];
+    setHidden(new Set(defs.filter((d) => !shown.includes(d.key)).map((d) => d.key)));
+    inited.current = true;
+  }, [defs]);
+
   function toggle(key: string) {
     setHidden((prev) => {
       const next = new Set(prev);
@@ -170,35 +189,63 @@ export function PlanCharts({
             <p className="text-sm text-muted-foreground py-2">{t("plan.timelineEmpty")}</p>
           ) : (
             <div className="overflow-x-auto">
-              <div className="min-w-[32rem] space-y-1">
-                <div className="grid items-center gap-1 text-[10px] text-muted-foreground" style={{ gridTemplateColumns: gridCols }}>
-                  <span />
-                  {timelineMonths.map((m) => (
-                    <span key={m.ym} className="text-center capitalize">
-                      {m.label}
-                    </span>
-                  ))}
-                </div>
-                {timelineRows.map(({ plan, cells }) => (
-                  <div key={plan.id} className="grid items-center gap-1" style={{ gridTemplateColumns: gridCols }}>
-                    <span className="truncate text-xs pr-1" title={plan.label}>
-                      {plan.label}
-                    </span>
-                    {cells.map((c, i) => (
-                      <div key={i} className="h-5 rounded-sm bg-muted/40">
-                        {c.applies ? (
-                          <div
-                            className={`h-full rounded-sm ${plan.direction === "income" ? "bg-emerald-500" : "bg-amber-500"}`}
-                            title={`${plan.label} · ${money(Math.abs(Number(plan.amount) || 0))}`}
-                          />
-                        ) : c.saving ? (
-                          <div className="h-full rounded-sm bg-emerald-500/25" title={t("plan.funded")} />
-                        ) : null}
-                      </div>
+              <TooltipProvider delayDuration={80}>
+                <div className="min-w-[32rem] space-y-1">
+                  <div className="grid items-center gap-1 text-[10px] text-muted-foreground" style={{ gridTemplateColumns: gridCols }}>
+                    <span />
+                    {timelineMonths.map((m) => (
+                      <span key={m.ym} className="text-center capitalize">
+                        {m.label}
+                      </span>
                     ))}
                   </div>
-                ))}
-              </div>
+                  {timelineRows.map(({ plan, cells }) => {
+                    const dueYm = String(plan.month).slice(0, 7);
+                    const recKey =
+                      plan.recurrence === "annual"
+                        ? "plan.annual"
+                        : plan.recurrence === "ongoing"
+                          ? "plan.ongoing"
+                          : "plan.once";
+                    return (
+                      <UiTooltip key={plan.id}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className="grid items-center gap-1 cursor-default rounded-sm hover:bg-muted/40"
+                            style={{ gridTemplateColumns: gridCols }}
+                          >
+                            <span className="truncate text-xs pr-1">{plan.label}</span>
+                            {cells.map((c, i) => (
+                              <div key={i} className="h-5 rounded-sm bg-muted/40">
+                                {c.applies ? (
+                                  <div
+                                    className={`h-full rounded-sm ${plan.direction === "income" ? "bg-emerald-500" : "bg-amber-500"}`}
+                                  />
+                                ) : c.saving ? (
+                                  <div className="h-full rounded-sm bg-emerald-500/25" />
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          <p className="font-medium">{plan.label}</p>
+                          <p>
+                            {plan.direction === "income" ? "+" : ""}
+                            {money(Math.abs(Number(plan.amount) || 0))} ·{" "}
+                            <span className="capitalize">
+                              {shortLabel(new Date(`${dueYm}-01T00:00:00`))}
+                            </span>
+                          </p>
+                          <p className="text-muted-foreground">
+                            {t(recKey)} · {plan.bucket_id ? t("plan.funded") : t("plan.payFromLeftover")}
+                          </p>
+                        </TooltipContent>
+                      </UiTooltip>
+                    );
+                  })}
+                </div>
+              </TooltipProvider>
             </div>
           )}
         </CardContent>
