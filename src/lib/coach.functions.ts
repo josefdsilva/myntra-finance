@@ -1026,7 +1026,9 @@ You are continuing an ongoing chat with this household. Only the last ${COACH_RE
     });
 
     // Auto-title from the first user message if the conversation has no title yet.
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const updates: { updated_at: string; title?: string } = {
+      updated_at: new Date().toISOString(),
+    };
     if (prior.length === 0) {
       updates.title = data.message.slice(0, 60);
     }
