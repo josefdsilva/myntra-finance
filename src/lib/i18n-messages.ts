@@ -3344,6 +3344,7 @@ const de: Record<MessageKey, string> = {
   "credits.remaining": "{value} verbleibend",
   "credits.overBy": "Überzogen um {value}",
   "credits.capNote": "Die Monatsgrenze liegt fest bei {cap} Credits pro Haushalt.",
+  "credits.topupHint": "Mehr nötig? Credit-Aufladungen sind bald verfügbar.",
   "credits.byFeature": "Diesen Monat nach Funktion",
   "credits.noActivity": "Diesen Monat noch keine KI- oder Cloud-Aktivität.",
   "credits.recent": "Letzte Aktivität ({count})",
