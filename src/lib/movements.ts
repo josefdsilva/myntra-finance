@@ -114,6 +114,29 @@ export async function serviceDebt(p: {
   return data as string;
 }
 
+/**
+ * Record the regular monthly payment for a debt as a ledger entry, dated the
+ * first day of the cycle. Idempotent per (household, debt, period): calling it
+ * again for the same period is a no-op and returns null. It does NOT change the
+ * debt principal — the amortization projection stays authoritative — so this
+ * only adds a visible payment history and never double-counts the balance.
+ */
+export async function logScheduledDebtPayment(p: {
+  householdId: string;
+  debtId: string;
+  period: Date | string;
+  amount: number;
+}): Promise<string | null> {
+  const { data, error } = await supabase.rpc("log_scheduled_debt_payment", {
+    p_household: p.householdId,
+    p_debt: p.debtId,
+    p_period: toDateStr(p.period)!,
+    p_amount: p.amount,
+  });
+  if (error) throw error;
+  return (data as string | null) ?? null;
+}
+
 // ---- Pure balance aggregation (bucket balance folds allocations + movements) ----
 
 type AllocationLike = { bucket_id: string; amount: number | string };

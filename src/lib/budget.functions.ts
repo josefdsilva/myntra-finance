@@ -346,7 +346,13 @@ export const upsertDebt = createServerFn({ method: "POST" })
           .default("other"),
         monthly_amount: z.number().min(0),
         taeg_pct: z.number().min(0).max(100).nullable().optional(),
+        // Balance owed today (optional override). When a start date + original
+        // amount are given without this, the balance is derived from the schedule.
         principal_remaining: z.number().min(0).nullable().optional(),
+        // Original amount borrowed — the progress-bar denominator.
+        starting_principal: z.number().min(0).nullable().optional(),
+        // The date the loan started, so past progress can be reconstructed.
+        opened_at: z.string().date().nullable().optional(),
         maturity_date: z.string().date().nullable().optional(),
         note: z.string().max(500).nullable().optional(),
         sort_order: z.number().int().optional(),
@@ -358,20 +364,43 @@ export const upsertDebt = createServerFn({ method: "POST" })
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
 
-    // Deduce the annual effective rate from principal + monthly + (today → maturity).
-    // Re-anchor the schedule to today so the rate reflects clearing the remaining
-    // principal by the maturity date. Null when inputs can't amortize.
-    const principal = payload.principal_remaining ?? null;
+    // --- Decide the schedule anchor -----------------------------------------
+    // "Historical" path: the user gave the original amount and the start date but
+    // no explicit balance-today. Anchor to the start date with the original
+    // principal, so the projection reconstructs today's balance and progress.
+    // Otherwise anchor to today: a known balance-today (or the simple path where
+    // that balance is all we have) starts the schedule from now.
+    const origPrincipal = payload.starting_principal ?? null;
+    const balanceToday = payload.principal_remaining ?? null;
+    const openedAt = payload.opened_at ?? null;
+    const historical = origPrincipal != null && openedAt != null && balanceToday == null;
+
+    const anchorDateStr = historical ? openedAt! : todayStr;
+    const anchorPrincipal = historical ? origPrincipal : (balanceToday ?? origPrincipal);
+    const startingPrincipal = origPrincipal ?? balanceToday;
+    const openedAtStore = openedAt ?? todayStr;
+
+    // Deduce the annual effective rate from the anchor principal + monthly +
+    // (anchor → maturity). Null when the inputs can't amortize.
     let deduced_rate_pct: number | null = null;
-    if (payload.maturity_date && principal && payload.monthly_amount > 0) {
-      const term = differenceInCalendarMonths(new Date(payload.maturity_date), today);
-      if (term > 0) deduced_rate_pct = impliedAnnualRate(principal, payload.monthly_amount, term);
+    if (payload.maturity_date && anchorPrincipal && payload.monthly_amount > 0) {
+      const term = differenceInCalendarMonths(new Date(payload.maturity_date), new Date(anchorDateStr));
+      if (term > 0) deduced_rate_pct = impliedAnnualRate(anchorPrincipal, payload.monthly_amount, term);
     }
 
     if (id) {
+      // Edits re-anchor to today against the (possibly updated) balance.
+      const editDeduced =
+        payload.maturity_date && balanceToday && payload.monthly_amount > 0
+          ? impliedAnnualRate(
+              balanceToday,
+              payload.monthly_amount,
+              differenceInCalendarMonths(new Date(payload.maturity_date), today),
+            )
+          : null;
       const { data: row, error } = await context.supabase
         .from("debts")
-        .update({ ...payload, deduced_rate_pct, last_recompute_at: todayStr })
+        .update({ ...payload, deduced_rate_pct: editDeduced, last_recompute_at: todayStr })
         .eq("id", id)
         .select()
         .single();
@@ -381,11 +410,13 @@ export const upsertDebt = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase
       .from("debts")
       .insert({
+        // Explicit anchor fields below intentionally override the raw payload.
         ...payload,
         deduced_rate_pct,
-        starting_principal: principal,
-        opened_at: todayStr,
-        last_recompute_at: todayStr,
+        principal_remaining: anchorPrincipal,
+        starting_principal: startingPrincipal,
+        opened_at: openedAtStore,
+        last_recompute_at: anchorDateStr,
       })
       .select()
       .single();

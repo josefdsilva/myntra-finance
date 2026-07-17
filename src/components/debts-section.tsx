@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { startOfMonth } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { ArrowLeftRight, Wallet } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
-import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
+import { bucketBalancesFor, logScheduledDebtPayment, type AccountMovement } from "@/lib/movements";
 import { OverpaymentDialog } from "@/components/overpayment-dialog";
 import { MoveFundsDialog } from "@/components/move-funds-dialog";
 
@@ -17,6 +18,7 @@ type BucketRow = { id: string; name: string; initial_balance: number };
 
 export function DebtsSection({ householdId }: { householdId: string }) {
   const t = useT();
+  const qc = useQueryClient();
   const [moveOpen, setMoveOpen] = useState(false);
   const [payDebt, setPayDebt] = useState<Debt | null>(null);
 
@@ -49,6 +51,40 @@ export function DebtsSection({ householdId }: { householdId: string }) {
   const balances = bucketBalancesFor(buckets, data?.allocations ?? [], data?.movements ?? []);
   const bucketOptions = buckets.map((b) => ({ id: b.id, name: b.name }));
 
+  // Log the regular monthly payment for each active loan once per cycle, dated
+  // the first day of the cycle. The RPC is idempotent per (debt, period), so this
+  // is safe to run on every load and across shared-household members / devices.
+  useEffect(() => {
+    if (!data?.debts?.length) return;
+    const period = startOfMonth(new Date());
+    const active = data.debts.filter(
+      (d) => Number(d.monthly_amount) > 0 && !debtLiveSchedule(d).paidOff,
+    );
+    if (!active.length) return;
+    let cancelled = false;
+    Promise.allSettled(
+      active.map((d) =>
+        logScheduledDebtPayment({
+          householdId,
+          debtId: d.id,
+          period,
+          amount: Number(d.monthly_amount),
+        }),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      // Only refresh if a new entry was actually created (avoids a refetch loop).
+      if (results.some((r) => r.status === "fulfilled" && r.value)) {
+        qc.invalidateQueries({ queryKey: ["debts-section", householdId] });
+        qc.invalidateQueries({ queryKey: ["alloc-bucket-movements", householdId] });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.debts, householdId]);
+
   if (!data) return null;
   if (debts.length === 0 && buckets.length === 0) return null;
 
@@ -77,6 +113,10 @@ export function DebtsSection({ householdId }: { householdId: string }) {
             {debts.map((debt) => {
               const s = debtLiveSchedule(debt);
               const start = Number(debt.starting_principal ?? debt.principal_remaining ?? 0);
+              const payments = (data?.movements ?? [])
+                .filter((m) => m.to_type === "debt" && m.to_id === debt.id)
+                .sort((a, b) => String(b.period).localeCompare(String(a.period)))
+                .slice(0, 3);
               return (
                 <li key={debt.id} className="rounded-lg border p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2">
@@ -110,6 +150,20 @@ export function DebtsSection({ householdId }: { householdId: string }) {
                       <span>{t("debt.interestLeft", { amount: money(s.totalInterestRemaining) })}</span>
                     )}
                   </div>
+
+                  {payments.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 border-t pt-2 text-xs text-muted-foreground">
+                      {payments.map((m) => (
+                        <li key={m.id} className="flex items-center justify-between gap-2">
+                          <span>
+                            {fmtDate(m.period)} ·{" "}
+                            {m.reason === "scheduled" ? t("debt.logScheduled") : t("debt.logExtra")}
+                          </span>
+                          <span className="tabular-nums">{money(Number(m.amount))}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               );
             })}

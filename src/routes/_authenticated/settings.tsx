@@ -36,7 +36,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { money, setCurrentCurrency } from "@/lib/format";
-import { impliedAnnualRate } from "@/lib/amortization";
+import { impliedAnnualRate, scheduleSummary, monthlyRateFromTaeg } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
 import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
@@ -1205,6 +1205,8 @@ function DebtsSection({ householdId }: { householdId: string }) {
   const [monthly, setMonthly] = useState("");
   const [taeg, setTaeg] = useState("");
   const [principal, setPrincipal] = useState("");
+  const [origPrincipal, setOrigPrincipal] = useState("");
+  const [openedAt, setOpenedAt] = useState("");
   const [maturity, setMaturity] = useState("");
 
   function bumpCaches() {
@@ -1225,6 +1227,8 @@ function DebtsSection({ householdId }: { householdId: string }) {
         monthly_amount: parseFloat(monthly) || 0,
         taeg_pct: taeg ? parseFloat(taeg) : null,
         principal_remaining: principal ? parseFloat(principal) : null,
+        starting_principal: origPrincipal ? parseFloat(origPrincipal) : null,
+        opened_at: openedAt || null,
         maturity_date: maturity || null,
       },
     });
@@ -1232,6 +1236,8 @@ function DebtsSection({ householdId }: { householdId: string }) {
     setMonthly("");
     setTaeg("");
     setPrincipal("");
+    setOrigPrincipal("");
+    setOpenedAt("");
     setMaturity("");
     refetch();
     bumpCaches();
@@ -1246,17 +1252,47 @@ function DebtsSection({ householdId }: { householdId: string }) {
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
   const principalTotal = (rows ?? []).reduce((s, r) => s + Number(r.principal_remaining ?? 0), 0);
 
-  // Live "deduced rate" preview: solve the annual effective rate from
+  // Live "deduced rate" preview: solve the annual effective rate from the anchor
   // principal + monthly + months to maturity. This is what the app uses for
   // payoff/interest — the entered all-in rate is only a reference estimate.
-  const pNum = parseFloat(principal);
+  // The anchor mirrors the server: with an original amount + start date and no
+  // balance-today, we anchor to the start date; otherwise to today.
+  const balNum = parseFloat(principal);
+  const origNum = parseFloat(origPrincipal);
   const mNum = parseFloat(monthly);
-  const termToMaturity = maturity
-    ? differenceInCalendarMonths(new Date(maturity), new Date())
+  const openedDate = openedAt ? new Date(openedAt) : null;
+  const maturityDate = maturity ? new Date(maturity) : null;
+  const historical = origNum > 0 && !!openedDate && !balNum;
+  const anchorForPreview = historical ? openedDate! : new Date();
+  const anchorPrincipalForPreview = historical ? origNum : balNum || origNum || 0;
+  const termToMaturity = maturityDate
+    ? differenceInCalendarMonths(maturityDate, anchorForPreview)
     : 0;
   const deducedRate =
-    pNum && mNum && termToMaturity > 0 ? impliedAnnualRate(pNum, mNum, termToMaturity) : null;
-  const deducedUnsolvable = !!(pNum && mNum && termToMaturity > 0 && deducedRate == null);
+    anchorPrincipalForPreview && mNum && termToMaturity > 0
+      ? impliedAnnualRate(anchorPrincipalForPreview, mNum, termToMaturity)
+      : null;
+  const deducedUnsolvable = !!(
+    anchorPrincipalForPreview &&
+    mNum &&
+    termToMaturity > 0 &&
+    deducedRate == null
+  );
+
+  // For the historical path, project today's balance so the user can sanity-check
+  // it against their bank statement before saving.
+  let estBalanceToday: number | null = null;
+  if (historical && deducedRate != null && mNum > 0 && openedDate) {
+    const summary = scheduleSummary({
+      principal: origNum,
+      startingPrincipal: origNum,
+      monthlyRate: monthlyRateFromTaeg(deducedRate),
+      installment: mNum,
+      anchorDate: openedDate,
+      today: new Date(),
+    });
+    estBalanceToday = summary.remaining;
+  }
 
   return (
     <Card>
@@ -1335,7 +1371,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <div>
-            <Label className="text-xs">Monthly (€)</Label>
+            <Label className="text-xs">Monthly</Label>
             <Input
               inputMode="decimal"
               placeholder="0.00"
@@ -1353,10 +1389,25 @@ function DebtsSection({ householdId }: { householdId: string }) {
             />
           </div>
           <div>
-            <Label className="text-xs">Principal due (€)</Label>
+            <Label className="text-xs">Original amount borrowed</Label>
             <Input
               inputMode="decimal"
-              placeholder="e.g. 120000"
+              placeholder="e.g. 150000"
+              value={origPrincipal}
+              onChange={(e) => setOrigPrincipal(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Loan start date</Label>
+            <Input type="date" value={openedAt} onChange={(e) => setOpenedAt(e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Balance today (optional)</Label>
+            <Input
+              inputMode="decimal"
+              placeholder="leave blank to estimate"
               value={principal}
               onChange={(e) => setPrincipal(e.target.value)}
             />
@@ -1366,6 +1417,17 @@ function DebtsSection({ householdId }: { householdId: string }) {
             <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Enter the original amount and start date and we estimate today&apos;s balance and your
+          progress automatically. If you know today&apos;s exact balance, fill it in and we start
+          from there.
+        </p>
+        {estBalanceToday != null && (
+          <p className="text-xs text-muted-foreground">
+            Estimated balance today:{" "}
+            <span className="font-medium text-foreground">{money(estBalanceToday)}</span>
+          </p>
+        )}
         {deducedRate != null && (
           <p className="text-xs text-muted-foreground">
             Deduced rate (used for payoff calculations):{" "}
@@ -1374,7 +1436,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
         )}
         {deducedUnsolvable && (
           <p className="text-xs text-destructive">
-            These values don&apos;t add up — the monthly payment is too low to clear the principal by
+            These values don&apos;t add up. The monthly payment is too low to clear the principal by
             that date. Payoff will use your entered rate instead.
           </p>
         )}

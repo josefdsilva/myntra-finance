@@ -1107,6 +1107,15 @@ export type Database = {
         }
         Returns: string
       }
+      log_scheduled_debt_payment: {
+        Args: {
+          p_amount: number
+          p_debt: string
+          p_household: string
+          p_period: string
+        }
+        Returns: string
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
