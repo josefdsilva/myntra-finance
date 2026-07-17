@@ -32,9 +32,11 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [awaitingVerification, setAwaitingVerification] = useState(false);
   const t = useT();
 
   useEffect(() => {
@@ -47,12 +49,36 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
-  async function signIn(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (mode === "signin") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) toast.error(error.message);
+      return;
+    }
+    // sign up
+    if (password.length < 8) {
+      setLoading(false);
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth` },
+    });
     setLoading(false);
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    // If email confirmation is required, no session is returned.
+    if (!data.session) {
+      setAwaitingVerification(true);
+      toast.success("Check your inbox to confirm your email.");
+    }
   }
 
   async function google() {
@@ -68,6 +94,7 @@ function AuthPage() {
     });
     if (result.error) toast.error("Apple sign-in failed");
   }
+
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] bg-background">
