@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -55,7 +55,22 @@ export function PlanCharts({
 }) {
   const t = useT();
   const [horizon, setHorizon] = useState<3 | 6 | 12>(6);
-  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  // Default view: only project/allocation lines are shown; everything else is
+  // hidden until the user toggles it on. Falls back to income + surplus when the
+  // household has no projects, so the chart is never blank.
+  const [hidden, setHidden] = useState<Set<string>>(() => {
+    const projKeys = projects.map((p) => `proj_${p.id}`);
+    const shown = projKeys.length ? projKeys : ["income", "surplus"];
+    const allKeys = [
+      "income",
+      "surplus",
+      "interestSaved",
+      "uninvestedSurplus",
+      ...projects.map((p) => `proj_${p.id}`),
+      ...debts.map((d) => `debt_${d.id}`),
+    ];
+    return new Set(allKeys.filter((k) => !shown.includes(k)));
+  });
 
   const series = useMemo(
     () => buildForecastSeries({ plans, projects, debts, baseline, monthlyIncome, months: horizon }),
@@ -115,19 +130,6 @@ export function PlanCharts({
       map.get(d.group)!.push(d);
     }
     return Array.from(map.entries());
-  }, [defs]);
-
-  // Default view: only the project lines are shown; everything else starts
-  // hidden. Runs once when the series first become available, then leaves the
-  // user's own toggles alone. When there are no projects, fall back to showing
-  // income and surplus so the chart isn't blank.
-  const inited = useRef(false);
-  useEffect(() => {
-    if (inited.current || !defs.length) return;
-    const projKeys = defs.filter((d) => d.key.startsWith("proj_")).map((d) => d.key);
-    const shown = projKeys.length ? projKeys : ["income", "surplus"];
-    setHidden(new Set(defs.filter((d) => !shown.includes(d.key)).map((d) => d.key)));
-    inited.current = true;
   }, [defs]);
 
   function toggle(key: string) {
