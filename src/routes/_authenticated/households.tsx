@@ -78,7 +78,7 @@ function HouseholdsPage() {
 
       {(() => {
         const ownedCount = households.filter((h) => h.role === "owner").length;
-        const atLimit = ownedCount >= 2;
+        const atLimit = ownedCount >= 1;
         return (
           <Card>
             <CardHeader>
@@ -88,9 +88,10 @@ function HouseholdsPage() {
               <CardDescription>
                 {t("households.createDescription")}
                 <span className="block mt-1 text-xs">
-                  Free tier: up to 2 owned households ({ownedCount}/2 used). Extra household slots
-                  will be available to purchase soon.
+                  Free tier: 1 owned household ({ownedCount}/1 used). Buying additional household
+                  slots will be available soon.
                 </span>
+
               </CardDescription>
             </CardHeader>
             <CardContent>
