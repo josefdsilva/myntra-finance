@@ -17,7 +17,7 @@ export const getHouseholdCreditUsage = createServerFn({ method: "POST" })
       .select("credit_cap")
       .eq("id", data.householdId)
       .maybeSingle();
-    const cap = Number(hh?.credit_cap ?? 10);
+    const cap = Number(hh?.credit_cap ?? 7.5);
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
