@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
+import { unfundedPlannedSpend, monthKey, type Plan } from "@/lib/plan";
 import {
   bucketsQuery,
   incomesQuery,
@@ -140,6 +141,20 @@ function Dashboard() {
     },
   });
 
+  // Unfunded planned spend landing in the current cycle — subtracted from the
+  // real surplus so the dashboard reflects money already spoken for by plans.
+  const { data: plannedThisCycle } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["dashboard-planned", householdId],
+    queryFn: async () => {
+      const { data: rows } = await supabase
+        .from("plans")
+        .select("id, label, amount, direction, month, recurrence, category, bucket_id, done")
+        .eq("household_id", householdId!);
+      return unfundedPlannedSpend((rows ?? []) as unknown as Plan[], monthKey(new Date()));
+    },
+  });
+
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
@@ -157,7 +172,8 @@ function Dashboard() {
   const income = dashboard?.income ?? 0;
   const surplus = Math.max(0, income - baseline);
   const realAllocated = realAlloc ?? 0;
-  const realSurplus = surplus - realAllocated;
+  const planned = plannedThisCycle ?? 0;
+  const realSurplus = surplus - realAllocated - planned;
   const overspendAmount = Math.max(0, netSpent - variablePool);
   const buckets = dashboard?.buckets ?? [];
 
@@ -453,7 +469,11 @@ function Dashboard() {
         <StatCard
           label={t("dashboard.stat.realSurplus")}
           value={money(realSurplus)}
-          hint={t("dashboard.stat.realSurplusHint")}
+          hint={
+            planned > 0
+              ? `${t("dashboard.stat.realSurplusHint")} · ${t("plan.dashThisCycle")} ${money(planned)}`
+              : t("dashboard.stat.realSurplusHint")
+          }
           tone={realSurplus < 0 ? "bad" : undefined}
         />
         <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />

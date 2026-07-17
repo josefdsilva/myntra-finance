@@ -928,6 +928,72 @@ export type Database = {
         }
         Relationships: []
       }
+      plans: {
+        Row: {
+          amount: number
+          bucket_id: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          direction: string
+          done: boolean
+          household_id: string
+          id: string
+          label: string
+          month: string
+          note: string | null
+          recurrence: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bucket_id?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          done?: boolean
+          household_id: string
+          id?: string
+          label: string
+          month: string
+          note?: string | null
+          recurrence?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bucket_id?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          done?: boolean
+          household_id?: string
+          id?: string
+          label?: string
+          month?: string
+          note?: string | null
+          recurrence?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plans_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plans_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
