@@ -196,7 +196,15 @@ export type Database = {
           code_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "beta_members_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "beta_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       beta_redeem_attempts: {
         Row: {
@@ -316,6 +324,83 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "buckets_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_conversations: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          household_id: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_conversations_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          household_id: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          household_id: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "coach_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_messages_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
@@ -982,17 +1067,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "plans_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "plans_bucket_id_fkey"
             columns: ["bucket_id"]
             isOneToOne: false
             referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plans_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
         ]
@@ -1129,10 +1214,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      redeem_beta_code: {
-        Args: { p_code: string }
-        Returns: string
-      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1206,6 +1287,7 @@ export type Database = {
         Args: { _household_id: string }
         Returns: undefined
       }
+      redeem_beta_code: { Args: { p_code: string }; Returns: string }
       service_debt: {
         Args: {
           p_amount: number

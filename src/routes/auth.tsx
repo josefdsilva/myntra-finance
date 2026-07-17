@@ -32,9 +32,11 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [awaitingVerification, setAwaitingVerification] = useState(false);
   const t = useT();
 
   useEffect(() => {
@@ -47,12 +49,36 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
-  async function signIn(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (mode === "signin") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) toast.error(error.message);
+      return;
+    }
+    // sign up
+    if (password.length < 8) {
+      setLoading(false);
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth` },
+    });
     setLoading(false);
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    // If email confirmation is required, no session is returned.
+    if (!data.session) {
+      setAwaitingVerification(true);
+      toast.success("Check your inbox to confirm your email.");
+    }
   }
 
   async function google() {
@@ -68,6 +94,7 @@ function AuthPage() {
     });
     if (result.error) toast.error("Apple sign-in failed");
   }
+
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] bg-background">
@@ -270,34 +297,93 @@ function AuthPage() {
                 </div>
               </div>
 
-              <form onSubmit={signIn} className="space-y-3">
-                <div>
-                  <Label htmlFor="email">{t("auth.emailLabel")}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+              {awaitingVerification ? (
+                <div className="rounded-lg border bg-surface-muted p-4 text-sm text-center space-y-2">
+                  <p className="font-medium">Check your inbox</p>
+                  <p className="text-muted-foreground text-xs">
+                    We sent a confirmation link to <span className="font-medium">{email}</span>.
+                    Click it, then come back here to sign in.
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      setAwaitingVerification(false);
+                      setMode("signin");
+                    }}
+                  >
+                    Back to sign in
+                  </Button>
                 </div>
-                <div>
-                  <Label htmlFor="password">{t("auth.passwordLabel")}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {t("auth.signIn")}
-                </Button>
-              </form>
-              <p className="text-xs text-muted-foreground mt-4 text-center leading-relaxed">
-                {t("auth.inviteOnlyNote")}
-              </p>
+              ) : (
+                <>
+                  <form onSubmit={submit} className="space-y-3">
+                    <div>
+                      <Label htmlFor="email">{t("auth.emailLabel")}</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="password">{t("auth.passwordLabel")}</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        required
+                        minLength={mode === "signup" ? 8 : undefined}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      {mode === "signup" && (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          At least 8 characters.
+                        </p>
+                      )}
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading
+                        ? "…"
+                        : mode === "signin"
+                          ? t("auth.signIn")
+                          : "Create account"}
+                    </Button>
+                  </form>
+                  <p className="text-xs text-center text-muted-foreground mt-4">
+                    {mode === "signin" ? (
+                      <>
+                        No account?{" "}
+                        <button
+                          type="button"
+                          className="underline hover:text-foreground"
+                          onClick={() => setMode("signup")}
+                        >
+                          Create one
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        Already have an account?{" "}
+                        <button
+                          type="button"
+                          className="underline hover:text-foreground"
+                          onClick={() => setMode("signin")}
+                        >
+                          Sign in
+                        </button>
+                      </>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-4 text-center leading-relaxed">
+                    {t("auth.inviteOnlyNote")}
+                  </p>
+                </>
+              )}
+
             </CardContent>
           </Card>
 

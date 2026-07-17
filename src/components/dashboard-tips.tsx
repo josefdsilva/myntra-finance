@@ -1,7 +1,7 @@
 import type * as React from "react";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   bucketsQuery,
@@ -68,7 +68,7 @@ export function DashboardTips({
   const qc = useQueryClient();
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const navigate = useNavigate();
+  
 
   // Dismissed tips are stored per household+period in localStorage.
   const storageKey = `dashboard-tips-dismissed:${householdId}:${period}`;
@@ -598,7 +598,7 @@ export function DashboardTips({
   const hidden = tips.filter((t) => dismissed.has(t.id));
 
   function openChat(prompt: string) {
-    navigate({ to: "/analysis", search: { ask: prompt } as never });
+    window.dispatchEvent(new CustomEvent("coach:open", { detail: { prompt } }));
   }
 
   if (!active.length) {

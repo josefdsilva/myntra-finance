@@ -277,12 +277,27 @@ export const createHousehold = createServerFn({ method: "POST" })
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Enforce max 1 owned household per user on the free tier.
+    const { count: ownedCount, error: countErr } = await supabaseAdmin
+      .from("household_members")
+      .select("household_id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("role", "owner");
+    if (countErr) throw countErr;
+    if ((ownedCount ?? 0) >= 1) {
+      throw new Error(
+        "HOUSEHOLD_LIMIT_REACHED: The free tier includes 1 household. Buying additional household slots will be available soon.",
+      );
+    }
+
+
     const { data: household, error } = await supabaseAdmin
       .from("households")
       .insert({ name: data.name, created_by: userId, baseline_budget: 0, margin_pct: 10 })
       .select()
       .single();
     if (error || !household) throw error ?? new Error("Failed to create household");
+
 
     const { error: mErr } = await supabaseAdmin
       .from("household_members")
