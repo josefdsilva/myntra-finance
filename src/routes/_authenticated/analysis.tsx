@@ -371,9 +371,14 @@ function AnalysisPage() {
         isSalary: ev.is_salary,
       };
     });
-    const mvEvts: Evt[] = (movements ?? []).map((m) => {
-      const amt = Number(m.amount);
-      const inflow = m.to_type === "cash"; // money returning to cash (withdrawal)
+    const mvEvts: Evt[] = (movements ?? [])
+      // Scheduled monthly debt payments are already represented in fixedTotal
+      // (reserved in one lump at salary time), so plotting them again on the due
+      // date would double-count the outflow.
+      .filter((m) => m.reason !== "scheduled")
+      .map((m) => {
+        const amt = Number(m.amount);
+        const inflow = m.to_type === "cash"; // money returning to cash (withdrawal)
       return {
         time: +new Date(m.created_at),
         iso: m.created_at,

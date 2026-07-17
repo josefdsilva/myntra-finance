@@ -281,16 +281,20 @@ export async function buildClosedCycleStats(
   const debtLabels = new Map((debtRows ?? []).map((d) => [d.id as string, d.label as string]));
   const { data: debtMoves } = await supabase
     .from("account_movements")
-    .select("amount, to_id, from_type")
+    .select("amount, to_id, from_type, reason")
     .eq("household_id", householdId)
     .eq("to_type", "debt")
     .gte("created_at", cycle.start.toISOString())
     .lt("created_at", cycle.end.toISOString());
-  const debtPayments = (debtMoves ?? []).map((m) => ({
-    label: debtLabels.get(m.to_id as string) ?? "Debt",
-    amount: Number(m.amount),
-    source: m.from_type === "bucket" ? "project" : "cash",
-  }));
+  const debtPayments = (debtMoves ?? [])
+    // Exclude scheduled monthly payments — those are already inside fixedMonthly.
+    // This list is only the extra overpayments / transfers made this cycle.
+    .filter((m) => m.reason !== "scheduled")
+    .map((m) => ({
+      label: debtLabels.get(m.to_id as string) ?? "Debt",
+      amount: Number(m.amount),
+      source: m.from_type === "bucket" ? "project" : "cash",
+    }));
   const debtPaidTotal = Math.round(debtPayments.reduce((s, p) => s + p.amount, 0) * 100) / 100;
 
   return {
