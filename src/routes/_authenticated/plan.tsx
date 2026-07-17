@@ -15,7 +15,12 @@ import {
 } from "@/lib/plan.functions";
 import { buildForecast, plansForMonth, monthKey, type Plan } from "@/lib/plan";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
-import { PlanCharts } from "@/components/plan-charts";
+import {
+  PlanForecastChart,
+  PlanTimeline,
+  HorizonToggle,
+  type Horizon,
+} from "@/components/plan-charts";
 import type { ProjectInput } from "@/lib/plan-forecast-series";
 import type { Debt } from "@/lib/debt-schedule";
 import { pageShellClass } from "@/components/page-shell";
@@ -49,6 +54,8 @@ import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
+  List,
+  CalendarRange,
 } from "lucide-react";
 import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
@@ -249,6 +256,10 @@ function PlanPage() {
   const [actual, setActual] = useState("");
   const [payFrom, setPayFrom] = useState("");
 
+  // "Your plans" view: a flat list, or the timeline (Gantt).
+  const [planView, setPlanView] = useState<"list" | "timeline">("list");
+  const [timelineHorizon, setTimelineHorizon] = useState<Horizon>(6);
+
   function openResolve(p: PlanRow) {
     setResolveRow(p);
     setActual(String(Number(p.amount)));
@@ -433,12 +444,39 @@ function PlanPage() {
 
       {/* Upcoming plans list */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t("plan.listTitle")}</CardTitle>
-          <CardDescription>{t("plan.listDesc")}</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle>{t("plan.listTitle")}</CardTitle>
+            <CardDescription>{t("plan.listDesc")}</CardDescription>
+          </div>
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant={planView === "list" ? "default" : "outline"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setPlanView("list")}
+              >
+                <List className="size-3.5" /> {t("plan.viewList")}
+              </Button>
+              <Button
+                size="sm"
+                variant={planView === "timeline" ? "default" : "outline"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setPlanView("timeline")}
+              >
+                <CalendarRange className="size-3.5" /> {t("plan.viewTimeline")}
+              </Button>
+            </div>
+            {planView === "timeline" && (
+              <HorizonToggle horizon={timelineHorizon} onChange={setTimelineHorizon} />
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {upcomingMonths.length === 0 ? (
+          {planView === "timeline" ? (
+            <PlanTimeline plans={plans} horizon={timelineHorizon} />
+          ) : upcomingMonths.length === 0 ? (
             <p className="text-sm text-muted-foreground py-2">{t("plan.listEmpty")}</p>
           ) : (
             upcomingMonths.map(({ ym, items }) => (
@@ -448,50 +486,55 @@ function PlanPage() {
                 </p>
                 <ul className="divide-y">
                   {items.map((p) => (
-                    <li key={`${p.id}-${ym}`} className="py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {p.direction === "income" ? (
-                            <TrendingUp className="size-4 text-emerald-600 shrink-0" />
-                          ) : (
-                            <TrendingDown className="size-4 text-muted-foreground shrink-0" />
-                          )}
-                          <span className="truncate">{p.label}</span>
-                          {p.recurrence !== "one_off" && (
-                            <Badge variant="outline" className="text-[10px] shrink-0">
-                              {t(p.recurrence === "annual" ? "plan.annual" : "plan.ongoing")}
-                            </Badge>
-                          )}
-                          {p.bucket_id && (
-                            <Badge variant="outline" className="text-[10px] text-emerald-600 shrink-0">
-                              {t("plan.funded")}
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="tabular-nums font-medium shrink-0">
+                    <li
+                      key={`${p.id}-${ym}`}
+                      className="grid grid-cols-[1fr_auto] items-center gap-x-3 py-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {p.direction === "income" ? (
+                          <TrendingUp className="size-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <TrendingDown className="size-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="truncate">{p.label}</span>
+                        {p.recurrence !== "one_off" && (
+                          <Badge variant="outline" className="text-[10px] shrink-0">
+                            {t(p.recurrence === "annual" ? "plan.annual" : "plan.ongoing")}
+                          </Badge>
+                        )}
+                        {p.bucket_id && (
+                          <Badge variant="outline" className="text-[10px] text-emerald-600 shrink-0">
+                            {t("plan.funded")}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 justify-self-end">
+                        <span className="w-20 sm:w-24 text-right tabular-nums font-medium">
                           {p.direction === "income" ? "+" : ""}
                           {money(Number(p.amount))}
                         </span>
-                      </div>
-                      <div className="mt-1.5 flex flex-wrap gap-1">
-                        {p.direction === "spend" && !p.bucket_id && (
+                        {p.direction === "spend" && !p.bucket_id ? (
                           <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-xs"
+                            size="icon"
+                            variant="ghost"
+                            className="size-7 text-emerald-600"
                             disabled={busy}
                             onClick={() => fund(p.id)}
+                            title={t("plan.fund")}
                           >
-                            <PiggyBank className="size-3.5" /> {t("plan.fund")}
+                            <PiggyBank className="size-3.5" />
                           </Button>
+                        ) : (
+                          <span className="size-7 inline-block" aria-hidden />
                         )}
                         <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2 text-xs"
+                          size="icon"
+                          variant="ghost"
+                          className="size-7"
                           onClick={() => openResolve(p)}
+                          title={t("plan.markDone")}
                         >
-                          <Check className="size-3.5" /> {t("plan.markDone")}
+                          <Check className="size-3.5" />
                         </Button>
                         <Button
                           size="icon"
@@ -505,7 +548,7 @@ function PlanPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="size-7"
+                          className="size-7 text-muted-foreground"
                           onClick={() => remove(p.id)}
                         >
                           <Trash2 className="size-3.5" />
@@ -521,7 +564,7 @@ function PlanPage() {
       </Card>
 
       {data && (
-        <PlanCharts
+        <PlanForecastChart
           plans={plans}
           projects={projects}
           debts={debts}
