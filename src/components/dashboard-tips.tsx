@@ -68,7 +68,7 @@ export function DashboardTips({
   const qc = useQueryClient();
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const navigate = useNavigate();
+  
 
   // Dismissed tips are stored per household+period in localStorage.
   const storageKey = `dashboard-tips-dismissed:${householdId}:${period}`;
