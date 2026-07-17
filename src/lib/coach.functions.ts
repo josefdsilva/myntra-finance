@@ -9,6 +9,7 @@ import { addMonths } from "date-fns";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import { computeBenchmarkComparison, type BenchmarkComparison } from "./benchmarks";
 import { monthlyRateFromTaeg, monthlyRateFromNominalTan, termMonthsFor } from "./amortization";
+import { buildForecast, monthKey, type Plan } from "./plan";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
@@ -51,6 +52,32 @@ type CoachContext = {
   today: string;
   currency: string;
   baseline: number;
+  /** Next 6 months folding in known plans: income, baseline, plannedSpend, leftover, shortfall. */
+  planForecast: Array<{
+    month: string;
+    income: number;
+    baseline: number;
+    plannedSpend: number;
+    leftover: number;
+    shortfall: boolean;
+  }>;
+  /** Known future costs / income changes the household entered. */
+  upcomingPlans: Array<{
+    label: string;
+    month: string;
+    amount: number;
+    direction: string;
+    recurrence: string;
+    funded: boolean;
+  }>;
+  /** Recently paid plans, estimate vs actual. */
+  resolvedPlansRecent: Array<{
+    label: string;
+    month: string;
+    planned: number;
+    actual: number;
+    direction: string;
+  }>;
   marginPct: number;
   cycle: {
     source: string;
@@ -212,6 +239,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     { data: allocs },
     { data: allAllocs },
     { data: bucketMoves },
+    { data: plansData },
   ] = await Promise.all([
     supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
     supabase
@@ -242,6 +270,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       .select("amount, to_type, to_id, from_type, from_id, created_at, reason")
       .eq("household_id", householdId)
       .or("to_type.eq.bucket,from_type.eq.bucket"),
+    supabase
+      .from("plans")
+      .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
+      .eq("household_id", householdId),
   ]);
 
   const sumMonthly = (rows: unknown): number =>
@@ -505,10 +537,53 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
         })
       : null;
 
+  // ---- Forward plans (future costs & income changes the household entered) ----
+  const planList = rowsOrEmpty<Plan>(plansData);
+  const planForecast = buildForecast({
+    plans: planList,
+    baseline,
+    monthlyIncome: settingsIncome,
+    months: 6,
+  }).map((m) => ({
+    month: m.ym,
+    income: m.income,
+    baseline: m.baseline,
+    plannedSpend: m.plannedSpend,
+    leftover: m.leftover,
+    shortfall: m.shortfall,
+  }));
+  const nowYm = monthKey(new Date());
+  const upcomingPlans = planList
+    .filter((p) => !p.done && String(p.month).slice(0, 7) >= nowYm)
+    .sort((a, b) => String(a.month).localeCompare(String(b.month)))
+    .slice(0, 12)
+    .map((p) => ({
+      label: p.label,
+      month: String(p.month).slice(0, 7),
+      amount: Math.abs(Number(p.amount) || 0),
+      direction: p.direction,
+      recurrence: p.recurrence,
+      funded: !!p.bucket_id,
+    }));
+  const resolvedPlansRecent = planList
+    .filter((p) => p.done)
+    .sort((a, b) => String(b.month).localeCompare(String(a.month)))
+    .slice(0, 6)
+    .map((p) => ({
+      label: p.label,
+      month: String(p.month).slice(0, 7),
+      planned: Math.abs(Number(p.amount) || 0),
+      actual: Number(p.actual_amount ?? 0),
+      direction: p.direction,
+    }));
+
   return {
     today: new Date().toISOString(),
     currency: hh?.currency ?? "EUR",
     baseline,
+    planForecast,
+    upcomingPlans,
+    resolvedPlansRecent,
     marginPct: Number(hh?.margin_pct ?? 0),
     cycle: {
       source: cycle.source,
@@ -613,6 +688,7 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
 - avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
 - benchmark — national averages from Eurostat / national statistics, never other users.
+- upcomingPlans[] — known future costs and income changes the household entered (label, month, amount, direction spend|income, recurrence, funded=whether a project is saving for it). planForecast[] projects the next 6 months: income, baseline, plannedSpend, leftover, and shortfall (that month runs short). resolvedPlansRecent[] shows recently paid plans with planned vs actual. Use these for ANY question about the months ahead, saving for something specific, or what to do with money the household did not expect: point to the real upcoming claims on their money, flag any shortfall month, and suggest pre-funding a big unfunded one-off as a project. When advising on a windfall, first cover imminent unfunded plans and any shortfall month, then the emergency-fund gap, then debt and investing.
 If a needed number is not in the snapshot, say what you'd need instead of guessing. Income is take-home (net), so treat the 28/36 rule as a conservative guide.
 Format money in ${ctx.currency}, use markdown, and cite the figures you used in parentheses, e.g. "(surplus €X, safe €Y)". Be concrete: ranges, not vague advice.
 

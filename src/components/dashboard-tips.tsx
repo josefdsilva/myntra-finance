@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
+import { buildForecast, monthKey, type Plan } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 import {
   AlertTriangle,
@@ -49,6 +50,9 @@ type Props = {
 };
 
 const EMERGENCY_HINTS = ["emergency", "buffer", "safety", "rainy", "reserve"];
+
+const monthLabel = (ym: string) =>
+  new Date(`${ym}-01T00:00:00`).toLocaleDateString(undefined, { month: "short", year: "numeric" });
 
 export function DashboardTips({
   householdId,
@@ -114,6 +118,7 @@ export function DashboardTips({
         { data: confirmations },
         { data: allTimeAllocations },
         { count: expenseCount },
+        { data: plans },
       ] = await Promise.all([
         qc.fetchQuery(bucketsQuery(householdId)),
         qc.fetchQuery(incomesQuery(householdId)),
@@ -136,6 +141,10 @@ export function DashboardTips({
           .select("id", { count: "exact", head: true })
           .eq("household_id", householdId)
           .eq("kind", "expense"),
+        supabase
+          .from("plans")
+          .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
+          .eq("household_id", householdId),
       ]);
       const allTimeTotals: Record<string, number> = {};
       for (const r of allTimeAllocations ?? []) {
@@ -149,6 +158,7 @@ export function DashboardTips({
         confirmations: confirmations ?? [],
         allTimeTotals,
         expenseCount: expenseCount ?? 0,
+        plans: (plans ?? []) as unknown as Plan[],
       };
     },
   });
@@ -537,6 +547,47 @@ export function DashboardTips({
           }),
         });
       }
+    }
+  }
+
+  // ---- Forward plans (future costs & income changes) ----
+  const planList = data.plans ?? [];
+  if (planList.length && income > 0) {
+    const forecast = buildForecast({ plans: planList, baseline, monthlyIncome: income, months: 6 });
+    const firstShort = forecast.find((m) => m.shortfall);
+    if (firstShort) {
+      tips.push({
+        id: `plan-shortfall-${firstShort.ym}`,
+        severity: "warning",
+        title: t("tips.planShortfall.title", { month: monthLabel(firstShort.ym) }),
+        detail: t("tips.planShortfall.detail", { amount: money(-firstShort.leftover) }),
+        cta: { label: t("tips.cta.openPlan"), to: "/plan" },
+        chatPrompt: t("tips.planShortfall.chat", { month: monthLabel(firstShort.ym) }),
+      });
+    }
+    // A big unfunded one-off within 3 months that one month's leftover can't absorb.
+    const nowYm = monthKey(now);
+    const horizonYm = monthKey(new Date(now.getFullYear(), now.getMonth() + 3, 1));
+    const bigUnfunded = planList
+      .filter((p) => !p.done && p.direction === "spend" && !p.bucket_id)
+      .filter((p) => {
+        const ym = String(p.month).slice(0, 7);
+        return ym >= nowYm && ym <= horizonYm;
+      })
+      .filter((p) => Math.abs(Number(p.amount) || 0) > Math.max(surplus, 0))
+      .sort((a, b) => String(a.month).localeCompare(String(b.month)))[0];
+    if (bigUnfunded) {
+      tips.push({
+        id: `plan-fund-${bigUnfunded.id}`,
+        severity: "info",
+        title: t("tips.planFund.title", { label: bigUnfunded.label }),
+        detail: t("tips.planFund.detail", {
+          amount: money(Math.abs(Number(bigUnfunded.amount) || 0)),
+          month: monthLabel(String(bigUnfunded.month).slice(0, 7)),
+        }),
+        cta: { label: t("tips.cta.openPlan"), to: "/plan" },
+        chatPrompt: t("tips.planFund.chat", { label: bigUnfunded.label }),
+      });
     }
   }
 

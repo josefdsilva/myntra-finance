@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { buildCyclesFromSalaries, type CycleSpan } from "@/lib/cycle";
+import { buildForecast, plansForMonth, monthKey, type Plan } from "@/lib/plan";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
@@ -72,6 +73,18 @@ export type ClosedCycleStats = {
   debtPayments: Array<{ label: string; amount: number; source: string }>;
   debtPaidTotal: number;
   trend: Array<{ start: string; end: string; variableSpentMonthly: number }>;
+  /** Plans resolved (paid) during this cycle, estimate vs actual. */
+  resolvedPlans: Array<{ label: string; planned: number; actual: number; direction: string }>;
+  /** A one-month look ahead at the next cycle, folding in known plans. */
+  nextCycleOutlook: {
+    month: string;
+    expectedIncome: number;
+    baseline: number;
+    plannedSpend: number;
+    leftover: number;
+    shortfall: boolean;
+    plans: Array<{ label: string; amount: number; direction: string; funded: boolean }>;
+  } | null;
 };
 
 async function sumExpenses(
@@ -122,25 +135,37 @@ export async function buildClosedCycleStats(
   cycle: CycleSpan,
   priorCycles: CycleSpan[],
 ): Promise<ClosedCycleStats> {
-  const [{ data: hh }, { data: fixed }, { data: debts }, { data: estimates }, { data: buckets }] =
-    await Promise.all([
-      supabase
-        .from("households")
-        .select("currency, baseline_budget")
-        .eq("id", householdId)
-        .maybeSingle(),
-      supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
-      supabase.from("debts").select("monthly_amount").eq("household_id", householdId),
-      supabase
-        .from("variable_estimates")
-        .select("id, label, category, monthly_amount")
-        .eq("household_id", householdId),
-      supabase
-        .from("buckets")
-        .select("id, name, target_type, target_value, target_deadline, initial_balance")
-        .eq("household_id", householdId)
-        .order("sort_order"),
-    ]);
+  const [
+    { data: hh },
+    { data: fixed },
+    { data: debts },
+    { data: estimates },
+    { data: buckets },
+    { data: incomeRows },
+    { data: plansData },
+  ] = await Promise.all([
+    supabase
+      .from("households")
+      .select("currency, baseline_budget")
+      .eq("id", householdId)
+      .maybeSingle(),
+    supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+    supabase.from("debts").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("variable_estimates")
+      .select("id, label, category, monthly_amount")
+      .eq("household_id", householdId),
+    supabase
+      .from("buckets")
+      .select("id, name, target_type, target_value, target_deadline, initial_balance")
+      .eq("household_id", householdId)
+      .order("sort_order"),
+    supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("plans")
+      .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
+      .eq("household_id", householdId),
+  ]);
 
   const fixedMonthly =
     rowsOrEmpty<{ monthly_amount: number | string }>(fixed).reduce(
@@ -297,6 +322,52 @@ export async function buildClosedCycleStats(
     }));
   const debtPaidTotal = Math.round(debtPayments.reduce((s, p) => s + p.amount, 0) * 100) / 100;
 
+  // ---- Plans: what was resolved this cycle, and a look at the next one ----
+  const planList = rowsOrEmpty<Plan>(plansData);
+  const resolvedPlans = planList
+    .filter((p) => {
+      if (!p.done) return false;
+      const d = new Date(String(p.month));
+      return d >= cycle.start && d < cycle.end;
+    })
+    .map((p) => ({
+      label: p.label,
+      planned: Math.abs(Number(p.amount) || 0),
+      actual: Number(p.actual_amount ?? 0),
+      direction: p.direction,
+    }));
+
+  const settingsIncome = rowsOrEmpty<{ monthly_amount: number | string }>(incomeRows).reduce(
+    (s, r) => s + Number(r.monthly_amount),
+    0,
+  );
+  const outlookMonth = buildForecast({
+    plans: planList,
+    baseline,
+    monthlyIncome: settingsIncome,
+    startMonth: cycle.end,
+    months: 1,
+  })[0];
+  const outlookYm = outlookMonth?.ym ?? monthKey(cycle.end);
+  const nextCycleOutlook = outlookMonth
+    ? {
+        month: outlookYm,
+        expectedIncome: outlookMonth.income,
+        baseline: outlookMonth.baseline,
+        plannedSpend: outlookMonth.plannedSpend,
+        leftover: outlookMonth.leftover,
+        shortfall: outlookMonth.shortfall,
+        plans: plansForMonth(planList, outlookYm)
+          .filter((p) => !p.done)
+          .map((p) => ({
+            label: p.label,
+            amount: Math.abs(Number(p.amount) || 0),
+            direction: p.direction,
+            funded: !!p.bucket_id,
+          })),
+      }
+    : null;
+
   return {
     cycleStart: cycle.start.toISOString(),
     cycleEnd: cycle.end.toISOString(),
@@ -315,6 +386,8 @@ export async function buildClosedCycleStats(
     debtPayments,
     debtPaidTotal,
     trend,
+    resolvedPlans,
+    nextCycleOutlook,
   };
 }
 
@@ -332,13 +405,16 @@ function langInstruction(locale?: string) {
 
 const SYSTEM = `You are a warm, practical household financial coach writing the narrative section of a closed-pay-cycle report for a family in Portugal. Currency EUR.
 Ground every claim in the JSON snapshot provided — never invent numbers, categories, or bucket names that aren't in it.
-Format money as €X,XXX.XX. Output markdown with exactly two sections:
+The snapshot includes resolvedPlans[] (planned costs the family settled this cycle, each with planned vs actual — a negotiated-down bill is a win; an overrun is worth flagging) and nextCycleOutlook (the coming month's expectedIncome, baseline, plannedSpend, leftover, whether it runs short, and the specific plans landing, each with funded=whether a project is already saving for it).
+Format money as €X,XXX.XX. Output markdown with exactly three sections:
 ### What went well
-2–4 short bullets — specific, grounded in the numbers (e.g. a category that came in under estimate, a bucket that got funded, income covering baseline comfortably).
+2–4 short bullets — specific, grounded in the numbers (e.g. a category under estimate, a bucket funded, a resolved plan that came in under its estimate).
 ### Areas to improve
-2–4 short bullets — specific, actionable (e.g. a category that ran over, a bucket that missed its confirmation, an estimate that's drifted from actual spend).
-If something is genuinely fine and there is nothing to flag in a section, say so briefly rather than inventing a nitpick.
-Keep the whole thing under ~180 words. No preamble, no closing summary line, just the two sections.`;
+2–4 short bullets — specific, actionable (e.g. a category that ran over, a bucket that missed confirmation, a plan that overran its estimate).
+### Looking ahead
+1–3 short bullets on nextCycleOutlook: name the big planned costs coming, whether the month looks tight (shortfall) or comfortable (leftover), any income change, and nudge pre-funding a big unfunded one-off as a project. If there are no upcoming plans, say the month looks clear.
+If a section has genuinely nothing to flag, say so briefly rather than inventing a nitpick.
+Keep the whole thing under ~230 words. No preamble, no closing summary line, just the three sections.`;
 
 /**
  * Get the cached narrative for a closed cycle, or generate + cache it.
