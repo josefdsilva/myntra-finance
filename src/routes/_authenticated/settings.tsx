@@ -330,31 +330,23 @@ function HouseholdSection({
   const debtTotal = rowsOrEmpty(debtRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
   const varTotal = rowsOrEmpty(varRows).reduce((s, r) => s + Number(r.monthly_amount), 0);
   const safetyReserve = ((fixedTotal + debtTotal + varTotal) * margin) / 100;
-  const baseline = fixedTotal + debtTotal + varTotal + safetyReserve;
-  const storedBaseline = Number(household.baseline_budget);
+  const baseline = fixedTotal + debtTotal + varTotal + safetyReserve; // shown as a live preview below
 
-  // Auto-persist computed baseline whenever the inputs change
+  // Persist only the safety-margin slider. The database recomputes
+  // baseline_budget from fixed + debt + variable + margin via triggers, so the
+  // client no longer writes the baseline itself (keeping both risked drift).
   useEffect(() => {
-    if (!Array.isArray(fixedRows) || !Array.isArray(varRows) || !Array.isArray(debtRows)) return;
-    if (Math.abs(baseline - storedBaseline) < 0.005 && margin === Number(household.margin_pct))
-      return;
-    update({
-      data: {
-        household_id: household.id,
-        baseline_budget: Number(baseline.toFixed(2)),
-        margin_pct: margin,
-      },
-    })
+    if (margin === Number(household.margin_pct)) return;
+    update({ data: { household_id: household.id, margin_pct: margin } })
       .then(() => {
         onChange();
         invalidateHouseholdData(qc);
         qc.invalidateQueries({ queryKey: ["allocations"] });
       })
       .catch(() => {});
-    // Intentionally excludes stable refs (update, onChange, qc, household.*) to
-    // avoid write loops; recomputes only when the derived baseline inputs change.
+    // Only the margin is persisted here; the DB trigger derives baseline from it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseline, margin, storedBaseline, fixedRows, varRows, debtRows]);
+  }, [margin]);
 
   async function saveName() {
     try {
