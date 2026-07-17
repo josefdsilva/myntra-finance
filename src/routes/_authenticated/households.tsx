@@ -76,41 +76,58 @@ function HouseholdsPage() {
         <p className="text-sm text-muted-foreground">{t("households.description")}</p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Plus className="size-4" /> {t("households.createTitle")}
-          </CardTitle>
-          <CardDescription>{t("households.createDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="flex flex-col sm:flex-row gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const n = newName.trim();
-              if (!n) return;
-              createMutation.mutate(n);
-            }}
-          >
-            <div className="flex-1">
-              <Label htmlFor="new-hh" className="sr-only">
-                {t("households.nameSrLabel")}
-              </Label>
-              <Input
-                id="new-hh"
-                placeholder={t("households.namePlaceholder")}
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                maxLength={100}
-              />
-            </div>
-            <Button type="submit" disabled={!newName.trim() || createMutation.isPending}>
-              {createMutation.isPending ? t("households.creating") : t("households.create")}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {(() => {
+        const ownedCount = households.filter((h) => h.role === "owner").length;
+        const atLimit = ownedCount >= 2;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Plus className="size-4" /> {t("households.createTitle")}
+              </CardTitle>
+              <CardDescription>
+                {t("households.createDescription")}
+                <span className="block mt-1 text-xs">
+                  Free tier: up to 2 owned households ({ownedCount}/2 used). Extra household slots
+                  will be available to purchase soon.
+                </span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="flex flex-col sm:flex-row gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const n = newName.trim();
+                  if (!n) return;
+                  createMutation.mutate(n);
+                }}
+              >
+                <div className="flex-1">
+                  <Label htmlFor="new-hh" className="sr-only">
+                    {t("households.nameSrLabel")}
+                  </Label>
+                  <Input
+                    id="new-hh"
+                    placeholder={t("households.namePlaceholder")}
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    maxLength={100}
+                    disabled={atLimit}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={!newName.trim() || createMutation.isPending || atLimit}
+                >
+                  {createMutation.isPending ? t("households.creating") : t("households.create")}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
 
       <div className="space-y-3">
         <h2 className="text-lg font-medium">{t("households.yourHouseholds")}</h2>
