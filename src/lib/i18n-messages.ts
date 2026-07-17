@@ -248,6 +248,7 @@ const en = {
   "credits.remaining": "{value} remaining",
   "credits.overBy": "Over by {value}",
   "credits.capNote": "Monthly cap is fixed at {cap} credits per household.",
+  "credits.topupHint": "Need more? Credit top-ups will be available soon.",
   "credits.byFeature": "This month by feature",
   "credits.noActivity": "No AI or Cloud activity recorded yet this month.",
   "credits.recent": "Recent activity ({count})",
