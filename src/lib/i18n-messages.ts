@@ -4384,6 +4384,7 @@ const fr: Record<MessageKey, string> = {
   "credits.remaining": "{value} restants",
   "credits.overBy": "Dépassé de {value}",
   "credits.capNote": "Le plafond mensuel est fixé à {cap} crédits par foyer.",
+  "credits.topupHint": "Besoin de plus ? Les recharges de crédits arrivent bientôt.",
   "credits.byFeature": "Ce mois par fonction",
   "credits.noActivity": "Aucune activité IA ou Cloud enregistrée ce mois-ci.",
   "credits.recent": "Activité récente ({count})",
