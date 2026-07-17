@@ -276,6 +276,7 @@ function HouseholdSection({
     country?: string | null;
     adults?: number | null;
     children?: number | null;
+    currency?: string | null;
   };
   onChange: () => void;
 }) {
