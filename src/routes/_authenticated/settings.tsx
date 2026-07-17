@@ -154,7 +154,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
   });
 
   const total = data?.total ?? 0;
-  const capValue = HARDWIRED_CAP;
+  const capValue = data?.cap ?? DEFAULT_CAP;
   const pct = Math.min(100, (total / capValue) * 100);
   const remaining = Math.max(0, capValue - total);
   const overCap = total > capValue;
