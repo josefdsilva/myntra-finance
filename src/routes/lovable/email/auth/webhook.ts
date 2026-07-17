@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "myntra-finance"
+const SITE_NAME = "bynku"
 const SENDER_DOMAIN = "notify.bynku.app"
 const ROOT_DOMAIN = "bynku.app"
 const FROM_DOMAIN = "bynku.app"
