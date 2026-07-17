@@ -118,7 +118,7 @@ function SettingsPage() {
           <DangerZone
             householdId={householdId}
             householdName={hh!.household!.name ?? t("hh.defaultName")}
-            role={hh!.role}
+            role={hh!.role ?? "member"}
           />
         </>
       )}
