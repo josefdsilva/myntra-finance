@@ -598,7 +598,7 @@ export function DashboardTips({
   const hidden = tips.filter((t) => dismissed.has(t.id));
 
   function openChat(prompt: string) {
-    navigate({ to: "/analysis", search: { ask: prompt } as never });
+    window.dispatchEvent(new CustomEvent("coach:open", { detail: { prompt } }));
   }
 
   if (!active.length) {
