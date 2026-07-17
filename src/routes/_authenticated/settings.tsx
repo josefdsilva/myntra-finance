@@ -118,7 +118,7 @@ function SettingsPage() {
           <DangerZone
             householdId={householdId}
             householdName={hh!.household!.name ?? t("hh.defaultName")}
-            role={hh!.role}
+            role={hh!.role ?? "member"}
           />
         </>
       )}
@@ -276,6 +276,7 @@ function HouseholdSection({
     country?: string | null;
     adults?: number | null;
     children?: number | null;
+    currency?: string | null;
   };
   onChange: () => void;
 }) {
