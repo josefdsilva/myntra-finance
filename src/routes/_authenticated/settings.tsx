@@ -137,7 +137,7 @@ function operationLabels(t: ReturnType<typeof useT>): Record<string, string> {
   };
 }
 
-const HARDWIRED_CAP = 10;
+const DEFAULT_CAP = 7.5;
 
 function rowsOrEmpty<T>(rows: T[] | null | undefined): T[] {
   return Array.isArray(rows) ? rows : [];
@@ -154,7 +154,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
   });
 
   const total = data?.total ?? 0;
-  const capValue = HARDWIRED_CAP;
+  const capValue = data?.cap ?? DEFAULT_CAP;
   const pct = Math.min(100, (total / capValue) * 100);
   const remaining = Math.max(0, capValue - total);
   const overCap = total > capValue;
@@ -198,7 +198,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {t("credits.capNote", { cap: HARDWIRED_CAP })}
+          {t("credits.capNote", { cap: capValue })}
         </p>
 
         {data?.breakdown && data.breakdown.length > 0 ? (
