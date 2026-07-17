@@ -1,0 +1,1 @@
+ALTER TABLE public.households ALTER COLUMN credit_cap SET DEFAULT 7.5;
