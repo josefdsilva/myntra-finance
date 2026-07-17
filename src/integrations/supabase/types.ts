@@ -153,18 +153,66 @@ export type Database = {
           },
         ]
       }
+      beta_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          label: string | null
+          max_seats: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          max_seats: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          max_seats?: number
+        }
+        Relationships: []
+      }
       beta_members: {
         Row: {
           activated_at: string
+          code_id: string | null
           user_id: string
         }
         Insert: {
           activated_at?: string
+          code_id?: string | null
           user_id: string
         }
         Update: {
           activated_at?: string
+          code_id?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      beta_redeem_attempts: {
+        Row: {
+          attempts: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          user_id?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -901,6 +949,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      redeem_beta_code: {
+        Args: { p_code: string }
+        Returns: string
+      }
       fund_deposit: {
         Args: {
           p_amount: number

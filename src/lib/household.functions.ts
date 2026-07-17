@@ -138,27 +138,20 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
   });
 
 /**
- * Redeem the shared beta access code. On success the caller is recorded in
- * beta_members and may then create a household. The code is checked server-side
- * against the BETA_ACCESS_CODE env var and is never exposed to the client.
+ * Redeem a beta access code. Delegates to the redeem_beta_code database function,
+ * which throttles attempts (max 3 per hour), validates the code against the
+ * beta_codes table, and admits the caller only if the code still has a free seat.
+ * Returns a status string the client turns into a friendly message.
  */
 export const redeemBetaCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ code: z.string().min(1).max(200) }).parse(input))
   .handler(async ({ context, data }) => {
-    const expected = process.env.BETA_ACCESS_CODE;
-    if (!expected) {
-      throw new Error("Beta access is not configured yet. Set the BETA_ACCESS_CODE env var.");
-    }
-    if (data.code.trim() !== expected) {
-      return { ok: false as const };
-    }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("beta_members")
-      .upsert({ user_id: context.userId }, { onConflict: "user_id" });
+    const { data: status, error } = await context.supabase.rpc("redeem_beta_code", {
+      p_code: data.code.trim(),
+    });
     if (error) throw error;
-    return { ok: true as const };
+    return { status: (status as string) ?? "invalid" };
   });
 
 export const updateHousehold = createServerFn({ method: "POST" })

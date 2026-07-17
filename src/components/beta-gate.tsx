@@ -27,8 +27,14 @@ export function BetaGate({ onSignOut }: { onSignOut: () => void }) {
     setLoading(true);
     try {
       const res = await redeem({ data: { code: code.trim() } });
-      if (!res.ok) {
-        toast.error(t("beta.invalid"));
+      if (res.status !== "ok") {
+        toast.error(
+          res.status === "full"
+            ? t("beta.full")
+            : res.status === "rate_limited"
+              ? t("beta.rateLimited")
+              : t("beta.invalid"),
+        );
         return;
       }
       toast.success(t("beta.welcome"));
