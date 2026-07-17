@@ -1278,6 +1278,7 @@ const pt: Record<MessageKey, string> = {
   "credits.remaining": "{value} restantes",
   "credits.overBy": "Excesso de {value}",
   "credits.capNote": "O limite mensal está fixado em {cap} créditos por agregado.",
+  "credits.topupHint": "Precisa de mais? Em breve poderá comprar créditos adicionais.",
   "credits.byFeature": "Este mês por funcionalidade",
   "credits.noActivity": "Sem atividade de IA ou Cloud registada este mês.",
   "credits.recent": "Atividade recente ({count})",
