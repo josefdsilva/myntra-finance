@@ -15,6 +15,9 @@ import {
 } from "@/lib/plan.functions";
 import { buildForecast, plansForMonth, monthKey, type Plan } from "@/lib/plan";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
+import { PlanCharts } from "@/components/plan-charts";
+import type { ProjectInput } from "@/lib/plan-forecast-series";
+import type { Debt } from "@/lib/debt-schedule";
 import { pageShellClass } from "@/components/page-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -83,34 +86,61 @@ function PlanPage() {
     enabled: !!householdId,
     queryKey: ["plans", householdId],
     queryFn: async () => {
-      const [{ data: plans }, { data: incomes }, { data: buckets }, { data: allocs }, { data: moves }] =
-        await Promise.all([
-          supabase.from("plans").select("*").eq("household_id", householdId!).order("month"),
-          supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
-          supabase
-            .from("buckets")
-            .select("id, name, initial_balance")
-            .eq("household_id", householdId!)
-            .order("sort_order"),
-          supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId!),
-          supabase.from("account_movements").select("*").eq("household_id", householdId!),
-        ]);
-      const bucketRows = (buckets ?? []) as Array<{ id: string; name: string; initial_balance: number }>;
+      const [
+        { data: plans },
+        { data: incomes },
+        { data: buckets },
+        { data: allocs },
+        { data: moves },
+        { data: debts },
+      ] = await Promise.all([
+        supabase.from("plans").select("*").eq("household_id", householdId!).order("month"),
+        supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
+        supabase
+          .from("buckets")
+          .select("id, name, initial_balance, kind, target_type, target_value, target_deadline")
+          .eq("household_id", householdId!)
+          .order("sort_order"),
+        supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId!),
+        supabase.from("account_movements").select("*").eq("household_id", householdId!),
+        supabase.from("debts").select("*").eq("household_id", householdId!).order("sort_order"),
+      ]);
+      type BucketRow = {
+        id: string;
+        name: string;
+        initial_balance: number;
+        kind: ProjectInput["kind"] | null;
+        target_type: ProjectInput["target_type"];
+        target_value: number;
+        target_deadline: string | null;
+      };
+      const bucketRows = (buckets ?? []) as BucketRow[];
       const balances = bucketBalancesFor(
         bucketRows,
         (allocs ?? []) as Array<{ bucket_id: string; amount: number }>,
         (moves ?? []) as AccountMovement[],
       );
+      const projects: ProjectInput[] = bucketRows.map((b) => ({
+        id: b.id,
+        name: b.name,
+        kind: b.kind ?? "savings",
+        target_type: b.target_type,
+        target_value: Number(b.target_value),
+        target_deadline: b.target_deadline,
+        balance: balances[b.id] ?? 0,
+      }));
       return {
         plans: (plans ?? []) as PlanRow[],
         monthlyIncome: (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0),
-        projects: bucketRows.map((b) => ({ id: b.id, name: b.name, balance: balances[b.id] ?? 0 })),
+        projects,
+        debts: (debts ?? []) as Debt[],
       };
     },
   });
 
   const plans = useMemo(() => data?.plans ?? [], [data?.plans]);
   const projects = useMemo(() => data?.projects ?? [], [data?.projects]);
+  const debts = useMemo(() => data?.debts ?? [], [data?.debts]);
   const monthlyIncome = data?.monthlyIncome ?? 0;
   const forecast = useMemo(
     () => buildForecast({ plans, baseline, monthlyIncome, months: 6 }),
@@ -400,6 +430,14 @@ function PlanPage() {
           <p className="mt-2 text-xs text-muted-foreground">{t("plan.fundHint")}</p>
         </CardContent>
       </Card>
+
+      <PlanCharts
+        plans={plans}
+        projects={projects}
+        debts={debts}
+        baseline={baseline}
+        monthlyIncome={monthlyIncome}
+      />
 
       {/* Upcoming plans list */}
       <Card>
