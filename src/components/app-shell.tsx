@@ -30,6 +30,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.functions";
 import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
+import { CoachDock } from "@/components/coach-dock";
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -325,6 +326,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="flex-1 min-w-0">{children}</main>
+      <CoachDock />
     </div>
   );
 }
