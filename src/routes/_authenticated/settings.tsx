@@ -198,7 +198,7 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {t("credits.capNote", { cap: HARDWIRED_CAP })}
+          {t("credits.capNote", { cap: capValue })}
         </p>
 
         {data?.breakdown && data.breakdown.length > 0 ? (
