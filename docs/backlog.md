@@ -1,17 +1,6 @@
 # bynku backlog
 
-A living list of what we can still build together. Grouped by type, roughly ordered by priority within each group. Last updated: 2026-07-17.
-
-## Run before the beta opens
-
-These are already written and just need to be applied to the database.
-
-- Apply migration `20260716160000_beta_codes_seats.sql` (seat limits + throttling).
-- Apply migration `20260717120000_secdef_hardening.sql` (pins search_path, revokes PUBLIC/anon on definer functions).
-- Apply migration `20260717140000_scheduled_debt_payments.sql` (monthly debt-payment log).
-- Create a beta code, for example: `INSERT INTO public.beta_codes (code, label, max_seats) VALUES ('SPRING-2026','Round 1',20);`
-- Reset seat counting if needed: `DELETE FROM public.beta_members; DELETE FROM public.beta_redeem_attempts;`
-- Run `bun test` and a production build to typecheck the latest changes end to end.
+A living list of what we can still build together. Grouped by type, roughly ordered by priority within each group. Last updated: 2026-07-18.
 
 ## Parked, needs your decision
 
@@ -20,6 +9,7 @@ These are already written and just need to be applied to the database.
 
 ## Ready to build
 
+- Subscription radar. Detect recurring charges from transaction history (same merchant, similar amount, monthly or yearly cadence) and surface them in one place, so users can spot forgotten or creeping subscriptions and decide what to cut. Flag new ones and price increases.
 - Net worth over time. A simple chart of assets (project balances) minus debts across cycles. Most of the data already exists.
 - Global movements ledger. `fetchMovements` exists but nothing renders a full history yet. Debt payments are now visible per loan, but a single account-activity view (deposits, withdrawals, transfers, debt payments) would tie it together.
 - Recurring templates. Let users save a set of fixed expenses or allocations and reapply them, to speed up onboarding and monthly setup.
@@ -40,6 +30,7 @@ These are already written and just need to be applied to the database.
 
 ## Recently shipped, for reference
 
+- AI-read bank statements. The importer now sends the whole file (CSV or PDF) to the AI, which extracts clean signed transactions across any bank layout; the existing recurring / variable / income / debt analysis runs on top. CSV keeps a local-parser fallback if the AI is unavailable.
 - Money-math unit tests (cycle, movements, debt schedule) and a `bun test` script.
 - Removed the client-side baseline computation in Settings so the database trigger is the single source of truth.
 - Debt origination: loan start date, original amount, optional balance-today override, live estimated-balance preview, and anchor logic that reconstructs past progress.

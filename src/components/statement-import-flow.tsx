@@ -7,8 +7,10 @@ import {
   applyStatementImport,
   inferStatementColumnsAI,
 } from "@/lib/statement-import.functions";
+import { extractStatementTransactions } from "@/lib/ai-parse.functions";
 import {
   parseCsv,
+  parseDate,
   inferColumns,
   toTransactions,
   analyzeStatement,
@@ -42,6 +44,17 @@ import { toast } from "sonner";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** Base64-encode a file in chunks (avoids call-stack limits on large PDFs). */
+async function fileToBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 type FixedRow = {
   include: boolean;
   label: string;
@@ -71,6 +84,7 @@ export function StatementImportFlow({
   const qc = useQueryClient();
   const categorizeFn = useServerFn(categorizeMerchants);
   const inferColsFn = useServerFn(inferStatementColumnsAI);
+  const extractFn = useServerFn(extractStatementTransactions);
   const applyFn = useServerFn(applyStatementImport);
 
   const { data: current } = useQuery({
@@ -106,16 +120,41 @@ export function StatementImportFlow({
   async function handleFile(file: File) {
     setBusy(true);
     try {
-      const text = await file.text();
-      const rows = parseCsv(text);
-      if (rows.length < 2) throw new Error(t("stmt.errNoRows"));
-      let map = inferColumns(rows[0]);
-      if (!map) {
-        map = await inferColsFn({
-          data: { householdId, headers: rows[0], sampleRows: rows.slice(1, 4) },
+      if (file.size > 10 * 1024 * 1024) throw new Error(t("stmt.errTooLarge"));
+      const isCsv =
+        /\.csv$/i.test(file.name) || file.type.includes("csv") || file.type.includes("text");
+      const mime = file.type || (isCsv ? "text/csv" : "application/pdf");
+
+      // AI reads the file (PDF or CSV) into a clean, signed transaction list. If
+      // the AI call fails and the file is a CSV, fall back to the local parser so
+      // an import can still go through without the gateway.
+      let txns: RawTxn[] = [];
+      try {
+        const base64 = await fileToBase64(file);
+        const extracted = await extractFn({
+          data: { file_base64: base64, mime_type: mime, file_name: file.name, householdId },
         });
+        txns = extracted.items
+          .map((it) => {
+            const date = parseDate(it.date);
+            const amount = Number(it.amount);
+            if (!date || !Number.isFinite(amount) || amount === 0) return null;
+            return { date, description: (it.description ?? "").trim(), amount } as RawTxn;
+          })
+          .filter((x): x is RawTxn => x !== null);
+      } catch (aiErr) {
+        if (!isCsv) throw aiErr;
+        const text = await file.text();
+        const rows = parseCsv(text);
+        if (rows.length < 2) throw new Error(t("stmt.errNoRows"));
+        let map = inferColumns(rows[0]);
+        if (!map) {
+          map = await inferColsFn({
+            data: { householdId, headers: rows[0], sampleRows: rows.slice(1, 4) },
+          });
+        }
+        txns = toTransactions(rows, map);
       }
-      const txns: RawTxn[] = toTransactions(rows, map);
       if (txns.length < 3) throw new Error(t("stmt.errFewTxns"));
 
       let analysis = analyzeStatement(txns);
@@ -265,7 +304,7 @@ export function StatementImportFlow({
               </span>
               <input
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,text/csv,.pdf,application/pdf"
                 className="hidden"
                 disabled={busy}
                 onChange={(e) => {

@@ -259,6 +259,91 @@ No prose, no markdown fences.`,
     return StatementList.parse(extractJson(result.text));
   });
 
+const ExtractedTxn = z.object({
+  date: z.string().min(4).max(40),
+  description: z.string().max(300),
+  // Signed: negative = money out (debit), positive = money in (credit).
+  amount: z.number(),
+});
+const ExtractedList = z.object({ items: z.array(ExtractedTxn) });
+
+/**
+ * Read a bank/card statement (PDF or CSV, any bank/country/language) and return
+ * a normalized, SIGNED transaction list. This deliberately does no analysis and
+ * no categorization — it only turns a messy file into clean rows, which the
+ * deterministic engine (analyzeStatement) then turns into fixed/variable/income/
+ * debt candidates. Keeping the AI to the parsing step is what makes a new bank
+ * "just work" without new per-bank code, while the budget math stays stable.
+ */
+export const extractStatementTransactions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        file_base64: z.string().min(10),
+        mime_type: z.string().min(3),
+        file_name: z.string().min(1).max(200),
+        householdId: z.string().uuid().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const apiKey = requireLovableApiKey();
+    const gateway = createLovableAiGatewayProvider(apiKey);
+
+    const isText = data.mime_type.includes("csv") || data.mime_type.includes("text");
+    let messages: Parameters<typeof generateText>[0]["messages"];
+    if (isText) {
+      const csvText = new TextDecoder().decode(
+        Uint8Array.from(atob(data.file_base64), (c) => c.charCodeAt(0)),
+      );
+      messages = [
+        { role: "user", content: `Extract every transaction from this statement:\n\n${csvText.slice(0, 120_000)}` },
+      ];
+    } else {
+      messages = [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Extract every transaction from this bank statement." },
+            {
+              type: "file",
+              data: `data:${data.mime_type};base64,${data.file_base64}`,
+              mediaType: data.mime_type,
+            },
+          ],
+        },
+      ];
+    }
+
+    const result = await generateText({
+      model: gateway(PARSE_MODEL),
+      system: `You read bank and card statements from any bank, country, or language, given as CSV text or a PDF.
+Extract EVERY transaction line. For each one return:
+- "date": the transaction (booking) date as ISO "yyyy-mm-dd". If only day/month is shown, infer the year from the statement.
+- "description": the raw merchant or description text, kept verbatim. Do not translate or clean it.
+- "amount": a SIGNED number. NEGATIVE for money leaving the account (debits, purchases, withdrawals, fees, direct debits). POSITIVE for money coming in (salary, credits, refunds, transfers in).
+Rules: include BOTH debits and credits. Do not categorize. Do not summarize or merge lines. Ignore running-balance columns and any header, footer, or summary totals. Use a dot as the decimal separator.
+Respond ONLY with JSON of shape {"items":[{"date":"yyyy-mm-dd","description":string,"amount":number}]}. No prose, no markdown fences.`,
+      messages,
+    });
+
+    if (data.householdId) {
+      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      await logHouseholdCredits({
+        householdId: data.householdId,
+        userId: context.userId,
+        operation: "ai_extract_statement",
+        credits: est.credits,
+        inputTokens: est.input,
+        outputTokens: est.output,
+        meta: { file_name: data.file_name, mime_type: data.mime_type },
+      });
+    }
+
+    return ExtractedList.parse(extractJson(result.text));
+  });
+
 /** Parse a photo of a receipt / bill into one or more expense rows. */
 export const parseReceiptPhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
