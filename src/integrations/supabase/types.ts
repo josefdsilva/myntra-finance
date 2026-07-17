@@ -1063,6 +1063,7 @@ export type Database = {
       redeem_beta_code: {
         Args: { p_code: string }
         Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
