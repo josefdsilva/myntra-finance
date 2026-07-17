@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { startOfMonth } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,15 @@ export function DebtsSection({ householdId }: { householdId: string }) {
   // is safe to run on every load and across shared-household members / devices.
   useEffect(() => {
     if (!data?.debts?.length) return;
-    const period = startOfMonth(new Date());
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    // Pay each loan on the maturity date's day-of-month (clamped to the month, so
+    // a due-day of 31 lands on the last day of a shorter month). Falls back to the
+    // 1st when no maturity date is set.
+    const paymentPeriod = (maturity: string | null): Date => {
+      const day = maturity ? Number(maturity.slice(8, 10)) || 1 : 1;
+      return new Date(now.getFullYear(), now.getMonth(), Math.min(day, daysInMonth));
+    };
     const active = data.debts.filter(
       (d) => Number(d.monthly_amount) > 0 && !debtLiveSchedule(d).paidOff,
     );
@@ -67,7 +74,7 @@ export function DebtsSection({ householdId }: { householdId: string }) {
         logScheduledDebtPayment({
           householdId,
           debtId: d.id,
-          period,
+          period: paymentPeriod(d.maturity_date),
           amount: Number(d.monthly_amount),
         }),
       ),
