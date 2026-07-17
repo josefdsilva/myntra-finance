@@ -856,3 +856,192 @@ Answer the user's questions grounded in this snapshot. Use markdown when helpful
 
     return { reply: result.text };
   });
+
+// ==========================================================================
+// Persistent coach conversations. We keep at most 5 per household (DB trigger)
+// and replay only the last REPLAY_TURNS turns to bound token cost.
+// ==========================================================================
+
+/** How many prior turns (user+assistant pairs) are replayed to the model. */
+export const COACH_REPLAY_TURNS = 3;
+
+export const listCoachConversations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ householdId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertHouseholdMember(supabase, data.householdId, userId);
+    const { data: rows } = await supabase
+      .from("coach_conversations")
+      .select("id, title, created_at, updated_at")
+      .eq("household_id", data.householdId)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+    return rows ?? [];
+  });
+
+export const getCoachConversation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ conversationId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: conv } = await supabase
+      .from("coach_conversations")
+      .select("id, household_id, title, created_at, updated_at")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!conv) throw new Error("Conversation not found");
+    await assertHouseholdMember(supabase, conv.household_id as string, userId);
+    const { data: msgs } = await supabase
+      .from("coach_messages")
+      .select("id, role, content, created_at")
+      .eq("conversation_id", data.conversationId)
+      .order("created_at", { ascending: true });
+    return { conversation: conv, messages: msgs ?? [] };
+  });
+
+export const createCoachConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ householdId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertHouseholdMember(supabase, data.householdId, userId);
+    const { data: row, error } = await supabase
+      .from("coach_conversations")
+      .insert({ household_id: data.householdId, created_by: userId })
+      .select("id, title, created_at, updated_at")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteCoachConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ conversationId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: conv } = await supabase
+      .from("coach_conversations")
+      .select("household_id")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!conv) return { ok: true };
+    await assertHouseholdMember(supabase, conv.household_id as string, userId);
+    await supabase.from("coach_conversations").delete().eq("id", data.conversationId);
+    return { ok: true };
+  });
+
+/**
+ * Persistent chat: appends the user turn, calls the model with only the last
+ * COACH_REPLAY_TURNS turns of context, appends the assistant reply, and bumps
+ * updated_at. If conversationId is null a new conversation is created.
+ */
+export const chatInConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        conversationId: z.string().uuid().nullable().optional(),
+        message: z.string().min(1).max(2000),
+        locale: z.string().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertHouseholdMember(supabase, data.householdId, userId);
+
+    // Resolve / create the conversation.
+    let convId = data.conversationId ?? null;
+    if (convId) {
+      const { data: existing } = await supabase
+        .from("coach_conversations")
+        .select("id, household_id")
+        .eq("id", convId)
+        .maybeSingle();
+      if (!existing || existing.household_id !== data.householdId) {
+        throw new Error("Conversation not found");
+      }
+    } else {
+      const { data: row, error } = await supabase
+        .from("coach_conversations")
+        .insert({ household_id: data.householdId, created_by: userId })
+        .select("id")
+        .single();
+      if (error) throw error;
+      convId = row.id as string;
+    }
+
+    // Load prior messages (all — we render them all client-side, but only replay tail).
+    const { data: priorRows } = await supabase
+      .from("coach_messages")
+      .select("role, content, created_at")
+      .eq("conversation_id", convId)
+      .order("created_at", { ascending: true });
+    const prior = (priorRows ?? []) as Array<{ role: "user" | "assistant"; content: string }>;
+
+    // Replay only the last N turns (user+assistant pairs => N*2 messages).
+    const replayCount = COACH_REPLAY_TURNS * 2;
+    const replayed = prior.slice(-replayCount);
+
+    // Persist the incoming user message before calling the model.
+    await supabase.from("coach_messages").insert({
+      conversation_id: convId,
+      household_id: data.householdId,
+      role: "user",
+      content: data.message,
+    });
+
+    const ctx = await buildContext(supabase, data.householdId);
+    const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
+    const result = await generateText({
+      model: gateway(MODEL),
+      system: `${buildSystem(ctx, data.locale)}
+
+Current household snapshot (JSON, always fresh):
+${JSON.stringify(ctx)}
+
+You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot. For quick questions stay short (2–5 sentences); for life-decision questions give a thorough answer with a range, assumption line, and clear recommendation.`,
+      temperature: 0.2,
+      messages: [
+        ...replayed.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user" as const, content: data.message },
+      ],
+    });
+
+    await supabase.from("coach_messages").insert({
+      conversation_id: convId,
+      household_id: data.householdId,
+      role: "assistant",
+      content: result.text,
+    });
+
+    // Auto-title from the first user message if the conversation has no title yet.
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (prior.length === 0) {
+      updates.title = data.message.slice(0, 60);
+    }
+    await supabase.from("coach_conversations").update(updates).eq("id", convId);
+
+    const est = estimateTextCredits(MODEL, result.usage as never);
+    await logHouseholdCredits({
+      householdId: data.householdId,
+      userId,
+      operation: "ai_coach_chat",
+      credits: est.credits,
+      inputTokens: est.input,
+      outputTokens: est.output,
+    });
+
+    return { reply: result.text, conversationId: convId };
+  });
+
