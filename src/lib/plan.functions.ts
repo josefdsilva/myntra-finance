@@ -58,6 +58,41 @@ export const deletePlan = createServerFn({ method: "POST" })
   });
 
 /**
+ * Resolve a plan against reality: mark it done and record what it actually cost
+ * (0 when it did not happen). Resolved plans leave the forward forecast and move
+ * to the history, where estimate vs actual is shown. The payment itself is not
+ * created here — that flows through a project withdrawal or a normal expense.
+ */
+export const resolvePlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ id: z.string().uuid(), actual_amount: z.number().min(0).max(10_000_000) })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("plans")
+      .update({ done: true, actual_amount: data.actual_amount })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+/** Reopen a resolved plan (clears the actual amount and puts it back in the forecast). */
+export const reopenPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("plans")
+      .update({ done: false, actual_amount: null })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+/**
  * Turn a spend plan into a sinking fund: create a goal_by_date project that
  * targets the plan's amount by its month, and link it back to the plan. From
  * then on the plan is "funded" and stops hitting its month as a lump; the user

@@ -25,6 +25,8 @@ export type Plan = {
   /** When set, a project is saving for this plan, so it won't land as a lump. */
   bucket_id: string | null;
   done?: boolean;
+  /** What it actually cost once resolved (0 = did not happen). Null until resolved. */
+  actual_amount?: number | string | null;
 };
 
 /** "yyyy-mm" key for a date. */

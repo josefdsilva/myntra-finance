@@ -6,10 +6,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { invalidateHouseholdData } from "@/lib/household-queries";
-import { upsertPlan, deletePlan, fundPlanAsProject } from "@/lib/plan.functions";
+import {
+  upsertPlan,
+  deletePlan,
+  fundPlanAsProject,
+  resolvePlan,
+  reopenPlan,
+} from "@/lib/plan.functions";
 import { buildForecast, plansForMonth, monthKey, type Plan } from "@/lib/plan";
 import { pageShellClass } from "@/components/page-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +35,17 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Plus, Trash2, PiggyBank, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Pencil,
+  Check,
+  RotateCcw,
+  PiggyBank,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+} from "lucide-react";
 import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { toast } from "sonner";
@@ -44,6 +68,8 @@ function PlanPage() {
   const upsertFn = useServerFn(upsertPlan);
   const deleteFn = useServerFn(deletePlan);
   const fundFn = useServerFn(fundPlanAsProject);
+  const resolveFn = useServerFn(resolvePlan);
+  const reopenFn = useServerFn(reopenPlan);
 
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],
@@ -127,6 +153,87 @@ function PlanPage() {
       setBusy(false);
     }
   }
+
+  // Edit an existing plan.
+  const [editRow, setEditRow] = useState<PlanRow | null>(null);
+  const [eLabel, setELabel] = useState("");
+  const [eAmount, setEAmount] = useState("");
+  const [eDirection, setEDirection] = useState<"spend" | "income">("spend");
+  const [eMonth, setEMonth] = useState("");
+  const [eRecurrence, setERecurrence] = useState<"one_off" | "annual" | "ongoing">("one_off");
+
+  function openEdit(p: PlanRow) {
+    setEditRow(p);
+    setELabel(p.label);
+    setEAmount(String(Number(p.amount)));
+    setEDirection(p.direction);
+    setEMonth(String(p.month).slice(0, 7));
+    setERecurrence(p.recurrence);
+  }
+
+  async function saveEdit() {
+    if (!editRow || !householdId || !eLabel || !eAmount) return;
+    setBusy(true);
+    try {
+      await upsertFn({
+        data: {
+          id: editRow.id,
+          household_id: householdId,
+          label: eLabel,
+          amount: parseFloat(eAmount) || 0,
+          direction: eDirection,
+          month: `${eMonth}-01`,
+          recurrence: eRecurrence,
+        },
+      });
+      setEditRow(null);
+      refetch();
+      toast.success(t("plan.updated"));
+    } catch {
+      toast.error(t("plan.errGeneric"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Resolve a plan against reality.
+  const [resolveRow, setResolveRow] = useState<PlanRow | null>(null);
+  const [actual, setActual] = useState("");
+
+  function openResolve(p: PlanRow) {
+    setResolveRow(p);
+    setActual(String(Number(p.amount)));
+  }
+
+  async function saveResolve(amountOverride?: number) {
+    if (!resolveRow) return;
+    const value = amountOverride ?? (parseFloat(actual) || 0);
+    setBusy(true);
+    try {
+      await resolveFn({ data: { id: resolveRow.id, actual_amount: value } });
+      setResolveRow(null);
+      refetch();
+      toast.success(t("plan.resolvedToast"));
+    } catch {
+      toast.error(t("plan.errGeneric"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reopen(id: string) {
+    await reopenFn({ data: { id } });
+    refetch();
+  }
+
+  // Resolved plans (history), newest month first.
+  const resolved = useMemo(
+    () =>
+      plans
+        .filter((p) => p.done)
+        .sort((a, b) => String(b.month).localeCompare(String(a.month))),
+    [plans],
+  );
 
   // Upcoming plans grouped by month (next 12 months of activity, undone).
   const upcomingMonths = useMemo(() => {
@@ -302,8 +409,8 @@ function PlanPage() {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="tabular-nums font-medium">
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="tabular-nums font-medium mr-1">
                           {p.direction === "income" ? "+" : ""}
                           {money(Number(p.amount))}
                         </span>
@@ -317,6 +424,17 @@ function PlanPage() {
                             <PiggyBank className="size-4" /> {t("plan.fund")}
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openResolve(p)}
+                          title={t("plan.markDone")}
+                        >
+                          <Check className="size-4" /> {t("plan.markDone")}
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
+                          <Pencil className="size-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => remove(p.id)}>
                           <Trash2 className="size-4" />
                         </Button>
@@ -329,6 +447,159 @@ function PlanPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Resolved history: estimate vs reality */}
+      {resolved.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("plan.resolvedTitle")}</CardTitle>
+            <CardDescription>{t("plan.resolvedDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y">
+              {resolved.map((p) => {
+                const planned = Number(p.amount);
+                const act = Number(p.actual_amount ?? 0);
+                const magnitude = Math.abs(planned - act);
+                const favorable = p.direction === "income" ? act >= planned : act <= planned;
+                return (
+                  <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate">{p.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {monthLabel(String(p.month).slice(0, 7))} · {t("plan.planned")}{" "}
+                        {money(planned)} · {t("plan.actual")} {money(act)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${favorable ? "text-emerald-600" : "text-destructive"}`}
+                      >
+                        {magnitude < 0.005
+                          ? t("plan.diffExact")
+                          : favorable
+                            ? t("plan.diffBetter", { amount: money(magnitude) })
+                            : t("plan.diffWorse", { amount: money(magnitude) })}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => reopen(p.id)}
+                        title={t("plan.reopen")}
+                      >
+                        <RotateCcw className="size-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(p.id)}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Edit dialog */}
+      <Dialog open={!!editRow} onOpenChange={(v) => !v && setEditRow(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("plan.editTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">{t("plan.label")}</Label>
+              <Input value={eLabel} onChange={(e) => setELabel(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">{t("plan.amount")}</Label>
+                <Input
+                  inputMode="decimal"
+                  value={eAmount}
+                  onChange={(e) => setEAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{t("plan.month")}</Label>
+                <Input type="month" value={eMonth} onChange={(e) => setEMonth(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">{t("plan.kind")}</Label>
+                <Select value={eDirection} onValueChange={(v) => setEDirection(v as typeof eDirection)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="spend">{t("plan.spend")}</SelectItem>
+                    <SelectItem value="income">{t("plan.income")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">{t("plan.recurrence")}</Label>
+                <Select
+                  value={eRecurrence}
+                  onValueChange={(v) => setERecurrence(v as typeof eRecurrence)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="one_off">{t("plan.once")}</SelectItem>
+                    <SelectItem value="annual">{t("plan.annual")}</SelectItem>
+                    <SelectItem value="ongoing">{t("plan.ongoing")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRow(null)} disabled={busy}>
+              {t("plan.cancel")}
+            </Button>
+            <Button onClick={saveEdit} disabled={busy || !eLabel || !eAmount}>
+              {t("plan.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resolve dialog */}
+      <Dialog open={!!resolveRow} onOpenChange={(v) => !v && setResolveRow(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("plan.resolveTitle")}</DialogTitle>
+            <DialogDescription>{t("plan.resolveDesc")}</DialogDescription>
+          </DialogHeader>
+          {resolveRow && (
+            <p className="text-sm text-muted-foreground">
+              {resolveRow.label} · {t("plan.planned")} {money(Number(resolveRow.amount))}
+            </p>
+          )}
+          <div>
+            <Label className="text-xs">{t("plan.actualAmount")}</Label>
+            <Input inputMode="decimal" value={actual} onChange={(e) => setActual(e.target.value)} />
+          </div>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="ghost" onClick={() => saveResolve(0)} disabled={busy}>
+              {t("plan.didntHappen")}
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setResolveRow(null)} disabled={busy}>
+                {t("plan.cancel")}
+              </Button>
+              <Button onClick={() => saveResolve()} disabled={busy}>
+                {t("plan.resolve")}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

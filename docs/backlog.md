@@ -34,6 +34,7 @@ A living list of what we can still build together. Grouped by type, roughly orde
 ## Recently shipped, for reference
 
 - Forward planning. A Plan page where users line up known future costs and income changes (one-off, annual, or ongoing-from), see a month-by-month forecast of income, baseline, planned spend, and leftover with shortfall months flagged, and turn any big one-off into a savings project in one click. The standing baseline stays recurring-only; the current cycle's real surplus on the dashboard now subtracts this month's unfunded plans. Pure forecast engine with unit tests.
+- Planned vs reality. Plan entries are fully editable (value and date), and each can be resolved against reality: mark it done and record what it actually cost (or that it did not happen). A done history shows the estimate next to the actual with a better/worse badge; resolved plans leave the forward forecast. Payment itself still flows through a project withdrawal or a normal expense.
 - AI-read bank statements. The importer now sends the whole file (CSV or PDF) to the AI, which extracts clean signed transactions across any bank layout; the existing recurring / variable / income / debt analysis runs on top. CSV keeps a local-parser fallback if the AI is unavailable.
 - Money-math unit tests (cycle, movements, debt schedule) and a `bun test` script.
 - Removed the client-side baseline computation in Settings so the database trigger is the single source of truth.

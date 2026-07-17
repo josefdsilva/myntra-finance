@@ -930,6 +930,7 @@ export type Database = {
       }
       plans: {
         Row: {
+          actual_amount: number | null
           amount: number
           bucket_id: string | null
           category: string | null
@@ -946,6 +947,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_amount?: number | null
           amount: number
           bucket_id?: string | null
           category?: string | null
@@ -962,6 +964,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_amount?: number | null
           amount?: number
           bucket_id?: string | null
           category?: string | null
