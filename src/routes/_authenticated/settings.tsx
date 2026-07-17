@@ -137,7 +137,7 @@ function operationLabels(t: ReturnType<typeof useT>): Record<string, string> {
   };
 }
 
-const HARDWIRED_CAP = 10;
+const DEFAULT_CAP = 7.5;
 
 function rowsOrEmpty<T>(rows: T[] | null | undefined): T[] {
   return Array.isArray(rows) ? rows : [];
