@@ -88,6 +88,13 @@ export function SpendingVsEstimate({ householdId }: { householdId: string }) {
   const rows = data?.rows ?? [];
   if (rows.length === 0) return null;
 
+  const totalEst = round2(rows.reduce((s, r) => s + r.estimate, 0));
+  const totalAct = round2(rows.reduce((s, r) => s + r.actual, 0));
+  const totalPct =
+    totalEst > 0 ? Math.min(100, (totalAct / totalEst) * 100) : totalAct > 0 ? 100 : 0;
+  const totalOver = totalEst > 0 && totalAct > totalEst;
+  const totalDiff = round2(Math.abs(totalEst - totalAct));
+
   return (
     <Card>
       <CardHeader>
@@ -95,6 +102,25 @@ export function SpendingVsEstimate({ householdId }: { householdId: string }) {
         <CardDescription>{t("sve.desc")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        <div className="space-y-1 rounded-lg border bg-muted/40 p-3">
+          <div className="flex items-center justify-between gap-2 text-sm font-medium">
+            <span>{t("sve.total")}</span>
+            <span className="tabular-nums">
+              <span className={totalOver ? "text-destructive" : ""}>{money(totalAct)}</span>
+              <span className="text-muted-foreground font-normal"> / {money(totalEst)}</span>
+            </span>
+          </div>
+          <Progress value={totalPct} className={totalOver ? "[&>div]:bg-destructive" : ""} />
+          <p className="text-xs text-muted-foreground">
+            {totalEst === 0
+              ? t("sve.noEstimate")
+              : totalDiff < 0.005
+                ? t("sve.onTrack")
+                : totalOver
+                  ? t("sve.over", { amount: money(totalDiff) })
+                  : t("sve.left", { amount: money(totalDiff) })}
+          </p>
+        </div>
         {rows.map((r) => {
           const pct =
             r.estimate > 0 ? Math.min(100, (r.actual / r.estimate) * 100) : r.actual > 0 ? 100 : 0;
