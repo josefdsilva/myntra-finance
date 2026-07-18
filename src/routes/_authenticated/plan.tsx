@@ -445,7 +445,11 @@ function PlanPage() {
           {planView === "timeline" ? (
             <PlanTimeline plans={plans} horizon={timelineHorizon} />
           ) : upcomingMonths.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">{t("plan.listEmpty")}</p>
+            <EmptyState
+              icon={CalendarClock}
+              title={t("plan.listEmpty")}
+              description={t("plan.subtitle")}
+            />
           ) : (
             upcomingMonths.map(({ ym, items }) => (
               <div key={ym} className="space-y-2">
