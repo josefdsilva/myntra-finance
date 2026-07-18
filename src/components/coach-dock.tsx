@@ -61,6 +61,7 @@ export function CoachDock() {
   const [convId, setConvId] = useState<string | null>(null);
   const [pending, setPending] = useState<Msg[]>([]); // optimistic user + streaming placeholder
   const [input, setInput] = useState("");
+  const [deepThink, setDeepThink] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const autoSentRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
