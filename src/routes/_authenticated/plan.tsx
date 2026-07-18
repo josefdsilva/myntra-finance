@@ -451,83 +451,85 @@ function PlanPage() {
                   {monthLabel(ym)}
                 </p>
                 <ul className="divide-y">
-                  {items.map((p) => (
-                    <li
-                      key={`${p.id}-${ym}`}
-                      className="grid grid-cols-[1fr_auto] items-center gap-x-3 py-2"
-                    >
-                      <div className="flex items-start gap-2 min-w-0">
-                        {p.direction === "income" ? (
-                          <TrendingUp className="size-4 text-emerald-600 shrink-0 mt-0.5" />
-                        ) : (
-                          <TrendingDown className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <span className="block truncate">{p.label}</span>
-                          {(p.recurrence !== "one_off" || p.bucket_id) && (
-                            <div className="mt-0.5 flex flex-wrap gap-1">
-                              {p.recurrence !== "one_off" && (
-                                <Badge variant="outline" className="text-[10px]">
-                                  {t(p.recurrence === "annual" ? "plan.annual" : "plan.ongoing")}
-                                </Badge>
-                              )}
-                              {p.bucket_id && (
-                                <Badge variant="outline" className="text-[10px] text-emerald-600">
-                                  {t("plan.funded")}
-                                </Badge>
-                              )}
-                            </div>
+                  {items.map((p) => {
+                    const hasBadges = p.recurrence !== "one_off" || !!p.bucket_id;
+                    return (
+                      <li key={`${p.id}-${ym}`} className="py-2 space-y-1.5">
+                        {/* Top row: icon + label + amount */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          {p.direction === "income" ? (
+                            <TrendingUp className="size-4 text-emerald-600 shrink-0" />
+                          ) : (
+                            <TrendingDown className="size-4 text-muted-foreground shrink-0" />
                           )}
+                          <span className="flex-1 min-w-0 truncate text-sm">{p.label}</span>
+                          <span className="shrink-0 tabular-nums font-medium text-sm">
+                            {p.direction === "income" ? "+" : ""}
+                            {money(Number(p.amount))}
+                          </span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1 justify-self-end">
-                        <span className="w-20 sm:w-24 text-right tabular-nums font-medium">
-                          {p.direction === "income" ? "+" : ""}
-                          {money(Number(p.amount))}
-                        </span>
-                        {p.direction === "spend" && !p.bucket_id ? (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-7 text-emerald-600"
-                            disabled={busy}
-                            onClick={() => fund(p.id)}
-                            title={t("plan.fund")}
-                          >
-                            <PiggyBank className="size-3.5" />
-                          </Button>
-                        ) : (
-                          <span className="size-7 inline-block" aria-hidden />
-                        )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-7"
-                          onClick={() => openResolve(p)}
-                          title={t("plan.markDone")}
-                        >
-                          <Check className="size-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-7"
-                          onClick={() => openEdit(p)}
-                          title={t("plan.editTitle")}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-7 text-muted-foreground"
-                          onClick={() => remove(p.id)}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
+                        {/* Bottom row: badges left, actions right */}
+                        <div className="flex items-center justify-between gap-2 pl-6">
+                          <div className="flex flex-wrap gap-1 min-w-0">
+                            {p.recurrence !== "one_off" && (
+                              <Badge variant="outline" className="text-[10px] whitespace-nowrap">
+                                {t(p.recurrence === "annual" ? "plan.annual" : "plan.ongoing")}
+                              </Badge>
+                            )}
+                            {p.bucket_id && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] text-emerald-600 whitespace-nowrap"
+                              >
+                                {t("plan.funded")}
+                              </Badge>
+                            )}
+                            {!hasBadges && <span className="text-[10px]">&nbsp;</span>}
+                          </div>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {p.direction === "spend" && !p.bucket_id && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="size-7 text-emerald-600"
+                                disabled={busy}
+                                onClick={() => fund(p.id)}
+                                title={t("plan.fund")}
+                              >
+                                <PiggyBank className="size-3.5" />
+                              </Button>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-7"
+                              onClick={() => openResolve(p)}
+                              title={t("plan.markDone")}
+                            >
+                              <Check className="size-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-7"
+                              onClick={() => openEdit(p)}
+                              title={t("plan.editTitle")}
+                            >
+                              <Pencil className="size-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-7 text-muted-foreground"
+                              onClick={() => remove(p.id)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))
