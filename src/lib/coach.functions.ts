@@ -671,6 +671,20 @@ const MARKET_RATES: Record<string, RateBlock> = {
   },
 };
 
+/**
+ * The copy of the snapshot actually sent to the model. Caps the long arrays to
+ * cut input tokens without dropping any field the prompt relies on. Every screen
+ * still gets the full ctx; only what the model sees is trimmed.
+ */
+function slimContext(ctx: CoachContext): CoachContext {
+  return {
+    ...ctx,
+    topSpends: ctx.topSpends.slice(0, 6),
+    upcomingPlans: ctx.upcomingPlans.slice(0, 8),
+    resolvedPlansRecent: ctx.resolvedPlansRecent.slice(0, 4),
+  };
+}
+
 /** Country-aware system prompt that points the model at the pre-computed facts. */
 function buildSystem(ctx: CoachContext, locale?: string): string {
   const cc = ctx.countryName;
@@ -775,7 +789,7 @@ export const generateOverview = createServerFn({ method: "POST" })
       model: gateway(MODEL),
       system: buildSystem(ctx, data.locale),
       temperature: 0.2,
-      prompt: `Household snapshot (JSON):\n${JSON.stringify(ctx)}\n\n${OVERVIEW_PROMPT}`,
+      prompt: `Household snapshot (JSON):\n${JSON.stringify(slimContext(ctx))}\n\n${OVERVIEW_PROMPT}`,
     });
 
     const est = estimateTextCredits(MODEL, result.usage as never);
@@ -834,7 +848,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
       system: `${buildSystem(ctx, data.locale)}
 
 Current household snapshot (JSON, always fresh):
-${JSON.stringify(ctx)}
+${JSON.stringify(slimContext(ctx))}
 
 Answer the user's questions grounded in this snapshot. Use markdown when helpful. For quick questions stay short (2–5 sentences); for life-decision questions (housing, buying vs financing, taking on debt, big savings goals) give a more thorough answer with a range, an assumption line, and a clear recommendation.`,
       temperature: 0.2,
@@ -1008,7 +1022,7 @@ export const chatInConversation = createServerFn({ method: "POST" })
       system: `${buildSystem(ctx, data.locale)}
 
 Current household snapshot (JSON, always fresh):
-${JSON.stringify(ctx)}
+${JSON.stringify(slimContext(ctx))}
 
 You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot. For quick questions stay short (2–5 sentences); for life-decision questions give a thorough answer with a range, assumption line, and clear recommendation.`,
       temperature: 0.2,
