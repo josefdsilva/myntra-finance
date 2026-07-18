@@ -970,35 +970,35 @@ function BucketRow<T extends BucketRowShape>({
   const dirty = JSON.stringify(b) !== JSON.stringify(bucket);
 
   return (
-    <div className="rounded-lg border p-4 space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-end">
-        <div>
-          <Label>{t("buckets.name")}</Label>
-          <Input value={b.name} onChange={(e) => setB({ ...b, name: e.target.value })} />
-        </div>
-        <div>
-          <Label>{t("buckets.color")}</Label>
-          <Input
-            type="color"
-            value={b.color ?? "#2c6e6b"}
-            onChange={(e) => setB({ ...b, color: e.target.value })}
-            className="w-16 p-1 h-9"
-          />
-        </div>
-        <Button variant="ghost" size="icon" onClick={onRemove}>
+    <div className="rounded-lg border p-3 space-y-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 items-center">
+        <Input
+          value={b.name}
+          onChange={(e) => setB({ ...b, name: e.target.value })}
+          className="h-8"
+          placeholder={t("buckets.name")}
+        />
+        <Input
+          type="color"
+          value={b.color ?? "#2c6e6b"}
+          onChange={(e) => setB({ ...b, color: e.target.value })}
+          className="w-10 h-8 p-1 shrink-0"
+          aria-label={t("buckets.color")}
+        />
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onRemove}>
           <Trash2 className="size-4" />
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div>
-          <Label>{t("buckets.kindLabel")}</Label>
+          <Label className="text-xs">{t("buckets.kindLabel")}</Label>
           <Select
             value={b.kind ?? "savings"}
             onValueChange={(v) =>
               setB({ ...b, kind: v as "savings" | "emergency" | "investment" })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1007,12 +1007,11 @@ function BucketRow<T extends BucketRowShape>({
               <SelectItem value="investment">{t("buckets.kindInvestment")}</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground mt-1">{t("buckets.kindHint")}</p>
         </div>
         <div>
-          <Label>{t("buckets.targetType")}</Label>
+          <Label className="text-xs">{t("buckets.targetType")}</Label>
           <Select value={b.target_type} onValueChange={(v) => setB({ ...b, target_type: v })}>
-            <SelectTrigger>
+            <SelectTrigger className="h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1024,7 +1023,7 @@ function BucketRow<T extends BucketRowShape>({
           </Select>
         </div>
         <div>
-          <Label>
+          <Label className="text-xs">
             {b.target_type === "pct_surplus"
               ? t("buckets.targetPct", { value: b.target_value })
               : b.target_type === "goal_by_date"
@@ -1038,46 +1037,48 @@ function BucketRow<T extends BucketRowShape>({
               max={100}
               step={1}
               onValueChange={(v) => setB({ ...b, target_value: v[0] })}
-              className="mt-3"
+              className="mt-2.5"
             />
           ) : (
             <Input
               inputMode="decimal"
               value={b.target_value}
               onChange={(e) => setB({ ...b, target_value: parseFloat(e.target.value) || 0 })}
+              className="h-8"
             />
           )}
         </div>
-        {b.target_type === "goal_by_date" && (
-          <div>
-            <Label>{t("buckets.reachBy")}</Label>
-            <Input
-              type="date"
-              value={b.target_deadline ?? ""}
-              onChange={(e) => setB({ ...b, target_deadline: e.target.value || null })}
-            />
-            <p className="text-xs text-muted-foreground mt-1">{t("buckets.reachByHint")}</p>
-          </div>
-        )}
         <div>
-          <Label>{t("buckets.initialBalance")}</Label>
+          <Label className="text-xs">{t("buckets.initialBalance")}</Label>
           <Input
             inputMode="decimal"
             placeholder="0.00"
             value={b.initial_balance ?? 0}
             onChange={(e) => setB({ ...b, initial_balance: parseFloat(e.target.value) || 0 })}
+            className="h-8"
           />
-          <p className="text-xs text-muted-foreground mt-1">{t("buckets.initialBalanceHint")}</p>
         </div>
+        {b.target_type === "goal_by_date" && (
+          <div className="col-span-2 sm:col-span-4">
+            <Label className="text-xs">{t("buckets.reachBy")}</Label>
+            <Input
+              type="date"
+              value={b.target_deadline ?? ""}
+              onChange={(e) => setB({ ...b, target_deadline: e.target.value || null })}
+              className="h-8"
+            />
+          </div>
+        )}
       </div>
       {dirty && (
-        <Button size="sm" onClick={() => onSave(b)}>
+        <Button size="sm" onClick={() => onSave(b)} className="h-8">
           {t("common.saveChanges")}
         </Button>
       )}
     </div>
   );
 }
+
 
 function MembersSection({ householdId }: { householdId: string }) {
   const t = useT();
