@@ -490,23 +490,29 @@ function PlanPage() {
                       key={`${p.id}-${ym}`}
                       className="grid grid-cols-[1fr_auto] items-center gap-x-3 py-2"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-start gap-2 min-w-0">
                         {p.direction === "income" ? (
-                          <TrendingUp className="size-4 text-emerald-600 shrink-0" />
+                          <TrendingUp className="size-4 text-emerald-600 shrink-0 mt-0.5" />
                         ) : (
-                          <TrendingDown className="size-4 text-muted-foreground shrink-0" />
+                          <TrendingDown className="size-4 text-muted-foreground shrink-0 mt-0.5" />
                         )}
-                        <span className="truncate">{p.label}</span>
-                        {p.recurrence !== "one_off" && (
-                          <Badge variant="outline" className="text-[10px] shrink-0">
-                            {t(p.recurrence === "annual" ? "plan.annual" : "plan.ongoing")}
-                          </Badge>
-                        )}
-                        {p.bucket_id && (
-                          <Badge variant="outline" className="text-[10px] text-emerald-600 shrink-0">
-                            {t("plan.funded")}
-                          </Badge>
-                        )}
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate">{p.label}</span>
+                          {(p.recurrence !== "one_off" || p.bucket_id) && (
+                            <div className="mt-0.5 flex flex-wrap gap-1">
+                              {p.recurrence !== "one_off" && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  {t(p.recurrence === "annual" ? "plan.annual" : "plan.ongoing")}
+                                </Badge>
+                              )}
+                              {p.bucket_id && (
+                                <Badge variant="outline" className="text-[10px] text-emerald-600">
+                                  {t("plan.funded")}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 justify-self-end">
                         <span className="w-20 sm:w-24 text-right tabular-nums font-medium">
