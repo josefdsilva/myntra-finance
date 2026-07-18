@@ -1,14 +1,4 @@
-import { useMemo, useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip as UiTooltip,
@@ -18,29 +8,14 @@ import {
 } from "@/components/ui/tooltip";
 import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { buildForecastSeries, type ProjectInput } from "@/lib/plan-forecast-series";
 import { planAppliesToMonth, monthKey, type Plan } from "@/lib/plan";
-import type { Debt } from "@/lib/debt-schedule";
 
 export type Horizon = 3 | 6 | 12;
-
-const PALETTE = [
-  "#6366f1",
-  "#0ea5e9",
-  "#14b8a6",
-  "#f59e0b",
-  "#ec4899",
-  "#8b5cf6",
-  "#22c55e",
-  "#ef4444",
-  "#06b6d4",
-  "#a855f7",
-];
 
 const shortLabel = (d: Date) =>
   d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
 
-/** Segmented 3 / 6 / 12 month horizon control (shared by the timeline and chart). */
+/** Segmented 3 / 6 / 12 month horizon control. */
 export function HorizonToggle({
   horizon,
   onChange,
@@ -164,174 +139,5 @@ export function PlanTimeline({ plans, horizon }: { plans: Plan[]; horizon: Horiz
         </div>
       </TooltipProvider>
     </div>
-  );
-}
-
-type SeriesDef = { key: string; name: string; color: string; group: string; dashed?: boolean };
-
-/** Multi-series forecast chart with toggleable, grouped lines. */
-export function PlanForecastChart({
-  plans,
-  projects,
-  debts,
-  baseline,
-  monthlyIncome,
-}: {
-  plans: Plan[];
-  projects: ProjectInput[];
-  debts: Debt[];
-  baseline: number;
-  monthlyIncome: number;
-}) {
-  const t = useT();
-  const [horizon, setHorizon] = useState<Horizon>(6);
-
-  // Default: only project/allocation lines are shown; the rest start hidden.
-  const [hidden, setHidden] = useState<Set<string>>(() => {
-    const projKeys = projects.map((p) => `proj_${p.id}`);
-    const shown = projKeys.length ? projKeys : ["income", "surplus"];
-    const allKeys = [
-      "income",
-      "surplus",
-      "interestSaved",
-      "uninvestedSurplus",
-      ...projects.map((p) => `proj_${p.id}`),
-      ...debts.map((d) => `debt_${d.id}`),
-    ];
-    return new Set(allKeys.filter((k) => !shown.includes(k)));
-  });
-
-  const series = useMemo(
-    () => buildForecastSeries({ plans, projects, debts, baseline, monthlyIncome, months: horizon }),
-    [plans, projects, debts, baseline, monthlyIncome, horizon],
-  );
-
-  const { rows, defs } = useMemo(() => {
-    const defs: SeriesDef[] = [
-      { key: "income", name: t("plan.seriesIncome"), color: "#16a34a", group: t("plan.groupIncome") },
-      { key: "surplus", name: t("plan.seriesSurplus"), color: "#0891b2", group: t("plan.groupIncome") },
-    ];
-    projects.forEach((p, i) =>
-      defs.push({ key: `proj_${p.id}`, name: p.name, color: PALETTE[i % PALETTE.length], group: t("plan.groupProjects") }),
-    );
-    debts.forEach((d, i) =>
-      defs.push({
-        key: `debt_${d.id}`,
-        name: (d as unknown as { label?: string }).label ?? t("plan.groupDebts"),
-        color: PALETTE[(i + 5) % PALETTE.length],
-        group: t("plan.groupDebts"),
-        dashed: true,
-      }),
-    );
-    defs.push({ key: "interestSaved", name: t("plan.seriesInterestSaved"), color: "#f59e0b", group: t("plan.groupGains") });
-    defs.push({ key: "uninvestedSurplus", name: t("plan.seriesUninvested"), color: "#a855f7", group: t("plan.groupGains") });
-
-    const rows = series.map((pt) => {
-      const row: Record<string, number | string> = {
-        label: pt.label,
-        income: pt.income,
-        surplus: pt.surplus,
-        interestSaved: pt.interestSaved,
-        uninvestedSurplus: pt.uninvestedSurplus,
-      };
-      for (const p of projects) row[`proj_${p.id}`] = pt.projects[p.id] ?? 0;
-      for (const d of debts) row[`debt_${d.id}`] = pt.debts[d.id] ?? 0;
-      return row;
-    });
-    return { rows, defs };
-  }, [series, projects, debts, t]);
-
-  const groups = useMemo(() => {
-    const map = new Map<string, SeriesDef[]>();
-    for (const d of defs) {
-      if (!map.has(d.group)) map.set(d.group, []);
-      map.get(d.group)!.push(d);
-    }
-    return Array.from(map.entries());
-  }, [defs]);
-
-  function toggle(key: string) {
-    setHidden((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
-  if (!projects.length && !debts.length && !plans.length) return null;
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-        <div>
-          <CardTitle>{t("plan.chartsTitle")}</CardTitle>
-          <CardDescription>{t("plan.chartsDesc")}</CardDescription>
-        </div>
-        <HorizonToggle horizon={horizon} onChange={setHorizon} />
-      </CardHeader>
-      <CardContent>
-        <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                stroke="var(--muted-foreground)"
-                width={48}
-                tickFormatter={(v) => (Math.abs(v) >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
-              />
-              <Tooltip
-                formatter={(v: number, name: string) => [money(Number(v)), name]}
-                contentStyle={{
-                  background: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-              />
-              {defs.map((d) => (
-                <Line
-                  key={d.key}
-                  type="monotone"
-                  dataKey={d.key}
-                  name={d.name}
-                  stroke={d.color}
-                  strokeWidth={2}
-                  strokeDasharray={d.dashed ? "5 4" : undefined}
-                  dot={false}
-                  hide={hidden.has(d.key)}
-                  isAnimationActive={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="mt-3 space-y-2">
-          {groups.map(([group, items]) => (
-            <div key={group} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="text-[11px] font-medium text-muted-foreground w-full sm:w-auto">
-                {group}
-              </span>
-              {items.map((d) => {
-                const off = hidden.has(d.key);
-                return (
-                  <button
-                    key={d.key}
-                    onClick={() => toggle(d.key)}
-                    className={`flex items-center gap-1.5 text-xs ${off ? "opacity-40" : ""}`}
-                  >
-                    <span className="inline-block size-2.5 rounded-full" style={{ background: d.color }} />
-                    {d.name}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
