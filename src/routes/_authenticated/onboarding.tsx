@@ -25,7 +25,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { StatementImportButton } from "@/components/statement-import-flow";
-import { money } from "@/lib/format";
+import { money, currencySymbol } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+
 import {
   Plus,
   Loader2,
