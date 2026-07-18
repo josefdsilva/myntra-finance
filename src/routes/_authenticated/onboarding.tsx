@@ -216,24 +216,23 @@ function StepHead({
 }
 
 function Welcome() {
+  const t = useT();
   return (
     <div className="space-y-4 pt-6">
       <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Sparkles className="size-7" />
       </div>
-      <h1 className="font-display text-3xl">Welcome — let's set up your budget</h1>
-      <p className="text-muted-foreground">
-        A few quick questions to get you started. You can skip any of them and fill things in later
-        in Settings — and you can even upload a bank statement to fill most of it automatically.
-      </p>
+      <h1 className="font-display text-3xl">{t("ob.welcome.title")}</h1>
+      <p className="text-muted-foreground">{t("ob.welcome.body")}</p>
     </div>
   );
 }
 
 function CountryStep({ country, setCountry }: { country: string; setCountry: (v: string) => void }) {
+  const t = useT();
   return (
     <div>
-      <StepHead icon={Home} title="Where are you based?" subtitle="Used for currency and to compare against national averages." />
+      <StepHead icon={Home} title={t("ob.country.title")} subtitle={t("ob.country.subtitle")} />
       <Select value={country} onValueChange={setCountry}>
         <SelectTrigger className="w-full">
           <SelectValue />
@@ -278,12 +277,13 @@ function HouseholdStep({
   children: number;
   setChildren: (v: number) => void;
 }) {
+  const t = useT();
   return (
     <div>
-      <StepHead icon={Users} title="Tell us about your household" subtitle="This tailors budgets and comparisons to your size." />
+      <StepHead icon={Users} title={t("ob.household.title")} subtitle={t("ob.household.subtitle")} />
       <div className="space-y-3">
-        <Stepper label="Adults" value={adults} setValue={setAdults} min={1} />
-        <Stepper label="Children" value={children} setValue={setChildren} min={0} />
+        <Stepper label={t("ob.household.adults")} value={adults} setValue={setAdults} min={1} />
+        <Stepper label={t("ob.household.children")} value={children} setValue={setChildren} min={0} />
       </div>
     </div>
   );
@@ -292,18 +292,23 @@ function HouseholdStep({
 // ---- Entry-list steps -----------------------------------------------------
 
 function EntryList({ items }: { items: Array<{ id: string; label: string; monthly_amount: number | string }> }) {
+  const t = useT();
   if (!items.length) return null;
   return (
     <ul className="mt-4 divide-y rounded-xl border">
       {items.map((r) => (
         <li key={r.id} className="flex items-center justify-between px-4 py-2 text-sm">
           <span className="truncate">{r.label}</span>
-          <span className="tabular-nums font-medium">{money(Number(r.monthly_amount))}/mo</span>
+          <span className="tabular-nums font-medium">
+            {money(Number(r.monthly_amount))}
+            {t("common.perMonthShort")}
+          </span>
         </li>
       ))}
     </ul>
   );
 }
+
 
 type ListRow = { id: string; label: string; monthly_amount: number };
 
