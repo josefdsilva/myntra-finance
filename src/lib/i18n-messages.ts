@@ -58,7 +58,7 @@ const en = {
   "stmt.errFewTxns": "Couldn't read enough transactions from this file.",
   "stmt.errRead": "Failed to read the statement.",
   "stmt.errTooLarge": "That file is too large. Please keep it under 10 MB.",
-  "nav.plan": "Plan",
+  "nav.plan": "Plans",
   "plan.title": "Plan ahead",
   "plan.subtitle": "Line up known costs and income changes so no month catches you off guard.",
   "plan.addTitle": "Add a plan",
