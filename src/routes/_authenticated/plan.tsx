@@ -49,9 +49,11 @@ import {
   AlertTriangle,
   List,
   CalendarRange,
+  CalendarClock,
 } from "lucide-react";
 import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
+import { EmptyState } from "@/components/empty-state";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/plan")({
@@ -443,7 +445,11 @@ function PlanPage() {
           {planView === "timeline" ? (
             <PlanTimeline plans={plans} horizon={timelineHorizon} />
           ) : upcomingMonths.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">{t("plan.listEmpty")}</p>
+            <EmptyState
+              icon={CalendarClock}
+              title={t("plan.listEmpty")}
+              description={t("plan.subtitle")}
+            />
           ) : (
             upcomingMonths.map(({ ym, items }) => (
               <div key={ym} className="space-y-2">

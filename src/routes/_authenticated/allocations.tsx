@@ -8,6 +8,7 @@ import { confirmBucketAllocation, undoBucketAllocation } from "@/lib/bucket-allo
 import { MoveFundsCard } from "@/components/move-funds-card";
 import { BucketsSection } from "@/routes/_authenticated/settings";
 import { pageShellClass } from "@/components/page-shell";
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
@@ -257,9 +258,13 @@ function AllocationsPage() {
         </CardHeader>
         <CardContent>
           {!data?.buckets?.length ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              {t("alloc.thisMonth.empty")}
-            </p>
+            <EmptyState
+              icon={PiggyBank}
+              title={t("alloc.thisMonth.empty")}
+              description={t("alloc.thisMonth.desc")}
+              ctaLabel={t("emptyState.tryCta")}
+              ctaTo="/settings"
+            />
           ) : (
             <div className="space-y-4">
               {surplus > 0 && (
