@@ -102,6 +102,8 @@ type CoachContext = {
   variableEstimateMonthly: number;
   /** Canonical monthly income = sum of Settings incomes (matches the app screens). */
   settingsIncome: number;
+  /** Each income source with its plain type (salary, rent, pension, benefits, other). */
+  incomeSources: Array<{ label: string; type: string; monthly_amount: number }>;
   /** Settings income − baseline (baseline includes fixed + debt + variable + margin). */
   monthlySurplus: number;
   /** Conservative safe monthly payment for a new recurring commitment (rent, loan, lease). */
@@ -289,9 +291,12 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   // savings rate, debt-to-income and the benchmark, matching every app screen.
   const { data: incomesRows } = await supabase
     .from("incomes")
-    .select("monthly_amount")
+    .select("label, type, monthly_amount")
     .eq("household_id", householdId);
   const settingsIncome = sumMonthly(incomesRows);
+  const incomeSources = rowsOrEmpty<{ label: string; type: string; monthly_amount: number | string }>(
+    incomesRows,
+  ).map((r) => ({ label: r.label, type: r.type, monthly_amount: Number(r.monthly_amount) || 0 }));
   const baseline = Number(hh?.baseline_budget ?? 0);
   type DebtRow = {
     label: string;
@@ -600,6 +605,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     debtPrincipalOutstanding,
     variableEstimateMonthly,
     settingsIncome,
+    incomeSources,
     monthlySurplus,
     safeNewMonthlyCommitment,
     totalSavings,
@@ -696,6 +702,7 @@ function buildSystem(ctx: CoachContext, locale?: string): string {
 Ground EVERY answer in the JSON snapshot provided — never invent numbers, and never redo arithmetic the snapshot already did.
 The snapshot pre-computes the key figures; quote them verbatim rather than deriving your own:
 - settingsIncome (monthly income), baseline (target cost of living), monthlySurplus (= settingsIncome − baseline), safeNewMonthlyCommitment, emergencyFundMonths, debtToIncomePct.
+- incomeSources[] lists each income with its type (salary, rent, pension, benefits, other). Use it to judge how stable and diversified the income is: a single salary is more fragile than a pension or benefits, and if most income is one source, note the concentration gently. Rent income implies an owned property.
 - savingsRatePct is the REALIZED savings rate: what the household actually set aside vs. what it actually earned (avgRealAllocPerCycle ÷ avgIncomePerCycle over savingsRateCycles complete months). This is the headline rate — quote it as the savings rate. If savingsRatePct is null, there isn't a full month of income history yet; say so and lean on potentialSavingsRatePct instead of inventing a rate.
 - potentialSavingsRatePct is the household's CAPACITY to save (monthlySurplus ÷ income). Use it to contrast with the realized rate: when potential exceeds realized, encourage saving/investing more of the headroom; when they are close, acknowledge they're already converting most of their surplus. emergencyFundMonths already counts pre-funded project balances, so trust it.
 - Projects are typed: each buckets[] item has kind ∈ savings | emergency | investment. Balances are split into emergencyBalance, savingsBalance and investmentBalance; liquidReserve is the safety cushion (emergency projects if hasEmergencyBucket, else all non-investment savings) and is what emergencyFundMonths measures — investments are excluded on purpose because they shouldn't be raided.

@@ -202,9 +202,12 @@ export function DashboardTips({
   // ---- Income concentration risk (single source) ----
   if (data.incomes.length === 1 && income > 0) {
     const only = data.incomes[0];
+    // A pension or benefits stream is inherently more stable than a single
+    // salary, so the diversification nudge is a gentler heads-up, not a warning.
+    const stable = only.type === "pension" || only.type === "benefits";
     tips.push({
       id: "single-income-source",
-      severity: "warning",
+      severity: stable ? "info" : "warning",
       title: t("tips.singleIncome.title"),
       detail: t("tips.singleIncome.detail", {
         label: only.label ?? t("tips.singleIncome.fallbackLabel"),

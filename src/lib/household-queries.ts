@@ -53,7 +53,7 @@ export function incomesQuery(householdId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("incomes")
-        .select("id, label, monthly_amount")
+        .select("id, label, monthly_amount, type")
         .eq("household_id", householdId);
       if (error) throw error;
       return data ?? [];
