@@ -5937,6 +5937,22 @@ const fr: Record<MessageKey, string> = {
   "snapshot.badge.budget_hero": "Héros du budget",
   "snapshot.badge.investing": "Investit",
   "snapshot.badge.getting_started": "Débute",
+  "tour.header": "Visite rapide",
+  "tour.step": "Étape {current} sur {total}",
+  "tour.skip": "Passer",
+  "tour.back": "Retour",
+  "tour.next": "Suivant",
+  "tour.done": "C'est bon",
+  "tour.income.title": "Ajoutez vos revenus",
+  "tour.income.desc": "Commencez par l'argent régulier sur lequel vous pouvez compter — salaire, pension ou loyer stable. C'est la base de chaque plan.",
+  "tour.income.cta": "Ouvrir Revenus",
+  "tour.fixed.title": "Listez charges fixes & prêts",
+  "tour.fixed.desc": "Loyer, factures, abonnements et mensualités. Bynku les soustrait de vos revenus pour révéler ce que vous pouvez vraiment dépenser ou épargner.",
+  "tour.fixed.cta": "Ouvrir Réglages",
+  "tour.bucket.title": "Créez votre premier projet",
+  "tour.bucket.desc": "Les projets (buckets) transforment votre surplus en objectifs — fonds d'urgence, voyage, placement. Même de petits montants s'additionnent.",
+  "tour.bucket.cta": "Ouvrir Épargner & Investir",
+  "emptyState.tryCta": "Commencer",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = { en, pt, es, de, fr };
