@@ -8,6 +8,7 @@ import { confirmBucketAllocation, undoBucketAllocation } from "@/lib/bucket-allo
 import { MoveFundsCard } from "@/components/move-funds-card";
 import { BucketsSection } from "@/routes/_authenticated/settings";
 import { pageShellClass } from "@/components/page-shell";
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
