@@ -131,7 +131,7 @@ function ExpensesPage() {
 
   const { data: fixedTotal = 0 } = useQuery({
     enabled: !!householdId,
-    queryKey: ["fixed-total", householdId],
+    queryKey: ["expenses-fixed-plus-debt-total", householdId],
     queryFn: async () => {
       const [{ data: fx, error: e1 }, { data: dt, error: e2 }] = await Promise.all([
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
