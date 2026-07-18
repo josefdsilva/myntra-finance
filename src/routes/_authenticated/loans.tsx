@@ -26,8 +26,10 @@ function LoansPage() {
   });
   const householdId = hh?.household?.id;
 
+  const debtsQ = householdId ? debtsQuery(householdId) : null;
   const { data: debts } = useQuery({
-    ...(householdId ? debtsQuery(householdId) : { queryKey: ["debts", "none"], queryFn: async () => [] as never[] }),
+    queryKey: debtsQ?.queryKey ?? ["household-debts", "none"],
+    queryFn: debtsQ?.queryFn ?? (async () => []),
     enabled: !!householdId,
   });
   const isEmpty = !!householdId && (debts?.length ?? 0) === 0;
