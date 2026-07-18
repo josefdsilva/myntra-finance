@@ -1322,8 +1322,8 @@ export function DebtsSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-row items-start justify-between gap-3">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="min-w-0">
             <CardTitle>Debt</CardTitle>
             <CardDescription>
               Loans and credit lines with an interest rate ({t("settings.debtRateLabel")}) and
@@ -1339,16 +1339,21 @@ export function DebtsSection({ householdId }: { householdId: string }) {
               .
             </CardDescription>
           </div>
-          <StatementImportButton householdId={householdId} />
+          <div className="shrink-0 self-start">
+            <StatementImportButton householdId={householdId} />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y">
           {(rows ?? []).map((r) => (
-            <li key={r.id} className="flex items-center justify-between py-2 gap-3">
+            <li
+              key={r.id}
+              className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+            >
               <div className="min-w-0">
-                <p className="truncate">{r.label}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="truncate font-medium">{r.label}</p>
+                <p className="text-xs text-muted-foreground break-words">
                   {DEBT_KINDS.find((k) => k.value === r.kind)?.label ?? r.kind}
                   {r.taeg_pct != null && ` · ${t("debt.apr", { pct: Number(r.taeg_pct).toFixed(2) })}`}
                   {r.principal_remaining != null &&
@@ -1356,7 +1361,7 @@ export function DebtsSection({ householdId }: { householdId: string }) {
                   {r.maturity_date && ` · until ${r.maturity_date}`}
                 </p>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center justify-between gap-3 shrink-0 sm:justify-end">
                 <span className="tabular-nums font-medium">
                   {money(r.monthly_amount)}
                   <span className="text-xs text-muted-foreground">/mo</span>
@@ -1368,6 +1373,7 @@ export function DebtsSection({ householdId }: { householdId: string }) {
             </li>
           ))}
         </ul>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div>
