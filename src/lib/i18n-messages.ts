@@ -23,7 +23,7 @@ const en = {
   "nav.dashboard": "Dashboard",
   "nav.moneyIn": "Money in",
   "moneyIn.title": "Money in",
-  "moneyIn.subtitle": "Everything that comes in each month, and where it comes from.",
+  "moneyIn.subtitle": "Record only recurring income you can count on every cycle — salary, pensions, rent you collect, regular allowances. Skip one-off inflows like gifts, refunds, or bonuses; log those as received money on the Expenses page instead.",
   "nav.expenses": "Expenses",
   "nav.analysis": "Analysis",
   "nav.allocations": "Save & Invest",
