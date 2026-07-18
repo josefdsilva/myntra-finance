@@ -181,3 +181,39 @@ export const template = {
     currency: 'EUR',
   },
 } satisfies TemplateEntry
+
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const container = { padding: '24px', maxWidth: '560px' }
+const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0f172a', margin: '0 0 4px' }
+const h3 = { fontSize: '14px', fontWeight: 'bold' as const, color: '#0f172a', margin: '20px 0 8px' }
+const muted = { fontSize: '12px', color: '#64748b', margin: '0 0 16px' }
+const hr = { borderColor: '#e2e8f0', margin: '12px 0' }
+const statCard = {
+  border: '1px solid #e2e8f0',
+  borderRadius: '12px',
+  padding: '16px 18px',
+  margin: '8px 0 16px',
+}
+const statCol = { verticalAlign: 'top' as const, padding: '4px 6px' }
+const statLabel = { fontSize: '11px', color: '#64748b', margin: 0, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }
+const statValue = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0f172a', margin: '4px 0 2px' }
+const statValueSm = { fontSize: '16px', fontWeight: 'bold' as const, color: '#0f172a', margin: '4px 0 2px' }
+const statHint = { fontSize: '11px', color: '#64748b', margin: 0 }
+const aiBox = { backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 16px', margin: '4px 0 16px' }
+const aiLabel = { fontSize: '11px', color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 4px' }
+const aiText = { fontSize: '13px', color: '#0f172a', lineHeight: '1.5', margin: 0 }
+const listRow = { borderBottom: '1px solid #e2e8f0', padding: '6px 0' }
+const listLabel = { fontSize: '13px', color: '#0f172a', padding: '4px 0' }
+const listAmount = { fontSize: '13px', color: '#0f172a', textAlign: 'right' as const, fontWeight: 'bold' as const, padding: '4px 0' }
+const button = {
+  backgroundColor: '#0f172a',
+  color: '#ffffff',
+  fontSize: '14px',
+  fontWeight: 'bold' as const,
+  borderRadius: '10px',
+  padding: '12px 20px',
+  textDecoration: 'none',
+  display: 'inline-block',
+}
+const link = { color: '#0f172a', textDecoration: 'underline' }
+const footer = { fontSize: '11px', color: '#94a3b8', margin: '20px 0 0', lineHeight: '1.5' }
