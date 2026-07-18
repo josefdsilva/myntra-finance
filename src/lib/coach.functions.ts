@@ -1038,21 +1038,36 @@ export const chatInConversation = createServerFn({ method: "POST" })
       content: data.message,
     });
 
-    const ctx = await buildContext(supabase, data.householdId);
+    const useQuick = !data.forceDeep && isQuickQuestion(data.message);
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
-    const result = await generateText({
-      model: gateway(MODEL),
-      system: `${buildSystem(ctx, data.locale)}
+    const modelId = useQuick ? QUICK_MODEL : MODEL;
+
+    let systemPrompt: string;
+    let messages: Array<{ role: "user" | "assistant"; content: string }>;
+    if (useQuick) {
+      // Quick tier: no household snapshot, no chat history. Great for factual
+      // or "how do I…" questions about the app or general finance concepts.
+      systemPrompt = `You are bynku's household finance coach. This is a QUICK reply — the user asked a short factual or how-to question, so no household numbers are provided. Answer plainly in 2–4 sentences. If the question actually needs the household's own figures to answer well, say so and invite them to toggle "Deep think" for a numbers-grounded answer.${langInstruction(data.locale)}`;
+      messages = [{ role: "user" as const, content: data.message }];
+    } else {
+      const ctx = await buildContext(supabase, data.householdId);
+      systemPrompt = `${buildSystem(ctx, data.locale)}
 
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(slimContext(ctx))}
 
-You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot. For quick questions stay short (2–5 sentences); for life-decision questions give a thorough answer with a range, assumption line, and clear recommendation.`,
-      temperature: 0.2,
-      messages: [
+You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot. For quick questions stay short (2–5 sentences); for life-decision questions give a thorough answer with a range, assumption line, and clear recommendation.`;
+      messages = [
         ...replayed.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: data.message },
-      ],
+      ];
+    }
+
+    const result = await generateText({
+      model: gateway(modelId),
+      system: systemPrompt,
+      temperature: 0.2,
+      messages,
     });
 
     await supabase.from("coach_messages").insert({
@@ -1071,16 +1086,16 @@ You are continuing an ongoing chat with this household. Only the last ${COACH_RE
     }
     await supabase.from("coach_conversations").update(updates).eq("id", convId);
 
-    const est = estimateTextCredits(MODEL, result.usage as never);
+    const est = estimateTextCredits(modelId, result.usage as never);
     await logHouseholdCredits({
       householdId: data.householdId,
       userId,
-      operation: "ai_coach_chat",
+      operation: useQuick ? "ai_coach_chat_quick" : "ai_coach_chat",
       credits: est.credits,
       inputTokens: est.input,
       outputTokens: est.output,
     });
 
-    return { reply: result.text, conversationId: convId };
+    return { reply: result.text, conversationId: convId, tier: useQuick ? "quick" : "deep" };
   });
 
