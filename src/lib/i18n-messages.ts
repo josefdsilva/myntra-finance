@@ -2375,6 +2375,22 @@ const pt: Record<MessageKey, string> = {
   "snapshot.badge.budget_hero": "Herói do orçamento",
   "snapshot.badge.investing": "Investidor",
   "snapshot.badge.getting_started": "A começar",
+  "tour.header": "Visita rápida",
+  "tour.step": "Passo {current} de {total}",
+  "tour.skip": "Saltar visita",
+  "tour.back": "Voltar",
+  "tour.next": "Seguinte",
+  "tour.done": "Entendido",
+  "tour.income.title": "Adicione o seu rendimento",
+  "tour.income.desc": "Comece pelo dinheiro recorrente com que pode contar — salário, pensão ou renda estável. É a base de todos os planos.",
+  "tour.income.cta": "Abrir Rendimentos",
+  "tour.fixed.title": "Liste custos fixos e empréstimos",
+  "tour.fixed.desc": "Renda, contas, subscrições e prestações mensais. O bynku subtrai-os ao rendimento para mostrar o que pode mesmo gastar ou poupar.",
+  "tour.fixed.cta": "Abrir Definições",
+  "tour.bucket.title": "Crie o seu primeiro projeto",
+  "tour.bucket.desc": "Os projetos (buckets) transformam o excedente em objetivos — fundo de emergência, viagem, investimento. Mesmo pequenos valores mensais somam.",
+  "tour.bucket.cta": "Abrir Poupar & Investir",
+  "emptyState.tryCta": "Começar",
 };
 
 const es: Record<MessageKey, string> = {
