@@ -4747,6 +4747,22 @@ const de: Record<MessageKey, string> = {
   "snapshot.badge.budget_hero": "Budget-Held",
   "snapshot.badge.investing": "Investierend",
   "snapshot.badge.getting_started": "Am Anfang",
+  "tour.header": "Kurze Tour",
+  "tour.step": "Schritt {current} von {total}",
+  "tour.skip": "Tour überspringen",
+  "tour.back": "Zurück",
+  "tour.next": "Weiter",
+  "tour.done": "Alles klar",
+  "tour.income.title": "Einkommen hinzufügen",
+  "tour.income.desc": "Starte mit dem regelmäßigen Geld, auf das du zählen kannst — Gehalt, Rente oder stabile Mieteinnahmen. Das ist die Basis jeder Planung.",
+  "tour.income.cta": "Zu Einkommen",
+  "tour.fixed.title": "Fixkosten & Kredite erfassen",
+  "tour.fixed.desc": "Miete, Nebenkosten, Abos und monatliche Raten. Bynku zieht sie vom Einkommen ab und zeigt, was wirklich zum Sparen oder Ausgeben übrig bleibt.",
+  "tour.fixed.cta": "Zu Einstellungen",
+  "tour.bucket.title": "Erstes Projekt anlegen",
+  "tour.bucket.desc": "Projekte (Buckets) verwandeln deinen Überschuss in Ziele — Notgroschen, eine Reise, ein Investment. Auch kleine Monatsbeträge summieren sich.",
+  "tour.bucket.cta": "Zu Sparen & Anlegen",
+  "emptyState.tryCta": "Loslegen",
 };
 
 const fr: Record<MessageKey, string> = {
