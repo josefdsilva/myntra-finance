@@ -1158,7 +1158,7 @@ const pt: Record<MessageKey, string> = {
   "nav.dashboard": "Painel",
   "nav.moneyIn": "Rendimentos",
   "moneyIn.title": "Rendimentos",
-  "moneyIn.subtitle": "Tudo o que entra por mês, e de onde vem.",
+  "moneyIn.subtitle": "Regista apenas rendimentos recorrentes com que podes contar todos os ciclos — salário, pensões, rendas que recebes, mesadas regulares. Não incluas entradas pontuais como prendas, reembolsos ou prémios; regista essas como dinheiro recebido na página de Despesas.",
   "nav.expenses": "Despesas",
   "nav.analysis": "Análise",
   "nav.allocations": "Poupar & Investir",
