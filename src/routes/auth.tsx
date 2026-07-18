@@ -378,9 +378,6 @@ function AuthPage() {
                       </>
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-4 text-center leading-relaxed">
-                    {t("auth.inviteOnlyNote")}
-                  </p>
                 </>
               )}
 
