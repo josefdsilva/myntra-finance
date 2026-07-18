@@ -8,6 +8,7 @@ import { pageShellClass } from "@/components/page-shell";
 import { DebtsSection as DebtsSetup } from "@/routes/_authenticated/settings";
 import { DebtsSection as DebtsOverview } from "@/components/debts-section";
 import { EmptyState } from "@/components/empty-state";
+import { PayoffSimulator } from "@/components/payoff-simulator";
 import { debtsQuery } from "@/lib/household-queries";
 import { useT } from "@/lib/i18n";
 
@@ -48,6 +49,7 @@ function LoansPage() {
         />
       )}
       {householdId && <DebtsOverview householdId={householdId} showMoveFunds={false} />}
+      {householdId && <PayoffSimulator householdId={householdId} />}
       {householdId && <DebtsSetup householdId={householdId} />}
     </div>
   );
