@@ -161,6 +161,7 @@ export const upsertIncome = createServerFn({ method: "POST" })
         household_id: z.string().uuid(),
         label: z.string().min(1).max(80),
         monthly_amount: z.number().min(0),
+        type: z.enum(["salary", "rent", "pension", "benefits", "other"]).optional(),
         owner_user_id: z.string().uuid().nullable().optional(),
       })
       .parse(input),

@@ -640,11 +640,20 @@ function IncomesSection({ householdId }: { householdId: string }) {
   });
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
+  const [type, setType] = useState<"salary" | "rent" | "pension" | "benefits" | "other">("salary");
+
+  const TYPE_LABEL: Record<string, string> = {
+    salary: t("income.typeSalary"),
+    rent: t("income.typeRent"),
+    pension: t("income.typePension"),
+    benefits: t("income.typeBenefits"),
+    other: t("income.typeOther"),
+  };
 
   async function add() {
     if (!label || !amount) return;
     await upsert({
-      data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0 },
+      data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0, type },
     });
     setLabel("");
     setAmount("");
@@ -677,9 +686,14 @@ function IncomesSection({ householdId }: { householdId: string }) {
       <CardContent className="space-y-3">
         <ul className="divide-y">
           {(rows ?? []).map((r) => (
-            <li key={r.id} className="flex items-center justify-between py-2">
-              <span>{r.label}</span>
-              <div className="flex items-center gap-3">
+            <li key={r.id} className="flex items-center justify-between gap-2 py-2">
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="truncate">{r.label}</span>
+                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                  {TYPE_LABEL[r.type] ?? r.type}
+                </span>
+              </span>
+              <div className="flex items-center gap-3 shrink-0">
                 <span className="tabular-nums font-medium">{money(r.monthly_amount)}</span>
                 <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
@@ -688,12 +702,24 @@ function IncomesSection({ householdId }: { householdId: string }) {
             </li>
           ))}
         </ul>
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-2">
           <Input
             placeholder={t("income.placeholder")}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
+          <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="salary">{t("income.typeSalary")}</SelectItem>
+              <SelectItem value="rent">{t("income.typeRent")}</SelectItem>
+              <SelectItem value="pension">{t("income.typePension")}</SelectItem>
+              <SelectItem value="benefits">{t("income.typeBenefits")}</SelectItem>
+              <SelectItem value="other">{t("income.typeOther")}</SelectItem>
+            </SelectContent>
+          </Select>
           <Input
             inputMode="decimal"
             placeholder="0.00"

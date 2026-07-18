@@ -929,6 +929,7 @@ export type Database = {
           label: string
           monthly_amount: number
           owner_user_id: string | null
+          type: string
           updated_at: string
         }
         Insert: {
@@ -938,6 +939,7 @@ export type Database = {
           label: string
           monthly_amount?: number
           owner_user_id?: string | null
+          type?: string
           updated_at?: string
         }
         Update: {
@@ -947,6 +949,7 @@ export type Database = {
           label?: string
           monthly_amount?: number
           owner_user_id?: string | null
+          type?: string
           updated_at?: string
         }
         Relationships: [
