@@ -6,6 +6,7 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { confirmBucketAllocation, undoBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { DebtsSection } from "@/components/debts-section";
+import { BucketsSection } from "@/routes/_authenticated/settings";
 import { pageShellClass } from "@/components/page-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
@@ -246,6 +247,8 @@ function AllocationsPage() {
       )}
 
       {householdId && <DebtsSection householdId={householdId} />}
+
+      {householdId && <BucketsSection householdId={householdId} />}
 
       <Card>
         <CardHeader>

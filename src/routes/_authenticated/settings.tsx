@@ -109,7 +109,6 @@ function SettingsPage() {
           <IncomesSection householdId={householdId} />
           <DebtsSection householdId={householdId} />
           <CategoryManager householdId={householdId} />
-          <BucketsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
           <CreditUsageSection household={hh!.household!} />
@@ -848,7 +847,7 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
   );
 }
 
-function BucketsSection({ householdId }: { householdId: string }) {
+export function BucketsSection({ householdId }: { householdId: string }) {
   const t = useT();
   const qc = useQueryClient();
   const upsert = useServerFn(upsertBucket);
