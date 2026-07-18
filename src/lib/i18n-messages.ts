@@ -2285,7 +2285,7 @@ const es: Record<MessageKey, string> = {
   "nav.dashboard": "Panel",
   "nav.moneyIn": "Ingresos",
   "moneyIn.title": "Ingresos",
-  "moneyIn.subtitle": "Todo lo que entra cada mes, y de dónde viene.",
+  "moneyIn.subtitle": "Registra solo ingresos recurrentes con los que puedas contar cada ciclo: salario, pensiones, alquileres que cobras, asignaciones regulares. No incluyas entradas puntuales como regalos, reembolsos o primas; regístralas como dinero recibido en la página de Gastos.",
   "nav.expenses": "Gastos",
   "nav.analysis": "Análisis",
   "nav.allocations": "Ahorrar e invertir",
