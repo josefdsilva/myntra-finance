@@ -307,7 +307,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
           {HouseholdSwitcher}
         </div>
-        <nav className="flex md:flex-col gap-1 p-3 flex-1 overflow-x-auto">
+        <nav className="flex flex-col gap-1 p-3 flex-1">
           {NAV_SECTIONS.map((section, si) => (
             <Fragment key={section.titleKey ?? si}>
               {section.titleKey && (
