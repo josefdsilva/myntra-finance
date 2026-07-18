@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,19 +45,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const NAV = [
-  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
-  { to: "/money-in", labelKey: "nav.moneyIn", icon: Banknote },
-  { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
-  { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
-  { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
-  { to: "/loans", labelKey: "nav.loans", icon: Landmark },
-  { to: "/plan", labelKey: "nav.plan", icon: CalendarClock },
-  { to: "/cycle-report", labelKey: "nav.cycleReport", icon: FileText },
-  { to: "/households", labelKey: "nav.households", icon: Users },
-  { to: "/settings", labelKey: "nav.settings", icon: Settings },
-  { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
-  { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
+const NAV_SECTIONS = [
+  {
+    titleKey: null,
+    items: [{ to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard }],
+  },
+  {
+    titleKey: "navSection.manage",
+    items: [
+      { to: "/money-in", labelKey: "nav.moneyIn", icon: Banknote },
+      { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
+      { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+      { to: "/loans", labelKey: "nav.loans", icon: Landmark },
+      { to: "/plan", labelKey: "nav.plan", icon: CalendarClock },
+    ],
+  },
+  {
+    titleKey: "navSection.data",
+    items: [
+      { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
+      { to: "/cycle-report", labelKey: "nav.cycleReport", icon: FileText },
+    ],
+  },
+  {
+    titleKey: "navSection.docs",
+    items: [
+      { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
+      { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
+    ],
+  },
+  {
+    titleKey: "navSection.account",
+    items: [
+      { to: "/households", labelKey: "nav.households", icon: Users },
+      { to: "/settings", labelKey: "nav.settings", icon: Settings },
+    ],
+  },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -285,26 +308,35 @@ export function AppShell({ children }: { children: ReactNode }) {
           {HouseholdSwitcher}
         </div>
         <nav className="flex md:flex-col gap-1 p-3 flex-1 overflow-x-auto">
-          {NAV.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.to;
-            const label = t(item.labelKey);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-                {label}
-              </Link>
-            );
-          })}
+          {NAV_SECTIONS.map((section, si) => (
+            <Fragment key={section.titleKey ?? si}>
+              {section.titleKey && (
+                <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 first:pt-1">
+                  {t(section.titleKey)}
+                </p>
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = pathname === item.to;
+                const label = t(item.labelKey);
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      active
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </Fragment>
+          ))}
         </nav>
         <div className="p-3 border-t hidden md:block space-y-1">
           <Button
