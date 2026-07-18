@@ -1189,6 +1189,22 @@ const en = {
   "snapshot.badge.budget_hero": "Budget hero",
   "snapshot.badge.investing": "Investing",
   "snapshot.badge.getting_started": "Getting started",
+  "tour.header": "Quick tour",
+  "tour.step": "Step {current} of {total}",
+  "tour.skip": "Skip tour",
+  "tour.back": "Back",
+  "tour.next": "Next",
+  "tour.done": "Got it",
+  "tour.income.title": "Add your income",
+  "tour.income.desc": "Start with the recurring money you can count on — salary, pensions, or steady rent. This becomes the foundation for every plan.",
+  "tour.income.cta": "Open Money in",
+  "tour.fixed.title": "List your fixed costs & loans",
+  "tour.fixed.desc": "Rent, utilities, subscriptions, and monthly loan payments. Bynku subtracts them from your income to find what you can really spend or save.",
+  "tour.fixed.cta": "Open Settings",
+  "tour.bucket.title": "Create your first project",
+  "tour.bucket.desc": "Projects (buckets) turn your surplus into goals — emergency fund, a trip, an investment. Even a small monthly amount adds up.",
+  "tour.bucket.cta": "Open Save & Invest",
+  "emptyState.tryCta": "Get started",
 } as const;
 
 
