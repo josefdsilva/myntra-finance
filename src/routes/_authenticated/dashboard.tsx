@@ -726,9 +726,9 @@ function Sparkline({
             className={d.net > threshold ? "fill-orange-500" : "fill-primary"}
           />
           <title>
-            {d.label} ·{" "}
-            {new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(d.net)}
+            {d.label} · {money(d.net)}
           </title>
+
         </g>
       ))}
     </svg>

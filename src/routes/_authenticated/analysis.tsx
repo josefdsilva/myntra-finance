@@ -551,7 +551,7 @@ function AnalysisPage() {
                       interval="preserveStartEnd"
                       minTickGap={20}
                     />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => money(Number(v))} />
                     <Tooltip content={<BurnTooltip />} />
                     <Area
                       type="stepAfter"

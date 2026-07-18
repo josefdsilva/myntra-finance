@@ -69,6 +69,19 @@ export function money(n: number | string | null | undefined): string {
   return currencyFormatter.format(isFinite(v as number) ? (v as number) : 0);
 }
 
+/** Return the current currency's symbol (e.g. €, $, £) using the active locale. */
+export function currencySymbol(): string {
+  try {
+    const parts = currencyFormatter.formatToParts(0);
+    const sym = parts.find((p) => p.type === "currency")?.value;
+    if (sym) return sym;
+  } catch {
+    /* ignore */
+  }
+  return currentCurrency === "USD" ? "$" : currentCurrency === "GBP" ? "£" : "€";
+}
+
+
 export function fmtDateTime(d: Date | string | null | undefined): string {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;

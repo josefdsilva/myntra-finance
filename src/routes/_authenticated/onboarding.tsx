@@ -25,7 +25,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { StatementImportButton } from "@/components/statement-import-flow";
-import { money } from "@/lib/format";
+import { money, currencySymbol } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+
 import {
   Plus,
   Loader2,
@@ -93,6 +95,7 @@ function OnboardingPage() {
 function Wizard({ householdId, initialCountry }: { householdId: string; initialCountry: string }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const t = useT();
   const updateHh = useServerFn(updateHousehold);
   const finishFn = useServerFn(completeOnboarding);
 
@@ -166,28 +169,29 @@ function Wizard({ householdId, initialCountry }: { householdId: string; initialC
 
         <div className="mt-8 flex items-center justify-between gap-2">
           <Button variant="ghost" onClick={back} disabled={step === 0 || busy}>
-            Back
+            {t("ob.back")}
           </Button>
           <div className="flex items-center gap-2">
             {key !== "welcome" && (
               <Button variant="ghost" onClick={skip} disabled={busy}>
-                Skip
+                {t("ob.skip")}
               </Button>
             )}
             <Button onClick={next} disabled={busy}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {key === "welcome" ? "Get started" : isLast ? "Finish" : "Continue"}
+              {key === "welcome" ? t("ob.getStarted") : isLast ? t("ob.finish") : t("ob.continue")}
             </Button>
           </div>
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          You can skip anything and change it later in Settings.
+          {t("ob.skipHint")}
         </p>
       </div>
     </div>
   );
 }
+
 
 // ---- Step chrome ----------------------------------------------------------
 
@@ -212,24 +216,23 @@ function StepHead({
 }
 
 function Welcome() {
+  const t = useT();
   return (
     <div className="space-y-4 pt-6">
       <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Sparkles className="size-7" />
       </div>
-      <h1 className="font-display text-3xl">Welcome — let's set up your budget</h1>
-      <p className="text-muted-foreground">
-        A few quick questions to get you started. You can skip any of them and fill things in later
-        in Settings — and you can even upload a bank statement to fill most of it automatically.
-      </p>
+      <h1 className="font-display text-3xl">{t("ob.welcome.title")}</h1>
+      <p className="text-muted-foreground">{t("ob.welcome.body")}</p>
     </div>
   );
 }
 
 function CountryStep({ country, setCountry }: { country: string; setCountry: (v: string) => void }) {
+  const t = useT();
   return (
     <div>
-      <StepHead icon={Home} title="Where are you based?" subtitle="Used for currency and to compare against national averages." />
+      <StepHead icon={Home} title={t("ob.country.title")} subtitle={t("ob.country.subtitle")} />
       <Select value={country} onValueChange={setCountry}>
         <SelectTrigger className="w-full">
           <SelectValue />
@@ -274,12 +277,13 @@ function HouseholdStep({
   children: number;
   setChildren: (v: number) => void;
 }) {
+  const t = useT();
   return (
     <div>
-      <StepHead icon={Users} title="Tell us about your household" subtitle="This tailors budgets and comparisons to your size." />
+      <StepHead icon={Users} title={t("ob.household.title")} subtitle={t("ob.household.subtitle")} />
       <div className="space-y-3">
-        <Stepper label="Adults" value={adults} setValue={setAdults} min={1} />
-        <Stepper label="Children" value={children} setValue={setChildren} min={0} />
+        <Stepper label={t("ob.household.adults")} value={adults} setValue={setAdults} min={1} />
+        <Stepper label={t("ob.household.children")} value={children} setValue={setChildren} min={0} />
       </div>
     </div>
   );
@@ -288,18 +292,23 @@ function HouseholdStep({
 // ---- Entry-list steps -----------------------------------------------------
 
 function EntryList({ items }: { items: Array<{ id: string; label: string; monthly_amount: number | string }> }) {
+  const t = useT();
   if (!items.length) return null;
   return (
     <ul className="mt-4 divide-y rounded-xl border">
       {items.map((r) => (
         <li key={r.id} className="flex items-center justify-between px-4 py-2 text-sm">
           <span className="truncate">{r.label}</span>
-          <span className="tabular-nums font-medium">{money(Number(r.monthly_amount))}/mo</span>
+          <span className="tabular-nums font-medium">
+            {money(Number(r.monthly_amount))}
+            {t("common.perMonthShort")}
+          </span>
         </li>
       ))}
     </ul>
   );
 }
+
 
 type ListRow = { id: string; label: string; monthly_amount: number };
 
@@ -327,6 +336,8 @@ function useList(table: "incomes" | "fixed_expenses" | "variable_estimates" | "d
 
 function IncomeStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertIncome);
   const { data: items = [] } = useList("incomes", householdId);
   const [label, setLabel] = useState("");
@@ -348,14 +359,14 @@ function IncomeStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Wallet} title="What comes in each month?" subtitle="Add your salary and any other regular income — or deduce it from a bank statement." />
+      <StepHead icon={Wallet} title={t("ob.income.title")} subtitle={t("ob.income.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
-        <span className="ml-2 text-xs text-muted-foreground">or add manually below</span>
+        <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder="e.g. Salary" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input placeholder={t("ob.income.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -367,6 +378,8 @@ function IncomeStep({ householdId }: { householdId: string }) {
 
 function FixedStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertFixedExpense);
   const { data: items = [] } = useList("fixed_expenses", householdId);
   const [label, setLabel] = useState("");
@@ -388,14 +401,14 @@ function FixedStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Home} title="Fixed monthly costs" subtitle="Rent, utilities, subscriptions, insurance — the bills that repeat. (Debts come next.)" />
+      <StepHead icon={Home} title={t("ob.fixed.title")} subtitle={t("ob.fixed.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
-        <span className="ml-2 text-xs text-muted-foreground">or add manually below</span>
+        <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder="e.g. Rent" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input placeholder={t("ob.fixed.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -407,6 +420,8 @@ function FixedStep({ householdId }: { householdId: string }) {
 
 function VariableStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertVariableEstimate);
   const { data: items = [] } = useList("variable_estimates", householdId);
   const [label, setLabel] = useState("");
@@ -428,14 +443,14 @@ function VariableStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Receipt} title="Estimated variable spending" subtitle="Rough monthly averages — groceries, transport, dining. Or deduce them from a statement." />
+      <StepHead icon={Receipt} title={t("ob.variable.title")} subtitle={t("ob.variable.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
-        <span className="ml-2 text-xs text-muted-foreground">or estimate manually below</span>
+        <span className="ml-2 text-xs text-muted-foreground">{t("ob.orEstimateManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder="e.g. Groceries" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input placeholder={t("ob.variable.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -447,6 +462,8 @@ function VariableStep({ householdId }: { householdId: string }) {
 
 function DebtStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertDebt);
   const { data: items = [] } = useList("debts", householdId);
   const [label, setLabel] = useState("");
@@ -484,15 +501,15 @@ function DebtStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Wallet} title="Any loans or credit?" subtitle="Mortgage, car loan, credit lines. Add the monthly payment; principal, rate and maturity power the payoff tools." />
+      <StepHead icon={Wallet} title={t("ob.debt.title")} subtitle={t("ob.debt.subtitle")} />
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input placeholder="e.g. Mortgage" value={label} onChange={(e) => setLabel(e.target.value)} />
-          <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
+          <Input placeholder={t("ob.debt.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
         </div>
         <div className="flex gap-2">
-          <Input inputMode="decimal" placeholder="Principal €" value={principal} onChange={(e) => setPrincipal(e.target.value)} />
-          <Input className="w-24" inputMode="decimal" placeholder="Rate %" value={rate} onChange={(e) => setRate(e.target.value)} />
+          <Input inputMode="decimal" placeholder={t("ob.debt.principalPh", { sym })} value={principal} onChange={(e) => setPrincipal(e.target.value)} />
+          <Input className="w-24" inputMode="decimal" placeholder={t("ob.debt.ratePh")} value={rate} onChange={(e) => setRate(e.target.value)} />
           <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
           <Button onClick={submit} disabled={saving || !label || !monthly}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
@@ -504,6 +521,7 @@ function DebtStep({ householdId }: { householdId: string }) {
   );
 }
 
+
 // ---- Projects / allocations ----------------------------------------------
 
 type BucketKind = "savings" | "emergency" | "investment";
@@ -511,6 +529,8 @@ type Suggestion = { name: string; target_type: "pct_surplus" | "fixed_monthly"; 
 
 function ProjectsStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertBucket);
 
   const { data } = useQuery({
@@ -538,11 +558,11 @@ function ProjectsStep({ householdId }: { householdId: string }) {
   const existing = new Set((data?.buckets ?? []).map((b) => b.name.toLowerCase()));
 
   const suggestions: Suggestion[] = [
-    { name: "Emergency fund", target_type: "pct_surplus", target_value: 30, why: "Aim for 3–6 months of expenses.", kind: "emergency" },
-    { name: "Investments", target_type: "pct_surplus", target_value: 20, why: "Long-term growth.", kind: "investment" },
-    { name: "Holidays", target_type: "fixed_monthly", target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5), why: "Set aside a little each month.", kind: "savings" },
+    { name: t("ob.projects.sug.emergency"), target_type: "pct_surplus", target_value: 30, why: t("ob.projects.sug.emergencyWhy"), kind: "emergency" },
+    { name: t("ob.projects.sug.invest"), target_type: "pct_surplus", target_value: 20, why: t("ob.projects.sug.investWhy"), kind: "investment" },
+    { name: t("ob.projects.sug.holidays"), target_type: "fixed_monthly", target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5), why: t("ob.projects.sug.holidaysWhy"), kind: "savings" },
     ...(data && data.children > 0
-      ? [{ name: "Kids & education", target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5), why: "For childcare, school and activities.", kind: "savings" as const }]
+      ? [{ name: t("ob.projects.sug.kids"), target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5), why: t("ob.projects.sug.kidsWhy"), kind: "savings" as const }]
       : []),
   ];
 
@@ -588,9 +608,9 @@ function ProjectsStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={PiggyBank} title="What are you saving for?" subtitle={`Projects hold money toward goals. You have about ${money(surplus)}/mo of surplus to allocate.`} />
+      <StepHead icon={PiggyBank} title={t("ob.projects.title")} subtitle={t("ob.projects.subtitle", { amount: money(surplus) })} />
 
-      <p className="mb-2 text-sm font-medium">Suggested for you</p>
+      <p className="mb-2 text-sm font-medium">{t("ob.projects.suggested")}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {suggestions.map((s) => {
           const added = existing.has(s.name.toLowerCase());
@@ -610,18 +630,21 @@ function ProjectsStep({ householdId }: { householdId: string }) {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">{s.why}</p>
-              <p className="mt-1 text-xs tabular-nums">~{money(monthlyFor(s))}/mo</p>
+              <p className="mt-1 text-xs tabular-nums">
+                ~{money(monthlyFor(s))}
+                {t("common.perMonthShort")}
+              </p>
             </button>
           );
         })}
       </div>
 
-      <p className="mb-2 mt-6 text-sm font-medium">Or add your own</p>
+      <p className="mb-2 mt-6 text-sm font-medium">{t("ob.projects.orCustom")}</p>
       <div className="space-y-2">
-        <Input placeholder="Project name (e.g. New car)" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder={t("ob.projects.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
         <div className="flex gap-2">
-          <Input inputMode="decimal" placeholder="Current balance €" value={balance} onChange={(e) => setBalance(e.target.value)} />
-          <Input inputMode="decimal" placeholder="Monthly target €" value={target} onChange={(e) => setTarget(e.target.value)} />
+          <Input inputMode="decimal" placeholder={t("ob.projects.balancePh", { sym })} value={balance} onChange={(e) => setBalance(e.target.value)} />
+          <Input inputMode="decimal" placeholder={t("ob.projects.targetPh", { sym })} value={target} onChange={(e) => setTarget(e.target.value)} />
           <Button onClick={submitCustom} disabled={saving || !name}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
           </Button>
@@ -645,6 +668,7 @@ function ProjectsStep({ householdId }: { householdId: string }) {
 
 function PlansStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
   const add = useServerFn(upsertPlan);
   const { data: plans = [] } = useQuery({
     queryKey: ["ob-plans", householdId],
@@ -694,13 +718,13 @@ function PlansStep({ householdId }: { householdId: string }) {
     <div>
       <StepHead
         icon={CalendarClock}
-        title="Anything coming up in the next months?"
-        subtitle="Known one-off costs (car tyres, insurance), a change in income, or heavier months like Christmas. Optional — skip and add these later on the Plan page."
+        title={t("ob.plans.title")}
+        subtitle={t("ob.plans.subtitle")}
       />
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input placeholder="e.g. Car insurance" value={label} onChange={(e) => setLabel(e.target.value)} />
-          <Input className="w-28" inputMode="decimal" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <Input placeholder={t("ob.plans.labelPh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input className="w-28" inputMode="decimal" placeholder={t("ob.plans.amountPh")} value={amount} onChange={(e) => setAmount(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-2">
           <Select value={direction} onValueChange={(v) => setDirection(v as typeof direction)}>
@@ -708,8 +732,8 @@ function PlansStep({ householdId }: { householdId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="spend">Spending</SelectItem>
-              <SelectItem value="income">Income</SelectItem>
+              <SelectItem value="spend">{t("ob.plans.spend")}</SelectItem>
+              <SelectItem value="income">{t("ob.plans.income")}</SelectItem>
             </SelectContent>
           </Select>
           <Input type="month" className="w-40" value={month} onChange={(e) => setMonth(e.target.value)} />
@@ -718,9 +742,9 @@ function PlansStep({ householdId }: { householdId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="one_off">Just once</SelectItem>
-              <SelectItem value="annual">Every year</SelectItem>
-              <SelectItem value="ongoing">Every month from then</SelectItem>
+              <SelectItem value="one_off">{t("ob.plans.once")}</SelectItem>
+              <SelectItem value="annual">{t("ob.plans.annual")}</SelectItem>
+              <SelectItem value="ongoing">{t("ob.plans.ongoing")}</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={submit} disabled={saving || !label || !amount}>
@@ -752,3 +776,4 @@ function PlansStep({ householdId }: { householdId: string }) {
     </div>
   );
 }
+
