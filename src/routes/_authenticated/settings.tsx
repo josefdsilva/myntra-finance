@@ -106,7 +106,6 @@ function SettingsPage() {
             household={hh!.household!}
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
           />
-          <IncomesSection householdId={householdId} />
           <DebtsSection householdId={householdId} />
           <CategoryManager householdId={householdId} />
           <MembersSection householdId={householdId} />
@@ -618,7 +617,7 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
   );
 }
 
-function IncomesSection({ householdId }: { householdId: string }) {
+export function IncomesSection({ householdId }: { householdId: string }) {
   const t = useT();
   const qc = useQueryClient();
   const upsert = useServerFn(upsertIncome);

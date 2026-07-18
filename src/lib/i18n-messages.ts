@@ -21,6 +21,9 @@ export const LOCALE_NAMES_EN: Record<Locale, string> = {
 const en = {
   // Nav
   "nav.dashboard": "Dashboard",
+  "nav.moneyIn": "Money in",
+  "moneyIn.title": "Money in",
+  "moneyIn.subtitle": "Everything that comes in each month, and where it comes from.",
   "nav.expenses": "Expenses",
   "nav.analysis": "Analysis",
   "nav.allocations": "Save & Invest",
@@ -1152,6 +1155,9 @@ export type MessageKey = keyof typeof en;
 
 const pt: Record<MessageKey, string> = {
   "nav.dashboard": "Painel",
+  "nav.moneyIn": "Rendimentos",
+  "moneyIn.title": "Rendimentos",
+  "moneyIn.subtitle": "Tudo o que entra por mês, e de onde vem.",
   "nav.expenses": "Despesas",
   "nav.analysis": "Análise",
   "nav.allocations": "Poupar & Investir",
@@ -2275,6 +2281,9 @@ const pt: Record<MessageKey, string> = {
 
 const es: Record<MessageKey, string> = {
   "nav.dashboard": "Panel",
+  "nav.moneyIn": "Ingresos",
+  "moneyIn.title": "Ingresos",
+  "moneyIn.subtitle": "Todo lo que entra cada mes, y de dónde viene.",
   "nav.expenses": "Gastos",
   "nav.analysis": "Análisis",
   "nav.allocations": "Ahorrar e invertir",
@@ -3397,6 +3406,9 @@ const es: Record<MessageKey, string> = {
 
 const de: Record<MessageKey, string> = {
   "nav.dashboard": "Übersicht",
+  "nav.moneyIn": "Einnahmen",
+  "moneyIn.title": "Einnahmen",
+  "moneyIn.subtitle": "Alles, was monatlich reinkommt, und woher es kommt.",
   "nav.expenses": "Ausgaben",
   "nav.analysis": "Analyse",
   "nav.allocations": "Sparen & Anlegen",
@@ -4527,6 +4539,9 @@ const de: Record<MessageKey, string> = {
 
 const fr: Record<MessageKey, string> = {
   "nav.dashboard": "Tableau de bord",
+  "nav.moneyIn": "Revenus",
+  "moneyIn.title": "Revenus",
+  "moneyIn.subtitle": "Tout ce qui entre chaque mois, et d'où cela vient.",
   "nav.expenses": "Dépenses",
   "nav.analysis": "Analyse",
   "nav.allocations": "Épargner & Investir",

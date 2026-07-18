@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
+  Banknote,
   Receipt,
   PiggyBank,
   Settings,
@@ -45,6 +46,7 @@ import {
 
 const NAV = [
   { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/money-in", labelKey: "nav.moneyIn", icon: Banknote },
   { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
   { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
   { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
