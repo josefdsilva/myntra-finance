@@ -328,6 +328,18 @@ export function CoachDock() {
 
         {/* Composer */}
         <div className="p-3 border-t space-y-2">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground select-none cursor-pointer">
+            <input
+              type="checkbox"
+              checked={deepThink}
+              onChange={(e) => setDeepThink(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-input accent-primary"
+            />
+            <span>
+              <strong className="text-foreground">Deep think</strong> — always use full
+              household context (costs more credits)
+            </span>
+          </label>
           <div className="flex gap-2">
             <Textarea
               ref={inputRef}
