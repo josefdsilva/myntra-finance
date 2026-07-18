@@ -9,6 +9,7 @@ import { useActiveHouseholdId } from "@/lib/active-household";
 import { deleteExpense, addExpensesBulk } from "@/lib/budget.functions";
 import { parseBankStatement } from "@/lib/ai-parse.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
@@ -24,7 +25,7 @@ import {
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
 import { toast } from "sonner";
-import { FileUp, Loader2, Trash2, Sparkles } from "lucide-react";
+import { FileUp, Loader2, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
@@ -174,31 +175,35 @@ function ExpensesPage() {
         <p className="text-sm text-muted-foreground">{t("exp.subtitle")}</p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("exp.addTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {householdId && (
-            <ExpenseQuickAdd
-              householdId={householdId}
-              onAdded={() => {
-                refetch();
-                qc.invalidateQueries({ queryKey: ["dashboard"] });
-              }}
-            />
-          )}
-        </CardContent>
-      </Card>
-
       {householdId && (
-        <BankImport
-          householdId={householdId}
-          onImported={() => {
-            refetch();
-            qc.invalidateQueries({ queryKey: ["dashboard"] });
-          }}
-        />
+        <Card>
+          <CardContent className="pt-6">
+            <Tabs defaultValue="add">
+              <TabsList className="mb-4">
+                <TabsTrigger value="add">{t("exp.addTitle")}</TabsTrigger>
+                <TabsTrigger value="statement">{t("exp.tabStatement")}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="add">
+                <ExpenseQuickAdd
+                  householdId={householdId}
+                  onAdded={() => {
+                    refetch();
+                    qc.invalidateQueries({ queryKey: ["dashboard"] });
+                  }}
+                />
+              </TabsContent>
+              <TabsContent value="statement">
+                <BankImport
+                  householdId={householdId}
+                  onImported={() => {
+                    refetch();
+                    qc.invalidateQueries({ queryKey: ["dashboard"] });
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       )}
 
       {householdId && <SpendingVsEstimate householdId={householdId} />}
@@ -456,17 +461,12 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
     : 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="size-4" /> Bank statement import
-        </CardTitle>
-        <CardDescription>
-          Upload a CSV or PDF — AI extracts transactions; likely duplicates are pre-unchecked.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-3">
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        Upload a CSV or PDF bank statement with last transactions for consolidation. Likely
+        duplicates are pre-unchecked.
+      </p>
+      <div className="flex items-center gap-3">
           <Input
             ref={ref}
             type="file"
@@ -539,7 +539,6 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }
