@@ -4545,7 +4545,7 @@ const fr: Record<MessageKey, string> = {
   "nav.dashboard": "Tableau de bord",
   "nav.moneyIn": "Revenus",
   "moneyIn.title": "Revenus",
-  "moneyIn.subtitle": "Tout ce qui entre chaque mois, et d'où cela vient.",
+  "moneyIn.subtitle": "N'enregistre ici que les revenus récurrents sur lesquels tu peux compter à chaque cycle — salaire, pensions, loyers perçus, allocations régulières. Ne saisis pas les entrées ponctuelles comme les cadeaux, remboursements ou primes ; enregistre-les comme argent reçu depuis la page Dépenses.",
   "nav.expenses": "Dépenses",
   "nav.analysis": "Analyse",
   "nav.allocations": "Épargner & Investir",
