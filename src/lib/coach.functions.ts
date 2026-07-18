@@ -13,7 +13,22 @@ import { buildForecast, monthKey, type Plan } from "./plan";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
+const QUICK_MODEL = "google/gemini-2.5-flash-lite";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+/**
+ * Routes short factual/UI questions to a cheaper model with no household
+ * snapshot and no chat history. Deep advice questions still hit the full
+ * context path so recommendations stay grounded in the household's numbers.
+ */
+function isQuickQuestion(msg: string): boolean {
+  if (msg.length > 200) return false;
+  const t = msg.trim().toLowerCase();
+  // Common factual / UI / definition patterns across EN + a few PT/ES/FR/DE cues.
+  return /^(what is|what's|whats|how do i|how can i|how to|where is|where do i|where can i|explain|define|tell me about|show me|can you show|is there|does bynku|what does|meaning of|o que é|o que e|como faço|como posso|onde|qué es|que es|cómo|como|où|comment|was ist|wie)\b/.test(
+    t,
+  );
+}
 
 // Narrow row shapes used only to aggregate the coach snapshot. Kept local so a
 // schema tweak on unrelated columns doesn't force this file to change.
@@ -974,6 +989,7 @@ export const chatInConversation = createServerFn({ method: "POST" })
         conversationId: z.string().uuid().nullable().optional(),
         message: z.string().min(1).max(2000),
         locale: z.string().optional(),
+        forceDeep: z.boolean().optional(),
       })
       .parse(input),
   )
@@ -1022,21 +1038,36 @@ export const chatInConversation = createServerFn({ method: "POST" })
       content: data.message,
     });
 
-    const ctx = await buildContext(supabase, data.householdId);
+    const useQuick = !data.forceDeep && isQuickQuestion(data.message);
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
-    const result = await generateText({
-      model: gateway(MODEL),
-      system: `${buildSystem(ctx, data.locale)}
+    const modelId = useQuick ? QUICK_MODEL : MODEL;
+
+    let systemPrompt: string;
+    let messages: Array<{ role: "user" | "assistant"; content: string }>;
+    if (useQuick) {
+      // Quick tier: no household snapshot, no chat history. Great for factual
+      // or "how do I…" questions about the app or general finance concepts.
+      systemPrompt = `You are bynku's household finance coach. This is a QUICK reply — the user asked a short factual or how-to question, so no household numbers are provided. Answer plainly in 2–4 sentences. If the question actually needs the household's own figures to answer well, say so and invite them to toggle "Deep think" for a numbers-grounded answer.${langInstruction(data.locale)}`;
+      messages = [{ role: "user" as const, content: data.message }];
+    } else {
+      const ctx = await buildContext(supabase, data.householdId);
+      systemPrompt = `${buildSystem(ctx, data.locale)}
 
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(slimContext(ctx))}
 
-You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot. For quick questions stay short (2–5 sentences); for life-decision questions give a thorough answer with a range, assumption line, and clear recommendation.`,
-      temperature: 0.2,
-      messages: [
+You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot. For quick questions stay short (2–5 sentences); for life-decision questions give a thorough answer with a range, assumption line, and clear recommendation.`;
+      messages = [
         ...replayed.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: data.message },
-      ],
+      ];
+    }
+
+    const result = await generateText({
+      model: gateway(modelId),
+      system: systemPrompt,
+      temperature: 0.2,
+      messages,
     });
 
     await supabase.from("coach_messages").insert({
@@ -1055,16 +1086,16 @@ You are continuing an ongoing chat with this household. Only the last ${COACH_RE
     }
     await supabase.from("coach_conversations").update(updates).eq("id", convId);
 
-    const est = estimateTextCredits(MODEL, result.usage as never);
+    const est = estimateTextCredits(modelId, result.usage as never);
     await logHouseholdCredits({
       householdId: data.householdId,
       userId,
-      operation: "ai_coach_chat",
+      operation: useQuick ? "ai_coach_chat_quick" : "ai_coach_chat",
       credits: est.credits,
       inputTokens: est.input,
       outputTokens: est.output,
     });
 
-    return { reply: result.text, conversationId: convId };
+    return { reply: result.text, conversationId: convId, tier: useQuick ? "quick" : "deep" };
   });
 

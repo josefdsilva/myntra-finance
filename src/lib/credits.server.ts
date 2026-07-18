@@ -11,6 +11,11 @@ const RATES = {
     input: 0.0000015, // ~ $0.30/M tokens, 1 credit ≈ $0.20
     output: 0.0000125, // ~ $2.50/M tokens
   },
+  "google/gemini-2.5-flash-lite": {
+    // Quick-tier model — roughly 10× cheaper than Gemini 3 Flash.
+    input: 0.00000015,
+    output: 0.00000125,
+  },
   "openai/gpt-4o-mini-transcribe": {
     // billed per audio-second; approximate 0.005 credits per call
     fixed: 0.005,
