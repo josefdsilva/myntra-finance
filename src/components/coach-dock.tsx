@@ -124,13 +124,14 @@ export function CoachDock() {
   }, [open, convId]);
 
   const chatMut = useMutation({
-    mutationFn: (payload: { message: string; conversationId: string | null }) =>
+    mutationFn: (payload: { message: string; conversationId: string | null; forceDeep: boolean }) =>
       chatFn({
         data: {
           householdId: householdId!,
           conversationId: payload.conversationId,
           message: payload.message,
           locale,
+          forceDeep: payload.forceDeep,
         },
       }),
     onSuccess: async (res) => {
