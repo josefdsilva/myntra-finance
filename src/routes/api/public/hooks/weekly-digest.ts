@@ -29,6 +29,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { sendWebPush } = await import("@/lib/webpush.server");
+        const { enqueueTemplateEmail } = await import("@/lib/email/send.server");
 
         const { data: prefs } = await supabaseAdmin
           .from("notification_prefs" as never)
