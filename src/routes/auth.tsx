@@ -19,6 +19,8 @@ import {
 import { toast } from "sonner";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useT } from "@/lib/i18n";
+import { money } from "@/lib/format";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
