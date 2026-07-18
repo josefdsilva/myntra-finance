@@ -49,6 +49,7 @@ function LoansPage() {
         />
       )}
       {householdId && <DebtsOverview householdId={householdId} showMoveFunds={false} />}
+      {householdId && <PayoffSimulator householdId={householdId} />}
       {householdId && <DebtsSetup householdId={householdId} />}
     </div>
   );
