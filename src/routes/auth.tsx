@@ -168,16 +168,16 @@ function AuthPage() {
               </span>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="font-display text-5xl">€42.80</span>
+              <span className="font-display text-5xl">{money(42.8)}</span>
               <span className="text-sm text-primary-foreground/60">{t("auth.perDayDaysLeft")}</span>
             </div>
             <div className="mt-4 h-2 rounded-full bg-primary-foreground/10 overflow-hidden">
               <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-accent to-[oklch(0.85_0.14_150)]" />
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-              <MiniTag label={t("auth.spent")} value="€648" tone="orange" />
-              <MiniTag label={t("auth.received")} value="€312" tone="blue" />
-              <MiniTag label={t("auth.balance")} value="€336" tone="muted" />
+              <MiniTag label={t("auth.spent")} value={money(648)} tone="orange" />
+              <MiniTag label={t("auth.received")} value={money(312)} tone="blue" />
+              <MiniTag label={t("auth.balance")} value={money(336)} tone="muted" />
             </div>
           </div>
         </div>
@@ -217,7 +217,7 @@ function AuthPage() {
                 </span>
               </div>
               <div className="mt-1.5 flex items-baseline gap-2">
-                <span className="font-display text-4xl">€42.80</span>
+                <span className="font-display text-4xl">{money(42.8)}</span>
                 <span className="text-xs text-primary-foreground/60">
                   {t("auth.perDayDaysLeft")}
                 </span>
@@ -226,9 +226,9 @@ function AuthPage() {
                 <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-accent to-[oklch(0.85_0.14_150)]" />
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                <MiniTag label={t("auth.spent")} value="€648" tone="orange" />
-                <MiniTag label={t("auth.received")} value="€312" tone="blue" />
-                <MiniTag label={t("auth.balance")} value="€336" tone="muted" />
+                <MiniTag label={t("auth.spent")} value={money(648)} tone="orange" />
+                <MiniTag label={t("auth.received")} value={money(312)} tone="blue" />
+                <MiniTag label={t("auth.balance")} value={money(336)} tone="muted" />
               </div>
             </div>
 
