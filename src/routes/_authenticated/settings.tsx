@@ -106,7 +106,6 @@ function SettingsPage() {
             household={hh!.household!}
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
           />
-          <DebtsSection householdId={householdId} />
           <CategoryManager householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
@@ -1205,7 +1204,7 @@ function debtKinds(t: ReturnType<typeof useT>): Array<{ value: DebtKind; label: 
   ];
 }
 
-function DebtsSection({ householdId }: { householdId: string }) {
+export function DebtsSection({ householdId }: { householdId: string }) {
   const t = useT();
   const DEBT_KINDS = debtKinds(t);
   const qc = useQueryClient();
@@ -1235,6 +1234,7 @@ function DebtsSection({ householdId }: { householdId: string }) {
 
   function bumpCaches() {
     qc.invalidateQueries({ queryKey: ["debts-total", householdId] });
+    qc.invalidateQueries({ queryKey: ["debts-section", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
     invalidateHouseholdData(qc);
     qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });

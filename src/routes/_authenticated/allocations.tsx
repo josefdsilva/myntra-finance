@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { confirmBucketAllocation, undoBucketAllocation } from "@/lib/bucket-allocations.functions";
-import { DebtsSection } from "@/components/debts-section";
+import { MoveFundsCard } from "@/components/move-funds-card";
 import { BucketsSection } from "@/routes/_authenticated/settings";
 import { pageShellClass } from "@/components/page-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -246,7 +246,7 @@ function AllocationsPage() {
         </div>
       )}
 
-      {householdId && <DebtsSection householdId={householdId} />}
+      {householdId && <MoveFundsCard householdId={householdId} />}
 
       {householdId && <BucketsSection householdId={householdId} />}
 

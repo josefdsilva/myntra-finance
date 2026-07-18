@@ -22,7 +22,13 @@ import { MoveFundsDialog } from "@/components/move-funds-dialog";
 
 type BucketRow = { id: string; name: string; initial_balance: number };
 
-export function DebtsSection({ householdId }: { householdId: string }) {
+export function DebtsSection({
+  householdId,
+  showMoveFunds = true,
+}: {
+  householdId: string;
+  showMoveFunds?: boolean;
+}) {
   const t = useT();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -101,24 +107,28 @@ export function DebtsSection({ householdId }: { householdId: string }) {
   }, [data?.debts, householdId]);
 
   if (!data) return null;
-  if (debts.length === 0 && buckets.length === 0) return null;
+  if (debts.length === 0 && (!showMoveFunds || buckets.length === 0)) return null;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div className="min-w-0">
-          <CardTitle>{t("debt.sectionTitle")}</CardTitle>
-          <CardDescription>{t("debt.sectionDesc")}</CardDescription>
+          <CardTitle>{showMoveFunds ? t("debt.sectionTitle") : t("debt.overviewTitle")}</CardTitle>
+          <CardDescription>
+            {showMoveFunds ? t("debt.sectionDesc") : t("debt.overviewDesc")}
+          </CardDescription>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="shrink-0 whitespace-nowrap"
-          disabled={buckets.length === 0}
-          onClick={() => setMoveOpen(true)}
-        >
-          <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
-        </Button>
+        {showMoveFunds && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 whitespace-nowrap"
+            disabled={buckets.length === 0}
+            onClick={() => setMoveOpen(true)}
+          >
+            <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
        <TooltipProvider delayDuration={80}>
@@ -237,13 +247,15 @@ export function DebtsSection({ householdId }: { householdId: string }) {
           onOpenChange={(v) => !v && setPayDebt(null)}
         />
       )}
-      <MoveFundsDialog
-        householdId={householdId}
-        buckets={bucketOptions}
-        bucketBalances={balances}
-        open={moveOpen}
-        onOpenChange={setMoveOpen}
-      />
+      {showMoveFunds && (
+        <MoveFundsDialog
+          householdId={householdId}
+          buckets={bucketOptions}
+          bucketBalances={balances}
+          open={moveOpen}
+          onOpenChange={setMoveOpen}
+        />
+      )}
     </Card>
   );
 }
