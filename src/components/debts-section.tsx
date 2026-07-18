@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeftRight, Wallet } from "lucide-react";
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ArrowLeftRight, Wallet, HelpCircle, MessageSquare } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
+import { debtLiveSchedule, debtMonthlyRate, type Debt } from "@/lib/debt-schedule";
 import { bucketBalancesFor, logScheduledDebtPayment, type AccountMovement } from "@/lib/movements";
 import { OverpaymentDialog } from "@/components/overpayment-dialog";
 import { MoveFundsDialog } from "@/components/move-funds-dialog";
@@ -18,6 +25,7 @@ type BucketRow = { id: string; name: string; initial_balance: number };
 export function DebtsSection({ householdId }: { householdId: string }) {
   const t = useT();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [moveOpen, setMoveOpen] = useState(false);
   const [payDebt, setPayDebt] = useState<Debt | null>(null);
 
@@ -113,6 +121,7 @@ export function DebtsSection({ householdId }: { householdId: string }) {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
+       <TooltipProvider delayDuration={80}>
         {debts.length === 0 ? (
           <p className="text-sm text-muted-foreground py-2">{t("debt.none")}</p>
         ) : (
@@ -120,6 +129,9 @@ export function DebtsSection({ householdId }: { householdId: string }) {
             {debts.map((debt) => {
               const s = debtLiveSchedule(debt);
               const start = Number(debt.starting_principal ?? debt.principal_remaining ?? 0);
+              // What this loan costs right now, in plain money: this month's interest.
+              const monthlyInterestNow =
+                Math.round(s.remaining * debtMonthlyRate(debt) * 100) / 100;
               const payments = (data?.movements ?? [])
                 .filter((m) => m.to_type === "debt" && m.to_id === debt.id)
                 .sort((a, b) => String(b.period).localeCompare(String(a.period)))
@@ -158,6 +170,26 @@ export function DebtsSection({ householdId }: { householdId: string }) {
                     )}
                   </div>
 
+                  {!s.paidOff && monthlyInterestNow > 0 && (
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      {t("debt.costsPerMonth", { amount: money(monthlyInterestNow) })}
+                      <UiTooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="text-muted-foreground/70"
+                            title={t("debt.costsHelp")}
+                          >
+                            <HelpCircle className="size-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-64 text-xs">
+                          {t("debt.costsHelp")}
+                        </TooltipContent>
+                      </UiTooltip>
+                    </p>
+                  )}
+
                   {payments.length > 0 && (
                     <ul className="mt-1 space-y-0.5 border-t pt-2 text-xs text-muted-foreground">
                       {payments.map((m) => (
@@ -176,6 +208,23 @@ export function DebtsSection({ householdId }: { householdId: string }) {
             })}
           </ul>
         )}
+
+        {debts.length > 0 && (
+          <div className="space-y-2 border-t pt-3 text-xs text-muted-foreground">
+            <p>{t("debt.faster.note")}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() =>
+                navigate({ to: "/analysis", search: { ask: t("debt.faster.askPrompt") } as never })
+              }
+            >
+              <MessageSquare className="size-3.5" /> {t("debt.faster.ask")}
+            </Button>
+          </div>
+        )}
+       </TooltipProvider>
       </CardContent>
 
       {payDebt && (
