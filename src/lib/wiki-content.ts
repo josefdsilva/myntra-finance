@@ -1,1795 +1,1220 @@
-// Auto-generated content dictionary for the Wiki guide page.
-// Kept local to this route (not in the global i18n-messages.ts catalog)
-// because this is long-form documentation content, not app UI chrome.
+// Wiki content for the in-app manual.
+//
+// This is intentionally structured as data (sections with per-locale copy)
+// rather than a flat i18n dictionary — the wiki is long-form documentation,
+// not app UI chrome. Keep translations in plain language and keep sections
+// aligned with the tabs users actually see in the app.
 import type { Locale } from "@/lib/i18n";
 
-export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
+type Loc<T> = Record<Locale, T>;
+
+export type WikiIcon =
+  | "BookOpen"
+  | "Calendar"
+  | "Wallet"
+  | "Receipt"
+  | "Calculator"
+  | "Sparkles"
+  | "PiggyBank"
+  | "CreditCard"
+  | "CalendarClock"
+  | "BarChart3"
+  | "MessageCircle"
+  | "Settings"
+  | "Bell"
+  | "ShieldCheck"
+  | "HelpCircle";
+
+export type WikiDiagram = "cycle" | "baseline" | "waterfall" | "ladder";
+
+export type WikiBullet = { label: string; body: string };
+
+export type WikiSection = {
+  id: string;
+  icon: WikiIcon;
+  diagram?: WikiDiagram;
+  title: Loc<string>;
+  paragraphs: Loc<string[]>;
+  bullets?: Loc<WikiBullet[]>;
+  callout?: Loc<string>;
+  faq?: boolean;
+  formula?: string; // rendered as a <pre> block, locale-agnostic
+};
+
+// ---------------------------------------------------------------------------
+// Page chrome (header, search, TOC label) + diagram labels per locale.
+// ---------------------------------------------------------------------------
+export const WIKI_META: Loc<{
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  tocTitle: string;
+  searchPlaceholder: string;
+  noResults: string;
+  diagrams: {
+    salary: string;
+    today: string;
+    nextSalary: string;
+    cycle: string;
+    cycleCap: string;
+    fixed: string;
+    debt: string;
+    variable: string;
+    margin: string;
+    baseline: string;
+    baselineCap: string;
+    surplus: string;
+    realAlloc: string;
+    realSurplus: string;
+    waterfallCap: string;
+    step1: string;
+    step2: string;
+    step3: string;
+    ladderCap: string;
+  };
+}> = {
   en: {
-    "toc.overview": "Overview",
-    "search.placeholder": "Search the manual",
-    "search.noResults": "No results for",
-    "toc.principles": "Financial principles",
-    "diag.baselineCap": "Your baseline is fixed costs plus debt plus variable spending plus a safety margin.",
-    "diag.salary": "Salary",
-    "diag.lFixed": "Fixed costs",
-    "diag.lDebt": "Debt",
-    "diag.lVariable": "Variable",
-    "diag.lMargin": "Margin",
-    "diag.lBaseline": "Baseline",
-    "diag.lSurplus": "Surplus",
-    "diag.lRealAlloc": "Real allocations",
-    "diag.lRealSurplus": "Real surplus",
-    "diag.today": "Today",
-    "diag.nextSalary": "Next salary",
-    "diag.cycle": "Current cycle",
-    "diag.cycleCap": "A cycle runs from one salary to the day before the next, not the calendar month.",
-    "diag.waterfallCap": "Your surplus splits into what you actually moved into projects and what stays free.",
-    "diag.step1": "Emergency fund",
-    "diag.step2": "High-interest debt",
-    "diag.step3": "Invest for growth",
-    "diag.ladderCap": "A rough order of priority for spare money. Your situation can change the mix.",
-    "tbl.typesTitle": "Project types",
-    "tbl.colType": "Type",
-    "tbl.colRole": "Role",
-    "tbl.savings": "Savings goal",
-    "tbl.savingsRole": "A goal you are setting money aside for.",
-    "tbl.emergency": "Emergency fund",
-    "tbl.emergencyRole": "Your safety cushion. The coach counts it first and protects it.",
-    "tbl.investment": "Investment",
-    "tbl.investmentRole": "Growth money for the long term, not to be raided.",
-    "tbl.targetsTitle": "How a project is funded",
-    "tbl.colMeaning": "How it funds",
-    "tbl.tPct": "Percent of surplus",
-    "tbl.tPctM": "Takes a share of whatever surplus you have that cycle.",
-    "tbl.tMonthly": "Fixed per month",
-    "tbl.tMonthlyM": "A set amount every month.",
-    "tbl.tYearly": "Fixed per year",
-    "tbl.tYearlyM": "A yearly amount spread evenly across the months.",
-    "tbl.tGoal": "Goal by date",
-    "tbl.tGoalM": "A target amount by a date. The monthly figure is what it takes to get there in time.",
-    "principles.intro":
-      "bynku is opinionated on purpose. Behind the screens sit a few simple money principles that most planners agree on. Here is what the app quietly steers you toward, and why.",
-    "principles.p1.h": "1. Live within your baseline",
-    "principles.p1.b":
-      "Your baseline is what a normal month costs: fixed bills, debt payments, expected variable spending, and a small safety margin. The daily safe to spend figure turns whatever is left into a simple per day number, so you can enjoy your money without quietly overshooting. Stay under it and the month takes care of itself.",
-    "principles.p2.h": "2. Build a safety cushion first",
-    "principles.p2.b":
-      "Before chasing growth, most households sleep better with cash that covers a few months of essential spending. bynku measures this as emergency fund coverage and treats emergency projects as money you should not touch. A common target is three to six months of essentials, more if your income is irregular.",
-    "principles.p3.h": "3. Clear expensive debt early",
-    "principles.p3.b":
-      "Paying down a debt is a guaranteed return equal to its interest rate. When a loan costs more than you could reasonably earn by investing, clearing it usually wins. Two ordering methods help: the avalanche pays the highest rate first to save the most interest, and the snowball pays the smallest balance first for quick, motivating wins. The coach can rank your debts either way.",
-    "principles.p4.h": "4. Then invest for the long term",
-    "principles.p4.b":
-      "Once your cushion is healthy and expensive debt is gone, money left idle loses ground to inflation. Investing puts your surplus to work over the years. bynku flags when you may be under investing (a healthy reserve but idle surplus) or over investing (adding to investments while the reserve is thin or costly debt remains), and it never tells you to sell investments unless it is truly necessary.",
-    "principles.p5.h": "5. Compare to averages, not to neighbours",
-    "principles.p5.b":
-      "The How do I compare view places your income and spending next to public national statistics for a household of your size and income band, never against other bynku users. It is a reference point, not a verdict. Use it to spot categories that stand out, then decide what fits your life.",
-    "principles.note":
-      "bynku is a budgeting companion, not a licensed financial, tax or legal advisor. For regulated products or big decisions, treat its guidance as a starting point and talk to a qualified professional.",
-    "toc.cycles": "Pay cycles",
-    "toc.baseline": "Baseline & safe-to-spend",
-    "toc.expenses": "Expenses & capture",
-    "toc.allocations": "Allocations & buckets",
-    "toc.plans": "Planning ahead",
-    "plans.intro":
-      "The Plan page is for money you already know is coming but that is not part of a normal month: a one-off cost like new car tyres in August, a yearly bill like insurance, a change in income such as a raise from September, or heavier spending around Christmas. You line these up ahead of time so no month catches you by surprise.",
-    "plans.h1": "How it works.",
-    "plans.b1":
-      "Each plan has an amount, a month, a direction (money out or money in), and how often it repeats: just once, every year, or every month from a chosen point. Plans never change your baseline, which stays your normal recurring costs. Instead they feed a forward forecast of the months ahead and a timeline, and any big one-off can be turned into a project so you save for it gradually rather than taking the hit in a single month. The forecast flags any month that would run short.",
-    "plans.h2": "When a planned payment comes due.",
-    "plans.b2":
-      "When you actually pay a planned cost, you mark it done and enter what it really cost, which may differ from your estimate. You choose where it is paid from: your unallocated leftover for the month, and only if the cost is larger than that leftover does it dip into your everyday budget; or a project you had been saving into, which is drawn down instead. From that moment it stops being a plan and becomes a settled expense, and because it stays counted for the month, the money does not quietly reappear.",
-    "plans.h3": "When money you expected arrives.",
-    "plans.b3":
-      "A planned receivable, like a bonus or a new income stream, works the same way in reverse. While it is still planned it lifts the forecast for the months it applies to. When it lands you mark it done at the amount you actually received, and it is recorded against that month.",
-    "plans.callout":
-      "In short: a plan is a promise about the future. Until it is paid it shapes what you can safely do; the moment it is paid it becomes real, at the real amount, drawn from the pot you choose.",
-    "toc.analysis": "Analysis",
-    "toc.settings": "Settings",
-    "toc.notifications": "Notifications",
-    "toc.privacy": "Hidden mode & dark mode",
-    "toc.credits": "Credits & tokens",
-    "toc.glossary": "How the numbers work",
-    "toc.faq": "FAQ",
-    "glossary.intro":
-      "Every figure in bynku comes from a fixed formula. Here is each term, what it means, and how it is calculated. \"This cycle\" means the current pay cycle.",
-    "glossary.income.term": "Income",
-    "glossary.income.desc":
-      "Your regular monthly income, summed from Settings. This one figure drives your baseline surplus, savings rate and the national benchmark, the same value everywhere in the app.",
-    "glossary.fixed.term": "Fixed Costs",
-    "glossary.fixed.desc": "The bills that repeat every month.",
-    "glossary.debt.term": "Debt Payments",
-    "glossary.debt.desc": "Monthly installments on your loans and credit lines.",
-    "glossary.variable.term": "Variable Estimate",
-    "glossary.variable.desc": "Your expected monthly variable spending (groceries, transport, etc.).",
-    "glossary.margin.term": "Margin",
-    "glossary.margin.desc": "A safety buffer, set with the slider, as a percentage of the three above.",
-    "glossary.baseline.term": "Baseline",
-    "glossary.baseline.desc": "Your target monthly cost of living, everything you need before saving.",
-    "glossary.surplus.term": "Surplus",
-    "glossary.surplus.desc":
-      "What is left of your income after the baseline: money you can save or spend freely.",
-    "glossary.plannedAlloc.term": "Planned Allocations",
-    "glossary.plannedAlloc.desc":
-      "How much you intend to move into your projects each month (their targets).",
-    "glossary.plannedSurplus.term": "Planned Surplus",
-    "glossary.plannedSurplus.desc": "What would remain after fulfilling every project's target.",
-    "glossary.realAlloc.term": "Real Allocations",
-    "glossary.realAlloc.desc":
-      "The money you have actually moved into projects this cycle (confirmations and transfers).",
-    "glossary.realSurplus.term": "Real Surplus",
-    "glossary.realSurplus.desc":
-      "What remains after the amounts you really moved, your true position.",
-    "glossary.received.term": "Received",
-    "glossary.received.desc":
-      "Ad-hoc money in during the cycle (refunds, gifts, bonuses). It raises what you can spend this cycle, but it does not change your recurring Income or Surplus.",
-    "glossary.realExpenses.term": "Real Expenses",
-    "glossary.realExpenses.desc": "The money-out you have actually recorded this cycle.",
-    "glossary.projectType.term": "Project type",
-    "glossary.projectType.desc":
-      "Each project is a Savings goal, your Emergency fund, or an Investment. The type tells the coach how to prioritise, and it never treats investments as spare cash to raid.",
-    "glossary.emergencyFund.term": "Emergency fund coverage",
-    "glossary.emergencyFund.desc":
-      "How many months of essential spending your liquid reserve covers. The reserve is your emergency projects (or all non-investment savings if none is tagged); investments are excluded on purpose.",
-    "glossary.moneyPriority.term": "Saving vs. investing vs. debt",
-    "glossary.moneyPriority.desc":
-      "A rough order for spare money: build a healthy emergency fund first, then clear high-interest debt, then invest for long-term growth. The right mix depends on your situation, the coach weighs it case by case.",
-    "header.eyebrow": "Wiki",
-    "header.title": "How this app works",
-    "header.subtitle":
-      "A complete guide to every screen, field and formula. Skim the table of contents or jump straight to the section you need.",
-    "header.tocTitle": "Table of contents",
-    "overview.p1a":
-      "bynku helps a couple (or small family) plan and manage monthly money together. Instead of tracking every cent against a calendar month, the app works in ",
-    "overview.term1": "pay cycles",
-    "overview.p1b":
-      ",the window between two consecutive salary deposits, and answers one core question every day:",
-    "overview.callout":
-      "“How much can I still spend today without breaking the baseline or putting a savings goal in jeopardy?”",
-    "overview.p2":
-      "To do that it needs three things from you: your fixed monthly costs, your estimated variable costs (groceries, fuel…), and your allocation buckets (investments, savings, kids, projects). From there it computes a safe-to-spend value, tracks your actual expenses, and shows analytics.",
-    "overview.badge1": "Shared household",
-    "overview.badge2": "EUR",
-    "overview.badge3": "DD/MM/YYYY HH:mm:ss",
-    "overview.badge4": "Invite-only",
-    "cycles.p1a": "A ",
-    "cycles.term1": "cycle",
-    "cycles.p1b":
-      " starts the day the primary salary is received and ends the day before the next one. All budgets, safe-to-spend and allocations are computed against the current cycle, not the calendar month.",
-    "cycles.li1a": "The cycle anchor is the most recent record marked as a ",
-    "cycles.li1term": "salary deposit",
-    "cycles.li1b": ".",
-    "cycles.li2a": "Use the ",
-    "cycles.li2strong": "Salary received · restart cycle",
-    "cycles.li2b":
-      " button on the Dashboard when you get paid. It creates the salary record using the amount from Settings and starts a new cycle.",
-    "cycles.li3":
-      "If no salary has ever been registered, the app falls back to the current calendar month.",
-    "cycles.li4":
-      "On Expenses and Allocations you can navigate to previous cycles with the arrows.",
-    "baseline.p1a": "The ",
-    "baseline.term1": "baseline",
-    "baseline.p1b":
-      " is your target monthly cost of living. It is a calculated value, not a number you type:",
-    "baseline.li1term": "Fixed monthly expenses",
-    "baseline.li1":
-      ",rent, utilities, subscriptions, insurance. Things that hit every month at (roughly) the same amount.",
-    "baseline.li2term": "Estimated variable costs",
-    "baseline.li2":
-      ",categories you spend on regularly but with varying amounts: groceries, fuel, transportation, household goods…",
-    "baseline.li3term": "Safety margin",
-    "baseline.li3":
-      ",a percentage buffer on top, to absorb small surprises without alarms firing.",
-    "baseline.safeTodayHeading": "Safe to spend today",
-    "baseline.p3": "The Dashboard shows this as a large number with three tags:",
-    "baseline.badgeSpent": "Spent",
-    "baseline.li4After": " variable expenses recorded this cycle.",
-    "baseline.badgeReceived": "Received",
-    "baseline.li5After": " money received during the cycle (refunds, reimbursements, not salary).",
-    "baseline.badgeBalance": "Balance",
-    "baseline.li6After": " spent minus received: the net drain on the variable pool.",
-    "baseline.p4a":
-      "The trend indicator (↑/↓) compares today's safe-to-spend against yesterday's. The ",
-    "baseline.p4strong": "Projected end of cycle",
-    "baseline.p4b":
-      " card extrapolates using your last 7 days of spending, green if you'll finish under baseline, red if you'll blow through it.",
-    "expenses.p1a": "Expenses are anything that is ",
-    "expenses.p1em": "not",
-    "expenses.p1b":
-      " a fixed monthly bill or the salary. Only these entries move the safe-to-spend needle. There are several ways to add them:",
-    "expenses.acc1Trigger": "Quick add (form)",
-    "expenses.acc1Body":
-      "Type amount, category, note and date. Fastest for a single purchase you remember.",
-    "expenses.acc2Trigger": "AI text or voice memo",
-    "expenses.acc2BodyA": "Paste (or dictate) something like ",
-    "expenses.acc2BodyEm": "“45 euros groceries at Continente yesterday”",
-    "expenses.acc2BodyB":
-      ". The AI extracts amount, category, merchant and date. Review and confirm before saving.",
-    "expenses.acc3Trigger": "Photo of a receipt or bill",
-    "expenses.acc3Body":
-      "Upload the image; the AI reads the total, merchant and date and pre-fills the form.",
-    "expenses.acc4Trigger": "Bank statement import",
-    "expenses.acc4BodyA":
-      "Paste a statement export. Rows are parsed into candidate expenses. A duplicate check runs against the ±2-day window already in your log, likely duplicates are highlighted in amber and pre-unchecked. Use ",
-    "expenses.acc4Em1": "Select all",
-    "expenses.acc4Mid": ", ",
-    "expenses.acc4Em2": "Reset dupes",
-    "expenses.acc4Mid2": " and ",
-    "expenses.acc4Em3": "None",
-    "expenses.acc4End": " to move quickly.",
-    "expenses.acc5Trigger": "What each field means",
-    "expenses.fieldAmountTerm": "Amount",
-    "expenses.fieldAmount": " in EUR. Positive for outgoing money.",
-    "expenses.fieldTypeTerm": "Type",
-    "expenses.fieldTypeEm1": "expense",
-    "expenses.fieldTypeMid": " reduces the pool, ",
-    "expenses.fieldTypeEm2": "received",
-    "expenses.fieldTypeEnd": " refunds it (not salary).",
-    "expenses.fieldCategoryTerm": "Category",
-    "expenses.fieldCategory":
-      " drives the Analysis pie chart and matches variable-estimate categories.",
-    "expenses.fieldDateTerm": "Date",
-    "expenses.fieldDate":
-      " when the money actually moved, this determines which cycle it belongs to.",
-    "expenses.fieldNoteTerm": "Note",
-    "expenses.fieldNote": " free text (merchant, purpose). Useful in the Analysis tooltips.",
-    "allocations.p1a": "A ",
-    "allocations.term1": "bucket",
-    "allocations.p1b":
-      " represents a place your income should flow to every cycle: long-term investments, savings account, kids' savings, a house-project fund, etc. Each bucket has a target that determines how much the app ",
-    "allocations.p1em": "recommends",
-    "allocations.p1c": " you move.",
-    "allocations.targetTypesHeading": "Target types",
-    "allocations.tt1term": "% of income",
-    "allocations.tt1": ",a share of the salary, e.g. 15% to investments.",
-    "allocations.tt2term": "Fixed € per month",
-    "allocations.tt2": ",a flat monthly contribution.",
-    "allocations.tt3term": "Goal € by date",
-    "allocations.tt3a": ",you want ",
-    "allocations.tt3em": "X €",
-    "allocations.tt3b":
-      " in this bucket by a specific date. The app computes the monthly contribution needed from today, and re-computes every cycle based on what was actually allocated.",
-    "allocations.markHeading": "Mark as allocated",
-    "allocations.markP1a": "When you move money into an account for a bucket, click ",
-    "allocations.markStrong": "Mark as allocated",
-    "allocations.markP1b": " and enter the actual amount transferred. The impact panel shows:",
-    "allocations.li1": "Delta versus the recommendation for the cycle.",
-    "allocations.li2a": "Effect on the ",
-    "allocations.li2term": "emergency pool",
-    "allocations.li2b": " (surplus / shortfall versus recommended totals).",
-    "allocations.li3":
-      "For goal buckets: updated progress percentage and the revised monthly rate needed to still hit the deadline.",
-    "allocations.p2":
-      "Allocating more than recommended pulls from the emergency pool; allocating less leaves surplus in it. Nothing forces you to hit the exact number, the app just keeps the math honest.",
-    "analysis.p1": "Two views help you understand where the money went and where it's heading.",
-    "analysis.burndownHeading": "Cycle burndown",
-    "analysis.li1a": "The line starts at ",
-    "analysis.li1strong": "−fixed_total",
-    "analysis.li1b":
-      " on day 1, fixed costs are already reserved even before you spend anything variable.",
-    "analysis.li2":
-      "It drops with each expense and rises with each received entry and the salary event.",
-    "analysis.li3":
-      "Dashed reference lines show the funding thresholds (baseline and, when relevant, allocation requirements).",
-    "analysis.li4":
-      "Hover any point to see the exact transactions that moved the balance that day.",
-    "analysis.categoryHeading": "Category distribution",
-    "analysis.p2":
-      "A pie chart of variable spending in the selected window (day / week / month). Use it to spot categories drifting above their variable-estimate share.",
-    "settings.li1term": "Household",
-    "settings.li1a":
-      ",name, primary salary amount and expected payday cadence. The salary amount is what the ",
-    "settings.li1em": "Salary received",
-    "settings.li1b": " button will record.",
-    "settings.li2term": "Members",
-    "settings.li2":
-      ",invite your partner by email. Both members share the same data; there is no per-member wallet.",
-    "settings.li3term": "Fixed monthly expenses",
-    "settings.li3": ",one row per recurring bill.",
-    "settings.li4term": "Variable cost estimates",
-    "settings.li4": ",expected monthly spend per category. Sum feeds the baseline.",
-    "settings.li5term": "Safety margin (%)",
-    "settings.li5": ",buffer applied on top of fixed + variable estimates.",
-    "settings.li6term": "Allocation buckets",
-    "settings.li6": ",create/edit buckets, targets, and goal deadlines.",
-    "settings.li7term": "Notifications",
-    "settings.li7": ",enable web push per device and toggle each alert individually.",
-    "notifications.p1":
-      "All notifications are opt-in, per device and per type. Enable a device first (Settings → Notifications → Enable on this device), then toggle the ones you want.",
-    "notifications.li1strong": "Monday morning digest",
-    "notifications.li1":
-      " (08:00 Europe/Lisbon), a summary of the previous week: total spent and received (excluding fixed costs and salary), top-3 expenses and received items, a comparison to the previous week, an AI commentary on pace, and how much room you still have in the baseline and emergency pool.",
-    "notifications.li2strong": "Baseline approaching / reached",
-    "notifications.li2":
-      ",sent when the remaining variable pool crosses warning and breach thresholds.",
-    "notifications.li3strong": "Emergency pool near depletion",
-    "notifications.li3": ",sent when consumption of the surplus reaches a critical level.",
-    "notifications.p2":
-      "iOS Safari requires the app to be installed to the home screen before push works. Desktop Chrome / Firefox / Edge and Android work directly.",
-    "privacy.p1term": "Hidden mode",
-    "privacy.p1":
-      " (eye icon) blurs every monetary value in the app so you can open it in public without exposing balances. The toggle is remembered across sessions in this browser.",
-    "privacy.p2term": "Dark mode",
-    "privacy.p2":
-      " (sun/moon icon) follows your OS preference by default and remembers your explicit choice across sessions.",
-    "privacy.p3":
-      "Access is restricted to allow-listed emails. Sign-ups are disabled; new members join by invitation only.",
-    "credits.p1a":
-      "Some bynku features are powered by AI models (the financial coach, voice/text/photo/bank-statement parsing). Every call to those models has a real cost, which we measure in ",
-    "credits.p1strong": "credits",
-    "credits.p1b": ". Each household gets a cap of ",
-    "credits.p1strong2": "7.5 credits per month",
-    "credits.p1c": "; usage is visible in ",
-    "credits.p1em": "Settings → Credit Usage",
-    "credits.p1d": ".",
-    "credits.tokenHeading": "What is a token?",
-    "credits.tokenP1a": "AI models don't read characters or words, they read ",
-    "credits.tokenStrong": "tokens",
-    "credits.tokenP1b":
-      ", small chunks of text (roughly ¾ of a word in English, a bit less for other languages). A short memo like ",
-    "credits.tokenEm": '"Grocery €42 at Pingo Doce"',     "credits.tokenP1c":
-      " is ~10 tokens; a full bank statement page can be several thousand. Images count too: a receipt photo is billed as a fixed block of image tokens plus the tokens of any text the model writes back.",
-    "credits.tokenP2a": "Every AI call has two sides: ",
-    "credits.tokenP2strong1": "input tokens",
-    "credits.tokenP2mid":
-      " (what we send, your memo, receipt, or the context we build for the coach) and ",
-    "credits.tokenP2strong2": "output tokens",
-    "credits.tokenP2end":
-      " (what the model writes back, the parsed JSON or the coach's answer). Both are billed, and output tokens are usually more expensive per token than input.",
-    "credits.howHeading": "How bynku turns tokens into credits",
-    "credits.howP1a":
-      "After every AI call we log the token counts, convert them to a fractional credit cost using the model's pricing, and store that against your household in the ",
-    "credits.howCode": "credit_usage",
-    "credits.howP1b":
-      " table. The Settings page sums the current month and shows a progress bar towards the 7.5-credit cap. Non-AI features (adding expenses manually, viewing charts, notifications, sync) do ",
-    "credits.howStrong": "not",
-    "credits.howP1c": " consume credits.",
-    "credits.typicalCosts": "Typical costs per action:",
-    "credits.cost1strong": "Text/voice memo parsing",
-    "credits.cost1": ",very small, often well below 0.01 credits per entry.",
-    "credits.cost2strong": "Receipt photo parsing",
-    "credits.cost2":
-      ",larger, because the image itself is billed; still typically a few hundredths of a credit.",
-    "credits.cost3strong": "Bank statement import",
-    "credits.cost3": ",the most expensive per call, because full pages of text are sent in.",
-    "credits.cost4strong": "Financial coach report",
-    "credits.cost4a": ",cached for 24h so re-opening the tab is free; only ",
-    "credits.cost4em": "Regenerate",
-    "credits.cost4b": " and each chat reply cost credits.",
-    "credits.saveHeading": "How to save credits",
-    "credits.save1strong": "text/voice memos",
-    "credits.save1a": "Prefer ",
-    "credits.save1b":
-      " over photos when you already know the amount, much cheaper than image parsing.",
-    "credits.save2":
-      "For photos, crop tightly to the total/merchant area before uploading; smaller images = fewer image tokens.",
-    "credits.save3a": "Import bank statements ",
-    "credits.save3strong": "once per cycle",
-    "credits.save3b":
-      " instead of after every transaction, and let the deduplication step merge with what you already logged.",
-    "credits.save4a": "Reuse the cached coach report during the 24h window instead of clicking ",
-    "credits.save4em": "Regenerate",
-    "credits.save4b":
-      "; only regenerate after a material change (big expense, allocation, new payday).",
-    "credits.save5":
-      "Keep coach chat messages short and specific, long back-and-forths spend both input and output tokens on every turn.",
-    "credits.save6":
-      "Fix obvious things (merchant, category, amount) directly in the form instead of asking the AI to re-parse.",
-    "credits.footnote":
-      "When the 7.5-credit cap is reached, AI features pause until the next month; everything else keeps working normally. Need more? A top-up option is on the roadmap.",
-    "faq.q1Trigger": "Why cycles instead of months?",
-    "faq.q1Body":
-      "Salaries rarely land on the 1st. A cycle aligned to payday gives a truthful “how much do I have left before the next paycheck” answer.",
-    "faq.q2Trigger": "Should I delete the salary entry from Recent expenses?",
-    "faq.q2Body":
-      "No. That record is the anchor for the current cycle. Deleting it will make the app fall back to calendar-month mode until the next payday.",
-    "faq.q3Trigger": "What happens if I allocate less than recommended?",
-    "faq.q3Body":
-      "The shortfall stays in the emergency pool for the cycle. Goal buckets recompute the monthly rate needed to still hit the deadline.",
-    "faq.q4Trigger": "What if we go over baseline?",
-    "faq.q4Body":
-      "Safe-to-spend goes negative and the projected-end card turns red. The overrun is first absorbed by the safety margin, then by the emergency pool, then by cutting allocations.",
-    "faq.q5Trigger": "Is the AI parsing always right?",
-    "faq.q5Body":
-      "No, always review the pre-filled form before saving. It's a head start, not an autopilot.",
+    eyebrow: "Manual",
+    title: "How bynku works",
+    subtitle:
+      "A short, plain-language guide to the app. Read a section, or search for what you need.",
+    tocTitle: "In this guide",
+    searchPlaceholder: "Search the manual",
+    noResults: "No results for",
+    diagrams: {
+      salary: "Payday",
+      today: "Today",
+      nextSalary: "Next payday",
+      cycle: "Current cycle",
+      cycleCap: "A cycle runs from one payday to the day before the next — not the calendar month.",
+      fixed: "Bills",
+      debt: "Loans",
+      variable: "Everyday",
+      margin: "Cushion",
+      baseline: "What a normal month costs",
+      baselineCap: "Bills + loan payments + your everyday estimate + a small safety cushion.",
+      surplus: "What's left",
+      realAlloc: "Set aside",
+      realSurplus: "Still free",
+      waterfallCap: "What's left splits into money you've set aside and money still free to use.",
+      step1: "Small emergency fund",
+      step2: "Pay down high-interest loans",
+      step3: "Invest for the long run",
+      ladderCap: "A rough order of priority for spare money — your situation can change the mix.",
+    },
   },
   pt: {
-    "toc.overview": "Visão geral",
-    "search.placeholder": "Pesquisar no manual",
-    "search.noResults": "Sem resultados para",
-    "toc.principles": "Princípios financeiros",
-    "diag.baselineCap": "A sua base é os custos fixos mais a dívida mais os gastos variáveis mais uma margem de segurança.",
-    "diag.salary": "Salário",
-    "diag.lFixed": "Custos fixos",
-    "diag.lDebt": "Dívida",
-    "diag.lVariable": "Variável",
-    "diag.lMargin": "Margem",
-    "diag.lBaseline": "Base",
-    "diag.lSurplus": "Excedente",
-    "diag.lRealAlloc": "Alocações reais",
-    "diag.lRealSurplus": "Excedente real",
-    "diag.today": "Hoje",
-    "diag.nextSalary": "Próximo salário",
-    "diag.cycle": "Ciclo atual",
-    "diag.cycleCap": "Um ciclo vai de um salário até ao dia anterior ao seguinte, não o mês de calendário.",
-    "diag.waterfallCap": "O seu excedente divide-se no que moveu de facto para projetos e no que fica livre.",
-    "diag.step1": "Fundo de emergência",
-    "diag.step2": "Dívida de juro alto",
-    "diag.step3": "Investir para crescer",
-    "diag.ladderCap": "Uma ordem aproximada de prioridade para dinheiro extra. A sua situação pode alterar a mistura.",
-    "tbl.typesTitle": "Tipos de projeto",
-    "tbl.colType": "Tipo",
-    "tbl.colRole": "Função",
-    "tbl.savings": "Meta de poupança",
-    "tbl.savingsRole": "Um objetivo para o qual está a reservar dinheiro.",
-    "tbl.emergency": "Fundo de emergência",
-    "tbl.emergencyRole": "O seu colchão de segurança. O coach conta-o primeiro e protege-o.",
-    "tbl.investment": "Investimento",
-    "tbl.investmentRole": "Dinheiro de crescimento a longo prazo, para não tocar.",
-    "tbl.targetsTitle": "Como um projeto é financiado",
-    "tbl.colMeaning": "Como financia",
-    "tbl.tPct": "Percentagem do excedente",
-    "tbl.tPctM": "Fica com uma parte do excedente que tiver nesse ciclo.",
-    "tbl.tMonthly": "Fixo por mês",
-    "tbl.tMonthlyM": "Um valor definido todos os meses.",
-    "tbl.tYearly": "Fixo por ano",
-    "tbl.tYearlyM": "Um valor anual repartido igualmente pelos meses.",
-    "tbl.tGoal": "Meta por data",
-    "tbl.tGoalM": "Um valor alvo até uma data. O valor mensal é o necessário para lá chegar a tempo.",
-    "principles.intro":
-      "O bynku tem opinião de propósito. Por trás dos ecrãs estão alguns princípios simples de dinheiro com os quais a maioria dos planeadores concorda. Aqui está aquilo para que a aplicação o orienta discretamente, e porquê.",
-    "principles.p1.h": "1. Viva dentro da sua base",
-    "principles.p1.b":
-      "A sua base é quanto custa um mês normal: contas fixas, prestações de dívida, gastos variáveis esperados e uma pequena margem de segurança. O valor diário seguro para gastar transforma o que sobra num número simples por dia, para que possa aproveitar o seu dinheiro sem ultrapassar sem dar conta. Fique abaixo dele e o mês cuida de si próprio.",
-    "principles.p2.h": "2. Construa primeiro um colchão de segurança",
-    "principles.p2.b":
-      "Antes de procurar crescimento, a maioria das famílias dorme melhor com dinheiro que cubra alguns meses de gastos essenciais. O bynku mede isto como cobertura do fundo de emergência e trata os projetos de emergência como dinheiro que não deve tocar. Um objetivo comum é três a seis meses de essenciais, mais se o seu rendimento for irregular.",
-    "principles.p3.h": "3. Liquide cedo a dívida cara",
-    "principles.p3.b":
-      "Amortizar uma dívida é um retorno garantido igual à sua taxa de juro. Quando um empréstimo custa mais do que poderia razoavelmente ganhar a investir, liquidá-lo costuma compensar. Dois métodos de ordenação ajudam: a avalanche paga primeiro a taxa mais alta para poupar mais juros, e a bola de neve paga primeiro o saldo mais pequeno para vitórias rápidas e motivadoras. O coach pode ordenar as suas dívidas de qualquer das formas.",
-    "principles.p4.h": "4. Depois invista a longo prazo",
-    "principles.p4.b":
-      "Quando o seu colchão está saudável e a dívida cara desapareceu, o dinheiro parado perde terreno para a inflação. Investir põe o seu excedente a trabalhar ao longo dos anos. O bynku assinala quando pode estar a investir de menos (uma reserva saudável mas excedente parado) ou a investir de mais (a reforçar investimentos enquanto a reserva está reduzida ou existe dívida cara), e nunca lhe diz para vender investimentos a não ser que seja mesmo necessário.",
-    "principles.p5.h": "5. Compare com médias, não com vizinhos",
-    "principles.p5.b":
-      "A vista Como me comparo coloca o seu rendimento e gastos ao lado de estatísticas nacionais públicas para um agregado do seu tamanho e escalão de rendimento, nunca contra outros utilizadores do bynku. É um ponto de referência, não um veredito. Use-a para detetar categorias que se destacam e depois decida o que se adequa à sua vida.",
-    "principles.note":
-      "O bynku é um companheiro de orçamento, não um consultor financeiro, fiscal ou jurídico licenciado. Para produtos regulados ou grandes decisões, encare a sua orientação como um ponto de partida e fale com um profissional qualificado.",
-    "toc.cycles": "Ciclos de pagamento",
-    "toc.baseline": "Base & seguro-para-gastar",
-    "toc.expenses": "Despesas & captura",
-    "toc.allocations": "Alocações & reservas",
-    "toc.plans": "Planear o futuro",
-    "plans.intro":
-      "A página de Planos é para dinheiro que já sabe que vem aí mas que não faz parte de um mês normal: um custo único como pneus novos em agosto, uma conta anual como o seguro, uma mudança de rendimento como um aumento a partir de setembro, ou meses mais pesados como o Natal. Organiza estas coisas com antecedência para que nenhum mês o apanhe de surpresa.",
-    "plans.h1": "Como funciona.",
-    "plans.b1":
-      "Cada plano tem um valor, um mês, um sentido (dinheiro a sair ou a entrar) e a frequência com que se repete: só uma vez, todos os anos, ou todos os meses a partir de um ponto escolhido. Os planos nunca alteram a sua base, que continua a ser os seus custos recorrentes normais. Em vez disso, alimentam uma previsão dos próximos meses e uma linha do tempo, e qualquer grande custo único pode ser transformado num projeto para poupar aos poucos, em vez de pesar tudo num só mês. A previsão assinala qualquer mês que fique curto.",
-    "plans.h2": "Quando um pagamento planeado se vence.",
-    "plans.b2":
-      "Quando paga de facto um custo planeado, marca-o como concluído e indica quanto custou realmente, que pode diferir da sua estimativa. Escolhe de onde é pago: da sua sobra não aplicada do mês, e só se o custo for maior do que essa sobra é que entra no seu orçamento do dia a dia; ou de um projeto para o qual estava a poupar, que é então reduzido. A partir desse momento deixa de ser um plano e passa a ser uma despesa concretizada e, como continua a ser contado no mês, o dinheiro não volta a aparecer sem se dar conta.",
-    "plans.h3": "Quando chega dinheiro que esperava.",
-    "plans.b3":
-      "Um recebimento planeado, como um prémio ou uma nova fonte de rendimento, funciona da mesma forma ao contrário. Enquanto está planeado, eleva a previsão dos meses a que se aplica. Quando chega, marca-o como concluído com o valor que recebeu de facto, e fica registado nesse mês.",
-    "plans.callout":
-      "Em resumo: um plano é uma promessa sobre o futuro. Até ser pago, molda o que pode fazer com segurança; no momento em que é pago torna-se real, pelo valor real, retirado do bolso que escolher.",
-    "toc.analysis": "Análise",
-    "toc.settings": "Definições",
-    "toc.notifications": "Notificações",
-    "toc.privacy": "Modo oculto & modo escuro",
-    "toc.credits": "Créditos & tokens",
-    "toc.faq": "Perguntas frequentes",
-    "header.eyebrow": "Wiki",
-    "header.title": "Como esta app funciona",
-    "header.subtitle":
-      "Um guia completo para cada ecrã, campo e fórmula. Percorra o índice ou vá diretamente à secção que precisa.",
-    "header.tocTitle": "Índice",
-    "overview.p1a":
-      "O bynku ajuda um casal (ou pequena família) a planear e gerir o dinheiro mensal em conjunto. Em vez de acompanhar cada cêntimo face a um mês de calendário, a app funciona em ",
-    "overview.term1": "ciclos de pagamento",
-    "overview.p1b":
-      ",o intervalo entre dois depósitos de salário consecutivos, e responde a uma pergunta central todos os dias:",
-    "overview.callout":
-      "“Quanto posso ainda gastar hoje sem ultrapassar a base ou pôr em risco um objetivo de poupança?”",
-    "overview.p2":
-      "Para isso precisa de três coisas suas: os seus custos fixos mensais, os seus custos variáveis estimados (compras, combustível…) e as suas reservas de alocação (investimentos, poupanças, filhos, projetos). A partir daí calcula um valor seguro-para-gastar, acompanha as suas despesas reais e mostra análises.",
-    "overview.badge1": "Agregado partilhado",
-    "overview.badge2": "EUR",
-    "overview.badge3": "DD/MM/AAAA HH:mm:ss",
-    "overview.badge4": "Apenas por convite",
-    "cycles.p1a": "Um ",
-    "cycles.term1": "ciclo",
-    "cycles.p1b":
-      " começa no dia em que o salário principal é recebido e termina no dia anterior ao seguinte. Todos os orçamentos, o seguro-para-gastar e as alocações são calculados face ao ciclo atual, não ao mês de calendário.",
-    "cycles.li1a": "A âncora do ciclo é o registo mais recente marcado como ",
-    "cycles.li1term": "depósito de salário",
-    "cycles.li1b": ".",
-    "cycles.li2a": "Use o botão ",
-    "cycles.li2strong": "Salário recebido · reiniciar ciclo",
-    "cycles.li2b":
-      " no Painel quando receber o pagamento. Cria o registo de salário usando o valor das Definições e inicia um novo ciclo.",
-    "cycles.li3":
-      "Se nunca tiver sido registado nenhum salário, a app recorre ao mês de calendário atual.",
-    "cycles.li4": "Em Despesas e Alocações pode navegar para ciclos anteriores com as setas.",
-    "baseline.p1a": "A ",
-    "baseline.term1": "base",
-    "baseline.p1b":
-      " é o seu custo de vida mensal alvo. É um valor calculado, não um número que introduz:",
-    "baseline.li1term": "Despesas fixas mensais",
-    "baseline.li1":
-      ",renda, serviços, subscrições, seguros. Coisas que ocorrem todos os meses com (aproximadamente) o mesmo valor.",
-    "baseline.li2term": "Custos variáveis estimados",
-    "baseline.li2":
-      ",categorias em que gasta regularmente mas com valores variáveis: compras, combustível, transportes, artigos para casa…",
-    "baseline.li3term": "Margem de segurança",
-    "baseline.li3":
-      ",uma reserva percentual adicional, para absorver pequenas surpresas sem disparar alarmes.",
-    "baseline.safeTodayHeading": "Seguro para gastar hoje",
-    "baseline.p3": "O Painel mostra isto como um número grande com três etiquetas:",
-    "baseline.badgeSpent": "Gasto",
-    "baseline.li4After": " despesas variáveis registadas neste ciclo.",
-    "baseline.badgeReceived": "Recebido",
-    "baseline.li5After": " dinheiro recebido durante o ciclo (reembolsos, não salário).",
-    "baseline.badgeBalance": "Saldo",
-    "baseline.li6After": " gasto menos recebido: o consumo líquido da reserva variável.",
-    "baseline.p4a":
-      "O indicador de tendência (↑/↓) compara o seguro-para-gastar de hoje com o de ontem. O cartão ",
-    "baseline.p4strong": "Projeção do fim do ciclo",
-    "baseline.p4b":
-      " extrapola usando os últimos 7 dias de despesas, verde se terminar abaixo da base, vermelho se a ultrapassar.",
-    "expenses.p1a": "Despesas são tudo o que ",
-    "expenses.p1em": "não",
-    "expenses.p1b":
-      " é uma conta fixa mensal nem o salário. Só estes registos movem o ponteiro do seguro-para-gastar. Há várias formas de as adicionar:",
-    "expenses.acc1Trigger": "Adição rápida (formulário)",
-    "expenses.acc1Body":
-      "Introduza valor, categoria, nota e data. A forma mais rápida para uma única compra de que se lembra.",
-    "expenses.acc2Trigger": "Nota de texto ou voz com IA",
-    "expenses.acc2BodyA": "Cole (ou dite) algo como ",
-    "expenses.acc2BodyEm": "“45 euros em compras no Continente ontem”",
-    "expenses.acc2BodyB":
-      ". A IA extrai o valor, a categoria, o comerciante e a data. Reveja e confirme antes de guardar.",
-    "expenses.acc3Trigger": "Foto de um recibo ou fatura",
-    "expenses.acc3Body":
-      "Carregue a imagem; a IA lê o total, o comerciante e a data e pré-preenche o formulário.",
-    "expenses.acc4Trigger": "Importação de extrato bancário",
-    "expenses.acc4BodyA":
-      "Cole uma exportação de extrato. As linhas são analisadas em despesas candidatas. É feita uma verificação de duplicados na janela de ±2 dias já existente no seu registo, prováveis duplicados são destacados a âmbar e desmarcados por defeito. Use ",
-    "expenses.acc4Em1": "Selecionar tudo",
-    "expenses.acc4Mid": ", ",
-    "expenses.acc4Em2": "Repor duplicados",
-    "expenses.acc4Mid2": " e ",
-    "expenses.acc4Em3": "Nenhum",
-    "expenses.acc4End": " para avançar rapidamente.",
-    "expenses.acc5Trigger": "O que significa cada campo",
-    "expenses.fieldAmountTerm": "Valor",
-    "expenses.fieldAmount": " em EUR. Positivo para dinheiro que sai.",
-    "expenses.fieldTypeTerm": "Tipo",
-    "expenses.fieldTypeEm1": "despesa",
-    "expenses.fieldTypeMid": " reduz a reserva, ",
-    "expenses.fieldTypeEm2": "recebido",
-    "expenses.fieldTypeEnd": " devolve-a (não é salário).",
-    "expenses.fieldCategoryTerm": "Categoria",
-    "expenses.fieldCategory":
-      " orienta o gráfico circular da Análise e corresponde às categorias de estimativa variável.",
-    "expenses.fieldDateTerm": "Data",
-    "expenses.fieldDate":
-      " quando o dinheiro efetivamente se moveu, isto determina a que ciclo pertence.",
-    "expenses.fieldNoteTerm": "Nota",
-    "expenses.fieldNote": " texto livre (comerciante, propósito). Útil nas dicas da Análise.",
-    "allocations.p1a": "Uma ",
-    "allocations.term1": "reserva",
-    "allocations.p1b":
-      " representa um destino para onde o seu rendimento deve fluir a cada ciclo: investimentos de longo prazo, conta poupança, poupanças dos filhos, um fundo para um projeto de casa, etc. Cada reserva tem um alvo que determina quanto a app ",
-    "allocations.p1em": "recomenda",
-    "allocations.p1c": " que mova.",
-    "allocations.targetTypesHeading": "Tipos de alvo",
-    "allocations.tt1term": "% do rendimento",
-    "allocations.tt1": ",uma parte do salário, por exemplo 15% para investimentos.",
-    "allocations.tt2term": "€ fixo por mês",
-    "allocations.tt2": ",uma contribuição mensal fixa.",
-    "allocations.tt3term": "Objetivo € até data",
-    "allocations.tt3a": ",quer ter ",
-    "allocations.tt3em": "X €",
-    "allocations.tt3b":
-      " nesta reserva até uma data específica. A app calcula a contribuição mensal necessária a partir de hoje e recalcula a cada ciclo com base no que foi realmente alocado.",
-    "allocations.markHeading": "Marcar como alocado",
-    "allocations.markP1a": "Quando move dinheiro para uma conta de uma reserva, clique em ",
-    "allocations.markStrong": "Marcar como alocado",
-    "allocations.markP1b": " e introduza o valor real transferido. O painel de impacto mostra:",
-    "allocations.li1": "Diferença face à recomendação para o ciclo.",
-    "allocations.li2a": "Efeito na ",
-    "allocations.li2term": "reserva de emergência",
-    "allocations.li2b": " (excedente / défice face aos totais recomendados).",
-    "allocations.li3":
-      "Para reservas com objetivo: percentagem de progresso atualizada e a nova taxa mensal necessária para ainda cumprir o prazo.",
-    "allocations.p2":
-      "Alocar mais do que o recomendado retira da reserva de emergência; alocar menos deixa excedente nela. Nada o obriga a acertar no número exato, a app apenas mantém as contas honestas.",
-    "analysis.p1": "Duas vistas ajudam a perceber para onde foi o dinheiro e para onde está a ir.",
-    "analysis.burndownHeading": "Consumo do ciclo",
-    "analysis.li1a": "A linha começa em ",
-    "analysis.li1strong": "−total_fixo",
-    "analysis.li1b":
-      " no dia 1, os custos fixos já estão reservados mesmo antes de gastar algo variável.",
-    "analysis.li2":
-      "Desce com cada despesa e sobe com cada registo de recebimento e o evento de salário.",
-    "analysis.li3":
-      "Linhas de referência tracejadas mostram os limiares de financiamento (base e, quando relevante, requisitos de alocação).",
-    "analysis.li4":
-      "Passe o cursor sobre qualquer ponto para ver as transações exatas que moveram o saldo nesse dia.",
-    "analysis.categoryHeading": "Distribuição por categoria",
-    "analysis.p2":
-      "Um gráfico circular da despesa variável na janela selecionada (dia / semana / mês). Use-o para detetar categorias a desviar-se acima da sua parte de estimativa variável.",
-    "settings.li1term": "Agregado",
-    "settings.li1a":
-      ",nome, valor do salário principal e cadência esperada do dia de pagamento. O valor do salário é o que o botão ",
-    "settings.li1em": "Salário recebido",
-    "settings.li1b": " irá registar.",
-    "settings.li2term": "Membros",
-    "settings.li2":
-      ",convide o seu parceiro por email. Ambos os membros partilham os mesmos dados; não há uma carteira por membro.",
-    "settings.li3term": "Despesas fixas mensais",
-    "settings.li3": ",uma linha por conta recorrente.",
-    "settings.li4term": "Estimativas de custos variáveis",
-    "settings.li4": ",despesa mensal esperada por categoria. A soma alimenta a base.",
-    "settings.li5term": "Margem de segurança (%)",
-    "settings.li5": ",reserva aplicada sobre as estimativas fixas + variáveis.",
-    "settings.li6term": "Reservas de alocação",
-    "settings.li6": ",criar/editar reservas, alvos e prazos de objetivos.",
-    "settings.li7term": "Notificações",
-    "settings.li7":
-      ",ativar notificações push por dispositivo e alternar cada alerta individualmente.",
-    "notifications.p1":
-      "Todas as notificações são opcionais, por dispositivo e por tipo. Ative um dispositivo primeiro (Definições → Notificações → Ativar neste dispositivo) e depois alterne as que quiser.",
-    "notifications.li1strong": "Resumo de segunda-feira de manhã",
-    "notifications.li1":
-      " (08:00 Europa/Lisboa), um resumo da semana anterior: total gasto e recebido (excluindo custos fixos e salário), top 3 de despesas e recebimentos, uma comparação com a semana anterior, um comentário de IA sobre o ritmo, e quanta margem ainda tem na base e na reserva de emergência.",
-    "notifications.li2strong": "Base a aproximar-se / atingida",
-    "notifications.li2":
-      ",enviada quando a reserva variável restante ultrapassa os limiares de aviso e de rutura.",
-    "notifications.li3strong": "Reserva de emergência quase esgotada",
-    "notifications.li3": ",enviada quando o consumo do excedente atinge um nível crítico.",
-    "notifications.p2":
-      "O iOS Safari exige que a app esteja instalada no ecrã principal antes de as notificações push funcionarem. Chrome / Firefox / Edge no computador e Android funcionam diretamente.",
-    "privacy.p1term": "Modo oculto",
-    "privacy.p1":
-      " (ícone de olho) desfoca todos os valores monetários na app para que a possa abrir em público sem expor saldos. A opção é lembrada entre sessões neste navegador.",
-    "privacy.p2term": "Modo escuro",
-    "privacy.p2":
-      " (ícone de sol/lua) segue por defeito a preferência do sistema operativo e lembra a sua escolha explícita entre sessões.",
-    "privacy.p3":
-      "O acesso está restrito a emails autorizados. Os registos estão desativados; novos membros só entram por convite.",
-    "credits.p1a":
-      "Algumas funcionalidades do bynku são alimentadas por modelos de IA (o coach financeiro, análise de voz/texto/foto/extrato bancário). Cada chamada a esses modelos tem um custo real, que medimos em ",
-    "credits.p1strong": "créditos",
-    "credits.p1b": ". Cada agregado tem um limite de ",
-    "credits.p1strong2": "7,5 créditos por mês",
-    "credits.p1c": "; a utilização é visível em ",
-    "credits.p1em": "Definições → Utilização de créditos",
-    "credits.p1d": ".",
-    "credits.tokenHeading": "O que é um token?",
-    "credits.tokenP1a": "Os modelos de IA não leem carateres ou palavras, leem ",
-    "credits.tokenStrong": "tokens",
-    "credits.tokenP1b":
-      ", pequenos fragmentos de texto (aproximadamente ¾ de uma palavra em inglês, um pouco menos noutras línguas). Uma nota curta como ",
-    "credits.tokenEm": '"Compras €42 no Pingo Doce"',     "credits.tokenP1c":
-      " tem cerca de 10 tokens; uma página completa de extrato bancário pode ter vários milhares. As imagens também contam: uma foto de recibo é cobrada como um bloco fixo de tokens de imagem mais os tokens de qualquer texto que o modelo devolva.",
-    "credits.tokenP2a": "Cada chamada de IA tem dois lados: ",
-    "credits.tokenP2strong1": "tokens de entrada",
-    "credits.tokenP2mid":
-      " (o que enviamos, a sua nota, recibo, ou o contexto que construímos para o coach) e ",
-    "credits.tokenP2strong2": "tokens de saída",
-    "credits.tokenP2end":
-      " (o que o modelo devolve, o JSON analisado ou a resposta do coach). Ambos são cobrados, e os tokens de saída são geralmente mais caros por token do que os de entrada.",
-    "credits.howHeading": "Como o bynku transforma tokens em créditos",
-    "credits.howP1a":
-      "Depois de cada chamada de IA registamos as contagens de tokens, convertemo-las num custo fracionário de créditos usando os preços do modelo, e guardamos isso associado ao seu agregado na tabela ",
-    "credits.howCode": "credit_usage",
-    "credits.howP1b":
-      ". A página de Definições soma o mês atual e mostra uma barra de progresso até ao limite de 10 créditos. Funcionalidades sem IA (adicionar despesas manualmente, ver gráficos, notificações, sincronização) ",
-    "credits.howStrong": "não",
-    "credits.howP1c": " consomem créditos.",
-    "credits.typicalCosts": "Custos típicos por ação:",
-    "credits.cost1strong": "Análise de nota de texto/voz",
-    "credits.cost1": ",muito pequeno, frequentemente bem abaixo de 0,01 créditos por registo.",
-    "credits.cost2strong": "Análise de foto de recibo",
-    "credits.cost2":
-      ",maior, porque a própria imagem é cobrada; ainda assim, tipicamente algumas centésimas de crédito.",
-    "credits.cost3strong": "Importação de extrato bancário",
-    "credits.cost3": ",a mais cara por chamada, porque páginas completas de texto são enviadas.",
-    "credits.cost4strong": "Relatório do coach financeiro",
-    "credits.cost4a": ",em cache por 24h, pelo que reabrir o separador é gratuito; só ",
-    "credits.cost4em": "Regenerar",
-    "credits.cost4b": " e cada resposta de chat custam créditos.",
-    "credits.saveHeading": "Como poupar créditos",
-    "credits.save1strong": "notas de texto/voz",
-    "credits.save1a": "Prefira ",
-    "credits.save1b":
-      " a fotos quando já souber o valor, muito mais barato do que a análise de imagem.",
-    "credits.save2":
-      "Para fotos, corte de forma apertada à área do total/comerciante antes de carregar; imagens mais pequenas = menos tokens de imagem.",
-    "credits.save3a": "Importe extratos bancários ",
-    "credits.save3strong": "uma vez por ciclo",
-    "credits.save3b":
-      " em vez de após cada transação, e deixe o passo de deduplicação juntar-se ao que já registou.",
-    "credits.save4a":
-      "Reutilize o relatório do coach em cache durante a janela de 24h em vez de clicar em ",
-    "credits.save4em": "Regenerar",
-    "credits.save4b":
-      "; só regenere após uma alteração relevante (despesa grande, alocação, novo dia de pagamento).",
-    "credits.save5":
-      "Mantenha as mensagens de chat do coach curtas e específicas, trocas longas gastam tokens de entrada e saída em cada volta.",
-    "credits.save6":
-      "Corrija coisas óbvias (comerciante, categoria, valor) diretamente no formulário em vez de pedir à IA para reanalisar.",
-    "credits.footnote":
-      "Quando o limite de 10 créditos é atingido, as funcionalidades de IA pausam até ao próximo mês; tudo o resto continua a funcionar normalmente.",
-    "faq.q1Trigger": "Porquê ciclos em vez de meses?",
-    "faq.q1Body":
-      "Os salários raramente caem no dia 1. Um ciclo alinhado com o dia de pagamento dá uma resposta verdadeira a “quanto me resta até ao próximo salário”.",
-    "faq.q2Trigger": "Devo eliminar o registo de salário das Despesas recentes?",
-    "faq.q2Body":
-      "Não. Esse registo é a âncora do ciclo atual. Eliminá-lo fará com que a app recorra ao modo de mês de calendário até ao próximo dia de pagamento.",
-    "faq.q3Trigger": "O que acontece se alocar menos do que o recomendado?",
-    "faq.q3Body":
-      "O défice permanece na reserva de emergência para o ciclo. As reservas com objetivo recalculam a taxa mensal necessária para ainda cumprir o prazo.",
-    "faq.q4Trigger": "E se ultrapassarmos a base?",
-    "faq.q4Body":
-      "O seguro-para-gastar fica negativo e o cartão de projeção de fim de ciclo fica vermelho. O excesso é primeiro absorvido pela margem de segurança, depois pela reserva de emergência, e por fim pelo corte de alocações.",
-    "faq.q5Trigger": "A análise de IA está sempre correta?",
-    "faq.q5Body":
-      "Não, reveja sempre o formulário pré-preenchido antes de guardar. É um ponto de partida, não um piloto automático.",
+    eyebrow: "Manual",
+    title: "Como funciona o bynku",
+    subtitle:
+      "Um guia curto e em linguagem simples. Lê uma secção ou pesquisa o que precisas.",
+    tocTitle: "Neste guia",
+    searchPlaceholder: "Pesquisar no manual",
+    noResults: "Sem resultados para",
+    diagrams: {
+      salary: "Dia de pagamento",
+      today: "Hoje",
+      nextSalary: "Próximo pagamento",
+      cycle: "Ciclo atual",
+      cycleCap:
+        "Um ciclo vai de um dia de pagamento até ao dia anterior ao seguinte — não é o mês do calendário.",
+      fixed: "Contas fixas",
+      debt: "Créditos",
+      variable: "Dia a dia",
+      margin: "Almofada",
+      baseline: "Quanto custa um mês normal",
+      baselineCap:
+        "Contas fixas + prestações + a tua estimativa do dia a dia + uma pequena almofada de segurança.",
+      surplus: "O que sobra",
+      realAlloc: "Posto de lado",
+      realSurplus: "Ainda livre",
+      waterfallCap:
+        "O que sobra divide-se entre o que já puseste de lado e o que ainda tens livre.",
+      step1: "Fundo de emergência pequeno",
+      step2: "Amortizar créditos caros",
+      step3: "Investir a longo prazo",
+      ladderCap:
+        "Uma ordem aproximada de prioridade para o dinheiro que sobra — a tua situação pode mudar a mistura.",
+    },
   },
   es: {
-    "toc.overview": "Resumen",
-    "search.placeholder": "Buscar en el manual",
-    "search.noResults": "Sin resultados para",
-    "toc.principles": "Principios financieros",
-    "diag.baselineCap": "Tu base son los costes fijos más la deuda más el gasto variable más un margen de seguridad.",
-    "diag.salary": "Salario",
-    "diag.lFixed": "Costes fijos",
-    "diag.lDebt": "Deuda",
-    "diag.lVariable": "Variable",
-    "diag.lMargin": "Margen",
-    "diag.lBaseline": "Base",
-    "diag.lSurplus": "Excedente",
-    "diag.lRealAlloc": "Asignaciones reales",
-    "diag.lRealSurplus": "Excedente real",
-    "diag.today": "Hoy",
-    "diag.nextSalary": "Próximo salario",
-    "diag.cycle": "Ciclo actual",
-    "diag.cycleCap": "Un ciclo va de un salario al día anterior al siguiente, no el mes natural.",
-    "diag.waterfallCap": "Tu excedente se divide en lo que realmente moviste a proyectos y lo que queda libre.",
-    "diag.step1": "Fondo de emergencia",
-    "diag.step2": "Deuda de interés alto",
-    "diag.step3": "Invertir para crecer",
-    "diag.ladderCap": "Un orden aproximado de prioridad para el dinero extra. Tu situación puede cambiar la mezcla.",
-    "tbl.typesTitle": "Tipos de proyecto",
-    "tbl.colType": "Tipo",
-    "tbl.colRole": "Función",
-    "tbl.savings": "Meta de ahorro",
-    "tbl.savingsRole": "Un objetivo para el que estás apartando dinero.",
-    "tbl.emergency": "Fondo de emergencia",
-    "tbl.emergencyRole": "Tu colchón de seguridad. El coach lo cuenta primero y lo protege.",
-    "tbl.investment": "Inversión",
-    "tbl.investmentRole": "Dinero de crecimiento a largo plazo, que no se debe tocar.",
-    "tbl.targetsTitle": "Cómo se financia un proyecto",
-    "tbl.colMeaning": "Cómo financia",
-    "tbl.tPct": "Porcentaje del excedente",
-    "tbl.tPctM": "Toma una parte del excedente que tengas ese ciclo.",
-    "tbl.tMonthly": "Fijo al mes",
-    "tbl.tMonthlyM": "Una cantidad fija cada mes.",
-    "tbl.tYearly": "Fijo al año",
-    "tbl.tYearlyM": "Una cantidad anual repartida por igual entre los meses.",
-    "tbl.tGoal": "Meta por fecha",
-    "tbl.tGoalM": "Una cantidad objetivo para una fecha. La cifra mensual es lo que hace falta para llegar a tiempo.",
-    "principles.intro":
-      "bynku tiene criterio a propósito. Tras las pantallas hay unos principios sencillos de dinero en los que coincide la mayoría de los planificadores. Esto es hacia lo que la app te orienta con discreción, y por qué.",
-    "principles.p1.h": "1. Vive dentro de tu base",
-    "principles.p1.b":
-      "Tu base es lo que cuesta un mes normal: facturas fijas, pagos de deuda, gasto variable previsto y un pequeño margen de seguridad. La cifra diaria segura para gastar convierte lo que queda en un número sencillo por día, para que disfrutes tu dinero sin pasarte sin darte cuenta. Mantente por debajo y el mes se cuida solo.",
-    "principles.p2.h": "2. Crea primero un colchón de seguridad",
-    "principles.p2.b":
-      "Antes de buscar crecimiento, la mayoría de los hogares duermen mejor con efectivo que cubra unos meses de gasto esencial. bynku lo mide como cobertura del fondo de emergencia y trata los proyectos de emergencia como dinero que no deberías tocar. Un objetivo habitual es de tres a seis meses de esenciales, más si tus ingresos son irregulares.",
-    "principles.p3.h": "3. Salda pronto la deuda cara",
-    "principles.p3.b":
-      "Amortizar una deuda es una rentabilidad garantizada igual a su tipo de interés. Cuando un préstamo cuesta más de lo que podrías ganar razonablemente invirtiendo, saldarlo suele ganar. Ayudan dos métodos de orden: la avalancha paga primero el tipo más alto para ahorrar más intereses, y la bola de nieve paga primero el saldo más pequeño para lograr victorias rápidas y motivadoras. El coach puede ordenar tus deudas de cualquiera de las dos formas.",
-    "principles.p4.h": "4. Después invierte a largo plazo",
-    "principles.p4.b":
-      "Cuando tu colchón está sano y la deuda cara ha desaparecido, el dinero parado pierde terreno frente a la inflación. Invertir pone tu excedente a trabajar a lo largo de los años. bynku avisa cuando podrías estar invirtiendo de menos (una reserva sana pero excedente parado) o de más (aportando a inversiones mientras la reserva está escasa o queda deuda cara), y nunca te dice que vendas inversiones salvo que sea realmente necesario.",
-    "principles.p5.h": "5. Compárate con medias, no con vecinos",
-    "principles.p5.b":
-      "La vista Cómo me comparo sitúa tus ingresos y gastos junto a estadísticas nacionales públicas para un hogar de tu tamaño y tramo de ingresos, nunca frente a otros usuarios de bynku. Es un punto de referencia, no un veredicto. Úsala para detectar categorías que destacan y luego decide qué encaja en tu vida.",
-    "principles.note":
-      "bynku es un compañero de presupuesto, no un asesor financiero, fiscal o legal autorizado. Para productos regulados o decisiones importantes, toma su orientación como un punto de partida y habla con un profesional cualificado.",
-    "toc.cycles": "Ciclos de pago",
-    "toc.baseline": "Base & seguro para gastar",
-    "toc.expenses": "Gastos & captura",
-    "toc.allocations": "Asignaciones & reservas",
-    "toc.plans": "Planificar el futuro",
-    "plans.intro":
-      "La página de Planes es para dinero que ya sabes que llegará pero que no forma parte de un mes normal: un gasto puntual como neumáticos nuevos en agosto, una factura anual como el seguro, un cambio de ingresos como una subida a partir de septiembre, o meses más cargados como Navidad. Organizas estas cosas con antelación para que ningún mes te pille por sorpresa.",
-    "plans.h1": "Cómo funciona.",
-    "plans.b1":
-      "Cada plan tiene un importe, un mes, un sentido (dinero que sale o que entra) y con qué frecuencia se repite: solo una vez, cada año, o cada mes a partir de un punto elegido. Los planes nunca cambian tu base, que sigue siendo tus costes recurrentes normales. En su lugar, alimentan una previsión de los próximos meses y una cronología, y cualquier gasto puntual grande puede convertirse en un proyecto para ahorrar poco a poco en vez de que recaiga todo en un solo mes. La previsión señala cualquier mes que se quede corto.",
-    "plans.h2": "Cuando vence un pago planificado.",
-    "plans.b2":
-      "Cuando pagas de verdad un coste planificado, lo marcas como hecho e indicas cuánto costó realmente, que puede diferir de tu estimación. Eliges de dónde se paga: de tu sobrante sin asignar del mes, y solo si el coste es mayor que ese sobrante entra en tu presupuesto diario; o de un proyecto en el que habías estado ahorrando, que se reduce en su lugar. Desde ese momento deja de ser un plan y pasa a ser un gasto realizado y, como sigue contando en el mes, el dinero no reaparece sin que te des cuenta.",
-    "plans.h3": "Cuando llega dinero que esperabas.",
-    "plans.b3":
-      "Un ingreso planificado, como una bonificación o una nueva fuente de ingresos, funciona igual pero a la inversa. Mientras está planificado, eleva la previsión de los meses a los que se aplica. Cuando llega, lo marcas como hecho con el importe que realmente recibiste, y queda registrado en ese mes.",
-    "plans.callout":
-      "En resumen: un plan es una promesa sobre el futuro. Hasta que se paga, moldea lo que puedes hacer con seguridad; en el momento en que se paga se vuelve real, por el importe real, sacado del bolsillo que elijas.",
-    "toc.analysis": "Análisis",
-    "toc.settings": "Ajustes",
-    "toc.notifications": "Notificaciones",
-    "toc.privacy": "Modo oculto & modo oscuro",
-    "toc.credits": "Créditos & tokens",
-    "toc.faq": "Preguntas frecuentes",
-    "header.eyebrow": "Wiki",
-    "header.title": "Cómo funciona esta app",
-    "header.subtitle":
-      "Una guía completa de cada pantalla, campo y fórmula. Recorre el índice o salta directamente a la sección que necesitas.",
-    "header.tocTitle": "Índice",
-    "overview.p1a":
-      "bynku ayuda a una pareja (o familia pequeña) a planificar y gestionar el dinero mensual juntos. En lugar de seguir cada céntimo frente a un mes de calendario, la app funciona en ",
-    "overview.term1": "ciclos de pago",
-    "overview.p1b":
-      ",el intervalo entre dos depósitos de nómina consecutivos, y responde a una pregunta central cada día:",
-    "overview.callout":
-      "«¿Cuánto puedo gastar hoy sin superar la base o poner en riesgo un objetivo de ahorro?»",
-    "overview.p2":
-      "Para eso necesita tres cosas de ti: tus costes fijos mensuales, tus costes variables estimados (compra, combustible…) y tus reservas de asignación (inversiones, ahorros, hijos, proyectos). A partir de ahí calcula un valor seguro para gastar, hace seguimiento de tus gastos reales y muestra análisis.",
-    "overview.badge1": "Hogar compartido",
-    "overview.badge2": "EUR",
-    "overview.badge3": "DD/MM/AAAA HH:mm:ss",
-    "overview.badge4": "Solo por invitación",
-    "cycles.p1a": "Un ",
-    "cycles.term1": "ciclo",
-    "cycles.p1b":
-      " empieza el día en que se recibe la nómina principal y termina el día antes de la siguiente. Todos los presupuestos, el seguro para gastar y las asignaciones se calculan sobre el ciclo actual, no el mes de calendario.",
-    "cycles.li1a": "El ancla del ciclo es el registro más reciente marcado como ",
-    "cycles.li1term": "depósito de nómina",
-    "cycles.li1b": ".",
-    "cycles.li2a": "Usa el botón ",
-    "cycles.li2strong": "Nómina recibida · reiniciar ciclo",
-    "cycles.li2b":
-      " en el Panel cuando cobres. Crea el registro de nómina usando el importe de Ajustes e inicia un nuevo ciclo.",
-    "cycles.li3":
-      "Si nunca se ha registrado ninguna nómina, la app recurre al mes de calendario actual.",
-    "cycles.li4": "En Gastos y Asignaciones puedes navegar a ciclos anteriores con las flechas.",
-    "baseline.p1a": "La ",
-    "baseline.term1": "base",
-    "baseline.p1b":
-      " es tu coste de vida mensual objetivo. Es un valor calculado, no un número que escribes:",
-    "baseline.li1term": "Gastos fijos mensuales",
-    "baseline.li1":
-      ",alquiler, suministros, suscripciones, seguros. Cosas que se repiten cada mes con (aproximadamente) el mismo importe.",
-    "baseline.li2term": "Costes variables estimados",
-    "baseline.li2":
-      ",categorías en las que gastas regularmente pero con importes variables: compra, combustible, transporte, artículos del hogar…",
-    "baseline.li3term": "Margen de seguridad",
-    "baseline.li3":
-      ",un colchón porcentual adicional, para absorber pequeñas sorpresas sin disparar alarmas.",
-    "baseline.safeTodayHeading": "Seguro para gastar hoy",
-    "baseline.p3": "El Panel muestra esto como un número grande con tres etiquetas:",
-    "baseline.badgeSpent": "Gastado",
-    "baseline.li4After": " gastos variables registrados en este ciclo.",
-    "baseline.badgeReceived": "Recibido",
-    "baseline.li5After": " dinero recibido durante el ciclo (reembolsos, no nómina).",
-    "baseline.badgeBalance": "Saldo",
-    "baseline.li6After": " gastado menos recibido: el consumo neto de la reserva variable.",
-    "baseline.p4a":
-      "El indicador de tendencia (↑/↓) compara el seguro para gastar de hoy con el de ayer. La tarjeta ",
-    "baseline.p4strong": "Proyección de fin de ciclo",
-    "baseline.p4b":
-      " extrapola usando tus últimos 7 días de gasto, verde si terminarás por debajo de la base, rojo si la superarás.",
-    "expenses.p1a": "Los gastos son todo lo que ",
-    "expenses.p1em": "no",
-    "expenses.p1b":
-      " es una factura fija mensual ni la nómina. Solo estos registros mueven la aguja del seguro para gastar. Hay varias formas de añadirlos:",
-    "expenses.acc1Trigger": "Añadir rápido (formulario)",
-    "expenses.acc1Body":
-      "Escribe importe, categoría, nota y fecha. La forma más rápida para una compra puntual que recuerdas.",
-    "expenses.acc2Trigger": "Nota de texto o voz con IA",
-    "expenses.acc2BodyA": "Pega (o dicta) algo como ",
-    "expenses.acc2BodyEm": "«45 euros de compra en Mercadona ayer»",
-    "expenses.acc2BodyB":
-      ". La IA extrae el importe, la categoría, el comercio y la fecha. Revisa y confirma antes de guardar.",
-    "expenses.acc3Trigger": "Foto de un recibo o factura",
-    "expenses.acc3Body":
-      "Sube la imagen; la IA lee el total, el comercio y la fecha y rellena previamente el formulario.",
-    "expenses.acc4Trigger": "Importar extracto bancario",
-    "expenses.acc4BodyA":
-      "Pega una exportación del extracto. Las filas se analizan como gastos candidatos. Se realiza una comprobación de duplicados contra la ventana de ±2 días ya existente en tu registro, los posibles duplicados se resaltan en ámbar y aparecen desmarcados. Usa ",
-    "expenses.acc4Em1": "Seleccionar todo",
-    "expenses.acc4Mid": ", ",
-    "expenses.acc4Em2": "Restablecer duplicados",
-    "expenses.acc4Mid2": " y ",
-    "expenses.acc4Em3": "Ninguno",
-    "expenses.acc4End": " para avanzar rápido.",
-    "expenses.acc5Trigger": "Qué significa cada campo",
-    "expenses.fieldAmountTerm": "Importe",
-    "expenses.fieldAmount": " en EUR. Positivo para dinero saliente.",
-    "expenses.fieldTypeTerm": "Tipo",
-    "expenses.fieldTypeEm1": "gasto",
-    "expenses.fieldTypeMid": " reduce la reserva, ",
-    "expenses.fieldTypeEm2": "recibido",
-    "expenses.fieldTypeEnd": " la reembolsa (no es nómina).",
-    "expenses.fieldCategoryTerm": "Categoría",
-    "expenses.fieldCategory":
-      " impulsa el gráfico circular de Análisis y coincide con las categorías de estimación variable.",
-    "expenses.fieldDateTerm": "Fecha",
-    "expenses.fieldDate":
-      " cuándo se movió realmente el dinero, esto determina a qué ciclo pertenece.",
-    "expenses.fieldNoteTerm": "Nota",
-    "expenses.fieldNote":
-      " texto libre (comercio, propósito). Útil en las descripciones emergentes de Análisis.",
-    "allocations.p1a": "Una ",
-    "allocations.term1": "reserva",
-    "allocations.p1b":
-      " representa un destino al que debe fluir tu ingreso cada ciclo: inversiones a largo plazo, cuenta de ahorro, ahorros de los hijos, un fondo para un proyecto de casa, etc. Cada reserva tiene un objetivo que determina cuánto ",
-    "allocations.p1em": "recomienda",
-    "allocations.p1c": " la app que muevas.",
-    "allocations.targetTypesHeading": "Tipos de objetivo",
-    "allocations.tt1term": "% del ingreso",
-    "allocations.tt1": ",una parte de la nómina, p. ej. 15% a inversiones.",
-    "allocations.tt2term": "€ fijo al mes",
-    "allocations.tt2": ",una aportación mensual fija.",
-    "allocations.tt3term": "Meta € por fecha",
-    "allocations.tt3a": ",quieres tener ",
-    "allocations.tt3em": "X €",
-    "allocations.tt3b":
-      " en esta reserva para una fecha concreta. La app calcula la aportación mensual necesaria a partir de hoy, y la recalcula cada ciclo según lo realmente asignado.",
-    "allocations.markHeading": "Marcar como asignado",
-    "allocations.markP1a": "Cuando muevas dinero a una cuenta de una reserva, haz clic en ",
-    "allocations.markStrong": "Marcar como asignado",
-    "allocations.markP1b": " e introduce el importe real transferido. El panel de impacto muestra:",
-    "allocations.li1": "Diferencia respecto a la recomendación del ciclo.",
-    "allocations.li2a": "Efecto en la ",
-    "allocations.li2term": "reserva de emergencia",
-    "allocations.li2b": " (superávit / déficit frente a los totales recomendados).",
-    "allocations.li3":
-      "Para reservas con meta: porcentaje de progreso actualizado y la nueva tasa mensual necesaria para seguir cumpliendo el plazo.",
-    "allocations.p2":
-      "Asignar más de lo recomendado resta de la reserva de emergencia; asignar menos deja superávit en ella. Nada te obliga a acertar el número exacto, la app solo mantiene las cuentas honestas.",
-    "analysis.p1": "Dos vistas te ayudan a entender adónde fue el dinero y hacia dónde se dirige.",
-    "analysis.burndownHeading": "Consumo del ciclo",
-    "analysis.li1a": "La línea empieza en ",
-    "analysis.li1strong": "−total_fijo",
-    "analysis.li1b":
-      " el día 1, los costes fijos ya están reservados incluso antes de gastar nada variable.",
-    "analysis.li2": "Baja con cada gasto y sube con cada ingreso recibido y el evento de nómina.",
-    "analysis.li3":
-      "Las líneas de referencia discontinuas muestran los umbrales de financiación (base y, cuando corresponda, requisitos de asignación).",
-    "analysis.li4":
-      "Pasa el cursor por cualquier punto para ver las transacciones exactas que movieron el saldo ese día.",
-    "analysis.categoryHeading": "Distribución por categoría",
-    "analysis.p2":
-      "Un gráfico circular del gasto variable en la ventana seleccionada (día / semana / mes). Úsalo para detectar categorías que se desvían por encima de su parte de estimación variable.",
-    "settings.li1term": "Hogar",
-    "settings.li1a":
-      ",nombre, importe de la nómina principal y cadencia esperada del día de pago. El importe de la nómina es lo que registrará el botón ",
-    "settings.li1em": "Nómina recibida",
-    "settings.li1b": ".",
-    "settings.li2term": "Miembros",
-    "settings.li2":
-      ",invita a tu pareja por correo. Ambos miembros comparten los mismos datos; no hay una cartera por miembro.",
-    "settings.li3term": "Gastos fijos mensuales",
-    "settings.li3": ",una fila por factura recurrente.",
-    "settings.li4term": "Estimaciones de costes variables",
-    "settings.li4": ",gasto mensual esperado por categoría. La suma alimenta la base.",
-    "settings.li5term": "Margen de seguridad (%)",
-    "settings.li5": ",colchón aplicado sobre las estimaciones fijas + variables.",
-    "settings.li6term": "Reservas de asignación",
-    "settings.li6": ",crear/editar reservas, objetivos y plazos de metas.",
-    "settings.li7term": "Notificaciones",
-    "settings.li7":
-      ",activar notificaciones push por dispositivo y alternar cada alerta individualmente.",
-    "notifications.p1":
-      "Todas las notificaciones son opcionales, por dispositivo y por tipo. Activa un dispositivo primero (Ajustes → Notificaciones → Activar en este dispositivo) y luego alterna las que quieras.",
-    "notifications.li1strong": "Resumen del lunes por la mañana",
-    "notifications.li1":
-      " (08:00 Europa/Lisboa), un resumen de la semana anterior: total gastado y recibido (excluyendo costes fijos y nómina), los 3 mayores gastos e ingresos, una comparación con la semana anterior, un comentario de IA sobre el ritmo, y cuánto margen te queda en la base y en la reserva de emergencia.",
-    "notifications.li2strong": "Base próxima / alcanzada",
-    "notifications.li2":
-      ",se envía cuando la reserva variable restante cruza los umbrales de aviso e infracción.",
-    "notifications.li3strong": "Reserva de emergencia cerca de agotarse",
-    "notifications.li3": ",se envía cuando el consumo del superávit alcanza un nivel crítico.",
-    "notifications.p2":
-      "iOS Safari requiere que la app esté instalada en la pantalla de inicio antes de que funcionen las notificaciones push. Chrome / Firefox / Edge de escritorio y Android funcionan directamente.",
-    "privacy.p1term": "Modo oculto",
-    "privacy.p1":
-      " (icono de ojo) difumina todos los valores monetarios de la app para que puedas abrirla en público sin exponer saldos. La preferencia se recuerda entre sesiones en este navegador.",
-    "privacy.p2term": "Modo oscuro",
-    "privacy.p2":
-      " (icono de sol/luna) sigue tu preferencia del sistema operativo por defecto y recuerda tu elección explícita entre sesiones.",
-    "privacy.p3":
-      "El acceso está restringido a correos en lista blanca. Los registros están desactivados; los nuevos miembros solo se unen por invitación.",
-    "credits.p1a":
-      "Algunas funciones de bynku funcionan con modelos de IA (el coach financiero, el análisis de voz/texto/foto/extracto bancario). Cada llamada a esos modelos tiene un coste real, que medimos en ",
-    "credits.p1strong": "créditos",
-    "credits.p1b": ". Cada hogar tiene un límite de ",
-    "credits.p1strong2": "7,5 créditos al mes",
-    "credits.p1c": "; el uso es visible en ",
-    "credits.p1em": "Ajustes → Uso de créditos",
-    "credits.p1d": ".",
-    "credits.tokenHeading": "¿Qué es un token?",
-    "credits.tokenP1a": "Los modelos de IA no leen caracteres ni palabras, leen ",
-    "credits.tokenStrong": "tokens",
-    "credits.tokenP1b":
-      ", pequeños fragmentos de texto (aproximadamente ¾ de una palabra en inglés, algo menos en otros idiomas). Una nota corta como ",
-    "credits.tokenEm": '"Compra 42€ en Mercadona"',     "credits.tokenP1c":
-      " tiene unos 10 tokens; una página completa de extracto bancario puede tener varios miles. Las imágenes también cuentan: una foto de recibo se factura como un bloque fijo de tokens de imagen más los tokens de cualquier texto que el modelo devuelva.",
-    "credits.tokenP2a": "Cada llamada de IA tiene dos lados: ",
-    "credits.tokenP2strong1": "tokens de entrada",
-    "credits.tokenP2mid":
-      " (lo que enviamos, tu nota, recibo, o el contexto que construimos para el coach) y ",
-    "credits.tokenP2strong2": "tokens de salida",
-    "credits.tokenP2end":
-      " (lo que devuelve el modelo, el JSON analizado o la respuesta del coach). Ambos se facturan, y los tokens de salida suelen ser más caros por token que los de entrada.",
-    "credits.howHeading": "Cómo convierte bynku los tokens en créditos",
-    "credits.howP1a":
-      "Tras cada llamada de IA registramos el recuento de tokens, los convertimos en un coste fraccional de créditos usando el precio del modelo, y lo almacenamos junto a tu hogar en la tabla ",
-    "credits.howCode": "credit_usage",
-    "credits.howP1b":
-      ". La página de Ajustes suma el mes actual y muestra una barra de progreso hacia el límite de 10 créditos. Las funciones sin IA (añadir gastos manualmente, ver gráficos, notificaciones, sincronización) ",
-    "credits.howStrong": "no",
-    "credits.howP1c": " consumen créditos.",
-    "credits.typicalCosts": "Costes típicos por acción:",
-    "credits.cost1strong": "Análisis de nota de texto/voz",
-    "credits.cost1": ",muy pequeño, a menudo muy por debajo de 0,01 créditos por registro.",
-    "credits.cost2strong": "Análisis de foto de recibo",
-    "credits.cost2":
-      ",mayor, porque la propia imagen se factura; aun así, típicamente unas centésimas de crédito.",
-    "credits.cost3strong": "Importación de extracto bancario",
-    "credits.cost3": ",lo más caro por llamada, porque se envían páginas completas de texto.",
-    "credits.cost4strong": "Informe del coach financiero",
-    "credits.cost4a": ",en caché durante 24h, así que reabrir la pestaña es gratis; solo ",
-    "credits.cost4em": "Regenerar",
-    "credits.cost4b": " y cada respuesta de chat cuestan créditos.",
-    "credits.saveHeading": "Cómo ahorrar créditos",
-    "credits.save1strong": "notas de texto/voz",
-    "credits.save1a": "Prefiere ",
-    "credits.save1b":
-      " a las fotos cuando ya sepas el importe, mucho más barato que el análisis de imagen.",
-    "credits.save2":
-      "En las fotos, recorta ajustado a la zona del total/comercio antes de subir; imágenes más pequeñas = menos tokens de imagen.",
-    "credits.save3a": "Importa los extractos bancarios ",
-    "credits.save3strong": "una vez por ciclo",
-    "credits.save3b":
-      " en lugar de después de cada transacción, y deja que el paso de deduplicación se combine con lo que ya registraste.",
-    "credits.save4a":
-      "Reutiliza el informe del coach en caché durante la ventana de 24h en lugar de pulsar ",
-    "credits.save4em": "Regenerar",
-    "credits.save4b":
-      "; regenera solo tras un cambio relevante (gasto grande, asignación, nuevo día de pago).",
-    "credits.save5":
-      "Mantén los mensajes de chat del coach cortos y específicos, las conversaciones largas gastan tokens de entrada y salida en cada turno.",
-    "credits.save6":
-      "Corrige lo obvio (comercio, categoría, importe) directamente en el formulario en lugar de pedirle a la IA que vuelva a analizarlo.",
-    "credits.footnote":
-      "Cuando se alcanza el límite de 10 créditos, las funciones de IA se pausan hasta el mes siguiente; todo lo demás sigue funcionando con normalidad.",
-    "faq.q1Trigger": "¿Por qué ciclos en lugar de meses?",
-    "faq.q1Body":
-      "Las nóminas rara vez caen el día 1. Un ciclo alineado con el día de pago da una respuesta veraz a «cuánto me queda hasta la próxima nómina».",
-    "faq.q2Trigger": "¿Debo eliminar el registro de nómina de Gastos recientes?",
-    "faq.q2Body":
-      "No. Ese registro es el ancla del ciclo actual. Eliminarlo hará que la app recurra al modo de mes de calendario hasta el próximo día de pago.",
-    "faq.q3Trigger": "¿Qué pasa si asigno menos de lo recomendado?",
-    "faq.q3Body":
-      "El déficit se queda en la reserva de emergencia para el ciclo. Las reservas con meta recalculan la tasa mensual necesaria para seguir cumpliendo el plazo.",
-    "faq.q4Trigger": "¿Y si superamos la base?",
-    "faq.q4Body":
-      "El seguro para gastar se vuelve negativo y la tarjeta de proyección de fin de ciclo se pone roja. El exceso se absorbe primero con el margen de seguridad, luego con la reserva de emergencia, y por último recortando asignaciones.",
-    "faq.q5Trigger": "¿El análisis de la IA siempre acierta?",
-    "faq.q5Body":
-      "No, revisa siempre el formulario prerrellenado antes de guardar. Es un punto de partida, no un piloto automático.",
+    eyebrow: "Manual",
+    title: "Cómo funciona bynku",
+    subtitle:
+      "Una guía corta y en lenguaje sencillo. Lee una sección o busca lo que necesites.",
+    tocTitle: "En esta guía",
+    searchPlaceholder: "Buscar en el manual",
+    noResults: "Sin resultados para",
+    diagrams: {
+      salary: "Día de cobro",
+      today: "Hoy",
+      nextSalary: "Próximo cobro",
+      cycle: "Ciclo actual",
+      cycleCap:
+        "Un ciclo va de un día de cobro al día anterior al siguiente — no es el mes natural.",
+      fixed: "Gastos fijos",
+      debt: "Préstamos",
+      variable: "Día a día",
+      margin: "Colchón",
+      baseline: "Lo que cuesta un mes normal",
+      baselineCap:
+        "Gastos fijos + cuotas de préstamos + tu estimación del día a día + un pequeño colchón.",
+      surplus: "Lo que sobra",
+      realAlloc: "Apartado",
+      realSurplus: "Aún libre",
+      waterfallCap:
+        "Lo que sobra se divide entre lo que ya has apartado y lo que sigue libre.",
+      step1: "Un pequeño fondo de emergencia",
+      step2: "Amortizar préstamos caros",
+      step3: "Invertir a largo plazo",
+      ladderCap:
+        "Un orden aproximado de prioridad para el dinero sobrante — tu situación puede cambiar la mezcla.",
+    },
   },
   de: {
-    "toc.overview": "Überblick",
-    "search.placeholder": "Handbuch durchsuchen",
-    "search.noResults": "Keine Ergebnisse für",
-    "toc.principles": "Finanzprinzipien",
-    "diag.baselineCap": "Deine Basis sind Fixkosten plus Schulden plus variable Ausgaben plus ein Sicherheitszuschlag.",
-    "diag.salary": "Gehalt",
-    "diag.lFixed": "Fixkosten",
-    "diag.lDebt": "Schulden",
-    "diag.lVariable": "Variabel",
-    "diag.lMargin": "Zuschlag",
-    "diag.lBaseline": "Basis",
-    "diag.lSurplus": "Überschuss",
-    "diag.lRealAlloc": "Echte Zuweisungen",
-    "diag.lRealSurplus": "Echter Überschuss",
-    "diag.today": "Heute",
-    "diag.nextSalary": "Nächstes Gehalt",
-    "diag.cycle": "Aktueller Zyklus",
-    "diag.cycleCap": "Ein Zyklus läuft von einem Gehalt bis zum Tag vor dem nächsten, nicht der Kalendermonat.",
-    "diag.waterfallCap": "Dein Überschuss teilt sich in das, was du wirklich in Projekte verschoben hast, und das, was frei bleibt.",
-    "diag.step1": "Notgroschen",
-    "diag.step2": "Hochverzinste Schulden",
-    "diag.step3": "Zum Wachsen investieren",
-    "diag.ladderCap": "Eine grobe Reihenfolge für übriges Geld. Deine Situation kann die Mischung ändern.",
-    "tbl.typesTitle": "Projektarten",
-    "tbl.colType": "Art",
-    "tbl.colRole": "Rolle",
-    "tbl.savings": "Sparziel",
-    "tbl.savingsRole": "Ein Ziel, für das du Geld zurücklegst.",
-    "tbl.emergency": "Notgroschen",
-    "tbl.emergencyRole": "Dein Sicherheitspolster. Der Coach zählt es zuerst und schützt es.",
-    "tbl.investment": "Investition",
-    "tbl.investmentRole": "Wachstumsgeld für die lange Frist, nicht anzurühren.",
-    "tbl.targetsTitle": "Wie ein Projekt finanziert wird",
-    "tbl.colMeaning": "Wie es finanziert",
-    "tbl.tPct": "Prozent des Überschusses",
-    "tbl.tPctM": "Nimmt einen Anteil des Überschusses, den du in dem Zyklus hast.",
-    "tbl.tMonthly": "Fest pro Monat",
-    "tbl.tMonthlyM": "Ein fester Betrag jeden Monat.",
-    "tbl.tYearly": "Fest pro Jahr",
-    "tbl.tYearlyM": "Ein Jahresbetrag, gleichmäßig auf die Monate verteilt.",
-    "tbl.tGoal": "Ziel bis Datum",
-    "tbl.tGoalM": "Ein Zielbetrag bis zu einem Datum. Die Monatszahl ist, was nötig ist, um rechtzeitig anzukommen.",
-    "principles.intro":
-      "bynku hat bewusst eine Haltung. Hinter den Bildschirmen stehen ein paar einfache Geldprinzipien, über die sich die meisten Finanzplaner einig sind. Hier ist, wozu die App dich sanft hinführt, und warum.",
-    "principles.p1.h": "1. Lebe innerhalb deiner Basis",
-    "principles.p1.b":
-      "Deine Basis ist, was ein normaler Monat kostet: feste Rechnungen, Kreditraten, erwartete variable Ausgaben und ein kleiner Sicherheitszuschlag. Der tägliche Betrag zum sicheren Ausgeben verwandelt den Rest in eine einfache Zahl pro Tag, damit du dein Geld genießen kannst, ohne unbemerkt zu viel auszugeben. Bleib darunter, und der Monat regelt sich von selbst.",
-    "principles.p2.h": "2. Baue zuerst ein Sicherheitspolster auf",
-    "principles.p2.b":
-      "Bevor du auf Wachstum setzt, schlafen die meisten Haushalte besser mit Bargeld, das einige Monate an wesentlichen Ausgaben abdeckt. bynku misst dies als Notgroschen-Abdeckung und behandelt Notfallprojekte als Geld, das du nicht anrühren solltest. Ein üblicher Richtwert sind drei bis sechs Monate an Wesentlichem, mehr, wenn dein Einkommen unregelmäßig ist.",
-    "principles.p3.h": "3. Tilge teure Schulden früh",
-    "principles.p3.b":
-      "Schulden zu tilgen ist eine garantierte Rendite in Höhe ihres Zinssatzes. Wenn ein Kredit mehr kostet, als du mit Investieren vernünftigerweise verdienen könntest, gewinnt das Tilgen meist. Zwei Reihenfolgen helfen: die Lawine zahlt zuerst den höchsten Zins, um am meisten Zinsen zu sparen, und der Schneeball zahlt zuerst den kleinsten Saldo für schnelle, motivierende Erfolge. Der Coach kann deine Schulden auf beide Arten ordnen.",
-    "principles.p4.h": "4. Dann langfristig investieren",
-    "principles.p4.b":
-      "Sobald dein Polster gesund ist und teure Schulden weg sind, verliert liegendes Geld gegen die Inflation. Investieren lässt deinen Überschuss über die Jahre arbeiten. bynku weist darauf hin, wenn du zu wenig investierst (gesunde Reserve, aber ungenutzter Überschuss) oder zu viel (Investitionen aufstocken, während die Reserve dünn ist oder teure Schulden bleiben), und sagt dir nie, Investitionen zu verkaufen, es sei denn, es ist wirklich nötig.",
-    "principles.p5.h": "5. Vergleiche dich mit Durchschnitten, nicht mit Nachbarn",
-    "principles.p5.b":
-      "Die Ansicht Wie schneide ich ab stellt dein Einkommen und deine Ausgaben neben öffentliche nationale Statistiken für einen Haushalt deiner Größe und Einkommensklasse, nie gegen andere bynku-Nutzer. Es ist ein Bezugspunkt, kein Urteil. Nutze sie, um auffällige Kategorien zu erkennen, und entscheide dann, was zu deinem Leben passt.",
-    "principles.note":
-      "bynku ist ein Budget-Begleiter, kein lizenzierter Finanz-, Steuer- oder Rechtsberater. Bei regulierten Produkten oder großen Entscheidungen betrachte seine Hinweise als Ausgangspunkt und sprich mit einer qualifizierten Fachkraft.",
-    "toc.cycles": "Zahlungszyklen",
-    "toc.baseline": "Basis & sicher ausgeben",
-    "toc.expenses": "Ausgaben & Erfassung",
-    "toc.allocations": "Zuweisungen & Töpfe",
-    "toc.plans": "Vorausplanen",
-    "plans.intro":
-      "Die Plan-Seite ist für Geld, von dem du schon weißt, dass es kommt, das aber nicht zu einem normalen Monat gehört: eine einmalige Ausgabe wie neue Autoreifen im August, eine jährliche Rechnung wie die Versicherung, eine Einkommensänderung wie eine Gehaltserhöhung ab September oder teurere Monate wie Weihnachten. Du stellst das im Voraus zusammen, damit dich kein Monat überrascht.",
-    "plans.h1": "So funktioniert es.",
-    "plans.b1":
-      "Jeder Plan hat einen Betrag, einen Monat, eine Richtung (Geld raus oder rein) und wie oft er sich wiederholt: nur einmal, jedes Jahr oder ab einem gewählten Zeitpunkt jeden Monat. Pläne ändern nie deine Basis, die deine normalen wiederkehrenden Kosten bleibt. Stattdessen speisen sie eine Vorschau der kommenden Monate und eine Zeitleiste, und jede große Einmalausgabe lässt sich in ein Projekt verwandeln, um nach und nach zu sparen, statt alles in einem Monat zu tragen. Die Vorschau markiert jeden Monat, der knapp wird.",
-    "plans.h2": "Wenn eine geplante Zahlung fällig wird.",
-    "plans.b2":
-      "Wenn du eine geplante Ausgabe tatsächlich bezahlst, markierst du sie als erledigt und trägst ein, was sie wirklich gekostet hat, was von deiner Schätzung abweichen kann. Du wählst, woraus sie bezahlt wird: aus deinem nicht zugewiesenen Rest des Monats, und nur wenn die Ausgabe größer ist als dieser Rest, greift sie in dein Alltagsbudget; oder aus einem Projekt, in das du gespart hast und das dann verringert wird. Ab diesem Moment ist es kein Plan mehr, sondern eine abgeschlossene Ausgabe, und weil sie für den Monat gezählt bleibt, taucht das Geld nicht heimlich wieder auf.",
-    "plans.h3": "Wenn erwartetes Geld eintrifft.",
-    "plans.b3":
-      "Eine geplante Einnahme, etwa ein Bonus oder eine neue Einkommensquelle, funktioniert genauso, nur umgekehrt. Solange sie geplant ist, hebt sie die Vorschau für die betroffenen Monate an. Wenn sie eintrifft, markierst du sie mit dem tatsächlich erhaltenen Betrag als erledigt, und sie wird diesem Monat zugerechnet.",
-    "plans.callout":
-      "Kurz gesagt: Ein Plan ist ein Versprechen über die Zukunft. Bis er bezahlt ist, prägt er, was du dir sicher leisten kannst; sobald er bezahlt ist, wird er real, zum echten Betrag, aus dem von dir gewählten Topf.",
-    "toc.analysis": "Analyse",
-    "toc.settings": "Einstellungen",
-    "toc.notifications": "Benachrichtigungen",
-    "toc.privacy": "Versteckter Modus & Dunkelmodus",
-    "toc.credits": "Guthaben & Tokens",
-    "toc.faq": "FAQ",
-    "header.eyebrow": "Wiki",
-    "header.title": "So funktioniert diese App",
-    "header.subtitle":
-      "Ein vollständiger Leitfaden zu jedem Bildschirm, jedem Feld und jeder Formel. Überfliege das Inhaltsverzeichnis oder springe direkt zum gewünschten Abschnitt.",
-    "header.tocTitle": "Inhaltsverzeichnis",
-    "overview.p1a":
-      "bynku hilft einem Paar (oder einer kleinen Familie), das monatliche Geld gemeinsam zu planen und zu verwalten. Statt jeden Cent gegen einen Kalendermonat zu verfolgen, arbeitet die App in ",
-    "overview.term1": "Zahlungszyklen",
-    "overview.p1b":
-      ",dem Zeitraum zwischen zwei aufeinanderfolgenden Gehaltseingängen, und beantwortet jeden Tag eine zentrale Frage:",
-    "overview.callout":
-      "„Wie viel kann ich heute noch ausgeben, ohne die Basis zu überschreiten oder ein Sparziel zu gefährden?“",
-    "overview.p2":
-      "Dafür braucht sie drei Dinge von dir: deine fixen monatlichen Kosten, deine geschätzten variablen Kosten (Lebensmittel, Sprit …) und deine Zuweisungstöpfe (Investitionen, Ersparnisse, Kinder, Projekte). Daraus berechnet sie einen sicher-auszugebenden Betrag, verfolgt deine tatsächlichen Ausgaben und zeigt Auswertungen.",
-    "overview.badge1": "Gemeinsamer Haushalt",
-    "overview.badge2": "EUR",
-    "overview.badge3": "TT.MM.JJJJ HH:mm:ss",
-    "overview.badge4": "Nur auf Einladung",
-    "cycles.p1a": "Ein ",
-    "cycles.term1": "Zyklus",
-    "cycles.p1b":
-      " beginnt an dem Tag, an dem das Hauptgehalt eingeht, und endet am Tag vor dem nächsten. Alle Budgets, das sicher Ausgebbare und die Zuweisungen werden anhand des aktuellen Zyklus berechnet, nicht des Kalendermonats.",
-    "cycles.li1a": "Der Anker des Zyklus ist der jüngste Eintrag, der als ",
-    "cycles.li1term": "Gehaltseingang",
-    "cycles.li1b": " markiert ist.",
-    "cycles.li2a": "Nutze die Schaltfläche ",
-    "cycles.li2strong": "Gehalt erhalten · Zyklus neu starten",
-    "cycles.li2b":
-      " im Dashboard, wenn du bezahlt wirst. Sie erstellt den Gehaltseintrag mit dem Betrag aus den Einstellungen und startet einen neuen Zyklus.",
-    "cycles.li3":
-      "Wurde noch nie ein Gehalt erfasst, greift die App auf den aktuellen Kalendermonat zurück.",
-    "cycles.li4":
-      "Bei Ausgaben und Zuweisungen kannst du mit den Pfeilen zu früheren Zyklen navigieren.",
-    "baseline.p1a": "Die ",
-    "baseline.term1": "Basis",
-    "baseline.p1b":
-      " ist deine angestrebten monatlichen Lebenshaltungskosten. Es ist ein berechneter Wert, keine Zahl, die du eintippst:",
-    "baseline.li1term": "Fixe monatliche Ausgaben",
-    "baseline.li1":
-      ",Miete, Nebenkosten, Abos, Versicherungen. Dinge, die jeden Monat in (ungefähr) gleicher Höhe anfallen.",
-    "baseline.li2term": "Geschätzte variable Kosten",
-    "baseline.li2":
-      ",Kategorien, für die du regelmäßig, aber mit schwankenden Beträgen ausgibst: Lebensmittel, Sprit, Transport, Haushaltswaren …",
-    "baseline.li3term": "Sicherheitsmarge",
-    "baseline.li3":
-      ",ein prozentualer Puffer obendrauf, um kleine Überraschungen abzufedern, ohne dass Alarme ausgelöst werden.",
-    "baseline.safeTodayHeading": "Heute sicher ausgebbar",
-    "baseline.p3": "Das Dashboard zeigt dies als große Zahl mit drei Tags:",
-    "baseline.badgeSpent": "Ausgegeben",
-    "baseline.li4After": " variable Ausgaben, die in diesem Zyklus erfasst wurden.",
-    "baseline.badgeReceived": "Erhalten",
-    "baseline.li5After": " während des Zyklus erhaltenes Geld (Rückerstattungen, nicht Gehalt).",
-    "baseline.badgeBalance": "Saldo",
-    "baseline.li6After": " ausgegeben minus erhalten: der Nettoverbrauch des variablen Pools.",
-    "baseline.p4a":
-      "Der Trendindikator (↑/↓) vergleicht das heutige sicher Ausgebbare mit dem von gestern. Die Karte ",
-    "baseline.p4strong": "Prognose Zyklusende",
-    "baseline.p4b":
-      " extrapoliert anhand deiner letzten 7 Ausgabentage, grün, wenn du unter der Basis bleibst, rot, wenn du sie sprengst.",
-    "expenses.p1a": "Ausgaben sind alles, was ",
-    "expenses.p1em": "keine",
-    "expenses.p1b":
-      " fixe monatliche Rechnung und kein Gehalt ist. Nur diese Einträge bewegen den Zeiger des sicher Ausgebbaren. Es gibt mehrere Wege, sie hinzuzufügen:",
-    "expenses.acc1Trigger": "Schnell hinzufügen (Formular)",
-    "expenses.acc1Body":
-      "Betrag, Kategorie, Notiz und Datum eintippen. Am schnellsten für einen einzelnen Kauf, an den du dich erinnerst.",
-    "expenses.acc2Trigger": "KI-Text- oder Sprachnotiz",
-    "expenses.acc2BodyA": "Füge etwas ein wie ",
-    "expenses.acc2BodyEm": "„45 Euro Lebensmittel bei Rewe gestern“",
-    "expenses.acc2BodyB":
-      " (oder diktiere es). Die KI extrahiert Betrag, Kategorie, Händler und Datum. Vor dem Speichern prüfen und bestätigen.",
-    "expenses.acc3Trigger": "Foto eines Belegs oder einer Rechnung",
-    "expenses.acc3Body":
-      "Bild hochladen; die KI liest Summe, Händler und Datum und füllt das Formular vorab aus.",
-    "expenses.acc4Trigger": "Kontoauszug importieren",
-    "expenses.acc4BodyA":
-      "Füge einen Kontoauszug-Export ein. Zeilen werden zu Ausgaben-Kandidaten analysiert. Eine Duplikatprüfung läuft gegen das bereits in deinem Verlauf vorhandene ±2-Tage-Fenster, wahrscheinliche Duplikate werden bernsteinfarben markiert und vorab abgewählt. Nutze ",
-    "expenses.acc4Em1": "Alle auswählen",
-    "expenses.acc4Mid": ", ",
-    "expenses.acc4Em2": "Duplikate zurücksetzen",
-    "expenses.acc4Mid2": " und ",
-    "expenses.acc4Em3": "Keine",
-    "expenses.acc4End": ", um schnell voranzukommen.",
-    "expenses.acc5Trigger": "Was jedes Feld bedeutet",
-    "expenses.fieldAmountTerm": "Betrag",
-    "expenses.fieldAmount": " in EUR. Positiv für ausgehendes Geld.",
-    "expenses.fieldTypeTerm": "Typ",
-    "expenses.fieldTypeEm1": "Ausgabe",
-    "expenses.fieldTypeMid": " verringert den Pool, ",
-    "expenses.fieldTypeEm2": "erhalten",
-    "expenses.fieldTypeEnd": " erstattet ihn (kein Gehalt).",
-    "expenses.fieldCategoryTerm": "Kategorie",
-    "expenses.fieldCategory":
-      " steuert das Kreisdiagramm in der Analyse und entspricht den Kategorien der variablen Schätzung.",
-    "expenses.fieldDateTerm": "Datum",
-    "expenses.fieldDate":
-      " wann das Geld tatsächlich geflossen ist, dies bestimmt, zu welchem Zyklus es gehört.",
-    "expenses.fieldNoteTerm": "Notiz",
-    "expenses.fieldNote": " Freitext (Händler, Zweck). Nützlich in den Analyse-Tooltips.",
-    "allocations.p1a": "Ein ",
-    "allocations.term1": "Topf",
-    "allocations.p1b":
-      " steht für ein Ziel, in das dein Einkommen jeden Zyklus fließen soll: langfristige Investitionen, Sparkonto, Ersparnisse der Kinder, ein Hausprojektfonds usw. Jeder Topf hat ein Ziel, das bestimmt, wie viel die App ",
-    "allocations.p1em": "empfiehlt",
-    "allocations.p1c": " zu verschieben.",
-    "allocations.targetTypesHeading": "Zielarten",
-    "allocations.tt1term": "% des Einkommens",
-    "allocations.tt1": ",ein Anteil des Gehalts, z. B. 15 % für Investitionen.",
-    "allocations.tt2term": "Fester €-Betrag pro Monat",
-    "allocations.tt2": ",ein fester monatlicher Beitrag.",
-    "allocations.tt3term": "Ziel-€ bis Datum",
-    "allocations.tt3a": ",du willst ",
-    "allocations.tt3em": "X €",
-    "allocations.tt3b":
-      " bis zu einem bestimmten Datum in diesem Topf haben. Die App berechnet den ab heute nötigen monatlichen Beitrag und rechnet jeden Zyklus neu, basierend auf dem tatsächlich Zugewiesenen.",
-    "allocations.markHeading": "Als zugewiesen markieren",
-    "allocations.markP1a": "Wenn du Geld auf ein Konto für einen Topf überweist, klicke auf ",
-    "allocations.markStrong": "Als zugewiesen markieren",
-    "allocations.markP1b":
-      " und gib den tatsächlich überwiesenen Betrag ein. Das Auswirkungspanel zeigt:",
-    "allocations.li1": "Abweichung von der Empfehlung für den Zyklus.",
-    "allocations.li2a": "Auswirkung auf den ",
-    "allocations.li2term": "Notfalltopf",
-    "allocations.li2b": " (Überschuss / Fehlbetrag gegenüber empfohlenen Summen).",
-    "allocations.li3":
-      "Bei Zieltöpfen: aktualisierter Fortschrittsprozentsatz und die überarbeitete monatliche Rate, die für die Einhaltung der Frist nötig ist.",
-    "allocations.p2":
-      "Wird mehr als empfohlen zugewiesen, wird das vom Notfalltopf abgezogen; wird weniger zugewiesen, bleibt der Überschuss dort. Nichts zwingt dich, exakt die Zahl zu treffen, die App hält lediglich die Rechnung ehrlich.",
-    "analysis.p1":
-      "Zwei Ansichten helfen dir zu verstehen, wohin das Geld ging und wohin es sich entwickelt.",
-    "analysis.burndownHeading": "Zyklus-Verbrauch",
-    "analysis.li1a": "Die Linie beginnt am Tag 1 bei ",
-    "analysis.li1strong": "−fixe_summe",
-    "analysis.li1b":
-      ",Fixkosten sind bereits reserviert, noch bevor du etwas Variables ausgibst.",
-    "analysis.li2":
-      "Sie sinkt mit jeder Ausgabe und steigt mit jedem erhaltenen Eintrag und dem Gehaltsereignis.",
-    "analysis.li3":
-      "Gestrichelte Referenzlinien zeigen die Finanzierungsschwellen (Basis und, falls relevant, Zuweisungsanforderungen).",
-    "analysis.li4":
-      "Fahre über einen Punkt, um die genauen Transaktionen zu sehen, die den Saldo an diesem Tag bewegt haben.",
-    "analysis.categoryHeading": "Kategorienverteilung",
-    "analysis.p2":
-      "Ein Kreisdiagramm der variablen Ausgaben im gewählten Zeitraum (Tag / Woche / Monat). Nutze es, um Kategorien zu erkennen, die über ihren Anteil an der variablen Schätzung hinauswachsen.",
-    "settings.li1term": "Haushalt",
-    "settings.li1a":
-      ",Name, Hauptgehaltsbetrag und erwarteter Zahltag-Rhythmus. Der Gehaltsbetrag ist das, was die Schaltfläche ",
-    "settings.li1em": "Gehalt erhalten",
-    "settings.li1b": " erfassen wird.",
-    "settings.li2term": "Mitglieder",
-    "settings.li2":
-      ",lade deinen Partner per E-Mail ein. Beide Mitglieder teilen dieselben Daten; es gibt keine Geldbörse pro Mitglied.",
-    "settings.li3term": "Fixe monatliche Ausgaben",
-    "settings.li3": ",eine Zeile pro wiederkehrender Rechnung.",
-    "settings.li4term": "Schätzungen variabler Kosten",
-    "settings.li4":
-      ",erwartete monatliche Ausgaben pro Kategorie. Die Summe fließt in die Basis ein.",
-    "settings.li5term": "Sicherheitsmarge (%)",
-    "settings.li5": ",Puffer, der auf fixe + variable Schätzungen aufgeschlagen wird.",
-    "settings.li6term": "Zuweisungstöpfe",
-    "settings.li6": ",Töpfe, Ziele und Zielfristen erstellen/bearbeiten.",
-    "settings.li7term": "Benachrichtigungen",
-    "settings.li7":
-      ",Web-Push pro Gerät aktivieren und jede Benachrichtigung einzeln umschalten.",
-    "notifications.p1":
-      "Alle Benachrichtigungen sind Opt-in, pro Gerät und pro Typ. Aktiviere zuerst ein Gerät (Einstellungen → Benachrichtigungen → Auf diesem Gerät aktivieren) und schalte dann die gewünschten ein.",
-    "notifications.li1strong": "Montagmorgen-Digest",
-    "notifications.li1":
-      " (08:00 Europa/Lissabon), eine Zusammenfassung der Vorwoche: gesamt ausgegeben und erhalten (ohne Fixkosten und Gehalt), Top 3 der Ausgaben und Eingänge, ein Vergleich zur Vorwoche, ein KI-Kommentar zum Tempo, und wie viel Spielraum noch in Basis und Notfalltopf ist.",
-    "notifications.li2strong": "Basis nähert sich / erreicht",
-    "notifications.li2":
-      ",wird gesendet, wenn der verbleibende variable Pool Warn- und Überschreitungsschwellen überschreitet.",
-    "notifications.li3strong": "Notfalltopf fast erschöpft",
-    "notifications.li3":
-      ",wird gesendet, wenn der Verbrauch des Überschusses ein kritisches Niveau erreicht.",
-    "notifications.p2":
-      "iOS Safari erfordert, dass die App zum Home-Bildschirm hinzugefügt wird, bevor Push funktioniert. Desktop Chrome / Firefox / Edge und Android funktionieren direkt.",
-    "privacy.p1term": "Versteckter Modus",
-    "privacy.p1":
-      " (Augensymbol) verwischt jeden Geldwert in der App, damit du sie in der Öffentlichkeit öffnen kannst, ohne Salden preiszugeben. Die Einstellung wird in diesem Browser sitzungsübergreifend gemerkt.",
-    "privacy.p2term": "Dunkelmodus",
-    "privacy.p2":
-      " (Sonne/Mond-Symbol) folgt standardmäßig deiner Betriebssystempräferenz und merkt sich deine ausdrückliche Wahl über Sitzungen hinweg.",
-    "privacy.p3":
-      "Der Zugriff ist auf freigegebene E-Mail-Adressen beschränkt. Registrierungen sind deaktiviert; neue Mitglieder treten nur per Einladung bei.",
-    "credits.p1a":
-      "Einige bynku-Funktionen werden von KI-Modellen angetrieben (der Finanzcoach, Sprach-/Text-/Foto-/Kontoauszug-Analyse). Jeder Aufruf dieser Modelle hat echte Kosten, die wir in ",
-    "credits.p1strong": "Guthaben",
-    "credits.p1b": " messen. Jeder Haushalt hat ein Limit von ",
-    "credits.p1strong2": "7,5 Guthaben pro Monat",
-    "credits.p1c": "; die Nutzung ist sichtbar unter ",
-    "credits.p1em": "Einstellungen → Guthabennutzung",
-    "credits.p1d": ".",
-    "credits.tokenHeading": "Was ist ein Token?",
-    "credits.tokenP1a": "KI-Modelle lesen keine Zeichen oder Wörter, sie lesen ",
-    "credits.tokenStrong": "Tokens",
-    "credits.tokenP1b":
-      ", kleine Textstücke (etwa ¾ eines Wortes im Englischen, in anderen Sprachen etwas weniger). Eine kurze Notiz wie ",
-    "credits.tokenEm": "„Lebensmittel 42€ bei Rewe“",
-    "credits.tokenP1c":
-      " sind ca. 10 Tokens; eine ganze Kontoauszugsseite kann mehrere Tausend sein. Bilder zählen auch: Ein Belegfoto wird als fester Block von Bild-Tokens plus den Tokens jedes vom Modell zurückgeschriebenen Textes abgerechnet.",
-    "credits.tokenP2a": "Jeder KI-Aufruf hat zwei Seiten: ",
-    "credits.tokenP2strong1": "Eingabe-Tokens",
-    "credits.tokenP2mid":
-      " (was wir senden, deine Notiz, dein Beleg oder der Kontext, den wir für den Coach aufbauen) und ",
-    "credits.tokenP2strong2": "Ausgabe-Tokens",
-    "credits.tokenP2end":
-      " (was das Modell zurückschreibt, das analysierte JSON oder die Antwort des Coaches). Beide werden abgerechnet, und Ausgabe-Tokens sind pro Token meist teurer als Eingabe-Tokens.",
-    "credits.howHeading": "Wie bynku Tokens in Guthaben umwandelt",
-    "credits.howP1a":
-      "Nach jedem KI-Aufruf protokollieren wir die Token-Anzahl, rechnen sie anhand der Preise des Modells in einen anteiligen Guthaben-Betrag um und speichern diesen für deinen Haushalt in der Tabelle ",
-    "credits.howCode": "credit_usage",
-    "credits.howP1b":
-      ". Die Einstellungsseite summiert den aktuellen Monat und zeigt einen Fortschrittsbalken zum 10-Guthaben-Limit. Nicht-KI-Funktionen (Ausgaben manuell hinzufügen, Diagramme ansehen, Benachrichtigungen, Synchronisierung) verbrauchen ",
-    "credits.howStrong": "kein",
-    "credits.howP1c": " Guthaben.",
-    "credits.typicalCosts": "Typische Kosten pro Aktion:",
-    "credits.cost1strong": "Text-/Sprachnotiz-Analyse",
-    "credits.cost1": ",sehr gering, oft deutlich unter 0,01 Guthaben pro Eintrag.",
-    "credits.cost2strong": "Belegfoto-Analyse",
-    "credits.cost2":
-      ",größer, weil das Bild selbst abgerechnet wird; meist aber nur wenige Hundertstel eines Guthabens.",
-    "credits.cost3strong": "Kontoauszug-Import",
-    "credits.cost3": ",am teuersten pro Aufruf, weil ganze Textseiten gesendet werden.",
-    "credits.cost4strong": "Finanzcoach-Bericht",
-    "credits.cost4a":
-      ",24 Stunden zwischengespeichert, sodass erneutes Öffnen des Tabs kostenlos ist; nur ",
-    "credits.cost4em": "Neu generieren",
-    "credits.cost4b": " und jede Chat-Antwort kosten Guthaben.",
-    "credits.saveHeading": "So sparst du Guthaben",
-    "credits.save1strong": "Text-/Sprachnotizen",
-    "credits.save1a": "Bevorzuge ",
-    "credits.save1b":
-      " gegenüber Fotos, wenn du den Betrag bereits kennst, viel günstiger als die Bildanalyse.",
-    "credits.save2":
-      "Schneide Fotos vor dem Hochladen eng auf den Bereich mit Summe/Händler zu; kleinere Bilder = weniger Bild-Tokens.",
-    "credits.save3a": "Importiere Kontoauszüge ",
-    "credits.save3strong": "einmal pro Zyklus",
-    "credits.save3b":
-      " statt nach jeder Transaktion, und lass den Deduplizierungsschritt mit dem bereits Erfassten zusammenführen.",
-    "credits.save4a":
-      "Nutze den zwischengespeicherten Coach-Bericht während des 24-Stunden-Fensters, statt auf ",
-    "credits.save4em": "Neu generieren",
-    "credits.save4b":
-      " zu klicken; erneuere nur nach einer wesentlichen Änderung (große Ausgabe, Zuweisung, neuer Zahltag).",
-    "credits.save5":
-      "Halte Coach-Chatnachrichten kurz und konkret, lange Hin-und-Her-Gespräche verbrauchen bei jeder Runde sowohl Eingabe- als auch Ausgabe-Tokens.",
-    "credits.save6":
-      "Korrigiere Offensichtliches (Händler, Kategorie, Betrag) direkt im Formular, statt die KI erneut analysieren zu lassen.",
-    "credits.footnote":
-      "Ist das 10-Guthaben-Limit erreicht, pausieren KI-Funktionen bis zum nächsten Monat; alles andere funktioniert weiterhin normal.",
-    "faq.q1Trigger": "Warum Zyklen statt Monate?",
-    "faq.q1Body":
-      "Gehälter fallen selten auf den 1. Ein am Zahltag ausgerichteter Zyklus gibt eine ehrliche Antwort auf „wie viel habe ich noch bis zum nächsten Gehalt übrig“.",
-    "faq.q2Trigger": "Soll ich den Gehaltseintrag aus den letzten Ausgaben löschen?",
-    "faq.q2Body":
-      "Nein. Dieser Eintrag ist der Anker für den aktuellen Zyklus. Löschst du ihn, greift die App bis zum nächsten Zahltag auf den Kalendermonat-Modus zurück.",
-    "faq.q3Trigger": "Was passiert, wenn ich weniger als empfohlen zuweise?",
-    "faq.q3Body":
-      "Der Fehlbetrag verbleibt für den Zyklus im Notfalltopf. Zieltöpfe berechnen die für die Einhaltung der Frist nötige monatliche Rate neu.",
-    "faq.q4Trigger": "Was, wenn wir über die Basis kommen?",
-    "faq.q4Body":
-      "Das sicher Ausgebbare wird negativ und die Prognosekarte für das Zyklusende wird rot. Der Überschuss wird zuerst von der Sicherheitsmarge, dann vom Notfalltopf und schließlich durch Kürzung der Zuweisungen aufgefangen.",
-    "faq.q5Trigger": "Liegt die KI-Analyse immer richtig?",
-    "faq.q5Body":
-      "Nein, überprüfe das vorausgefüllte Formular immer vor dem Speichern. Es ist ein Vorsprung, kein Autopilot.",
+    eyebrow: "Handbuch",
+    title: "So funktioniert bynku",
+    subtitle:
+      "Ein kurzer Leitfaden in einfacher Sprache. Lies einen Abschnitt oder suche direkt.",
+    tocTitle: "In diesem Leitfaden",
+    searchPlaceholder: "Handbuch durchsuchen",
+    noResults: "Keine Treffer für",
+    diagrams: {
+      salary: "Zahltag",
+      today: "Heute",
+      nextSalary: "Nächster Zahltag",
+      cycle: "Aktueller Zyklus",
+      cycleCap:
+        "Ein Zyklus läuft von einem Zahltag bis zum Tag vor dem nächsten — nicht der Kalendermonat.",
+      fixed: "Fixkosten",
+      debt: "Kredite",
+      variable: "Alltag",
+      margin: "Puffer",
+      baseline: "Was ein normaler Monat kostet",
+      baselineCap:
+        "Fixkosten + Kreditraten + Alltagsschätzung + ein kleiner Sicherheitspuffer.",
+      surplus: "Was übrig ist",
+      realAlloc: "Beiseite gelegt",
+      realSurplus: "Noch frei",
+      waterfallCap:
+        "Der Überschuss teilt sich in bereits Beiseitegelegtes und noch freies Geld.",
+      step1: "Kleiner Notgroschen",
+      step2: "Teure Kredite tilgen",
+      step3: "Langfristig anlegen",
+      ladderCap:
+        "Eine grobe Prioritätsreihenfolge fürs übrige Geld — deine Situation kann sie verändern.",
+    },
   },
   fr: {
-    "toc.overview": "Vue d'ensemble",
-    "search.placeholder": "Rechercher dans le manuel",
-    "search.noResults": "Aucun résultat pour",
-    "toc.principles": "Principes financiers",
-    "diag.baselineCap": "Votre base, ce sont les coûts fixes plus la dette plus les dépenses variables plus une marge de sécurité.",
-    "diag.salary": "Salaire",
-    "diag.lFixed": "Coûts fixes",
-    "diag.lDebt": "Dette",
-    "diag.lVariable": "Variable",
-    "diag.lMargin": "Marge",
-    "diag.lBaseline": "Base",
-    "diag.lSurplus": "Excédent",
-    "diag.lRealAlloc": "Allocations réelles",
-    "diag.lRealSurplus": "Excédent réel",
-    "diag.today": "Aujourd'hui",
-    "diag.nextSalary": "Prochain salaire",
-    "diag.cycle": "Cycle en cours",
-    "diag.cycleCap": "Un cycle va d'un salaire à la veille du suivant, pas le mois calendaire.",
-    "diag.waterfallCap": "Votre excédent se divise entre ce que vous avez réellement déplacé vers des projets et ce qui reste libre.",
-    "diag.step1": "Fonds d'urgence",
-    "diag.step2": "Dette à taux élevé",
-    "diag.step3": "Investir pour la croissance",
-    "diag.ladderCap": "Un ordre de priorité approximatif pour l'argent en trop. Votre situation peut changer le dosage.",
-    "tbl.typesTitle": "Types de projet",
-    "tbl.colType": "Type",
-    "tbl.colRole": "Rôle",
-    "tbl.savings": "Objectif d'épargne",
-    "tbl.savingsRole": "Un objectif pour lequel vous mettez de l'argent de côté.",
-    "tbl.emergency": "Fonds d'urgence",
-    "tbl.emergencyRole": "Votre matelas de sécurité. Le coach le compte en premier et le protège.",
-    "tbl.investment": "Investissement",
-    "tbl.investmentRole": "De l'argent de croissance sur le long terme, à ne pas toucher.",
-    "tbl.targetsTitle": "Comment un projet est financé",
-    "tbl.colMeaning": "Mode de financement",
-    "tbl.tPct": "Pourcentage de l'excédent",
-    "tbl.tPctM": "Prend une part de l'excédent que vous avez ce cycle.",
-    "tbl.tMonthly": "Fixe par mois",
-    "tbl.tMonthlyM": "Un montant défini chaque mois.",
-    "tbl.tYearly": "Fixe par an",
-    "tbl.tYearlyM": "Un montant annuel réparti également sur les mois.",
-    "tbl.tGoal": "Objectif par date",
-    "tbl.tGoalM": "Un montant cible pour une date. Le chiffre mensuel est ce qu'il faut pour y arriver à temps.",
-    "principles.intro":
-      "bynku a un avis, volontairement. Derrière les écrans se trouvent quelques principes d'argent simples sur lesquels s'accordent la plupart des planificateurs. Voici ce vers quoi l'application vous oriente discrètement, et pourquoi.",
-    "principles.p1.h": "1. Vivez selon votre base",
-    "principles.p1.b":
-      "Votre base correspond au coût d'un mois normal : factures fixes, remboursements de dettes, dépenses variables prévues et une petite marge de sécurité. Le montant quotidien à dépenser en toute sécurité transforme ce qui reste en un chiffre simple par jour, pour profiter de votre argent sans dépasser sans le remarquer. Restez en dessous et le mois se gère tout seul.",
-    "principles.p2.h": "2. Constituez d'abord un matelas de sécurité",
-    "principles.p2.b":
-      "Avant de viser la croissance, la plupart des foyers dorment mieux avec des liquidités couvrant quelques mois de dépenses essentielles. bynku mesure cela comme la couverture du fonds d'urgence et considère les projets d'urgence comme de l'argent à ne pas toucher. Un objectif courant est de trois à six mois d'essentiels, davantage si vos revenus sont irréguliers.",
-    "principles.p3.h": "3. Remboursez tôt les dettes coûteuses",
-    "principles.p3.b":
-      "Rembourser une dette est un rendement garanti égal à son taux d'intérêt. Quand un prêt coûte plus que ce que vous pourriez raisonnablement gagner en investissant, le rembourser l'emporte souvent. Deux méthodes de tri aident : l'avalanche paie d'abord le taux le plus élevé pour économiser le plus d'intérêts, et la boule de neige paie d'abord le plus petit solde pour des victoires rapides et motivantes. Le coach peut classer vos dettes des deux façons.",
-    "principles.p4.h": "4. Puis investissez sur le long terme",
-    "principles.p4.b":
-      "Une fois votre matelas sain et les dettes coûteuses effacées, l'argent qui dort perd du terrain face à l'inflation. Investir fait travailler votre excédent au fil des ans. bynku signale quand vous investissez peut-être trop peu (réserve saine mais excédent inutilisé) ou trop (renforcer les investissements alors que la réserve est faible ou qu'il reste des dettes coûteuses), et ne vous dit jamais de vendre des investissements sauf en cas de réelle nécessité.",
-    "principles.p5.h": "5. Comparez-vous aux moyennes, pas aux voisins",
-    "principles.p5.b":
-      "La vue Comment je me situe place vos revenus et dépenses à côté de statistiques nationales publiques pour un foyer de votre taille et de votre tranche de revenus, jamais face à d'autres utilisateurs de bynku. C'est un repère, pas un verdict. Servez-vous-en pour repérer les catégories qui ressortent, puis décidez ce qui convient à votre vie.",
-    "principles.note":
-      "bynku est un compagnon de budget, pas un conseiller financier, fiscal ou juridique agréé. Pour les produits réglementés ou les décisions importantes, considérez ses conseils comme un point de départ et parlez à un professionnel qualifié.",
-    "toc.cycles": "Cycles de paie",
-    "toc.baseline": "Base & sécurisé à dépenser",
-    "toc.expenses": "Dépenses & saisie",
-    "toc.allocations": "Allocations & réserves",
-    "toc.plans": "Anticiper",
-    "plans.intro":
-      "La page Plans concerne l'argent dont vous savez déjà qu'il arrive mais qui ne fait pas partie d'un mois normal : une dépense ponctuelle comme des pneus neufs en août, une facture annuelle comme l'assurance, un changement de revenu comme une augmentation à partir de septembre, ou des mois plus chargés comme Noël. Vous organisez tout cela à l'avance pour qu'aucun mois ne vous surprenne.",
-    "plans.h1": "Comment ça marche.",
-    "plans.b1":
-      "Chaque plan a un montant, un mois, un sens (argent qui sort ou qui entre) et une fréquence : une seule fois, chaque année, ou chaque mois à partir d'un point choisi. Les plans ne changent jamais votre base, qui reste vos coûts récurrents habituels. Ils alimentent plutôt une prévision des mois à venir et une chronologie, et toute grosse dépense ponctuelle peut devenir un projet pour épargner petit à petit au lieu de tout supporter en un seul mois. La prévision signale tout mois qui serait à court.",
-    "plans.h2": "Quand un paiement prévu arrive à échéance.",
-    "plans.b2":
-      "Quand vous payez réellement un coût prévu, vous le marquez comme réglé et saisissez ce qu'il a vraiment coûté, ce qui peut différer de votre estimation. Vous choisissez d'où il est payé : de votre reste non affecté du mois, et ce n'est que si le coût dépasse ce reste qu'il entame votre budget du quotidien ; ou d'un projet dans lequel vous épargniez, qui est alors réduit. À partir de ce moment, ce n'est plus un plan mais une dépense réglée, et comme elle reste comptée pour le mois, l'argent ne réapparaît pas discrètement.",
-    "plans.h3": "Quand l'argent attendu arrive.",
-    "plans.b3":
-      "Une recette prévue, comme une prime ou une nouvelle source de revenu, fonctionne de la même façon à l'envers. Tant qu'elle est prévue, elle relève la prévision des mois concernés. Quand elle arrive, vous la marquez comme réglée au montant réellement reçu, et elle est enregistrée sur ce mois.",
-    "plans.callout":
-      "En bref : un plan est une promesse sur l'avenir. Jusqu'à son paiement, il façonne ce que vous pouvez faire en sécurité ; au moment où il est payé, il devient réel, au montant réel, prélevé sur la poche que vous choisissez.",
-    "toc.analysis": "Analyse",
-    "toc.settings": "Paramètres",
-    "toc.notifications": "Notifications",
-    "toc.privacy": "Mode masqué & mode sombre",
-    "toc.credits": "Crédits & tokens",
-    "toc.faq": "FAQ",
-    "header.eyebrow": "Wiki",
-    "header.title": "Comment fonctionne cette application",
-    "header.subtitle":
-      "Un guide complet pour chaque écran, champ et formule. Parcourez le sommaire ou allez directement à la section voulue.",
-    "header.tocTitle": "Sommaire",
-    "overview.p1a":
-      "bynku aide un couple (ou une petite famille) à planifier et gérer l'argent mensuel ensemble. Plutôt que de suivre chaque centime par rapport à un mois civil, l'application fonctionne en ",
-    "overview.term1": "cycles de paie",
-    "overview.p1b":
-      ",l'intervalle entre deux versements de salaire consécutifs, et répond chaque jour à une question centrale :",
-    "overview.callout":
-      "« Combien puis-je encore dépenser aujourd'hui sans dépasser la base ou compromettre un objectif d'épargne ? »",
-    "overview.p2":
-      "Pour cela, elle a besoin de trois choses de votre part : vos coûts fixes mensuels, vos coûts variables estimés (courses, carburant…) et vos réserves d'allocation (investissements, épargne, enfants, projets). À partir de là, elle calcule un montant sécurisé à dépenser, suit vos dépenses réelles et affiche des analyses.",
-    "overview.badge1": "Foyer partagé",
-    "overview.badge2": "EUR",
-    "overview.badge3": "JJ/MM/AAAA HH:mm:ss",
-    "overview.badge4": "Sur invitation uniquement",
-    "cycles.p1a": "Un ",
-    "cycles.term1": "cycle",
-    "cycles.p1b":
-      " commence le jour où le salaire principal est reçu et se termine la veille du suivant. Tous les budgets, le montant sécurisé à dépenser et les allocations sont calculés par rapport au cycle actuel, pas au mois civil.",
-    "cycles.li1a": "L'ancre du cycle est l'enregistrement le plus récent marqué comme ",
-    "cycles.li1term": "versement de salaire",
-    "cycles.li1b": ".",
-    "cycles.li2a": "Utilisez le bouton ",
-    "cycles.li2strong": "Salaire reçu · redémarrer le cycle",
-    "cycles.li2b":
-      " sur le tableau de bord lorsque vous êtes payé. Il crée l'enregistrement de salaire en utilisant le montant des Paramètres et démarre un nouveau cycle.",
-    "cycles.li3":
-      "Si aucun salaire n'a jamais été enregistré, l'application revient au mois civil en cours.",
-    "cycles.li4":
-      "Sur Dépenses et Allocations, vous pouvez naviguer vers les cycles précédents avec les flèches.",
-    "baseline.p1a": "La ",
-    "baseline.term1": "base",
-    "baseline.p1b":
-      " est votre coût de la vie mensuel cible. C'est une valeur calculée, pas un chiffre que vous saisissez :",
-    "baseline.li1term": "Dépenses fixes mensuelles",
-    "baseline.li1":
-      ",loyer, charges, abonnements, assurances. Des choses qui reviennent chaque mois avec (à peu près) le même montant.",
-    "baseline.li2term": "Coûts variables estimés",
-    "baseline.li2":
-      ",catégories sur lesquelles vous dépensez régulièrement mais avec des montants variables : courses, carburant, transport, articles ménagers…",
-    "baseline.li3term": "Marge de sécurité",
-    "baseline.li3":
-      ",un coussin en pourcentage en plus, pour absorber les petites surprises sans déclencher d'alarmes.",
-    "baseline.safeTodayHeading": "Sécurisé à dépenser aujourd'hui",
-    "baseline.p3":
-      "Le tableau de bord affiche cela sous forme d'un grand nombre avec trois étiquettes :",
-    "baseline.badgeSpent": "Dépensé",
-    "baseline.li4After": " dépenses variables enregistrées ce cycle.",
-    "baseline.badgeReceived": "Reçu",
-    "baseline.li5After": " argent reçu pendant le cycle (remboursements, pas le salaire).",
-    "baseline.badgeBalance": "Solde",
-    "baseline.li6After": " dépensé moins reçu : la ponction nette sur la réserve variable.",
-    "baseline.p4a":
-      "L'indicateur de tendance (↑/↓) compare le sécurisé à dépenser d'aujourd'hui à celui d'hier. La carte ",
-    "baseline.p4strong": "Projection fin de cycle",
-    "baseline.p4b":
-      " extrapole à partir de vos 7 derniers jours de dépenses, verte si vous terminerez sous la base, rouge si vous la dépasserez.",
-    "expenses.p1a": "Les dépenses sont tout ce qui n'est ",
-    "expenses.p1em": "pas",
-    "expenses.p1b":
-      " une facture fixe mensuelle ni le salaire. Seules ces entrées font bouger l'aiguille du sécurisé à dépenser. Il y a plusieurs façons de les ajouter :",
-    "expenses.acc1Trigger": "Ajout rapide (formulaire)",
-    "expenses.acc1Body":
-      "Saisissez montant, catégorie, note et date. Le plus rapide pour un achat unique dont vous vous souvenez.",
-    "expenses.acc2Trigger": "Note texte ou vocale IA",
-    "expenses.acc2BodyA": "Collez (ou dictez) quelque chose comme ",
-    "expenses.acc2BodyEm": "« 45 euros de courses chez Carrefour hier »",
-    "expenses.acc2BodyB":
-      ". L'IA extrait le montant, la catégorie, le commerçant et la date. Vérifiez et confirmez avant d'enregistrer.",
-    "expenses.acc3Trigger": "Photo d'un reçu ou d'une facture",
-    "expenses.acc3Body":
-      "Téléchargez l'image ; l'IA lit le total, le commerçant et la date, et pré-remplit le formulaire.",
-    "expenses.acc4Trigger": "Import de relevé bancaire",
-    "expenses.acc4BodyA":
-      "Collez un export de relevé. Les lignes sont analysées en dépenses candidates. Une vérification des doublons est effectuée sur la fenêtre de ±2 jours déjà présente dans votre journal, les doublons probables sont surlignés en ambre et décochés par défaut. Utilisez ",
-    "expenses.acc4Em1": "Tout sélectionner",
-    "expenses.acc4Mid": ", ",
-    "expenses.acc4Em2": "Réinitialiser les doublons",
-    "expenses.acc4Mid2": " et ",
-    "expenses.acc4Em3": "Aucun",
-    "expenses.acc4End": " pour avancer rapidement.",
-    "expenses.acc5Trigger": "Ce que signifie chaque champ",
-    "expenses.fieldAmountTerm": "Montant",
-    "expenses.fieldAmount": " en EUR. Positif pour l'argent sortant.",
-    "expenses.fieldTypeTerm": "Type",
-    "expenses.fieldTypeEm1": "dépense",
-    "expenses.fieldTypeMid": " réduit la réserve, ",
-    "expenses.fieldTypeEm2": "reçu",
-    "expenses.fieldTypeEnd": " la rembourse (pas le salaire).",
-    "expenses.fieldCategoryTerm": "Catégorie",
-    "expenses.fieldCategory":
-      " pilote le graphique circulaire de l'Analyse et correspond aux catégories d'estimation variable.",
-    "expenses.fieldDateTerm": "Date",
-    "expenses.fieldDate":
-      " quand l'argent a réellement bougé, cela détermine à quel cycle elle appartient.",
-    "expenses.fieldNoteTerm": "Note",
-    "expenses.fieldNote":
-      " texte libre (commerçant, motif). Utile dans les infobulles de l'Analyse.",
-    "allocations.p1a": "Une ",
-    "allocations.term1": "réserve",
-    "allocations.p1b":
-      " représente une destination vers laquelle vos revenus doivent affluer chaque cycle : investissements à long terme, compte épargne, épargne des enfants, un fonds pour un projet immobilier, etc. Chaque réserve a un objectif qui détermine combien l'application ",
-    "allocations.p1em": "recommande",
-    "allocations.p1c": " de transférer.",
-    "allocations.targetTypesHeading": "Types d'objectifs",
-    "allocations.tt1term": "% du revenu",
-    "allocations.tt1": ",une part du salaire, par ex. 15 % vers les investissements.",
-    "allocations.tt2term": "€ fixe par mois",
-    "allocations.tt2": ",une contribution mensuelle fixe.",
-    "allocations.tt3term": "Objectif € par date",
-    "allocations.tt3a": ",vous voulez ",
-    "allocations.tt3em": "X €",
-    "allocations.tt3b":
-      " dans cette réserve à une date précise. L'application calcule la contribution mensuelle nécessaire à partir d'aujourd'hui, et la recalcule chaque cycle en fonction de ce qui a été réellement alloué.",
-    "allocations.markHeading": "Marquer comme alloué",
-    "allocations.markP1a":
-      "Lorsque vous transférez de l'argent vers un compte pour une réserve, cliquez sur ",
-    "allocations.markStrong": "Marquer comme alloué",
-    "allocations.markP1b":
-      " et saisissez le montant réellement transféré. Le panneau d'impact affiche :",
-    "allocations.li1": "L'écart par rapport à la recommandation pour le cycle.",
-    "allocations.li2a": "L'effet sur la ",
-    "allocations.li2term": "réserve d'urgence",
-    "allocations.li2b": " (excédent / déficit par rapport aux totaux recommandés).",
-    "allocations.li3":
-      "Pour les réserves à objectif : le pourcentage de progression mis à jour et le taux mensuel révisé nécessaire pour tenir le délai.",
-    "allocations.p2":
-      "Allouer plus que recommandé puise dans la réserve d'urgence ; allouer moins y laisse un excédent. Rien ne vous oblige à atteindre le chiffre exact, l'application garde simplement les calculs honnêtes.",
-    "analysis.p1": "Deux vues vous aident à comprendre où est allé l'argent et où il se dirige.",
-    "analysis.burndownHeading": "Consommation du cycle",
-    "analysis.li1a": "La ligne commence à ",
-    "analysis.li1strong": "−total_fixe",
-    "analysis.li1b":
-      " le jour 1, les coûts fixes sont déjà réservés avant même que vous ne dépensiez quoi que ce soit de variable.",
-    "analysis.li2":
-      "Elle baisse à chaque dépense et remonte à chaque entrée reçue et à l'événement de salaire.",
-    "analysis.li3":
-      "Des lignes de référence en pointillés montrent les seuils de financement (base et, le cas échéant, exigences d'allocation).",
-    "analysis.li4":
-      "Survolez n'importe quel point pour voir les transactions exactes qui ont fait bouger le solde ce jour-là.",
-    "analysis.categoryHeading": "Répartition par catégorie",
-    "analysis.p2":
-      "Un graphique circulaire des dépenses variables dans la fenêtre sélectionnée (jour / semaine / mois). Utilisez-le pour repérer les catégories qui dérivent au-delà de leur part d'estimation variable.",
-    "settings.li1term": "Foyer",
-    "settings.li1a":
-      ",nom, montant du salaire principal et cadence de paie attendue. Le montant du salaire est ce que le bouton ",
-    "settings.li1em": "Salaire reçu",
-    "settings.li1b": " enregistrera.",
-    "settings.li2term": "Membres",
-    "settings.li2":
-      ",invitez votre partenaire par e-mail. Les deux membres partagent les mêmes données ; il n'y a pas de portefeuille par membre.",
-    "settings.li3term": "Dépenses fixes mensuelles",
-    "settings.li3": ",une ligne par facture récurrente.",
-    "settings.li4term": "Estimations de coûts variables",
-    "settings.li4": ",dépense mensuelle attendue par catégorie. La somme alimente la base.",
-    "settings.li5term": "Marge de sécurité (%)",
-    "settings.li5": ",coussin appliqué en plus des estimations fixes + variables.",
-    "settings.li6term": "Réserves d'allocation",
-    "settings.li6": ",créer/modifier réserves, objectifs et échéances.",
-    "settings.li7term": "Notifications",
-    "settings.li7":
-      ",activer les notifications push par appareil et basculer chaque alerte individuellement.",
-    "notifications.p1":
-      "Toutes les notifications sont opt-in, par appareil et par type. Activez d'abord un appareil (Paramètres → Notifications → Activer sur cet appareil), puis basculez celles que vous voulez.",
-    "notifications.li1strong": "Résumé du lundi matin",
-    "notifications.li1":
-      " (08h00 Europe/Lisbonne), un résumé de la semaine précédente : total dépensé et reçu (hors coûts fixes et salaire), top 3 des dépenses et des entrées reçues, une comparaison avec la semaine précédente, un commentaire de l'IA sur le rythme, et la marge restante dans la base et la réserve d'urgence.",
-    "notifications.li2strong": "Base proche / atteinte",
-    "notifications.li2":
-      ",envoyée lorsque la réserve variable restante franchit les seuils d'avertissement et de dépassement.",
-    "notifications.li3strong": "Réserve d'urgence bientôt épuisée",
-    "notifications.li3":
-      ",envoyée lorsque la consommation de l'excédent atteint un niveau critique.",
-    "notifications.p2":
-      "iOS Safari exige que l'application soit installée sur l'écran d'accueil avant que les notifications push ne fonctionnent. Chrome / Firefox / Edge sur ordinateur et Android fonctionnent directement.",
-    "privacy.p1term": "Mode masqué",
-    "privacy.p1":
-      " (icône œil) floute chaque valeur monétaire dans l'application afin que vous puissiez l'ouvrir en public sans exposer les soldes. Le choix est mémorisé d'une session à l'autre dans ce navigateur.",
-    "privacy.p2term": "Mode sombre",
-    "privacy.p2":
-      " (icône soleil/lune) suit par défaut la préférence de votre système d'exploitation et mémorise votre choix explicite d'une session à l'autre.",
-    "privacy.p3":
-      "L'accès est limité aux e-mails autorisés. Les inscriptions sont désactivées ; les nouveaux membres ne rejoignent que sur invitation.",
-    "credits.p1a":
-      "Certaines fonctionnalités de bynku sont alimentées par des modèles d'IA (le coach financier, l'analyse vocale/texte/photo/relevé bancaire). Chaque appel à ces modèles a un coût réel, que nous mesurons en ",
-    "credits.p1strong": "crédits",
-    "credits.p1b": ". Chaque foyer a un plafond de ",
-    "credits.p1strong2": "7,5 crédits par mois",
-    "credits.p1c": " ; l'utilisation est visible dans ",
-    "credits.p1em": "Paramètres → Utilisation des crédits",
-    "credits.p1d": ".",
-    "credits.tokenHeading": "Qu'est-ce qu'un token ?",
-    "credits.tokenP1a":
-      "Les modèles d'IA ne lisent pas des caractères ou des mots, ils lisent des ",
-    "credits.tokenStrong": "tokens",
-    "credits.tokenP1b":
-      ", de petits fragments de texte (environ ¾ d'un mot en anglais, un peu moins pour d'autres langues). Une note courte comme ",
-    "credits.tokenEm": "« Courses 42€ chez Carrefour »",
-    "credits.tokenP1c":
-      " représente environ 10 tokens ; une page complète de relevé bancaire peut en compter plusieurs milliers. Les images comptent aussi : une photo de reçu est facturée comme un bloc fixe de tokens d'image plus les tokens de tout texte que le modèle renvoie.",
-    "credits.tokenP2a": "Chaque appel IA a deux côtés : les ",
-    "credits.tokenP2strong1": "tokens d'entrée",
-    "credits.tokenP2mid":
-      " (ce que nous envoyons, votre note, votre reçu, ou le contexte que nous construisons pour le coach) et les ",
-    "credits.tokenP2strong2": "tokens de sortie",
-    "credits.tokenP2end":
-      " (ce que le modèle renvoie, le JSON analysé ou la réponse du coach). Les deux sont facturés, et les tokens de sortie sont généralement plus chers par token que ceux d'entrée.",
-    "credits.howHeading": "Comment bynku transforme les tokens en crédits",
-    "credits.howP1a":
-      "Après chaque appel IA, nous enregistrons le nombre de tokens, les convertissons en un coût fractionnaire de crédits selon la tarification du modèle, et stockons cela pour votre foyer dans la table ",
-    "credits.howCode": "credit_usage",
-    "credits.howP1b":
-      ". La page Paramètres additionne le mois en cours et affiche une barre de progression vers le plafond de 10 crédits. Les fonctionnalités sans IA (ajouter des dépenses manuellement, consulter des graphiques, notifications, synchronisation) ne consomment ",
-    "credits.howStrong": "pas",
-    "credits.howP1c": " de crédits.",
-    "credits.typicalCosts": "Coûts typiques par action :",
-    "credits.cost1strong": "Analyse de note texte/vocale",
-    "credits.cost1": ",très faible, souvent bien en dessous de 0,01 crédit par entrée.",
-    "credits.cost2strong": "Analyse de photo de reçu",
-    "credits.cost2":
-      ",plus élevée, car l'image elle-même est facturée ; néanmoins généralement quelques centièmes de crédit.",
-    "credits.cost3strong": "Import de relevé bancaire",
-    "credits.cost3": ",le plus coûteux par appel, car des pages entières de texte sont envoyées.",
-    "credits.cost4strong": "Rapport du coach financier",
-    "credits.cost4a": ",mis en cache pendant 24h, donc rouvrir l'onglet est gratuit ; seuls ",
-    "credits.cost4em": "Régénérer",
-    "credits.cost4b": " et chaque réponse de chat coûtent des crédits.",
-    "credits.saveHeading": "Comment économiser des crédits",
-    "credits.save1strong": "notes texte/vocales",
-    "credits.save1a": "Préférez les ",
-    "credits.save1b":
-      " aux photos lorsque vous connaissez déjà le montant, bien moins cher que l'analyse d'image.",
-    "credits.save2":
-      "Pour les photos, recadrez étroitement sur la zone total/commerçant avant de télécharger ; des images plus petites = moins de tokens d'image.",
-    "credits.save3a": "Importez les relevés bancaires ",
-    "credits.save3strong": "une fois par cycle",
-    "credits.save3b":
-      " plutôt qu'après chaque transaction, et laissez l'étape de déduplication fusionner avec ce que vous avez déjà enregistré.",
-    "credits.save4a":
-      "Réutilisez le rapport du coach en cache pendant la fenêtre de 24h plutôt que de cliquer sur ",
-    "credits.save4em": "Régénérer",
-    "credits.save4b":
-      " ; ne régénérez qu'après un changement notable (grosse dépense, allocation, nouvelle paie).",
-    "credits.save5":
-      "Gardez les messages du chat du coach courts et précis, les longs échanges consomment des tokens d'entrée et de sortie à chaque tour.",
-    "credits.save6":
-      "Corrigez les éléments évidents (commerçant, catégorie, montant) directement dans le formulaire plutôt que de demander à l'IA de réanalyser.",
-    "credits.footnote":
-      "Une fois le plafond de 10 crédits atteint, les fonctionnalités IA se mettent en pause jusqu'au mois suivant ; tout le reste continue de fonctionner normalement.",
-    "faq.q1Trigger": "Pourquoi des cycles plutôt que des mois ?",
-    "faq.q1Body":
-      "Les salaires tombent rarement le 1er. Un cycle aligné sur la paie donne une réponse fidèle à « combien me reste-t-il avant la prochaine paie ».",
-    "faq.q2Trigger": "Dois-je supprimer l'entrée de salaire des dépenses récentes ?",
-    "faq.q2Body":
-      "Non. Cet enregistrement est l'ancre du cycle actuel. Le supprimer fera revenir l'application au mode mois civil jusqu'à la prochaine paie.",
-    "faq.q3Trigger": "Que se passe-t-il si j'alloue moins que recommandé ?",
-    "faq.q3Body":
-      "Le déficit reste dans la réserve d'urgence pour le cycle. Les réserves à objectif recalculent le taux mensuel nécessaire pour tenir le délai.",
-    "faq.q4Trigger": "Et si nous dépassons la base ?",
-    "faq.q4Body":
-      "Le sécurisé à dépenser devient négatif et la carte de projection de fin de cycle passe au rouge. Le dépassement est d'abord absorbé par la marge de sécurité, puis par la réserve d'urgence, puis en réduisant les allocations.",
-    "faq.q5Trigger": "L'analyse IA est-elle toujours juste ?",
-    "faq.q5Body":
-      "Non, vérifiez toujours le formulaire pré-rempli avant d'enregistrer. C'est une longueur d'avance, pas un pilote automatique.",
+    eyebrow: "Manuel",
+    title: "Comment bynku fonctionne",
+    subtitle:
+      "Un guide court, en langage clair. Lis une section ou cherche directement.",
+    tocTitle: "Dans ce guide",
+    searchPlaceholder: "Rechercher dans le manuel",
+    noResults: "Aucun résultat pour",
+    diagrams: {
+      salary: "Jour de paie",
+      today: "Aujourd'hui",
+      nextSalary: "Prochaine paie",
+      cycle: "Cycle actuel",
+      cycleCap:
+        "Un cycle va d'une paie à la veille de la suivante — ce n'est pas le mois calendaire.",
+      fixed: "Charges fixes",
+      debt: "Crédits",
+      variable: "Quotidien",
+      margin: "Coussin",
+      baseline: "Ce que coûte un mois normal",
+      baselineCap:
+        "Charges fixes + mensualités de crédits + estimation du quotidien + un petit coussin.",
+      surplus: "Ce qui reste",
+      realAlloc: "Mis de côté",
+      realSurplus: "Encore libre",
+      waterfallCap:
+        "Ce qui reste se partage entre ce qui est déjà mis de côté et ce qui est encore libre.",
+      step1: "Petite épargne d'urgence",
+      step2: "Rembourser les crédits chers",
+      step3: "Investir sur le long terme",
+      ladderCap:
+        "Un ordre indicatif de priorité pour l'argent restant — ta situation peut le modifier.",
+    },
   },
 };
+
+// Small helper to keep section literals compact.
+const L = <T,>(en: T, pt: T, es: T, de: T, fr: T): Loc<T> => ({ en, pt, es, de, fr });
+
+// ---------------------------------------------------------------------------
+// Sections. Order = display order in the wiki page.
+// ---------------------------------------------------------------------------
+export const WIKI_SECTIONS: WikiSection[] = [
+  // ------------------------------------------------------------ overview
+  {
+    id: "overview",
+    icon: "BookOpen",
+    title: L("Welcome to bynku", "Bem-vindo ao bynku", "Bienvenido a bynku", "Willkommen bei bynku", "Bienvenue sur bynku"),
+    paragraphs: L(
+      [
+        "bynku is a plain-language money planner. It answers one question well: how much can I actually spend today, without breaking my plan?",
+        "You tell it what comes in and what goes out. It shows what's left, what's safe to spend today, and helps you set money aside for goals — no spreadsheets, no jargon.",
+        "This guide follows the tabs of the app. If you're new, start with Cycles, then Money in and Money out.",
+      ],
+      [
+        "O bynku é um planeador financeiro em linguagem simples. Responde bem a uma pergunta: quanto posso mesmo gastar hoje sem estragar o plano?",
+        "Dizes o que entra e o que sai. Ele mostra o que sobra, quanto é seguro gastar hoje e ajuda a pôr dinheiro de lado para objetivos — sem folhas de cálculo, sem termos difíceis.",
+        "Este guia segue os separadores da app. Se és novo, começa em Ciclo, depois Entradas e Saídas.",
+      ],
+      [
+        "bynku es un planificador financiero en lenguaje sencillo. Responde bien a una pregunta: ¿cuánto puedo gastar hoy sin romper mi plan?",
+        "Le dices lo que entra y lo que sale. Te muestra lo que queda, lo seguro para gastar hoy y te ayuda a apartar dinero para tus objetivos — sin hojas de cálculo ni jerga.",
+        "Esta guía sigue las pestañas de la app. Si acabas de empezar, ve a Ciclo y luego a Ingresos y Gastos.",
+      ],
+      [
+        "bynku ist ein Geldplaner in einfacher Sprache. Er beantwortet eine Frage gut: Wie viel kann ich heute wirklich ausgeben, ohne meinen Plan zu sprengen?",
+        "Du sagst, was reinkommt und was rausgeht. Er zeigt, was übrig ist, was heute sicher ausgegeben werden kann und hilft, Geld für Ziele beiseitezulegen — ohne Tabellen, ohne Fachjargon.",
+        "Dieser Leitfaden folgt den Tabs der App. Starte bei Zyklus, dann Einnahmen und Ausgaben.",
+      ],
+      [
+        "bynku est un planificateur financier en langage clair. Il répond bien à une question : combien puis-je vraiment dépenser aujourd'hui sans casser mon plan ?",
+        "Tu indiques ce qui entre et ce qui sort. L'app affiche ce qui reste, ce qui est prudent de dépenser aujourd'hui et t'aide à mettre de côté pour tes objectifs — sans tableur, sans jargon.",
+        "Ce guide suit les onglets de l'app. Si tu débutes, commence par Cycle puis Entrées et Sorties.",
+      ],
+    ),
+    callout: L(
+      "The whole app is built around one idea: a plan you understand beats a perfect plan you don't.",
+      "Toda a app assenta numa ideia: um plano que percebes vale mais que um plano perfeito que não percebes.",
+      "Toda la app se apoya en una idea: un plan que entiendes vale más que un plan perfecto que no entiendes.",
+      "Die ganze App basiert auf einer Idee: Ein Plan, den du verstehst, schlägt einen perfekten Plan, den du nicht verstehst.",
+      "Toute l'app repose sur une idée : un plan que tu comprends vaut mieux qu'un plan parfait que tu ne comprends pas.",
+    ),
+  },
+
+  // ------------------------------------------------------------ cycles
+  {
+    id: "cycles",
+    icon: "Calendar",
+    diagram: "cycle",
+    title: L("Your pay cycle", "O teu ciclo salarial", "Tu ciclo de cobro", "Dein Gehaltszyklus", "Ton cycle de paie"),
+    paragraphs: L(
+      [
+        "A pay cycle runs from one payday to the day before the next. It matches how most people actually feel their money — pay-to-pay, not calendar month to calendar month.",
+        "Every number in the app resets each cycle. The dashboard always answers 'today, in this cycle', so today's decisions come from today's reality.",
+      ],
+      [
+        "Um ciclo salarial vai de um pagamento até ao dia anterior ao seguinte. É como a maioria das pessoas sente o dinheiro — de salário em salário, não de mês a mês do calendário.",
+        "Todos os números da app são reiniciados a cada ciclo. O painel responde sempre 'hoje, neste ciclo', para que as decisões de hoje partam da realidade de hoje.",
+      ],
+      [
+        "Un ciclo de cobro va de un día de pago al día anterior al siguiente. Coincide con cómo la mayoría vive el dinero — de nómina a nómina, no de mes natural.",
+        "Todos los números se reinician cada ciclo. El panel responde siempre 'hoy, en este ciclo' para que las decisiones partan de la realidad de hoy.",
+      ],
+      [
+        "Ein Gehaltszyklus läuft von einem Zahltag bis zum Tag vor dem nächsten. Das passt zum Alltag der meisten Menschen — Gehalt zu Gehalt, nicht Kalendermonat zu Kalendermonat.",
+        "Alle Zahlen werden jeden Zyklus zurückgesetzt. Das Dashboard antwortet immer 'heute, in diesem Zyklus', damit heutige Entscheidungen aus der heutigen Realität kommen.",
+      ],
+      [
+        "Un cycle de paie va d'une paie à la veille de la suivante. C'est ainsi que la plupart des gens ressentent leur argent — de paie à paie, pas de mois calendaire à mois calendaire.",
+        "Tous les chiffres sont remis à zéro à chaque cycle. Le tableau de bord répond toujours « aujourd'hui, dans ce cycle », pour partir de la réalité du jour.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Payday", body: "Set the day and frequency in Money in. Multiple salaries? bynku uses the most recent one to open the cycle." },
+        { label: "Length", body: "Usually monthly, but you can set weekly, bi-weekly, or custom." },
+        { label: "Rolling forward", body: "Unspent everyday money stays with you. Overspending simply lowers next cycle's safe-to-spend until you catch up — no penalties." },
+      ],
+      [
+        { label: "Dia de pagamento", body: "Define o dia e a frequência em Entradas. Vários salários? O bynku usa o mais recente para abrir o ciclo." },
+        { label: "Duração", body: "Normalmente mensal, mas podes escolher semanal, quinzenal ou personalizado." },
+        { label: "Sobra para o seguinte", body: "O que não gastas no dia a dia fica contigo. Gastar a mais só reduz o valor seguro do próximo ciclo até equilibrares — sem penalizações." },
+      ],
+      [
+        { label: "Día de cobro", body: "Fija el día y la frecuencia en Ingresos. ¿Varias nóminas? bynku usa la más reciente para abrir el ciclo." },
+        { label: "Duración", body: "Normalmente mensual, pero puedes elegir semanal, quincenal o a medida." },
+        { label: "Se traslada", body: "Lo que no gastas en el día a día se queda. Pasarte solo baja el 'seguro para hoy' del siguiente ciclo hasta recuperarte — sin castigos." },
+      ],
+      [
+        { label: "Zahltag", body: "Tag und Frequenz in Einnahmen einstellen. Mehrere Gehälter? bynku nutzt das jüngste, um den Zyklus zu öffnen." },
+        { label: "Länge", body: "Meist monatlich, aber wöchentlich, zweiwöchentlich oder individuell möglich." },
+        { label: "Rollt weiter", body: "Nicht ausgegebenes Alltagsgeld bleibt bei dir. Überschreitungen senken nur den Sicher-heute-Wert im nächsten Zyklus — keine Strafen." },
+      ],
+      [
+        { label: "Jour de paie", body: "Choisis le jour et la fréquence dans Entrées. Plusieurs salaires ? bynku utilise le plus récent pour ouvrir le cycle." },
+        { label: "Durée", body: "Souvent mensuel, mais possible en hebdo, quinzaine, ou sur mesure." },
+        { label: "Report", body: "Ce qui n'est pas dépensé au quotidien reste pour toi. Un dépassement réduit simplement le « sûr aujourd'hui » du cycle suivant — sans pénalité." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ moneyIn
+  {
+    id: "moneyIn",
+    icon: "Wallet",
+    title: L("Money in", "Entradas", "Ingresos", "Einnahmen", "Entrées"),
+    paragraphs: L(
+      [
+        "Money in is your recurring income — the money you can count on. Salary, pension, rent you receive, benefits, or a side income that repeats.",
+        "One-off inflows (a gift, a refund, a bonus sale) don't belong here. Record those as 'Money received' in Expenses so they don't inflate your plan.",
+      ],
+      [
+        "Entradas é o teu rendimento recorrente — o dinheiro com que podes contar. Salário, pensão, rendas recebidas, subsídios ou um extra que se repete.",
+        "Entradas pontuais (uma prenda, um reembolso, uma venda esporádica) não vão aqui. Regista-as como 'Dinheiro recebido' em Despesas para não inchar o plano.",
+      ],
+      [
+        "Ingresos son los que se repiten — el dinero con el que puedes contar. Nómina, pensión, alquileres cobrados, ayudas o un ingreso extra recurrente.",
+        "Los ingresos puntuales (un regalo, una devolución, una venta suelta) no van aquí. Anótalos como 'Dinero recibido' en Gastos para no inflar el plan.",
+      ],
+      [
+        "Einnahmen sind wiederkehrende Zuflüsse — Geld, mit dem du rechnen kannst. Gehalt, Rente, Mieteinnahmen, Sozialleistungen oder ein wiederkehrender Zusatzverdienst.",
+        "Einmalige Zuflüsse (Geschenk, Rückerstattung, einmaliger Verkauf) gehören nicht hierher. Erfasse sie als 'Geld erhalten' in Ausgaben, damit dein Plan realistisch bleibt.",
+      ],
+      [
+        "Les entrées sont tes revenus récurrents — l'argent sur lequel tu peux compter. Salaire, pension, loyers reçus, aides ou un revenu d'appoint qui revient.",
+        "Les entrées ponctuelles (cadeau, remboursement, vente exceptionnelle) ne vont pas ici. Note-les comme « argent reçu » dans Sorties pour ne pas gonfler le plan.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Type", body: "Salary, rent, pension, benefits or other — helps the coach spot risks like relying on a single source." },
+        { label: "Amount & frequency", body: "Monthly by default. Yearly, quarterly or weekly amounts get spread out evenly for a fair monthly view." },
+        { label: "Multiple sources", body: "Add as many as you like. Every household member's income can live here." },
+      ],
+      [
+        { label: "Tipo", body: "Salário, renda, pensão, subsídio ou outro — ajuda o assistente a detetar riscos, como depender de uma única fonte." },
+        { label: "Valor e frequência", body: "Mensal por defeito. Valores anuais, trimestrais ou semanais são distribuídos de forma justa por mês." },
+        { label: "Várias fontes", body: "Adiciona as que quiseres. Cabe aqui o rendimento de cada pessoa do agregado." },
+      ],
+      [
+        { label: "Tipo", body: "Nómina, alquiler, pensión, ayudas u otro — ayuda al asistente a detectar riesgos como depender de una única fuente." },
+        { label: "Importe y frecuencia", body: "Mensual por defecto. Importes anuales, trimestrales o semanales se reparten de forma justa por mes." },
+        { label: "Varias fuentes", body: "Añade las que quieras. Cabe aquí el ingreso de cada persona del hogar." },
+      ],
+      [
+        { label: "Typ", body: "Gehalt, Miete, Rente, Sozialleistung oder anderes — hilft dem Coach, Risiken wie eine einzige Einkommensquelle zu erkennen." },
+        { label: "Betrag & Häufigkeit", body: "Standard: monatlich. Jahres-, Quartals- oder Wochenbeträge werden fair auf den Monat verteilt." },
+        { label: "Mehrere Quellen", body: "So viele du willst. Alle Einkommen aus deinem Haushalt haben hier Platz." },
+      ],
+      [
+        { label: "Type", body: "Salaire, loyer, pension, aide ou autre — aide l'assistant à repérer les risques comme une source unique." },
+        { label: "Montant & fréquence", body: "Mensuel par défaut. Les montants annuels, trimestriels ou hebdo sont répartis équitablement par mois." },
+        { label: "Plusieurs sources", body: "Autant que tu veux. Les revenus de chaque membre du foyer trouvent leur place ici." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ moneyOut
+  {
+    id: "moneyOut",
+    icon: "Receipt",
+    title: L("Money out", "Saídas", "Gastos", "Ausgaben", "Sorties"),
+    paragraphs: L(
+      [
+        "Two kinds of money out. Regular bills (rent, phone, gym, insurance) that happen every month whether you notice or not. And everyday spending (groceries, coffee, transport) that varies.",
+        "You give bynku an estimate for everyday spending. Real expenses then count against it, and the gap between estimate and actual is where habits become visible.",
+      ],
+      [
+        "Há dois tipos de saída. Contas fixas (renda, telemóvel, ginásio, seguros) que acontecem todos os meses, com ou sem a tua atenção. E despesas do dia a dia (mercearia, café, transportes) que variam.",
+        "Dás ao bynku uma estimativa para o dia a dia. As despesas reais são descontadas dessa estimativa, e a diferença mostra os teus hábitos.",
+      ],
+      [
+        "Hay dos tipos de gasto. Facturas fijas (alquiler, móvil, gimnasio, seguros) que caen cada mes las mires o no. Y gastos del día a día (compra, café, transporte) que varían.",
+        "Le das a bynku una estimación del día a día. Los gastos reales van descontándose de ella, y la diferencia entre estimación y realidad muestra tus hábitos.",
+      ],
+      [
+        "Es gibt zwei Arten. Fixkosten (Miete, Handy, Gym, Versicherungen), die jeden Monat kommen, ob du hinsiehst oder nicht. Und Alltagsausgaben (Einkauf, Kaffee, Transport), die schwanken.",
+        "Du gibst bynku eine Schätzung für den Alltag. Reale Ausgaben werden davon abgezogen, und die Differenz macht Gewohnheiten sichtbar.",
+      ],
+      [
+        "Deux types de sorties. Les charges fixes (loyer, mobile, salle de sport, assurances) qui tombent chaque mois, remarquées ou non. Et les dépenses du quotidien (courses, café, transport) qui varient.",
+        "Tu donnes à bynku une estimation du quotidien. Les dépenses réelles s'y imputent, et l'écart entre estimation et réalité rend tes habitudes visibles.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Fixed monthly expenses", body: "Set once in Settings; they reserve themselves at the start of every cycle." },
+        { label: "Loans", body: "Kept separately (see Loans) because they have interest and an end date." },
+        { label: "Everyday estimate", body: "Your best guess of a normal month. Adjust it whenever the real numbers surprise you." },
+        { label: "Record fast", body: "Type, snap a receipt, or dictate a voice note — bynku fills in the details." },
+      ],
+      [
+        { label: "Contas fixas mensais", body: "Defines uma vez em Definições; reservam-se automaticamente no início de cada ciclo." },
+        { label: "Créditos", body: "Ficam à parte (ver Créditos) porque têm juros e uma data de fim." },
+        { label: "Estimativa do dia a dia", body: "A tua melhor previsão de um mês normal. Ajusta sempre que a realidade te surpreender." },
+        { label: "Registar rápido", body: "Escreve, tira foto ao recibo ou grava uma nota de voz — o bynku preenche os detalhes." },
+      ],
+      [
+        { label: "Gastos fijos mensuales", body: "Se fijan una vez en Ajustes; se reservan solos al inicio de cada ciclo." },
+        { label: "Préstamos", body: "Van aparte (ver Préstamos) porque tienen interés y fecha de fin." },
+        { label: "Estimación del día a día", body: "Tu mejor cálculo de un mes normal. Ajústala cuando la realidad te sorprenda." },
+        { label: "Registrar rápido", body: "Escribe, foto al ticket o nota de voz — bynku rellena los detalles." },
+      ],
+      [
+        { label: "Feste Monatskosten", body: "Einmal in Einstellungen setzen; werden zu Beginn jedes Zyklus automatisch reserviert." },
+        { label: "Kredite", body: "Separat (siehe Kredite), weil sie Zinsen und ein Enddatum haben." },
+        { label: "Alltagsschätzung", body: "Deine beste Annahme für einen normalen Monat. Anpassen, wenn die Realität überrascht." },
+        { label: "Schnell erfassen", body: "Tippen, Beleg fotografieren oder Sprachnotiz — bynku füllt die Details aus." },
+      ],
+      [
+        { label: "Charges fixes mensuelles", body: "À définir une fois dans Réglages ; réservées automatiquement au début de chaque cycle." },
+        { label: "Crédits", body: "À part (voir Crédits) car ils ont un taux et une fin." },
+        { label: "Estimation du quotidien", body: "Ta meilleure idée d'un mois normal. Ajuste-la dès que la réalité te surprend." },
+        { label: "Saisie rapide", body: "Écris, photographie un ticket ou dicte une note vocale — bynku remplit les détails." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ baseline
+  {
+    id: "baseline",
+    icon: "Calculator",
+    diagram: "baseline",
+    title: L(
+      "How much do I need",
+      "Quanto preciso",
+      "Cuánto necesito",
+      "Wie viel brauche ich",
+      "Combien il me faut",
+    ),
+    formula: "need = bills + loans + everyday + cushion",
+    paragraphs: L(
+      [
+        "This is what a normal month costs you. It adds four things: your bills, your loan payments, your everyday spending estimate, and a small safety cushion on top.",
+        "The cushion (called 'margin' in Settings) is a small % so that a normal month never leaves you at exactly zero. Small hiccups — a slightly bigger grocery run, an extra tank of fuel — don't derail the plan.",
+      ],
+      [
+        "É o que um mês normal te custa. Soma quatro coisas: as tuas contas fixas, as prestações de créditos, a estimativa do dia a dia e uma pequena almofada por cima.",
+        "A almofada (chamada 'margem' em Definições) é uma pequena %, para que um mês normal nunca acabe em zero. Pequenos imprevistos — uma compra maior, um depósito extra — não estragam o plano.",
+      ],
+      [
+        "Es lo que te cuesta un mes normal. Suma cuatro cosas: tus gastos fijos, las cuotas de préstamos, tu estimación del día a día y un pequeño colchón encima.",
+        "El colchón (llamado 'margen' en Ajustes) es un pequeño % para que un mes normal no acabe justo a cero. Pequeños sustos — una compra mayor, un depósito extra — no rompen el plan.",
+      ],
+      [
+        "Das sind die Kosten eines normalen Monats. Vier Bausteine: Fixkosten, Kreditraten, Alltagsschätzung und ein kleiner Sicherheitspuffer obendrauf.",
+        "Der Puffer (in den Einstellungen 'Margin') ist ein kleiner Prozentsatz, damit ein normaler Monat nicht bei genau null endet. Kleine Überraschungen kippen den Plan nicht.",
+      ],
+      [
+        "C'est ce qu'un mois normal te coûte. Additionne quatre choses : tes charges fixes, tes mensualités de crédit, ton estimation du quotidien et un petit coussin par-dessus.",
+        "Le coussin (appelé « marge » dans Réglages) est un petit % pour qu'un mois normal ne finisse pas à zéro pile. Les petites surprises ne cassent pas le plan.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Bills", body: "Come from Money out → fixed monthly expenses." },
+        { label: "Loans", body: "Sum of monthly payments; interest is tracked separately in the Loans section." },
+        { label: "Everyday", body: "Your estimate. Reality will teach you the real number — see Analysis." },
+        { label: "Cushion", body: "Default 10% on top. Adjust it in Settings if you like a tighter or looser plan." },
+      ],
+      [
+        { label: "Contas", body: "Vêm de Saídas → contas fixas mensais." },
+        { label: "Créditos", body: "Soma das prestações mensais; o juro é acompanhado à parte em Créditos." },
+        { label: "Dia a dia", body: "A tua estimativa. A realidade ensina o número real — ver Análise." },
+        { label: "Almofada", body: "10% por omissão. Ajustável em Definições se preferires um plano mais apertado ou mais folgado." },
+      ],
+      [
+        { label: "Gastos fijos", body: "Vienen de Gastos → gastos fijos mensuales." },
+        { label: "Préstamos", body: "Suma de cuotas mensuales; el interés se sigue aparte en Préstamos." },
+        { label: "Día a día", body: "Tu estimación. La realidad te enseñará la cifra real — ver Análisis." },
+        { label: "Colchón", body: "10% por defecto. Ajústalo en Ajustes si prefieres un plan más ajustado o más holgado." },
+      ],
+      [
+        { label: "Fixkosten", body: "Kommen aus Ausgaben → feste Monatskosten." },
+        { label: "Kredite", body: "Summe der Monatsraten; Zinsen laufen separat unter Kredite." },
+        { label: "Alltag", body: "Deine Schätzung. Die Realität zeigt dir die echte Zahl — siehe Analyse." },
+        { label: "Puffer", body: "Standard 10 % obendrauf. In Einstellungen anpassbar." },
+      ],
+      [
+        { label: "Charges fixes", body: "Viennent de Sorties → charges fixes mensuelles." },
+        { label: "Crédits", body: "Somme des mensualités ; les intérêts sont suivis à part dans Crédits." },
+        { label: "Quotidien", body: "Ton estimation. La réalité t'apprendra le vrai chiffre — voir Analyse." },
+        { label: "Coussin", body: "10 % par défaut. Ajustable dans Réglages si tu veux plus serré ou plus large." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ safeToSpend
+  {
+    id: "safeToSpend",
+    icon: "Sparkles",
+    title: L(
+      "Safe to spend today",
+      "Podes gastar hoje",
+      "Puedes gastar hoy",
+      "Heute sicher ausgeben",
+      "À dépenser aujourd'hui",
+    ),
+    paragraphs: L(
+      [
+        "'Safe to spend today' is your everyday pool divided by the days left in the cycle. It's the answer to 'if I spend this much today, I'll be fine'.",
+        "It moves as you spend. Big grocery run today? Tomorrow's number shrinks a little. A refund? It grows. Your fixed bills don't touch this number — they're already reserved.",
+      ],
+      [
+        "'Podes gastar hoje' é a tua reserva do dia a dia dividida pelos dias que faltam no ciclo. Responde a 'se gastar isto hoje, fico bem'.",
+        "Muda à medida que gastas. Compra grande hoje? Amanhã o número desce um pouco. Um reembolso? Sobe. As contas fixas não afetam este número — já estão reservadas.",
+      ],
+      [
+        "'Puedes gastar hoy' es tu bolsa del día a día dividida entre los días que quedan del ciclo. Responde a 'si gasto esto hoy, no me pasa nada'.",
+        "Cambia según gastas. ¿Compra grande hoy? Mañana el número baja algo. ¿Devolución? Sube. Los gastos fijos no tocan este número — ya están reservados.",
+      ],
+      [
+        "'Heute sicher ausgeben' ist dein Alltagsbudget geteilt durch die verbleibenden Tage im Zyklus. Es beantwortet: 'wenn ich das heute ausgebe, bin ich noch im Rahmen'.",
+        "Es bewegt sich mit deinen Ausgaben. Großer Einkauf heute? Morgen sinkt der Wert etwas. Rückerstattung? Er steigt. Fixkosten sind bereits reserviert und ändern diesen Wert nicht.",
+      ],
+      [
+        "« À dépenser aujourd'hui » est ton enveloppe quotidienne divisée par les jours restants du cycle. C'est la réponse à « si je dépense ça aujourd'hui, ça va ».",
+        "Il évolue quand tu dépenses. Grosses courses aujourd'hui ? Demain le chiffre baisse un peu. Un remboursement ? Il monte. Les charges fixes n'y touchent pas — déjà réservées.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Spent", body: "Money leaves the everyday pool." },
+        { label: "Received", body: "Refunds, gifts, one-off inflows go back into the pool." },
+        { label: "Rolling forward", body: "End the cycle under budget? What's left carries to the next cycle so you're rewarded for restraint." },
+      ],
+      [
+        { label: "Gasto", body: "Sai da reserva do dia a dia." },
+        { label: "Recebido", body: "Reembolsos, prendas ou entradas pontuais voltam para a reserva." },
+        { label: "Segue em frente", body: "Terminas o ciclo abaixo do orçamento? O que sobra passa para o ciclo seguinte — a contenção é recompensada." },
+      ],
+      [
+        { label: "Gastado", body: "Sale de la bolsa del día a día." },
+        { label: "Recibido", body: "Devoluciones, regalos o ingresos puntuales vuelven a la bolsa." },
+        { label: "Se traslada", body: "¿Cierras el ciclo por debajo del presupuesto? Lo que sobra pasa al siguiente — se premia la contención." },
+      ],
+      [
+        { label: "Ausgegeben", body: "Verlässt das Alltagsbudget." },
+        { label: "Erhalten", body: "Rückerstattungen, Geschenke oder Einmalzuflüsse gehen zurück ins Budget." },
+        { label: "Rollt weiter", body: "Unter Budget geblieben? Der Rest wandert in den nächsten Zyklus — Sparen wird belohnt." },
+      ],
+      [
+        { label: "Dépensé", body: "Sort de l'enveloppe du quotidien." },
+        { label: "Reçu", body: "Remboursements, cadeaux, entrées ponctuelles reviennent dans l'enveloppe." },
+        { label: "Report", body: "Cycle bouclé sous le budget ? Le reste passe au cycle suivant — la modération est récompensée." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ projects (save & invest)
+  {
+    id: "projects",
+    icon: "PiggyBank",
+    diagram: "waterfall",
+    title: L(
+      "Save & Invest (projects)",
+      "Poupar e Investir (projetos)",
+      "Ahorrar e invertir (proyectos)",
+      "Sparen & Anlegen (Projekte)",
+      "Épargner & Investir (projets)",
+    ),
+    paragraphs: L(
+      [
+        "What's left after a normal month (income − what you need) is your surplus. Projects are pots where you park it on purpose, instead of letting it disappear.",
+        "There are three kinds of project, on purpose. A Savings goal has a target (a trip, a laptop). An Emergency fund is your safety net — the coach counts it first and protects it. An Investment is long-term growth money you don't raid.",
+      ],
+      [
+        "O que sobra depois de um mês normal (rendimento − quanto precisas) é o teu excedente. Os projetos são mealheiros onde o pões de propósito, para não desaparecer.",
+        "Há três tipos de projeto, com intenção. Um Objetivo de poupança tem meta (viagem, portátil). Um Fundo de emergência é a tua rede de segurança — o assistente conta-o primeiro e protege-o. Um Investimento é dinheiro de crescimento a longo prazo em que não mexes.",
+      ],
+      [
+        "Lo que sobra tras un mes normal (ingresos − lo que necesitas) es tu excedente. Los proyectos son huchas donde lo dejas a propósito, para que no se evapore.",
+        "Hay tres tipos de proyecto, a propósito. Un Objetivo de ahorro tiene meta (viaje, portátil). Un Fondo de emergencia es tu red de seguridad — el asistente lo cuenta primero y lo protege. Una Inversión es dinero de crecimiento a largo plazo que no se toca.",
+      ],
+      [
+        "Was nach einem normalen Monat übrig ist (Einnahmen − Bedarf), ist dein Überschuss. Projekte sind Töpfe, in die du ihn bewusst legst, statt ihn verschwinden zu lassen.",
+        "Es gibt drei Projektarten mit Absicht. Ein Sparziel hat ein Ziel (Reise, Laptop). Ein Notgroschen ist dein Sicherheitsnetz — der Coach zählt ihn zuerst und schützt ihn. Eine Anlage ist langfristiges Wachstumsgeld, das du nicht antastest.",
+      ],
+      [
+        "Ce qui reste après un mois normal (revenus − besoin) est ton excédent. Les projets sont des tirelires où tu le déposes exprès, pour qu'il ne s'évapore pas.",
+        "Trois types de projets, à dessein. Un Objectif d'épargne a une cible (voyage, ordinateur). Un Fonds d'urgence est ton filet de sécurité — l'assistant le compte en premier et le protège. Un Investissement est de l'argent de croissance à long terme, à ne pas piocher.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Percent of surplus", body: "Takes a share of whatever surplus you get. Great for variable months." },
+        { label: "Fixed per month", body: "Same amount every cycle. Great for steady habits." },
+        { label: "Fixed per year", body: "A yearly amount spread across cycles. Great for annual costs." },
+        { label: "Goal by date", body: "You set the target and the date. bynku computes the monthly amount needed to arrive on time." },
+      ],
+      [
+        { label: "Percentagem do excedente", body: "Fica com uma parte do que sobrar. Bom para meses variáveis." },
+        { label: "Fixo por mês", body: "O mesmo valor todos os ciclos. Bom para hábitos estáveis." },
+        { label: "Fixo por ano", body: "Valor anual distribuído pelos ciclos. Bom para custos anuais." },
+        { label: "Meta por data", body: "Defines o valor e a data. O bynku calcula o valor mensal para chegar a tempo." },
+      ],
+      [
+        { label: "Porcentaje del excedente", body: "Se queda con una parte de lo que sobre. Ideal para meses variables." },
+        { label: "Fijo al mes", body: "El mismo importe cada ciclo. Ideal para hábitos estables." },
+        { label: "Fijo al año", body: "Importe anual repartido entre ciclos. Ideal para costes anuales." },
+        { label: "Meta por fecha", body: "Fijas importe y fecha. bynku calcula el mensual para llegar a tiempo." },
+      ],
+      [
+        { label: "Prozent vom Überschuss", body: "Nimmt einen Anteil vom Überschuss. Gut für schwankende Monate." },
+        { label: "Fest pro Monat", body: "Gleicher Betrag jeden Zyklus. Gut für stabile Gewohnheiten." },
+        { label: "Fest pro Jahr", body: "Jahresbetrag über die Zyklen verteilt. Gut für jährliche Kosten." },
+        { label: "Ziel bis Datum", body: "Du legst Betrag und Datum fest. bynku errechnet die Monatsrate, um rechtzeitig anzukommen." },
+      ],
+      [
+        { label: "Pourcentage de l'excédent", body: "Prend une part de l'excédent quel qu'il soit. Idéal en mois variables." },
+        { label: "Fixe par mois", body: "Le même montant chaque cycle. Idéal en habitudes stables." },
+        { label: "Fixe par an", body: "Montant annuel réparti sur les cycles. Idéal pour les coûts annuels." },
+        { label: "Objectif à date", body: "Tu fixes montant et date. bynku calcule le mensuel pour arriver à temps." },
+      ],
+    ),
+    callout: L(
+      "A common target: an emergency fund covering 3 to 6 months of essential spending before pushing hard into investments.",
+      "Uma meta comum: um fundo de emergência que cubra 3 a 6 meses de despesas essenciais antes de investir a sério.",
+      "Una meta habitual: un fondo de emergencia que cubra de 3 a 6 meses de gasto esencial antes de invertir con fuerza.",
+      "Häufiges Ziel: ein Notgroschen für 3 bis 6 Monate essenzieller Ausgaben, bevor du kräftig anlegst.",
+      "Objectif courant : un fonds d'urgence couvrant 3 à 6 mois de dépenses essentielles avant d'investir sérieusement.",
+    ),
+  },
+
+  // ------------------------------------------------------------ loans
+  {
+    id: "loans",
+    icon: "CreditCard",
+    diagram: "ladder",
+    title: L(
+      "Loans & interest",
+      "Créditos e juros",
+      "Préstamos e intereses",
+      "Kredite & Zinsen",
+      "Crédits & intérêts",
+    ),
+    paragraphs: L(
+      [
+        "A loan is money you borrow and pay back over time, with interest — the price of borrowing. bynku tracks each loan and shows what it really costs, not just the monthly payment.",
+        "The effective rate (often called TAEG in Europe, APR elsewhere) is the true annual cost, fees included. Two loans with the same monthly payment can have very different effective rates — and different real costs over the years.",
+      ],
+      [
+        "Um crédito é dinheiro que pedes emprestado e pagas ao longo do tempo, com juro — o preço de pedir emprestado. O bynku acompanha cada crédito e mostra o custo real, não apenas a prestação.",
+        "A taxa efetiva (frequentemente TAEG na Europa) é o custo anual real, com comissões incluídas. Dois créditos com a mesma prestação podem ter TAEG muito diferentes — e custos reais muito diferentes ao longo dos anos.",
+      ],
+      [
+        "Un préstamo es dinero que pides prestado y devuelves con el tiempo, con interés — el precio de pedirlo. bynku sigue cada préstamo y muestra su coste real, no solo la cuota.",
+        "La tasa efectiva (a menudo TAE en España, TAEG en Europa) es el coste anual real con comisiones incluidas. Dos préstamos con la misma cuota pueden tener TAE muy distintas — y costes reales muy distintos con los años.",
+      ],
+      [
+        "Ein Kredit ist geliehenes Geld, das du über die Zeit zurückzahlst — mit Zinsen als Preis. bynku verfolgt jeden Kredit und zeigt die wahren Kosten, nicht nur die Rate.",
+        "Der Effektivzins (in Europa oft als TAEG oder Effektivzinssatz ausgewiesen) ist die echte Jahresbelastung inklusive Gebühren. Zwei Kredite mit gleicher Rate können sehr unterschiedliche Effektivzinsen — und Gesamtkosten — haben.",
+      ],
+      [
+        "Un crédit, c'est de l'argent emprunté que tu rembourses avec le temps, avec des intérêts — le prix d'emprunter. bynku suit chaque crédit et montre le coût réel, pas seulement la mensualité.",
+        "Le taux effectif (souvent TAEG en Europe) est le coût annuel réel, frais inclus. Deux crédits avec la même mensualité peuvent avoir des TAEG très différents — et des coûts réels très différents sur la durée.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Interest paid so far / left to pay", body: "The coach uses these to compare 'pay off this loan' vs 'invest the extra money' honestly." },
+        { label: "Avalanche method", body: "Attack the highest-rate loan first. Saves the most interest over time." },
+        { label: "Snowball method", body: "Attack the smallest balance first. Slower on interest, but the quick wins keep you going." },
+        { label: "Extra payment preview", body: "See how many months and how much interest you'd save by adding a bit each month." },
+      ],
+      [
+        { label: "Juro pago até agora / a pagar", body: "O assistente usa isto para comparar 'amortizar este crédito' com 'investir o extra' de forma honesta." },
+        { label: "Método avalanche", body: "Ataca primeiro o crédito de taxa mais alta. Poupa mais juro no total." },
+        { label: "Método bola de neve", body: "Ataca primeiro o saldo mais pequeno. Rende menos em juro, mas as vitórias rápidas motivam." },
+        { label: "Simulação de reforço", body: "Vê quantos meses e quanto juro poupas se pagares um pouco a mais por mês." },
+      ],
+      [
+        { label: "Interés pagado / por pagar", body: "El asistente los usa para comparar 'amortizar este préstamo' con 'invertir el extra' de forma honesta." },
+        { label: "Método avalancha", body: "Ataca primero el préstamo con tasa más alta. Ahorra más interés a la larga." },
+        { label: "Método bola de nieve", body: "Ataca primero el saldo más pequeño. Menos ahorro de interés, pero los pequeños triunfos motivan." },
+        { label: "Vista previa de cuota extra", body: "Ve cuántos meses e intereses ahorras pagando un poco más cada mes." },
+      ],
+      [
+        { label: "Gezahlte / verbleibende Zinsen", body: "Der Coach vergleicht damit 'Kredit tilgen' vs 'Extra anlegen' ehrlich." },
+        { label: "Avalanche-Methode", body: "Zuerst den Kredit mit dem höchsten Zins tilgen. Spart insgesamt am meisten." },
+        { label: "Schneeball-Methode", body: "Zuerst den kleinsten Saldo tilgen. Weniger Zinsersparnis, aber schnelle Erfolge motivieren." },
+        { label: "Sondertilgung-Vorschau", body: "Sieh, wie viele Monate und wie viel Zins du sparst, wenn du monatlich etwas mehr zahlst." },
+      ],
+      [
+        { label: "Intérêts payés / à payer", body: "L'assistant s'en sert pour comparer honnêtement « rembourser » vs « investir l'extra »." },
+        { label: "Méthode avalanche", body: "S'attaquer d'abord au crédit au taux le plus élevé. Économise le plus d'intérêts." },
+        { label: "Méthode boule de neige", body: "S'attaquer d'abord au plus petit solde. Moins d'économies d'intérêts, mais les victoires rapides motivent." },
+        { label: "Aperçu de mensualité en plus", body: "Vois combien de mois et d'intérêts tu économises en ajoutant un peu chaque mois." },
+      ],
+    ),
+    callout: L(
+      "Rule of thumb: if a loan's effective rate is higher than what your savings could realistically earn, paying it down usually beats investing.",
+      "Regra prática: se a TAEG de um crédito for maior do que o que a tua poupança consegue render de forma realista, amortizar costuma bater investir.",
+      "Regla práctica: si la TAE de un préstamo supera lo que tu ahorro puede rentar de forma realista, amortizar suele ganar a invertir.",
+      "Faustregel: liegt der Effektivzins über der realistischen Rendite deiner Anlage, ist Tilgen meist besser als Anlegen.",
+      "Règle simple : si le TAEG d'un crédit dépasse ce que ton épargne peut raisonnablement rapporter, rembourser bat souvent investir.",
+    ),
+  },
+
+  // ------------------------------------------------------------ plans
+  {
+    id: "plans",
+    icon: "CalendarClock",
+    title: L("Coming up (plans)", "A caminho (planos)", "Por venir (planes)", "Kommt bald (Pläne)", "À venir (plans)"),
+    paragraphs: L(
+      [
+        "Plans are known future costs (or income) that aren't part of a normal month — a yearly insurance bill, a summer trip, a tax refund. Putting them on the roadmap avoids being caught out.",
+        "From a plan you can either open a project and safely accumulate for it, or just keep the reminder and cover it from savings when it lands. Both are valid — some people want the discipline of a project, others just want the nudge.",
+      ],
+      [
+        "Os planos são custos (ou entradas) futuros que já sabes, mas que não fazem parte de um mês normal — um seguro anual, uma viagem de verão, um reembolso de IRS. Pôr no mapa evita apanhar-te desprevenido.",
+        "A partir de um plano podes abrir um projeto e acumular com segurança, ou simplesmente ficar com o aviso e cobrir das poupanças quando chegar. Ambas as vias são válidas.",
+      ],
+      [
+        "Los planes son gastos (o ingresos) futuros que ya conoces pero que no forman parte de un mes normal — un seguro anual, un viaje de verano, una devolución de la renta. Ponerlos en el mapa evita pillarte por sorpresa.",
+        "Desde un plan puedes abrir un proyecto y ahorrar con orden, o solo dejar el aviso y cubrirlo del ahorro cuando toque. Ambas opciones son válidas.",
+      ],
+      [
+        "Pläne sind bekannte künftige Kosten (oder Einnahmen), die nicht zum normalen Monat gehören — jährliche Versicherung, Sommerreise, Steuerrückzahlung. Auf der Karte zu haben verhindert Überraschungen.",
+        "Aus einem Plan kannst du entweder ein Projekt öffnen und sicher ansparen, oder einfach den Hinweis behalten und aus den Ersparnissen abdecken, wenn es soweit ist. Beides ist ok.",
+      ],
+      [
+        "Les plans sont des coûts (ou revenus) futurs déjà connus mais hors mois normal — assurance annuelle, voyage d'été, retour d'impôt. Les mettre sur la carte évite les surprises.",
+        "À partir d'un plan tu peux ouvrir un projet et épargner tranquillement, ou juste garder le rappel et payer sur l'épargne le moment venu. Les deux sont valables.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "One-off", body: "A single date on the calendar (e.g. car service in March)." },
+        { label: "Repeating", body: "Every month, quarter, year — bynku spreads it across your cycles." },
+        { label: "Impact chart", body: "Shows how the plan bends your cash line over time, so you can see the moment coming." },
+      ],
+      [
+        { label: "Único", body: "Uma data no calendário (ex. revisão do carro em março)." },
+        { label: "Repetido", body: "Todos os meses, trimestres ou anos — o bynku distribui pelos teus ciclos." },
+        { label: "Gráfico de impacto", body: "Mostra como o plano dobra a tua linha de tesouraria ao longo do tempo, para veres o momento a chegar." },
+      ],
+      [
+        { label: "Único", body: "Una fecha en el calendario (p. ej. revisión del coche en marzo)." },
+        { label: "Repetido", body: "Cada mes, trimestre o año — bynku lo reparte por tus ciclos." },
+        { label: "Gráfico de impacto", body: "Muestra cómo el plan dobla tu línea de tesorería con el tiempo, para ver venir el momento." },
+      ],
+      [
+        { label: "Einmalig", body: "Ein Datum im Kalender (z. B. Autoinspektion im März)." },
+        { label: "Wiederkehrend", body: "Monatlich, quartalsweise, jährlich — bynku verteilt es über deine Zyklen." },
+        { label: "Impact-Chart", body: "Zeigt, wie der Plan deine Liquiditätslinie krümmt — den Moment kommen sehen." },
+      ],
+      [
+        { label: "Unique", body: "Une date au calendrier (ex. révision de la voiture en mars)." },
+        { label: "Récurrent", body: "Chaque mois, trimestre, année — bynku le répartit sur tes cycles." },
+        { label: "Graphique d'impact", body: "Montre comment le plan infléchit ta ligne de trésorerie dans le temps — voir venir." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ analysis
+  {
+    id: "analysis",
+    icon: "BarChart3",
+    title: L(
+      "Analysis & benchmarks",
+      "Análise e comparações",
+      "Análisis y referencias",
+      "Analyse & Vergleiche",
+      "Analyse & repères",
+    ),
+    paragraphs: L(
+      [
+        "The Analysis tab looks back at your cycle and compares your spending to real-world data for your country. It's how the abstract 'estimate' becomes a concrete number you can trust.",
+        "The burndown chart shows how your everyday budget drained during the cycle, versus the straight line you'd expect if you spent evenly. Steady is good; a cliff means catch-up cycles.",
+      ],
+      [
+        "O separador Análise olha para o ciclo que passou e compara os teus gastos com dados reais do teu país. É como a 'estimativa' abstrata se torna um número concreto de confiança.",
+        "O gráfico de desgaste mostra como a tua reserva do dia a dia foi caindo no ciclo, comparado com a linha reta esperada se gastasses de forma regular. Estável é bom; um penhasco significa ciclos de recuperação à frente.",
+      ],
+      [
+        "La pestaña Análisis mira el ciclo que acaba y compara tu gasto con datos reales de tu país. Así la 'estimación' abstracta se convierte en un número concreto en el que puedes confiar.",
+        "El gráfico de consumo muestra cómo bajó tu bolsa del día a día a lo largo del ciclo, frente a la línea recta esperable si gastases parejo. Estable es bueno; un acantilado avisa de ciclos de recuperación.",
+      ],
+      [
+        "Der Tab Analyse blickt auf den vergangenen Zyklus und vergleicht deine Ausgaben mit realen Daten deines Landes. So wird aus der abstrakten 'Schätzung' eine belastbare Zahl.",
+        "Die Burndown-Kurve zeigt, wie dein Alltagsbudget im Zyklus geschmolzen ist, gegenüber der geraden Linie bei gleichmäßiger Ausgabe. Stetig ist gut; eine Kante bedeutet Aufholzyklen.",
+      ],
+      [
+        "L'onglet Analyse regarde le cycle écoulé et compare tes dépenses aux données réelles de ton pays. C'est ainsi que l'« estimation » abstraite devient un chiffre concret et fiable.",
+        "La courbe de consommation montre comment ton enveloppe quotidienne a fondu sur le cycle, face à la ligne droite attendue si tu dépensais régulièrement. Stable c'est bien ; une falaise annonce des cycles de rattrapage.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Categories", body: "Where your money went, this cycle and vs your usual pattern." },
+        { label: "Benchmarks", body: "From public statistics (Eurostat) — what similar households in your country spend. Reference, not rule." },
+        { label: "Adopt as new estimate", body: "If reality keeps beating your estimate, adopt the real figure with one tap." },
+      ],
+      [
+        { label: "Categorias", body: "Para onde foi o dinheiro, neste ciclo e face ao teu padrão." },
+        { label: "Referências", body: "De estatísticas públicas (Eurostat) — o que gastam agregados semelhantes no teu país. Referência, não regra." },
+        { label: "Adotar como nova estimativa", body: "Se a realidade continua a bater a estimativa, adota o valor real com um toque." },
+      ],
+      [
+        { label: "Categorías", body: "Adónde fue el dinero, este ciclo y frente a tu patrón habitual." },
+        { label: "Referencias", body: "De estadísticas públicas (Eurostat) — lo que gastan hogares parecidos en tu país. Referencia, no norma." },
+        { label: "Adoptar como nueva estimación", body: "Si la realidad supera a tu estimación, adopta el importe real con un toque." },
+      ],
+      [
+        { label: "Kategorien", body: "Wohin dein Geld floss, in diesem Zyklus und im Vergleich zum Muster." },
+        { label: "Vergleichswerte", body: "Aus öffentlichen Statistiken (Eurostat) — was vergleichbare Haushalte in deinem Land ausgeben. Referenz, keine Regel." },
+        { label: "Als neue Schätzung übernehmen", body: "Wenn die Realität deine Schätzung dauerhaft schlägt, übernimm den echten Wert mit einem Tipp." },
+      ],
+      [
+        { label: "Catégories", body: "Où est parti l'argent, ce cycle et par rapport à ton habitude." },
+        { label: "Repères", body: "Statistiques publiques (Eurostat) — ce que dépensent des foyers comparables dans ton pays. Repère, pas règle." },
+        { label: "Adopter comme nouvelle estimation", body: "Si la réalité bat toujours ton estimation, adopte le chiffre réel d'un toucher." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ coach
+  {
+    id: "coach",
+    icon: "MessageCircle",
+    title: L("The AI coach", "O assistente com IA", "El asistente con IA", "Der KI-Coach", "L'assistant IA"),
+    paragraphs: L(
+      [
+        "The coach is an AI assistant that knows your numbers. Ask it in plain language: 'should I overpay my loan?', 'am I saving enough?', 'help me plan a move'.",
+        "It remembers the last few messages in each conversation so follow-ups make sense. Start a new topic any time — old conversations stay in your history.",
+      ],
+      [
+        "O assistente é uma IA que conhece os teus números. Pergunta em linguagem simples: 'devo reforçar o meu crédito?', 'estou a poupar o suficiente?', 'ajuda-me a planear uma mudança'.",
+        "Guarda as últimas mensagens em cada conversa para que os seguimentos façam sentido. Podes começar um tema novo quando quiseres — as conversas anteriores ficam no histórico.",
+      ],
+      [
+        "El asistente es una IA que conoce tus números. Pregúntale en lenguaje sencillo: '¿amortizo el préstamo?', '¿estoy ahorrando lo suficiente?', 'ayúdame a planear una mudanza'.",
+        "Recuerda los últimos mensajes de cada conversación para que las respuestas encajen. Inicia un tema nuevo cuando quieras — las conversaciones antiguas quedan en el historial.",
+      ],
+      [
+        "Der Coach ist eine KI, die deine Zahlen kennt. Frag ihn in einfacher Sprache: 'soll ich meinen Kredit sondertilgen?', 'spare ich genug?', 'hilf mir bei einem Umzug'.",
+        "Er merkt sich die letzten Nachrichten je Konversation, damit Rückfragen sitzen. Du kannst jederzeit ein neues Thema starten — alte Gespräche bleiben im Verlauf.",
+      ],
+      [
+        "L'assistant est une IA qui connaît tes chiffres. Pose-lui des questions simples : « je rembourse en avance ? », « j'épargne assez ? », « aide-moi à préparer un déménagement ».",
+        "Il retient les derniers messages de chaque conversation pour que les suites tiennent debout. Ouvre un nouveau sujet quand tu veux — les anciennes conversations restent dans l'historique.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Suggestions on the dashboard", body: "The coach flags setup gaps and opportunities (single income source, no emergency fund, over-allocated cycle). Dismiss any that don't apply." },
+        { label: "Privacy", body: "Your data stays inside your household. The AI sees numbers and categories, not receipts or shop names." },
+        { label: "Cost", body: "Each message uses a bit of your monthly credit — see Credits & AI usage." },
+      ],
+      [
+        { label: "Sugestões no painel", body: "O assistente aponta lacunas e oportunidades (uma única fonte de rendimento, sem fundo de emergência, ciclo sobre-alocado). Dispensa as que não se aplicam." },
+        { label: "Privacidade", body: "Os teus dados ficam dentro do agregado. A IA vê números e categorias, não recibos nem nomes de lojas." },
+        { label: "Custo", body: "Cada mensagem gasta uma pequena parte do crédito mensal — ver Créditos e utilização de IA." },
+      ],
+      [
+        { label: "Sugerencias en el panel", body: "El asistente señala huecos y oportunidades (ingreso único, sin fondo de emergencia, ciclo sobreasignado). Descarta las que no te encajen." },
+        { label: "Privacidad", body: "Tus datos se quedan en el hogar. La IA ve números y categorías, no tickets ni nombres de tiendas." },
+        { label: "Coste", body: "Cada mensaje consume un poco de tu crédito mensual — ver Créditos y uso de IA." },
+      ],
+      [
+        { label: "Vorschläge im Dashboard", body: "Der Coach zeigt Lücken und Chancen (einziges Einkommen, kein Notgroschen, überplanter Zyklus). Nicht Passendes einfach ausblenden." },
+        { label: "Datenschutz", body: "Deine Daten bleiben im Haushalt. Die KI sieht Zahlen und Kategorien, keine Belege oder Shopnamen." },
+        { label: "Kosten", body: "Jede Nachricht verbraucht etwas vom Monatskredit — siehe Credits & KI-Nutzung." },
+      ],
+      [
+        { label: "Suggestions au tableau de bord", body: "L'assistant repère lacunes et opportunités (revenu unique, pas de fonds d'urgence, cycle sur-alloué). Rejette celles qui ne te concernent pas." },
+        { label: "Confidentialité", body: "Tes données restent dans le foyer. L'IA voit des chiffres et catégories, pas de tickets ni de noms d'enseignes." },
+        { label: "Coût", body: "Chaque message consomme un peu de ton crédit mensuel — voir Crédits et utilisation IA." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ settings
+  {
+    id: "settings",
+    icon: "Settings",
+    title: L(
+      "Settings & households",
+      "Definições e agregados",
+      "Ajustes y hogares",
+      "Einstellungen & Haushalte",
+      "Réglages & foyers",
+    ),
+    paragraphs: L(
+      [
+        "Settings holds the preferences that shape the app: currency, country, language, the safety cushion %, notifications, and privacy actions like export or delete.",
+        "A household is your money space. You can invite people to share one, or create separate households for different lives — personal, freelance, a family budget.",
+      ],
+      [
+        "As Definições guardam as preferências que moldam a app: moeda, país, idioma, a % de almofada, notificações e ações de privacidade como exportar ou apagar.",
+        "Um agregado é o teu espaço de dinheiro. Podes convidar pessoas para partilhar, ou criar agregados separados para vidas diferentes — pessoal, freelance, orçamento de família.",
+      ],
+      [
+        "Ajustes guarda las preferencias que moldean la app: moneda, país, idioma, % de colchón, notificaciones y acciones de privacidad como exportar o borrar.",
+        "Un hogar es tu espacio de dinero. Invita a personas para compartirlo o crea varios hogares para vidas distintas — personal, autónomo, presupuesto familiar.",
+      ],
+      [
+        "In den Einstellungen liegen Vorlieben, die die App prägen: Währung, Land, Sprache, Puffer-%, Benachrichtigungen und Datenschutz-Aktionen wie Export oder Löschen.",
+        "Ein Haushalt ist dein Geldraum. Lade Menschen ein oder erstelle mehrere Haushalte für unterschiedliche Leben — privat, freiberuflich, Familienbudget.",
+      ],
+      [
+        "Les Réglages regroupent les préférences qui façonnent l'app : devise, pays, langue, % de coussin, notifications et actions de confidentialité comme l'export ou la suppression.",
+        "Un foyer est ton espace argent. Invite des personnes à le partager, ou crée plusieurs foyers pour des vies distinctes — perso, freelance, budget familial.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Members & roles", body: "The owner controls settings; members can add income and expenses." },
+        { label: "Categories & labels", body: "Rename or add categories; tag expenses with labels for cross-cutting views (e.g. 'work trip')." },
+        { label: "Danger zone", body: "Export everything as JSON, or wipe your account and all data at any time." },
+      ],
+      [
+        { label: "Membros e papéis", body: "O proprietário controla as definições; os membros podem adicionar entradas e despesas." },
+        { label: "Categorias e etiquetas", body: "Renomeia ou adiciona categorias; marca despesas com etiquetas para cortes transversais (ex. 'viagem de trabalho')." },
+        { label: "Zona de perigo", body: "Exportar tudo em JSON, ou apagar a conta e todos os dados a qualquer momento." },
+      ],
+      [
+        { label: "Miembros y roles", body: "El propietario controla los ajustes; los miembros pueden añadir ingresos y gastos." },
+        { label: "Categorías y etiquetas", body: "Renombra o añade categorías; etiqueta gastos para vistas transversales (p. ej. 'viaje de trabajo')." },
+        { label: "Zona peligrosa", body: "Exportar todo en JSON, o borrar la cuenta y todos los datos cuando quieras." },
+      ],
+      [
+        { label: "Mitglieder & Rollen", body: "Der Eigentümer verwaltet Einstellungen; Mitglieder erfassen Einnahmen und Ausgaben." },
+        { label: "Kategorien & Labels", body: "Kategorien umbenennen oder ergänzen; Ausgaben mit Labels versehen für Querschnitte (z. B. 'Dienstreise')." },
+        { label: "Gefahrenzone", body: "Alles als JSON exportieren oder Konto und Daten jederzeit löschen." },
+      ],
+      [
+        { label: "Membres & rôles", body: "Le propriétaire gère les réglages ; les membres saisissent entrées et sorties." },
+        { label: "Catégories & étiquettes", body: "Renomme ou ajoute des catégories ; étiquette les dépenses pour des vues transverses (ex. « voyage pro »)." },
+        { label: "Zone dangereuse", body: "Exporter tout en JSON, ou supprimer le compte et toutes les données à tout moment." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ notifications
+  {
+    id: "notifications",
+    icon: "Bell",
+    title: L("Notifications", "Notificações", "Notificaciones", "Benachrichtigungen", "Notifications"),
+    paragraphs: L(
+      [
+        "bynku can nudge you at moments that matter — a payday landing, a bill due, a budget slipping, or a short weekly digest of how the cycle is going.",
+        "Every channel is opt-in. Turn each one on or off in Settings → Notifications. You'll only be pinged for things you asked to hear about.",
+      ],
+      [
+        "O bynku pode dar-te um empurrão nos momentos que interessam — a chegada do salário, uma conta a vencer, um orçamento a fugir ou um resumo semanal do ciclo.",
+        "Todos os canais são opcionais. Liga ou desliga cada um em Definições → Notificações. Só serás avisado do que pediste para receber.",
+      ],
+      [
+        "bynku puede darte un aviso en momentos clave — llegada de nómina, factura próxima, un presupuesto que se desvía o un resumen semanal del ciclo.",
+        "Cada canal es opcional. Actívalo o desactívalo en Ajustes → Notificaciones. Solo te avisamos de lo que quieres oír.",
+      ],
+      [
+        "bynku kann dich zu wichtigen Momenten anstupsen — Gehaltseingang, fällige Rechnung, ein Budget, das aus dem Ruder läuft, oder eine kurze Wochenübersicht.",
+        "Alle Kanäle sind optional. Aktiviere jeden einzeln in Einstellungen → Benachrichtigungen. Es meldet sich nur, was du hören willst.",
+      ],
+      [
+        "bynku peut te rappeler les moments importants — arrivée de paie, facture à venir, budget qui dérive, ou un court récap hebdomadaire du cycle.",
+        "Chaque canal est optionnel. Active-les dans Réglages → Notifications. Seul ce que tu veux entendre te parviendra.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Payday", body: "A gentle nudge to allocate the new money before it disappears." },
+        { label: "Budget alerts", body: "Warnings when a category is drifting well beyond typical." },
+        { label: "Weekly digest", body: "A short email or push with the cycle's progress and any coach suggestions." },
+      ],
+      [
+        { label: "Dia de pagamento", body: "Um empurrão para alocares o novo dinheiro antes que desapareça." },
+        { label: "Alertas de orçamento", body: "Avisos quando uma categoria está a fugir muito do habitual." },
+        { label: "Resumo semanal", body: "Um email ou notificação curta com o progresso do ciclo e sugestões do assistente." },
+      ],
+      [
+        { label: "Día de cobro", body: "Un empujón para asignar el dinero nuevo antes de que se esfume." },
+        { label: "Alertas de presupuesto", body: "Avisos si una categoría se aleja mucho de lo habitual." },
+        { label: "Resumen semanal", body: "Un email o aviso corto con el avance del ciclo y sugerencias del asistente." },
+      ],
+      [
+        { label: "Zahltag", body: "Ein sanfter Stups, das neue Geld zuzuweisen, bevor es weg ist." },
+        { label: "Budget-Warnungen", body: "Hinweis, wenn eine Kategorie stark aus dem üblichen Rahmen fällt." },
+        { label: "Wochen-Digest", body: "Kurze E-Mail oder Push mit Zyklusfortschritt und Coach-Tipps." },
+      ],
+      [
+        { label: "Jour de paie", body: "Un léger rappel pour affecter le nouvel argent avant qu'il ne s'évapore." },
+        { label: "Alertes budget", body: "Un signal quand une catégorie s'éloigne nettement de l'habitude." },
+        { label: "Récap hebdo", body: "Un mail ou push court avec l'avancée du cycle et les suggestions du coach." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ privacy
+  {
+    id: "privacy",
+    icon: "ShieldCheck",
+    title: L(
+      "Privacy & your data",
+      "Privacidade e os teus dados",
+      "Privacidad y tus datos",
+      "Datenschutz & deine Daten",
+      "Confidentialité & tes données",
+    ),
+    paragraphs: L(
+      [
+        "Your data belongs to you. bynku stores it encrypted at rest and scopes access to your household — nobody outside it can see your numbers, ever.",
+        "You can export everything as JSON, or erase your account and all data at any time. This is GDPR-friendly by design, not as an afterthought.",
+      ],
+      [
+        "Os teus dados são teus. O bynku guarda-os encriptados em repouso e limita o acesso ao teu agregado — ninguém de fora vê os teus números, em circunstância alguma.",
+        "Podes exportar tudo em JSON ou apagar a conta e todos os dados quando quiseres. É compatível com o RGPD por desenho, não por acréscimo.",
+      ],
+      [
+        "Tus datos son tuyos. bynku los guarda cifrados en reposo y limita el acceso a tu hogar — nadie de fuera puede ver tus cifras, en ningún caso.",
+        "Puedes exportar todo en JSON o borrar la cuenta y los datos cuando quieras. Compatible con el RGPD por diseño, no como añadido.",
+      ],
+      [
+        "Deine Daten gehören dir. bynku speichert sie im Ruhezustand verschlüsselt und beschränkt den Zugriff auf deinen Haushalt — niemand außerhalb sieht deine Zahlen.",
+        "Du kannst alles als JSON exportieren oder Konto und Daten jederzeit löschen. DSGVO-freundlich by design, nicht nachträglich.",
+      ],
+      [
+        "Tes données t'appartiennent. bynku les stocke chiffrées au repos et limite l'accès à ton foyer — personne d'extérieur ne voit tes chiffres, jamais.",
+        "Tu peux tout exporter en JSON, ou supprimer ton compte et toutes tes données à tout moment. Conforme RGPD par conception, pas en rustine.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Export", body: "Settings → Danger zone → Export all data (JSON)." },
+        { label: "Erase", body: "Settings → Danger zone → Delete account. Permanent and immediate." },
+        { label: "Sharing", body: "Only members of your household see the household's data. Nothing is shared across households." },
+      ],
+      [
+        { label: "Exportar", body: "Definições → Zona de perigo → Exportar tudo (JSON)." },
+        { label: "Apagar", body: "Definições → Zona de perigo → Apagar conta. Permanente e imediato." },
+        { label: "Partilha", body: "Só os membros do agregado veem os dados do agregado. Nada é partilhado entre agregados." },
+      ],
+      [
+        { label: "Exportar", body: "Ajustes → Zona peligrosa → Exportar todo (JSON)." },
+        { label: "Borrar", body: "Ajustes → Zona peligrosa → Borrar cuenta. Permanente e inmediato." },
+        { label: "Compartir", body: "Solo los miembros del hogar ven los datos del hogar. Nada se comparte entre hogares." },
+      ],
+      [
+        { label: "Export", body: "Einstellungen → Gefahrenzone → Alles exportieren (JSON)." },
+        { label: "Löschen", body: "Einstellungen → Gefahrenzone → Konto löschen. Endgültig und sofort." },
+        { label: "Teilen", body: "Nur Mitglieder deines Haushalts sehen dessen Daten. Zwischen Haushalten wird nichts geteilt." },
+      ],
+      [
+        { label: "Export", body: "Réglages → Zone dangereuse → Tout exporter (JSON)." },
+        { label: "Suppression", body: "Réglages → Zone dangereuse → Supprimer le compte. Définitif et immédiat." },
+        { label: "Partage", body: "Seuls les membres de ton foyer voient les données du foyer. Rien n'est partagé entre foyers." },
+      ],
+    ),
+  },
+
+  // ------------------------------------------------------------ credits
+  {
+    id: "credits",
+    icon: "Sparkles",
+    title: L(
+      "Credits & AI usage",
+      "Créditos e utilização de IA",
+      "Créditos y uso de IA",
+      "Credits & KI-Nutzung",
+      "Crédits & utilisation IA",
+    ),
+    paragraphs: L(
+      [
+        "The AI features — the coach, snapping a receipt, dictating a voice note — use 'credits'. Each household has a small monthly cap (currently 7.5) shared across all AI features.",
+        "Under the hood, AI models charge per 'token' (roughly ¾ of a word). bynku converts token usage into a fraction of a credit, so you almost never spend a whole credit on a single message.",
+      ],
+      [
+        "As funcionalidades de IA — o assistente, foto ao recibo, ditar uma nota de voz — usam 'créditos'. Cada agregado tem um pequeno teto mensal (atualmente 7,5) partilhado por todas as funções de IA.",
+        "Nos bastidores, os modelos de IA cobram por 'token' (cerca de ¾ de uma palavra). O bynku converte o uso de tokens numa fração de crédito, portanto quase nunca gastas um crédito inteiro numa só mensagem.",
+      ],
+      [
+        "Las funciones de IA — el asistente, foto al ticket, dictar una nota de voz — usan 'créditos'. Cada hogar tiene un pequeño tope mensual (ahora 7,5) compartido entre todas las funciones de IA.",
+        "Por dentro, los modelos de IA cobran por 'token' (más o menos ¾ de una palabra). bynku convierte el uso de tokens en fracción de crédito, así que casi nunca gastas un crédito entero en un solo mensaje.",
+      ],
+      [
+        "Die KI-Funktionen — Coach, Beleg fotografieren, Sprachnotiz — nutzen 'Credits'. Jeder Haushalt hat ein kleines Monatslimit (aktuell 7,5), das alle KI-Funktionen teilen.",
+        "Unter der Haube rechnen KI-Modelle in 'Token' (etwa ¾ eines Wortes). bynku rechnet Tokens in Bruchteile eines Credits um — eine einzelne Nachricht kostet fast nie einen ganzen Credit.",
+      ],
+      [
+        "Les fonctions IA — l'assistant, photo de ticket, note vocale — consomment des « crédits ». Chaque foyer a un petit plafond mensuel (actuellement 7,5) partagé entre toutes les fonctions IA.",
+        "En coulisse, les modèles IA facturent au « token » (environ ¾ d'un mot). bynku convertit les tokens en fraction de crédit, donc un seul message coûte presque jamais un crédit entier.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Chat with the coach", body: "Usually 0.01–0.05 credits per short message. Long conversations add up faster than one-off questions." },
+        { label: "Photo of a receipt", body: "Around 0.05 credits per photo. Clear pictures cost less because the model works less." },
+        { label: "Voice note", body: "Around 0.02 credits per short recording. Speak clearly and pause background noise if you can." },
+        { label: "Top-ups", body: "Credit top-ups will be available soon. For now, the monthly cap resets automatically." },
+      ],
+      [
+        { label: "Conversar com o assistente", body: "Normalmente 0,01–0,05 créditos por mensagem curta. Conversas longas somam mais depressa que perguntas soltas." },
+        { label: "Foto ao recibo", body: "Cerca de 0,05 créditos por foto. Fotos nítidas custam menos, porque o modelo trabalha menos." },
+        { label: "Nota de voz", body: "Cerca de 0,02 créditos por gravação curta. Fala claro e reduz o ruído se possível." },
+        { label: "Recargas", body: "Recargas de créditos em breve. Por agora, o teto mensal renova-se automaticamente." },
+      ],
+      [
+        { label: "Chat con el asistente", body: "Suele ser 0,01–0,05 créditos por mensaje corto. Las conversaciones largas suman más rápido que preguntas sueltas." },
+        { label: "Foto al ticket", body: "En torno a 0,05 créditos por foto. Fotos nítidas cuestan menos porque el modelo trabaja menos." },
+        { label: "Nota de voz", body: "En torno a 0,02 créditos por grabación corta. Habla claro y reduce el ruido si puedes." },
+        { label: "Recargas", body: "Las recargas de créditos estarán disponibles pronto. Por ahora el tope mensual se renueva solo." },
+      ],
+      [
+        { label: "Chat mit dem Coach", body: "Meist 0,01–0,05 Credits pro kurzer Nachricht. Lange Gespräche summieren sich schneller als Einzelfragen." },
+        { label: "Beleg fotografieren", body: "Ca. 0,05 Credits pro Foto. Klare Bilder kosten weniger, weil das Modell weniger arbeitet." },
+        { label: "Sprachnotiz", body: "Ca. 0,02 Credits pro kurzer Aufnahme. Klar sprechen, Nebengeräusche reduzieren." },
+        { label: "Aufladungen", body: "Credit-Aufladungen kommen bald. Bis dahin setzt sich das Monatslimit automatisch zurück." },
+      ],
+      [
+        { label: "Chat avec l'assistant", body: "En général 0,01–0,05 crédits par court message. Les longues conversations montent plus vite que les questions isolées." },
+        { label: "Photo d'un ticket", body: "Environ 0,05 crédits par photo. Des photos nettes coûtent moins car le modèle travaille moins." },
+        { label: "Note vocale", body: "Environ 0,02 crédits par court enregistrement. Parle clairement et limite le bruit si possible." },
+        { label: "Recharges", body: "Les recharges de crédits arrivent bientôt. En attendant, le plafond mensuel se réinitialise tout seul." },
+      ],
+    ),
+    callout: L(
+      "Save credits: keep chats focused, dismiss suggestions you don't want to discuss, and prefer typing over voice for very short entries.",
+      "Poupar créditos: mantém as conversas focadas, dispensa sugestões que não queres discutir e prefere escrever a falar em entradas muito curtas.",
+      "Ahorra créditos: mantén las conversaciones enfocadas, descarta sugerencias que no quieras y prefiere teclear a hablar en entradas muy cortas.",
+      "Credits sparen: fokussiert chatten, unpassende Vorschläge ausblenden und bei sehr kurzen Einträgen lieber tippen als sprechen.",
+      "Économiser des crédits : rester focalisé, écarter les suggestions inutiles, et taper plutôt que parler pour les saisies très courtes.",
+    ),
+  },
+
+  // ------------------------------------------------------------ faq
+  {
+    id: "faq",
+    icon: "HelpCircle",
+    faq: true,
+    title: L("FAQ", "Perguntas frequentes", "Preguntas frecuentes", "FAQ", "FAQ"),
+    paragraphs: L([], [], [], [], []),
+    bullets: L(
+      [
+        { label: "Why cycles, not calendar months?", body: "Because most people live pay-to-pay. A cycle reflects reality better than the calendar, so 'safe to spend today' is honest." },
+        { label: "My salary shows in the expenses list — why?", body: "Money in and Money out share the same timeline so you see the full picture. Salary rows are marked as 'received' and boost the pool, not spent from it." },
+        { label: "I feel over-allocated. What now?", body: "Reduce or pause a project — nothing is billed automatically. bynku only tracks intentions until real money moves." },
+        { label: "I went over baseline this cycle.", body: "It's fine. bynku doesn't punish you. Next cycle's safe-to-spend simply starts a little lower until you catch up." },
+        { label: "Is the AI always right?", body: "No. It gives grounded suggestions based on your numbers, but you make the calls. Ask it to explain any advice you're unsure about." },
+      ],
+      [
+        { label: "Porquê ciclos, e não meses do calendário?", body: "Porque a maioria vive de salário em salário. Um ciclo reflete a realidade melhor que o calendário, tornando o 'seguro para hoje' honesto." },
+        { label: "O meu salário aparece na lista de despesas — porquê?", body: "As entradas e saídas partilham a mesma linha temporal para veres o quadro completo. As linhas de salário aparecem como 'recebido' e reforçam a reserva, não são gastas." },
+        { label: "Sinto que aloquei demais. E agora?", body: "Reduz ou pausa um projeto — nada é cobrado automaticamente. O bynku só regista intenções até que o dinheiro se mova mesmo." },
+        { label: "Ultrapassei o baseline neste ciclo.", body: "Está tudo bem. O bynku não castiga. O 'seguro para hoje' do próximo ciclo começa apenas um pouco mais baixo até equilibrares." },
+        { label: "A IA está sempre certa?", body: "Não. Dá sugestões fundamentadas nos teus números, mas quem decide és tu. Pede-lhe para explicar qualquer conselho em dúvida." },
+      ],
+      [
+        { label: "¿Por qué ciclos y no meses naturales?", body: "Porque la mayoría vive de nómina a nómina. Un ciclo refleja la realidad mejor que el calendario, así 'seguro para hoy' es honesto." },
+        { label: "Mi nómina aparece en la lista de gastos — ¿por qué?", body: "Ingresos y Gastos comparten la misma línea temporal para ver el cuadro completo. Las filas de nómina se marcan como 'recibido' y alimentan la bolsa, no se gastan." },
+        { label: "Siento que me pasé asignando. ¿Y ahora?", body: "Reduce o pausa un proyecto — nada se cobra automáticamente. bynku solo registra intenciones hasta que se mueve dinero real." },
+        { label: "Me pasé del baseline este ciclo.", body: "No pasa nada. bynku no castiga. El 'seguro para hoy' del próximo ciclo simplemente empieza algo más bajo hasta recuperarte." },
+        { label: "¿La IA acierta siempre?", body: "No. Da sugerencias fundadas en tus números, pero decides tú. Pídele que explique cualquier consejo que te haga dudar." },
+      ],
+      [
+        { label: "Warum Zyklen statt Kalendermonate?", body: "Weil viele Menschen von Gehalt zu Gehalt leben. Ein Zyklus bildet die Realität besser ab — 'heute sicher' wird ehrlich." },
+        { label: "Mein Gehalt taucht in der Ausgabenliste auf — warum?", body: "Einnahmen und Ausgaben liegen auf derselben Zeitleiste. Gehaltsposten sind als 'erhalten' markiert und füllen das Budget, statt daraus abgezogen zu werden." },
+        { label: "Ich fühle mich überplant. Was jetzt?", body: "Ein Projekt reduzieren oder pausieren — nichts wird automatisch abgebucht. bynku führt nur Absichten, bis echtes Geld fließt." },
+        { label: "Ich habe das Baseline in diesem Zyklus überschritten.", body: "Alles gut. bynku bestraft nichts. Der nächste 'heute sicher'-Wert startet einfach etwas niedriger, bis du wieder aufholst." },
+        { label: "Hat die KI immer recht?", body: "Nein. Sie gibt fundierte Vorschläge auf Basis deiner Zahlen, entscheiden musst du. Bitte sie, unsichere Ratschläge zu erklären." },
+      ],
+      [
+        { label: "Pourquoi des cycles et pas des mois calendaires ?", body: "Parce que beaucoup vivent de paie en paie. Un cycle colle mieux à la réalité — le « sûr aujourd'hui » devient honnête." },
+        { label: "Mon salaire apparaît dans la liste des dépenses — pourquoi ?", body: "Entrées et sorties partagent la même chronologie pour voir la vue d'ensemble. Les lignes de salaire sont marquées « reçu » et alimentent l'enveloppe, elles ne sont pas dépensées." },
+        { label: "Je me sens sur-alloué. Et maintenant ?", body: "Réduis ou mets un projet en pause — rien n'est prélevé automatiquement. bynku ne suit que les intentions tant que l'argent réel ne bouge pas." },
+        { label: "J'ai dépassé le baseline sur ce cycle.", body: "Pas de souci. bynku ne punit pas. Le « sûr aujourd'hui » du cycle suivant démarre juste un peu plus bas, le temps de rattraper." },
+        { label: "L'IA a-t-elle toujours raison ?", body: "Non. Elle propose des pistes fondées sur tes chiffres, mais c'est toi qui décides. Demande-lui d'expliquer tout conseil qui te fait douter." },
+      ],
+    ),
+  },
+];

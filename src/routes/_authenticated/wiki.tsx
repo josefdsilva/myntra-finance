@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   Calendar,
@@ -21,13 +20,16 @@ import {
   Calculator,
   Settings as SettingsIcon,
   Bell,
-  Eye,
-  Sparkles,
   ShieldCheck,
+  Sparkles,
   Search,
+  CreditCard,
+  MessageCircle,
+  HelpCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
-import { WIKI_STRINGS } from "@/lib/wiki-content";
+import { WIKI_META, WIKI_SECTIONS, type WikiIcon } from "@/lib/wiki-content";
 import { pageShellClass } from "@/components/page-shell";
 import {
   BaselineDiagram,
@@ -39,25 +41,43 @@ import {
 export const Route = createFileRoute("/_authenticated/wiki")({
   head: () => ({
     meta: [
-      { title: "Wiki · bynku" },
+      { title: "Manual · bynku" },
       {
         name: "description",
         content:
-          "Complete guide to the bynku app: pay cycles, safe-to-spend, allocations, analytics, notifications and more.",
+          "A plain-language guide to bynku: pay cycles, safe-to-spend, projects, loans, plans, analysis and privacy.",
       },
     ],
   }),
   component: WikiPage,
 });
 
-function Section({
+const ICONS: Record<WikiIcon, LucideIcon> = {
+  BookOpen,
+  Calendar,
+  Wallet,
+  Receipt,
+  Calculator,
+  Sparkles,
+  PiggyBank,
+  CreditCard,
+  CalendarClock,
+  BarChart3,
+  MessageCircle,
+  Settings: SettingsIcon,
+  Bell,
+  ShieldCheck,
+  HelpCircle,
+};
+
+function SectionCard({
   id,
   icon: Icon,
   title,
   children,
 }: {
   id: string;
-  icon: typeof BookOpen;
+  icon: ComponentType<{ className?: string }>;
   title: string;
   children: React.ReactNode;
 }) {
@@ -76,32 +96,25 @@ function Section({
   );
 }
 
-function Term({ children }: { children: React.ReactNode }) {
-  return (
-    <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground">
-      {children}
-    </code>
-  );
-}
-
 function WikiPage() {
   const locale = useLocale();
-  const w = (key: string) => WIKI_STRINGS[locale]?.[key] ?? WIKI_STRINGS.en[key] ?? key;
+  const meta = WIKI_META[locale] ?? WIKI_META.en;
+  const diag = meta.diagrams;
 
   const [query, setQuery] = useState("");
   const [noResults, setNoResults] = useState(false);
 
-  // Per-section search index from the current locale's strings. Keys are
-  // namespaced by section (overview.*, cycles.*, ...) and toc.<id> supplies the
-  // title, so grouping by key prefix yields searchable text for each section.
+  // Per-section text index (title + paragraphs + bullets + callout) for search.
   const searchIndex = useMemo(() => {
-    const dict = WIKI_STRINGS[locale] ?? WIKI_STRINGS.en;
     const idx: Record<string, string> = {};
-    for (const [key, val] of Object.entries(dict)) {
-      const parts = key.split(".");
-      const bucket = parts[0] === "toc" ? parts[1] : parts[0];
-      if (!bucket) continue;
-      idx[bucket] = (idx[bucket] ? idx[bucket] + " " : "") + String(val).toLowerCase();
+    for (const s of WIKI_SECTIONS) {
+      const title = s.title[locale] ?? s.title.en;
+      const paras = (s.paragraphs[locale] ?? s.paragraphs.en).join(" ");
+      const bullets = (s.bullets?.[locale] ?? s.bullets?.en ?? [])
+        .map((b) => `${b.label} ${b.body}`)
+        .join(" ");
+      const callout = s.callout?.[locale] ?? s.callout?.en ?? "";
+      idx[s.id] = `${title} ${paras} ${bullets} ${callout}`.toLowerCase();
     }
     return idx;
   }, [locale]);
@@ -122,617 +135,139 @@ function WikiPage() {
     setNoResults(q.length > 0 && !anyVisible);
   }, [query, searchIndex]);
 
-  const toc = [
-    { id: "overview", label: w("toc.overview") },
-    { id: "cycles", label: w("toc.cycles") },
-    { id: "baseline", label: w("toc.baseline") },
-    { id: "expenses", label: w("toc.expenses") },
-    { id: "allocations", label: w("toc.allocations") },
-    { id: "plans", label: w("toc.plans") },
-    { id: "glossary", label: w("toc.glossary") },
-    { id: "principles", label: w("toc.principles") },
-    { id: "analysis", label: w("toc.analysis") },
-    { id: "settings", label: w("toc.settings") },
-    { id: "notifications", label: w("toc.notifications") },
-    { id: "privacy", label: w("toc.privacy") },
-    { id: "credits", label: w("toc.credits") },
-    { id: "faq", label: w("toc.faq") },
-  ];
-
-  const glossary: Array<{ id: string; formula: string }> = [
-    { id: "income", formula: "Income = Σ Settings incomes" },
-    { id: "fixed", formula: "Fixed Costs = Σ Settings fixed expenses" },
-    { id: "debt", formula: "Debt Payments = Σ Settings debts (monthly)" },
-    { id: "variable", formula: "Variable Estimate = Σ Settings variable estimates" },
-    { id: "margin", formula: "Margin = margin% × (Fixed + Debt + Variable)" },
-    { id: "baseline", formula: "Baseline = Fixed + Debt + Variable + Margin" },
-    { id: "surplus", formula: "Surplus = Income − Baseline" },
-    { id: "plannedAlloc", formula: "Planned Allocations = Σ per-project monthly target" },
-    { id: "plannedSurplus", formula: "Planned Surplus = Surplus − Planned Allocations" },
-    { id: "realAlloc", formula: "Real Allocations = confirmed allocations + movements in − out" },
-    { id: "realSurplus", formula: "Real Surplus = Surplus − Real Allocations" },
-    { id: "received", formula: "Received = Σ money-in operations (this cycle)" },
-    { id: "realExpenses", formula: "Real Expenses = Σ money-out operations (this cycle)" },
-    { id: "projectType", formula: "Project type ∈ Savings | Emergency | Investment" },
-    { id: "emergencyFund", formula: "Coverage (months) = liquid reserve ÷ monthly essentials" },
-    { id: "moneyPriority", formula: "Priority: emergency fund → high-interest debt → invest" },
-  ];
-
   return (
-    <>
-      <div className={pageShellClass("4xl")}>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <BookOpen className="size-3.5" />
-            {w("header.eyebrow")}
-          </div>
-          <h1 className="font-display text-3xl md:text-4xl">{w("header.title")}</h1>
-          <p className="text-muted-foreground">{w("header.subtitle")}</p>
+    <div className={pageShellClass("4xl")}>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <BookOpen className="size-3.5" />
+          {meta.eyebrow}
         </div>
-
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={w("search.placeholder")}
-            aria-label={w("search.placeholder")}
-            className="pl-9"
-          />
-        </div>
-
-        {noResults && (
-          <p className="text-sm text-muted-foreground">
-            {w("search.noResults")} “{query.trim()}”.
-          </p>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{w("header.tocTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid gap-1 sm:grid-cols-2 text-sm">
-              {toc.map((t) => (
-                <li key={t.id} data-wiki-toc={t.id}>
-                  <a href={`#${t.id}`} className="text-primary hover:underline">
-                    {t.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Section id="overview" icon={BookOpen} title={w("toc.overview")}>
-          <p>
-            {w("overview.p1a")}
-            <Term>{w("overview.term1")}</Term>
-            {w("overview.p1b")}
-          </p>
-          <p className="rounded-lg border bg-muted/40 p-3 text-foreground">
-            <strong>{w("overview.callout")}</strong>
-          </p>
-          <p>{w("overview.p2")}</p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Badge variant="secondary">{w("overview.badge1")}</Badge>
-            <Badge variant="secondary">{w("overview.badge2")}</Badge>
-            <Badge variant="secondary">{w("overview.badge3")}</Badge>
-            <Badge variant="secondary">{w("overview.badge4")}</Badge>
-          </div>
-        </Section>
-
-        <Section id="cycles" icon={Calendar} title={w("toc.cycles")}>
-          <CycleDiagram
-            salary={w("diag.salary")}
-            today={w("diag.today")}
-            nextSalary={w("diag.nextSalary")}
-            cycle={w("diag.cycle")}
-            caption={w("diag.cycleCap")}
-          />
-          <p>
-            {w("cycles.p1a")}
-            <Term>{w("cycles.term1")}</Term>
-            {w("cycles.p1b")}
-          </p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              {w("cycles.li1a")}
-              <Term>{w("cycles.li1term")}</Term>
-              {w("cycles.li1b")}
-            </li>
-            <li>
-              {w("cycles.li2a")}
-              <strong>{w("cycles.li2strong")}</strong>
-              {w("cycles.li2b")}
-            </li>
-            <li>{w("cycles.li3")}</li>
-            <li>{w("cycles.li4")}</li>
-          </ul>
-        </Section>
-
-        <Section id="baseline" icon={Wallet} title={w("toc.baseline")}>
-          <BaselineDiagram
-            fixed={w("diag.lFixed")}
-            debt={w("diag.lDebt")}
-            variable={w("diag.lVariable")}
-            margin={w("diag.lMargin")}
-            baseline={w("diag.lBaseline")}
-            caption={w("diag.baselineCap")}
-          />
-          <p>
-            {w("baseline.p1a")}
-            <Term>{w("baseline.term1")}</Term>
-            {w("baseline.p1b")}
-          </p>
-          <pre className="rounded-lg border bg-muted/40 p-3 text-xs text-foreground overflow-x-auto">
-            {`baseline = fixed_monthly_expenses
-         + estimated_variable_costs
-         + safety_margin (% of the two above)`}
-          </pre>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <Term>{w("baseline.li1term")}</Term>
-              {w("baseline.li1")}
-            </li>
-            <li>
-              <Term>{w("baseline.li2term")}</Term>
-              {w("baseline.li2")}
-            </li>
-            <li>
-              <Term>{w("baseline.li3term")}</Term>
-              {w("baseline.li3")}
-            </li>
-          </ul>
-          <p className="pt-2 font-medium text-foreground">{w("baseline.safeTodayHeading")}</p>
-          <pre className="rounded-lg border bg-muted/40 p-3 text-xs text-foreground overflow-x-auto">
-            {`variable_pool = baseline - fixed_expenses_in_cycle
-remaining     = variable_pool - variable_spent_in_cycle + refunds_received
-safe_today    = remaining / days_left_in_cycle`}
-          </pre>
-          <p>{w("baseline.p3")}</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <Badge className="bg-orange-500/15 text-orange-600 dark:text-orange-400 border-transparent">
-                {w("baseline.badgeSpent")}
-              </Badge>{" "}
-              {w("baseline.li4After")}
-            </li>
-            <li>
-              <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-transparent">
-                {w("baseline.badgeReceived")}
-              </Badge>{" "}
-              {w("baseline.li5After")}
-            </li>
-            <li>
-              <Badge variant="secondary">{w("baseline.badgeBalance")}</Badge>{" "}
-              {w("baseline.li6After")}
-            </li>
-          </ul>
-          <p>
-            {w("baseline.p4a")}
-            <strong>{w("baseline.p4strong")}</strong>
-            {w("baseline.p4b")}
-          </p>
-        </Section>
-
-        <Section id="expenses" icon={Receipt} title={w("toc.expenses")}>
-          <p>
-            {w("expenses.p1a")}
-            <em>{w("expenses.p1em")}</em>
-            {w("expenses.p1b")}
-          </p>
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="quick">
-              <AccordionTrigger>{w("expenses.acc1Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("expenses.acc1Body")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="ai">
-              <AccordionTrigger>{w("expenses.acc2Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("expenses.acc2BodyA")}
-                <em>{w("expenses.acc2BodyEm")}</em>
-                {w("expenses.acc2BodyB")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="photo">
-              <AccordionTrigger>{w("expenses.acc3Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("expenses.acc3Body")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="stmt">
-              <AccordionTrigger>{w("expenses.acc4Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("expenses.acc4BodyA")}
-                <em>{w("expenses.acc4Em1")}</em>
-                {w("expenses.acc4Mid")}
-                <em>{w("expenses.acc4Em2")}</em>
-                {w("expenses.acc4Mid2")}
-                <em>{w("expenses.acc4Em3")}</em>
-                {w("expenses.acc4End")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="fields">
-              <AccordionTrigger>{w("expenses.acc5Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground space-y-2">
-                <div>
-                  <Term>{w("expenses.fieldAmountTerm")}</Term>
-                  {w("expenses.fieldAmount")}
-                </div>
-                <div>
-                  <Term>{w("expenses.fieldTypeTerm")}</Term> <em>{w("expenses.fieldTypeEm1")}</em>
-                  {w("expenses.fieldTypeMid")}
-                  <em>{w("expenses.fieldTypeEm2")}</em>
-                  {w("expenses.fieldTypeEnd")}
-                </div>
-                <div>
-                  <Term>{w("expenses.fieldCategoryTerm")}</Term>
-                  {w("expenses.fieldCategory")}
-                </div>
-                <div>
-                  <Term>{w("expenses.fieldDateTerm")}</Term>
-                  {w("expenses.fieldDate")}
-                </div>
-                <div>
-                  <Term>{w("expenses.fieldNoteTerm")}</Term>
-                  {w("expenses.fieldNote")}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </Section>
-
-        <Section id="allocations" icon={PiggyBank} title={w("toc.allocations")}>
-          <WaterfallDiagram
-            surplus={w("diag.lSurplus")}
-            realAlloc={w("diag.lRealAlloc")}
-            realSurplus={w("diag.lRealSurplus")}
-            caption={w("diag.waterfallCap")}
-          />
-          <div className="overflow-x-auto">
-            <p className="font-medium text-foreground">{w("tbl.typesTitle")}</p>
-            <table className="mt-1 w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-1 pr-3 font-medium">{w("tbl.colType")}</th>
-                  <th className="py-1 font-medium">{w("tbl.colRole")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ["tbl.savings", "tbl.savingsRole"],
-                  ["tbl.emergency", "tbl.emergencyRole"],
-                  ["tbl.investment", "tbl.investmentRole"],
-                ].map(([k, v]) => (
-                  <tr key={k} className="border-b last:border-0">
-                    <td className="py-1 pr-3 font-medium text-foreground align-top">{w(k)}</td>
-                    <td className="py-1">{w(v)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="overflow-x-auto">
-            <p className="font-medium text-foreground">{w("tbl.targetsTitle")}</p>
-            <table className="mt-1 w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-1 pr-3 font-medium">{w("tbl.colType")}</th>
-                  <th className="py-1 font-medium">{w("tbl.colMeaning")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ["tbl.tPct", "tbl.tPctM"],
-                  ["tbl.tMonthly", "tbl.tMonthlyM"],
-                  ["tbl.tYearly", "tbl.tYearlyM"],
-                  ["tbl.tGoal", "tbl.tGoalM"],
-                ].map(([k, v]) => (
-                  <tr key={k} className="border-b last:border-0">
-                    <td className="py-1 pr-3 font-medium text-foreground align-top">{w(k)}</td>
-                    <td className="py-1">{w(v)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p>
-            {w("allocations.p1a")}
-            <Term>{w("allocations.term1")}</Term>
-            {w("allocations.p1b")}
-            <em>{w("allocations.p1em")}</em>
-            {w("allocations.p1c")}
-          </p>
-          <p className="font-medium text-foreground">{w("allocations.targetTypesHeading")}</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <Term>{w("allocations.tt1term")}</Term>
-              {w("allocations.tt1")}
-            </li>
-            <li>
-              <Term>{w("allocations.tt2term")}</Term>
-              {w("allocations.tt2")}
-            </li>
-            <li>
-              <Term>{w("allocations.tt3term")}</Term>
-              {w("allocations.tt3a")}
-              <em>{w("allocations.tt3em")}</em>
-              {w("allocations.tt3b")}
-            </li>
-          </ul>
-          <p className="font-medium text-foreground pt-2">{w("allocations.markHeading")}</p>
-          <p>
-            {w("allocations.markP1a")}
-            <strong>{w("allocations.markStrong")}</strong>
-            {w("allocations.markP1b")}
-          </p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>{w("allocations.li1")}</li>
-            <li>
-              {w("allocations.li2a")}
-              <Term>{w("allocations.li2term")}</Term>
-              {w("allocations.li2b")}
-            </li>
-            <li>{w("allocations.li3")}</li>
-          </ul>
-          <p>{w("allocations.p2")}</p>
-        </Section>
-
-        <Section id="plans" icon={CalendarClock} title={w("toc.plans")}>
-          <p>{w("plans.intro")}</p>
-          <p>
-            <strong>{w("plans.h1")}</strong> {w("plans.b1")}
-          </p>
-          <p>
-            <strong>{w("plans.h2")}</strong> {w("plans.b2")}
-          </p>
-          <p>
-            <strong>{w("plans.h3")}</strong> {w("plans.b3")}
-          </p>
-          <p className="rounded-lg bg-muted/50 p-3 text-sm">{w("plans.callout")}</p>
-        </Section>
-
-        <Section id="glossary" icon={Calculator} title={w("toc.glossary")}>
-          <p>{w("glossary.intro")}</p>
-          <div className="space-y-3">
-            {glossary.map((g) => (
-              <div key={g.id}>
-                <p>
-                  <strong className="text-foreground">{w(`glossary.${g.id}.term`)}</strong>:{" "}
-                  {w(`glossary.${g.id}.desc`)}
-                </p>
-                <pre className="mt-1 rounded-lg border bg-muted/40 p-2 text-xs text-foreground overflow-x-auto">
-                  {g.formula}
-                </pre>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        <Section id="principles" icon={Sparkles} title={w("toc.principles")}>
-          <p>{w("principles.intro")}</p>
-          <LadderDiagram
-            step1={w("diag.step1")}
-            step2={w("diag.step2")}
-            step3={w("diag.step3")}
-            caption={w("diag.ladderCap")}
-          />
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <div key={n}>
-                <p className="font-medium text-foreground">{w(`principles.p${n}.h`)}</p>
-                <p>{w(`principles.p${n}.b`)}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs">{w("principles.note")}</p>
-        </Section>
-
-        <Section id="analysis" icon={BarChart3} title={w("toc.analysis")}>
-          <p>{w("analysis.p1")}</p>
-          <p className="font-medium text-foreground">{w("analysis.burndownHeading")}</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              {w("analysis.li1a")}
-              <strong>{w("analysis.li1strong")}</strong>
-              {w("analysis.li1b")}
-            </li>
-            <li>{w("analysis.li2")}</li>
-            <li>{w("analysis.li3")}</li>
-            <li>{w("analysis.li4")}</li>
-          </ul>
-          <p className="font-medium text-foreground pt-2">{w("analysis.categoryHeading")}</p>
-          <p>{w("analysis.p2")}</p>
-        </Section>
-
-        <Section id="settings" icon={SettingsIcon} title={w("toc.settings")}>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <Term>{w("settings.li1term")}</Term>
-              {w("settings.li1a")}
-              <em>{w("settings.li1em")}</em>
-              {w("settings.li1b")}
-            </li>
-            <li>
-              <Term>{w("settings.li2term")}</Term>
-              {w("settings.li2")}
-            </li>
-            <li>
-              <Term>{w("settings.li3term")}</Term>
-              {w("settings.li3")}
-            </li>
-            <li>
-              <Term>{w("settings.li4term")}</Term>
-              {w("settings.li4")}
-            </li>
-            <li>
-              <Term>{w("settings.li5term")}</Term>
-              {w("settings.li5")}
-            </li>
-            <li>
-              <Term>{w("settings.li6term")}</Term>
-              {w("settings.li6")}
-            </li>
-            <li>
-              <Term>{w("settings.li7term")}</Term>
-              {w("settings.li7")}
-            </li>
-          </ul>
-        </Section>
-
-        <Section id="notifications" icon={Bell} title={w("toc.notifications")}>
-          <p>{w("notifications.p1")}</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <strong>{w("notifications.li1strong")}</strong>
-              {w("notifications.li1")}
-            </li>
-            <li>
-              <strong>{w("notifications.li2strong")}</strong>
-              {w("notifications.li2")}
-            </li>
-            <li>
-              <strong>{w("notifications.li3strong")}</strong>
-              {w("notifications.li3")}
-            </li>
-          </ul>
-          <p>{w("notifications.p2")}</p>
-        </Section>
-
-        <Section id="privacy" icon={Eye} title={w("toc.privacy")}>
-          <p>
-            <Term>{w("privacy.p1term")}</Term>
-            {w("privacy.p1")}
-          </p>
-          <p>
-            <Term>{w("privacy.p2term")}</Term>
-            {w("privacy.p2")}
-          </p>
-          <p className="flex items-center gap-2 pt-1">
-            <ShieldCheck className="size-4 text-primary" />
-            <span>{w("privacy.p3")}</span>
-          </p>
-        </Section>
-
-        <Section id="credits" icon={Sparkles} title={w("toc.credits")}>
-          <p>
-            {w("credits.p1a")}
-            <strong>{w("credits.p1strong")}</strong>
-            {w("credits.p1b")}
-            <strong>{w("credits.p1strong2")}</strong>
-            {w("credits.p1c")}
-            <em>{w("credits.p1em")}</em>
-            {w("credits.p1d")}
-          </p>
-
-          <h3 className="font-medium text-foreground mt-4">{w("credits.tokenHeading")}</h3>
-          <p>
-            {w("credits.tokenP1a")}
-            <strong>{w("credits.tokenStrong")}</strong>
-            {w("credits.tokenP1b")}
-            <em>{w("credits.tokenEm")}</em>
-            {w("credits.tokenP1c")}
-          </p>
-          <p>
-            {w("credits.tokenP2a")}
-            <strong>{w("credits.tokenP2strong1")}</strong>
-            {w("credits.tokenP2mid")}
-            <strong>{w("credits.tokenP2strong2")}</strong>
-            {w("credits.tokenP2end")}
-          </p>
-
-          <h3 className="font-medium text-foreground mt-4">{w("credits.howHeading")}</h3>
-          <p>
-            {w("credits.howP1a")}
-            <code>{w("credits.howCode")}</code>
-            {w("credits.howP1b")}
-            <strong>{w("credits.howStrong")}</strong>
-            {w("credits.howP1c")}
-          </p>
-          <p>{w("credits.typicalCosts")}</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <strong>{w("credits.cost1strong")}</strong>
-              {w("credits.cost1")}
-            </li>
-            <li>
-              <strong>{w("credits.cost2strong")}</strong>
-              {w("credits.cost2")}
-            </li>
-            <li>
-              <strong>{w("credits.cost3strong")}</strong>
-              {w("credits.cost3")}
-            </li>
-            <li>
-              <strong>{w("credits.cost4strong")}</strong>
-              {w("credits.cost4a")}
-              <em>{w("credits.cost4em")}</em>
-              {w("credits.cost4b")}
-            </li>
-          </ul>
-
-          <h3 className="font-medium text-foreground mt-4">{w("credits.saveHeading")}</h3>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              {w("credits.save1a")}
-              <strong>{w("credits.save1strong")}</strong>
-              {w("credits.save1b")}
-            </li>
-            <li>{w("credits.save2")}</li>
-            <li>
-              {w("credits.save3a")}
-              <strong>{w("credits.save3strong")}</strong>
-              {w("credits.save3b")}
-            </li>
-            <li>
-              {w("credits.save4a")}
-              <em>{w("credits.save4em")}</em>
-              {w("credits.save4b")}
-            </li>
-            <li>{w("credits.save5")}</li>
-            <li>{w("credits.save6")}</li>
-          </ul>
-          <p className="text-xs text-muted-foreground mt-2">{w("credits.footnote")}</p>
-        </Section>
-
-        <Section id="faq" icon={Sparkles} title={w("toc.faq")}>
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="why-cycles">
-              <AccordionTrigger>{w("faq.q1Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("faq.q1Body")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="salary-in-list">
-              <AccordionTrigger>{w("faq.q2Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("faq.q2Body")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="under-allocated">
-              <AccordionTrigger>{w("faq.q3Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("faq.q3Body")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="over-baseline">
-              <AccordionTrigger>{w("faq.q4Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("faq.q4Body")}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="ai-accuracy">
-              <AccordionTrigger>{w("faq.q5Trigger")}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {w("faq.q5Body")}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </Section>
+        <h1 className="font-display text-3xl md:text-4xl">{meta.title}</h1>
+        <p className="text-muted-foreground">{meta.subtitle}</p>
       </div>
-    </>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={meta.searchPlaceholder}
+          aria-label={meta.searchPlaceholder}
+          className="pl-9"
+        />
+      </div>
+
+      {noResults && (
+        <p className="text-sm text-muted-foreground">
+          {meta.noResults} “{query.trim()}”.
+        </p>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{meta.tocTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid gap-1 sm:grid-cols-2 text-sm">
+            {WIKI_SECTIONS.map((s) => (
+              <li key={s.id} data-wiki-toc={s.id}>
+                <a href={`#${s.id}`} className="text-primary hover:underline">
+                  {s.title[locale] ?? s.title.en}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      {WIKI_SECTIONS.map((s) => {
+        const Icon = ICONS[s.icon];
+        const title = s.title[locale] ?? s.title.en;
+        const paras = s.paragraphs[locale] ?? s.paragraphs.en;
+        const bullets = s.bullets?.[locale] ?? s.bullets?.en ?? [];
+        const callout = s.callout?.[locale] ?? s.callout?.en;
+
+        return (
+          <SectionCard key={s.id} id={s.id} icon={Icon} title={title}>
+            {s.diagram === "cycle" && (
+              <CycleDiagram
+                salary={diag.salary}
+                today={diag.today}
+                nextSalary={diag.nextSalary}
+                cycle={diag.cycle}
+                caption={diag.cycleCap}
+              />
+            )}
+            {s.diagram === "baseline" && (
+              <BaselineDiagram
+                fixed={diag.fixed}
+                debt={diag.debt}
+                variable={diag.variable}
+                margin={diag.margin}
+                baseline={diag.baseline}
+                caption={diag.baselineCap}
+              />
+            )}
+            {s.diagram === "waterfall" && (
+              <WaterfallDiagram
+                surplus={diag.surplus}
+                realAlloc={diag.realAlloc}
+                realSurplus={diag.realSurplus}
+                caption={diag.waterfallCap}
+              />
+            )}
+            {s.diagram === "ladder" && (
+              <LadderDiagram
+                step1={diag.step1}
+                step2={diag.step2}
+                step3={diag.step3}
+                caption={diag.ladderCap}
+              />
+            )}
+
+            {paras.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+
+            {s.formula && (
+              <pre className="rounded-lg border bg-muted/40 p-3 text-xs text-foreground overflow-x-auto">
+                {s.formula}
+              </pre>
+            )}
+
+            {bullets.length > 0 &&
+              (s.faq ? (
+                <Accordion type="single" collapsible className="w-full">
+                  {bullets.map((b, i) => (
+                    <AccordionItem key={i} value={`q-${i}`}>
+                      <AccordionTrigger className="text-left text-foreground">
+                        {b.label}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground">
+                        {b.body}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : (
+                <ul className="space-y-1.5 pt-1">
+                  {bullets.map((b, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
+                      <span>
+                        <strong className="text-foreground">{b.label}.</strong> {b.body}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+
+            {callout && (
+              <p className="rounded-lg border bg-muted/40 p-3 text-foreground">{callout}</p>
+            )}
+          </SectionCard>
+        );
+      })}
+    </div>
   );
 }
