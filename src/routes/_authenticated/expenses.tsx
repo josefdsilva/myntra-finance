@@ -175,7 +175,14 @@ function ExpensesPage() {
         <p className="text-sm text-muted-foreground">{t("exp.subtitle")}</p>
       </header>
 
-      {householdId && (
+      <Tabs defaultValue="spending">
+        <TabsList className="mb-4">
+          <TabsTrigger value="spending">{t("exp.tabSpending")}</TabsTrigger>
+          <TabsTrigger value="plan">{t("exp.tabPlan")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="spending" className="space-y-6">
+          {householdId && (
         <Card>
           <CardContent className="pt-6">
             <Tabs defaultValue="add">
@@ -205,12 +212,6 @@ function ExpensesPage() {
           </CardContent>
         </Card>
       )}
-
-      {householdId && <SpendingVsEstimate householdId={householdId} />}
-
-      {householdId && <FixedExpensesSection householdId={householdId} />}
-      {householdId && <VariableEstimatesSection householdId={householdId} />}
-
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -329,6 +330,14 @@ function ExpensesPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="plan" className="space-y-6">
+          {householdId && <FixedExpensesSection householdId={householdId} />}
+          {householdId && <VariableEstimatesSection householdId={householdId} />}
+          {householdId && <SpendingVsEstimate householdId={householdId} />}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
