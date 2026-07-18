@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
+import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticated/snapshot'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -69,6 +70,11 @@ const AuthenticatedStatementImportRoute =
     path: '/statement-import',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSnapshotRoute = AuthenticatedSnapshotRouteImport.update({
+  id: '/snapshot',
+  path: '/snapshot',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/snapshot': typeof AuthenticatedSnapshotRoute
   '/_authenticated/statement-import': typeof AuthenticatedStatementImportRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/plan'
     | '/settings'
+    | '/snapshot'
     | '/statement-import'
     | '/wiki'
     | '/invite/$token'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/plan'
     | '/settings'
+    | '/snapshot'
     | '/statement-import'
     | '/wiki'
     | '/invite/$token'
@@ -306,6 +317,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/plan'
     | '/_authenticated/settings'
+    | '/_authenticated/snapshot'
     | '/_authenticated/statement-import'
     | '/_authenticated/wiki'
     | '/invite/$token'
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/statement-import'
       fullPath: '/statement-import'
       preLoaderRoute: typeof AuthenticatedStatementImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/snapshot': {
+      id: '/_authenticated/snapshot'
+      path: '/snapshot'
+      fullPath: '/snapshot'
+      preLoaderRoute: typeof AuthenticatedSnapshotRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -516,6 +535,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSnapshotRoute: typeof AuthenticatedSnapshotRoute
   AuthenticatedStatementImportRoute: typeof AuthenticatedStatementImportRoute
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
 }
@@ -532,6 +552,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSnapshotRoute: AuthenticatedSnapshotRoute,
   AuthenticatedStatementImportRoute: AuthenticatedStatementImportRoute,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
 }
@@ -555,13 +576,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
