@@ -83,6 +83,38 @@ export type Database = {
           },
         ]
       }
+      ai_extraction_cache: {
+        Row: {
+          created_at: string
+          file_hash: string
+          household_id: string
+          id: string
+          result: Json
+        }
+        Insert: {
+          created_at?: string
+          file_hash: string
+          household_id: string
+          id?: string
+          result: Json
+        }
+        Update: {
+          created_at?: string
+          file_hash?: string
+          household_id?: string
+          id?: string
+          result?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_extraction_cache_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analysis_overviews: {
         Row: {
           content: string

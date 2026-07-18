@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createHash } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
@@ -238,8 +239,8 @@ Currency is EUR. Return only debits/expenses (skip incoming credits and transfer
 Always positive amounts. Categorize using one of: ${CATEGORY_LIST}.
 Use the transaction date in ISO 8601 format.
 
-Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
-No prose, no markdown fences.`,
+Respond with minified JSON on a single line, no extra whitespace: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
+Do not repeat the input. No prose, no markdown fences.`,
       messages: userContent,
     });
 
@@ -288,6 +289,23 @@ export const extractStatementTransactions = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const fileHash = createHash("sha256").update(data.file_base64).digest("hex");
+
+    // Reuse a prior extraction of the identical file: free, and deterministic
+    // for a retry after a failed import.
+    if (data.householdId) {
+      const { data: cached } = await context.supabase
+        .from("ai_extraction_cache")
+        .select("result")
+        .eq("household_id", data.householdId)
+        .eq("file_hash", fileHash)
+        .maybeSingle();
+      if (cached?.result) {
+        const hit = ExtractedList.safeParse(cached.result);
+        if (hit.success) return hit.data;
+      }
+    }
+
     const apiKey = requireLovableApiKey();
     const gateway = createLovableAiGatewayProvider(apiKey);
 
@@ -324,9 +342,11 @@ Extract EVERY transaction line. For each one return:
 - "description": the raw merchant or description text, kept verbatim. Do not translate or clean it.
 - "amount": a SIGNED number. NEGATIVE for money leaving the account (debits, purchases, withdrawals, fees, direct debits). POSITIVE for money coming in (salary, credits, refunds, transfers in).
 Rules: include BOTH debits and credits. Do not categorize. Do not summarize or merge lines. Ignore running-balance columns and any header, footer, or summary totals. Use a dot as the decimal separator.
-Respond ONLY with JSON of shape {"items":[{"date":"yyyy-mm-dd","description":string,"amount":number}]}. No prose, no markdown fences.`,
+Respond with minified JSON on a single line, no extra whitespace, of shape {"items":[{"date":"yyyy-mm-dd","description":string,"amount":number}]}. Do not repeat the input. No prose, no markdown fences.`,
       messages,
     });
+
+    const parsed = ExtractedList.parse(extractJson(result.text));
 
     if (data.householdId) {
       const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
@@ -339,9 +359,14 @@ Respond ONLY with JSON of shape {"items":[{"date":"yyyy-mm-dd","description":str
         outputTokens: est.output,
         meta: { file_name: data.file_name, mime_type: data.mime_type },
       });
+      // Cache so a re-upload of the identical file is free.
+      await context.supabase.from("ai_extraction_cache").upsert(
+        { household_id: data.householdId, file_hash: fileHash, result: parsed },
+        { onConflict: "household_id,file_hash" },
+      );
     }
 
-    return ExtractedList.parse(extractJson(result.text));
+    return parsed;
   });
 
 /** Parse a photo of a receipt / bill into one or more expense rows. */
