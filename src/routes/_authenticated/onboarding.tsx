@@ -336,6 +336,8 @@ function useList(table: "incomes" | "fixed_expenses" | "variable_estimates" | "d
 
 function IncomeStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertIncome);
   const { data: items = [] } = useList("incomes", householdId);
   const [label, setLabel] = useState("");
@@ -357,14 +359,14 @@ function IncomeStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Wallet} title="What comes in each month?" subtitle="Add your salary and any other regular income — or deduce it from a bank statement." />
+      <StepHead icon={Wallet} title={t("ob.income.title")} subtitle={t("ob.income.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
-        <span className="ml-2 text-xs text-muted-foreground">or add manually below</span>
+        <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder="e.g. Salary" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input placeholder={t("ob.income.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -376,6 +378,8 @@ function IncomeStep({ householdId }: { householdId: string }) {
 
 function FixedStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertFixedExpense);
   const { data: items = [] } = useList("fixed_expenses", householdId);
   const [label, setLabel] = useState("");
@@ -397,14 +401,14 @@ function FixedStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Home} title="Fixed monthly costs" subtitle="Rent, utilities, subscriptions, insurance — the bills that repeat. (Debts come next.)" />
+      <StepHead icon={Home} title={t("ob.fixed.title")} subtitle={t("ob.fixed.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
-        <span className="ml-2 text-xs text-muted-foreground">or add manually below</span>
+        <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder="e.g. Rent" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input placeholder={t("ob.fixed.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -416,6 +420,8 @@ function FixedStep({ householdId }: { householdId: string }) {
 
 function VariableStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertVariableEstimate);
   const { data: items = [] } = useList("variable_estimates", householdId);
   const [label, setLabel] = useState("");
@@ -437,14 +443,14 @@ function VariableStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Receipt} title="Estimated variable spending" subtitle="Rough monthly averages — groceries, transport, dining. Or deduce them from a statement." />
+      <StepHead icon={Receipt} title={t("ob.variable.title")} subtitle={t("ob.variable.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
-        <span className="ml-2 text-xs text-muted-foreground">or estimate manually below</span>
+        <span className="ml-2 text-xs text-muted-foreground">{t("ob.orEstimateManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder="e.g. Groceries" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input placeholder={t("ob.variable.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -456,6 +462,8 @@ function VariableStep({ householdId }: { householdId: string }) {
 
 function DebtStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
   const add = useServerFn(upsertDebt);
   const { data: items = [] } = useList("debts", householdId);
   const [label, setLabel] = useState("");
@@ -493,15 +501,15 @@ function DebtStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Wallet} title="Any loans or credit?" subtitle="Mortgage, car loan, credit lines. Add the monthly payment; principal, rate and maturity power the payoff tools." />
+      <StepHead icon={Wallet} title={t("ob.debt.title")} subtitle={t("ob.debt.subtitle")} />
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input placeholder="e.g. Mortgage" value={label} onChange={(e) => setLabel(e.target.value)} />
-          <Input className="w-28" inputMode="decimal" placeholder="€/mo" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
+          <Input placeholder={t("ob.debt.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
         </div>
         <div className="flex gap-2">
-          <Input inputMode="decimal" placeholder="Principal €" value={principal} onChange={(e) => setPrincipal(e.target.value)} />
-          <Input className="w-24" inputMode="decimal" placeholder="Rate %" value={rate} onChange={(e) => setRate(e.target.value)} />
+          <Input inputMode="decimal" placeholder={t("ob.debt.principalPh", { sym })} value={principal} onChange={(e) => setPrincipal(e.target.value)} />
+          <Input className="w-24" inputMode="decimal" placeholder={t("ob.debt.ratePh")} value={rate} onChange={(e) => setRate(e.target.value)} />
           <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
           <Button onClick={submit} disabled={saving || !label || !monthly}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
@@ -512,6 +520,7 @@ function DebtStep({ householdId }: { householdId: string }) {
     </div>
   );
 }
+
 
 // ---- Projects / allocations ----------------------------------------------
 
