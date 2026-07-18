@@ -989,6 +989,7 @@ export const chatInConversation = createServerFn({ method: "POST" })
         conversationId: z.string().uuid().nullable().optional(),
         message: z.string().min(1).max(2000),
         locale: z.string().optional(),
+        forceDeep: z.boolean().optional(),
       })
       .parse(input),
   )
