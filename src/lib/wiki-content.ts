@@ -70,6 +70,20 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "toc.baseline": "Baseline & safe-to-spend",
     "toc.expenses": "Expenses & capture",
     "toc.allocations": "Allocations & buckets",
+    "toc.plans": "Planning ahead",
+    "plans.intro":
+      "The Plan page is for money you already know is coming but that is not part of a normal month: a one-off cost like new car tyres in August, a yearly bill like insurance, a change in income such as a raise from September, or heavier spending around Christmas. You line these up ahead of time so no month catches you by surprise.",
+    "plans.h1": "How it works.",
+    "plans.b1":
+      "Each plan has an amount, a month, a direction (money out or money in), and how often it repeats: just once, every year, or every month from a chosen point. Plans never change your baseline, which stays your normal recurring costs. Instead they feed a forward forecast of the months ahead and a timeline, and any big one-off can be turned into a project so you save for it gradually rather than taking the hit in a single month. The forecast flags any month that would run short.",
+    "plans.h2": "When a planned payment comes due.",
+    "plans.b2":
+      "When you actually pay a planned cost, you mark it done and enter what it really cost, which may differ from your estimate. You choose where it is paid from: your unallocated leftover for the month, and only if the cost is larger than that leftover does it dip into your everyday budget; or a project you had been saving into, which is drawn down instead. From that moment it stops being a plan and becomes a settled expense, and because it stays counted for the month, the money does not quietly reappear.",
+    "plans.h3": "When money you expected arrives.",
+    "plans.b3":
+      "A planned receivable, like a bonus or a new income stream, works the same way in reverse. While it is still planned it lifts the forecast for the months it applies to. When it lands you mark it done at the amount you actually received, and it is recorded against that month.",
+    "plans.callout":
+      "In short: a plan is a promise about the future. Until it is paid it shapes what you can safely do; the moment it is paid it becomes real, at the real amount, drawn from the pot you choose.",
     "toc.analysis": "Analysis",
     "toc.settings": "Settings",
     "toc.notifications": "Notifications",
@@ -445,6 +459,20 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "toc.baseline": "Base & seguro-para-gastar",
     "toc.expenses": "Despesas & captura",
     "toc.allocations": "Alocações & reservas",
+    "toc.plans": "Planear o futuro",
+    "plans.intro":
+      "A página de Planos é para dinheiro que já sabe que vem aí mas que não faz parte de um mês normal: um custo único como pneus novos em agosto, uma conta anual como o seguro, uma mudança de rendimento como um aumento a partir de setembro, ou meses mais pesados como o Natal. Organiza estas coisas com antecedência para que nenhum mês o apanhe de surpresa.",
+    "plans.h1": "Como funciona.",
+    "plans.b1":
+      "Cada plano tem um valor, um mês, um sentido (dinheiro a sair ou a entrar) e a frequência com que se repete: só uma vez, todos os anos, ou todos os meses a partir de um ponto escolhido. Os planos nunca alteram a sua base, que continua a ser os seus custos recorrentes normais. Em vez disso, alimentam uma previsão dos próximos meses e uma linha do tempo, e qualquer grande custo único pode ser transformado num projeto para poupar aos poucos, em vez de pesar tudo num só mês. A previsão assinala qualquer mês que fique curto.",
+    "plans.h2": "Quando um pagamento planeado se vence.",
+    "plans.b2":
+      "Quando paga de facto um custo planeado, marca-o como concluído e indica quanto custou realmente, que pode diferir da sua estimativa. Escolhe de onde é pago: da sua sobra não aplicada do mês, e só se o custo for maior do que essa sobra é que entra no seu orçamento do dia a dia; ou de um projeto para o qual estava a poupar, que é então reduzido. A partir desse momento deixa de ser um plano e passa a ser uma despesa concretizada e, como continua a ser contado no mês, o dinheiro não volta a aparecer sem se dar conta.",
+    "plans.h3": "Quando chega dinheiro que esperava.",
+    "plans.b3":
+      "Um recebimento planeado, como um prémio ou uma nova fonte de rendimento, funciona da mesma forma ao contrário. Enquanto está planeado, eleva a previsão dos meses a que se aplica. Quando chega, marca-o como concluído com o valor que recebeu de facto, e fica registado nesse mês.",
+    "plans.callout":
+      "Em resumo: um plano é uma promessa sobre o futuro. Até ser pago, molda o que pode fazer com segurança; no momento em que é pago torna-se real, pelo valor real, retirado do bolso que escolher.",
     "toc.analysis": "Análise",
     "toc.settings": "Definições",
     "toc.notifications": "Notificações",
@@ -777,6 +805,20 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "toc.baseline": "Base & seguro para gastar",
     "toc.expenses": "Gastos & captura",
     "toc.allocations": "Asignaciones & reservas",
+    "toc.plans": "Planificar el futuro",
+    "plans.intro":
+      "La página de Planes es para dinero que ya sabes que llegará pero que no forma parte de un mes normal: un gasto puntual como neumáticos nuevos en agosto, una factura anual como el seguro, un cambio de ingresos como una subida a partir de septiembre, o meses más cargados como Navidad. Organizas estas cosas con antelación para que ningún mes te pille por sorpresa.",
+    "plans.h1": "Cómo funciona.",
+    "plans.b1":
+      "Cada plan tiene un importe, un mes, un sentido (dinero que sale o que entra) y con qué frecuencia se repite: solo una vez, cada año, o cada mes a partir de un punto elegido. Los planes nunca cambian tu base, que sigue siendo tus costes recurrentes normales. En su lugar, alimentan una previsión de los próximos meses y una cronología, y cualquier gasto puntual grande puede convertirse en un proyecto para ahorrar poco a poco en vez de que recaiga todo en un solo mes. La previsión señala cualquier mes que se quede corto.",
+    "plans.h2": "Cuando vence un pago planificado.",
+    "plans.b2":
+      "Cuando pagas de verdad un coste planificado, lo marcas como hecho e indicas cuánto costó realmente, que puede diferir de tu estimación. Eliges de dónde se paga: de tu sobrante sin asignar del mes, y solo si el coste es mayor que ese sobrante entra en tu presupuesto diario; o de un proyecto en el que habías estado ahorrando, que se reduce en su lugar. Desde ese momento deja de ser un plan y pasa a ser un gasto realizado y, como sigue contando en el mes, el dinero no reaparece sin que te des cuenta.",
+    "plans.h3": "Cuando llega dinero que esperabas.",
+    "plans.b3":
+      "Un ingreso planificado, como una bonificación o una nueva fuente de ingresos, funciona igual pero a la inversa. Mientras está planificado, eleva la previsión de los meses a los que se aplica. Cuando llega, lo marcas como hecho con el importe que realmente recibiste, y queda registrado en ese mes.",
+    "plans.callout":
+      "En resumen: un plan es una promesa sobre el futuro. Hasta que se paga, moldea lo que puedes hacer con seguridad; en el momento en que se paga se vuelve real, por el importe real, sacado del bolsillo que elijas.",
     "toc.analysis": "Análisis",
     "toc.settings": "Ajustes",
     "toc.notifications": "Notificaciones",
@@ -1109,6 +1151,20 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "toc.baseline": "Basis & sicher ausgeben",
     "toc.expenses": "Ausgaben & Erfassung",
     "toc.allocations": "Zuweisungen & Töpfe",
+    "toc.plans": "Vorausplanen",
+    "plans.intro":
+      "Die Plan-Seite ist für Geld, von dem du schon weißt, dass es kommt, das aber nicht zu einem normalen Monat gehört: eine einmalige Ausgabe wie neue Autoreifen im August, eine jährliche Rechnung wie die Versicherung, eine Einkommensänderung wie eine Gehaltserhöhung ab September oder teurere Monate wie Weihnachten. Du stellst das im Voraus zusammen, damit dich kein Monat überrascht.",
+    "plans.h1": "So funktioniert es.",
+    "plans.b1":
+      "Jeder Plan hat einen Betrag, einen Monat, eine Richtung (Geld raus oder rein) und wie oft er sich wiederholt: nur einmal, jedes Jahr oder ab einem gewählten Zeitpunkt jeden Monat. Pläne ändern nie deine Basis, die deine normalen wiederkehrenden Kosten bleibt. Stattdessen speisen sie eine Vorschau der kommenden Monate und eine Zeitleiste, und jede große Einmalausgabe lässt sich in ein Projekt verwandeln, um nach und nach zu sparen, statt alles in einem Monat zu tragen. Die Vorschau markiert jeden Monat, der knapp wird.",
+    "plans.h2": "Wenn eine geplante Zahlung fällig wird.",
+    "plans.b2":
+      "Wenn du eine geplante Ausgabe tatsächlich bezahlst, markierst du sie als erledigt und trägst ein, was sie wirklich gekostet hat, was von deiner Schätzung abweichen kann. Du wählst, woraus sie bezahlt wird: aus deinem nicht zugewiesenen Rest des Monats, und nur wenn die Ausgabe größer ist als dieser Rest, greift sie in dein Alltagsbudget; oder aus einem Projekt, in das du gespart hast und das dann verringert wird. Ab diesem Moment ist es kein Plan mehr, sondern eine abgeschlossene Ausgabe, und weil sie für den Monat gezählt bleibt, taucht das Geld nicht heimlich wieder auf.",
+    "plans.h3": "Wenn erwartetes Geld eintrifft.",
+    "plans.b3":
+      "Eine geplante Einnahme, etwa ein Bonus oder eine neue Einkommensquelle, funktioniert genauso, nur umgekehrt. Solange sie geplant ist, hebt sie die Vorschau für die betroffenen Monate an. Wenn sie eintrifft, markierst du sie mit dem tatsächlich erhaltenen Betrag als erledigt, und sie wird diesem Monat zugerechnet.",
+    "plans.callout":
+      "Kurz gesagt: Ein Plan ist ein Versprechen über die Zukunft. Bis er bezahlt ist, prägt er, was du dir sicher leisten kannst; sobald er bezahlt ist, wird er real, zum echten Betrag, aus dem von dir gewählten Topf.",
     "toc.analysis": "Analyse",
     "toc.settings": "Einstellungen",
     "toc.notifications": "Benachrichtigungen",
@@ -1448,6 +1504,20 @@ export const WIKI_STRINGS: Record<Locale, Record<string, string>> = {
     "toc.baseline": "Base & sécurisé à dépenser",
     "toc.expenses": "Dépenses & saisie",
     "toc.allocations": "Allocations & réserves",
+    "toc.plans": "Anticiper",
+    "plans.intro":
+      "La page Plans concerne l'argent dont vous savez déjà qu'il arrive mais qui ne fait pas partie d'un mois normal : une dépense ponctuelle comme des pneus neufs en août, une facture annuelle comme l'assurance, un changement de revenu comme une augmentation à partir de septembre, ou des mois plus chargés comme Noël. Vous organisez tout cela à l'avance pour qu'aucun mois ne vous surprenne.",
+    "plans.h1": "Comment ça marche.",
+    "plans.b1":
+      "Chaque plan a un montant, un mois, un sens (argent qui sort ou qui entre) et une fréquence : une seule fois, chaque année, ou chaque mois à partir d'un point choisi. Les plans ne changent jamais votre base, qui reste vos coûts récurrents habituels. Ils alimentent plutôt une prévision des mois à venir et une chronologie, et toute grosse dépense ponctuelle peut devenir un projet pour épargner petit à petit au lieu de tout supporter en un seul mois. La prévision signale tout mois qui serait à court.",
+    "plans.h2": "Quand un paiement prévu arrive à échéance.",
+    "plans.b2":
+      "Quand vous payez réellement un coût prévu, vous le marquez comme réglé et saisissez ce qu'il a vraiment coûté, ce qui peut différer de votre estimation. Vous choisissez d'où il est payé : de votre reste non affecté du mois, et ce n'est que si le coût dépasse ce reste qu'il entame votre budget du quotidien ; ou d'un projet dans lequel vous épargniez, qui est alors réduit. À partir de ce moment, ce n'est plus un plan mais une dépense réglée, et comme elle reste comptée pour le mois, l'argent ne réapparaît pas discrètement.",
+    "plans.h3": "Quand l'argent attendu arrive.",
+    "plans.b3":
+      "Une recette prévue, comme une prime ou une nouvelle source de revenu, fonctionne de la même façon à l'envers. Tant qu'elle est prévue, elle relève la prévision des mois concernés. Quand elle arrive, vous la marquez comme réglée au montant réellement reçu, et elle est enregistrée sur ce mois.",
+    "plans.callout":
+      "En bref : un plan est une promesse sur l'avenir. Jusqu'à son paiement, il façonne ce que vous pouvez faire en sécurité ; au moment où il est payé, il devient réel, au montant réel, prélevé sur la poche que vous choisissez.",
     "toc.analysis": "Analyse",
     "toc.settings": "Paramètres",
     "toc.notifications": "Notifications",

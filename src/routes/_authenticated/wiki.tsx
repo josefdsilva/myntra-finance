@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   Calendar,
+  CalendarClock,
   Wallet,
   Receipt,
   PiggyBank,
@@ -127,6 +128,7 @@ function WikiPage() {
     { id: "baseline", label: w("toc.baseline") },
     { id: "expenses", label: w("toc.expenses") },
     { id: "allocations", label: w("toc.allocations") },
+    { id: "plans", label: w("toc.plans") },
     { id: "glossary", label: w("toc.glossary") },
     { id: "principles", label: w("toc.principles") },
     { id: "analysis", label: w("toc.analysis") },
@@ -477,6 +479,20 @@ safe_today    = remaining / days_left_in_cycle`}
             <li>{w("allocations.li3")}</li>
           </ul>
           <p>{w("allocations.p2")}</p>
+        </Section>
+
+        <Section id="plans" icon={CalendarClock} title={w("toc.plans")}>
+          <p>{w("plans.intro")}</p>
+          <p>
+            <strong>{w("plans.h1")}</strong> {w("plans.b1")}
+          </p>
+          <p>
+            <strong>{w("plans.h2")}</strong> {w("plans.b2")}
+          </p>
+          <p>
+            <strong>{w("plans.h3")}</strong> {w("plans.b3")}
+          </p>
+          <p className="rounded-lg bg-muted/50 p-3 text-sm">{w("plans.callout")}</p>
         </Section>
 
         <Section id="glossary" icon={Calculator} title={w("toc.glossary")}>

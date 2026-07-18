@@ -11,6 +11,7 @@ import {
   upsertDebt,
   upsertBucket,
 } from "@/lib/budget.functions";
+import { upsertPlan } from "@/lib/plan.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,20 @@ import {
 } from "@/components/ui/select";
 import { StatementImportButton } from "@/components/statement-import-flow";
 import { money } from "@/lib/format";
-import { Plus, Loader2, Check, PiggyBank, Wallet, Receipt, Home, Users, Sparkles } from "lucide-react";
+import {
+  Plus,
+  Loader2,
+  Check,
+  PiggyBank,
+  Wallet,
+  Receipt,
+  Home,
+  Users,
+  Sparkles,
+  CalendarClock,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -55,6 +69,7 @@ const STEPS = [
   "variable",
   "debt",
   "projects",
+  "plans",
 ] as const;
 
 function OnboardingPage() {
@@ -146,6 +161,7 @@ function Wizard({ householdId, initialCountry }: { householdId: string; initialC
           {key === "variable" && <VariableStep householdId={householdId} />}
           {key === "debt" && <DebtStep householdId={householdId} />}
           {key === "projects" && <ProjectsStep householdId={householdId} />}
+          {key === "plans" && <PlansStep householdId={householdId} />}
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-2">
@@ -617,6 +633,118 @@ function ProjectsStep({ householdId }: { householdId: string }) {
           {data!.buckets.map((b) => (
             <li key={b.id} className="flex items-center gap-2 px-4 py-2 text-sm">
               <PiggyBank className="size-4 text-muted-foreground" /> {b.name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ---- Plans (future costs / income the user already knows about) -----------
+
+function PlansStep({ householdId }: { householdId: string }) {
+  const qc = useQueryClient();
+  const add = useServerFn(upsertPlan);
+  const { data: plans = [] } = useQuery({
+    queryKey: ["ob-plans", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("plans")
+        .select("id, label, amount, direction, month")
+        .eq("household_id", householdId)
+        .order("month");
+      return data ?? [];
+    },
+  });
+
+  const [label, setLabel] = useState("");
+  const [amount, setAmount] = useState("");
+  const [direction, setDirection] = useState<"spend" | "income">("spend");
+  const [month, setMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [recurrence, setRecurrence] = useState<"one_off" | "annual" | "ongoing">("one_off");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!label || !amount) return;
+    setSaving(true);
+    try {
+      await add({
+        data: {
+          household_id: householdId,
+          label,
+          amount: parseFloat(amount) || 0,
+          direction,
+          month: `${month}-01`,
+          recurrence,
+        },
+      });
+      setLabel("");
+      setAmount("");
+      qc.invalidateQueries({ queryKey: ["ob-plans", householdId] });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <StepHead
+        icon={CalendarClock}
+        title="Anything coming up in the next months?"
+        subtitle="Known one-off costs (car tyres, insurance), a change in income, or heavier months like Christmas. Optional — skip and add these later on the Plan page."
+      />
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Input placeholder="e.g. Car insurance" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input className="w-28" inputMode="decimal" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Select value={direction} onValueChange={(v) => setDirection(v as typeof direction)}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="spend">Spending</SelectItem>
+              <SelectItem value="income">Income</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input type="month" className="w-40" value={month} onChange={(e) => setMonth(e.target.value)} />
+          <Select value={recurrence} onValueChange={(v) => setRecurrence(v as typeof recurrence)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="one_off">Just once</SelectItem>
+              <SelectItem value="annual">Every year</SelectItem>
+              <SelectItem value="ongoing">Every month from then</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={submit} disabled={saving || !label || !amount}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {plans.length > 0 && (
+        <ul className="mt-4 divide-y rounded-xl border">
+          {plans.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
+              <span className="flex min-w-0 items-center gap-2">
+                {p.direction === "income" ? (
+                  <TrendingUp className="size-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <TrendingDown className="size-4 text-muted-foreground shrink-0" />
+                )}
+                <span className="truncate">{p.label}</span>
+              </span>
+              <span className="tabular-nums font-medium shrink-0">
+                {p.direction === "income" ? "+" : ""}
+                {money(Number(p.amount))} · {String(p.month).slice(0, 7)}
+              </span>
             </li>
           ))}
         </ul>
