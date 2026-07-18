@@ -1,51 +1,90 @@
-# Foundation cleanup — no functional changes
+# Next batch: retention, smarter coach, shareable snapshot
 
-Goal: prepare the codebase for upcoming features (multi-household, paywall, richer coach) by paying down debt without touching user-visible behaviour. Every change is verified against build + typecheck; behaviour stays byte-identical.
+Three tracks based on the earlier suggestions you approved: **(1) Trust & retention**, **(5) AI coach cost/value**, **(7) Shareable snapshot**. Delivered in that order so each ships independently.
 
-## What I found
+---
 
-- **1,505 auto-fixable Prettier violations** across almost every file (mixed formatting, unbroken JSX props). Nothing behavioural — pure formatting drift.
-- **~10 real lint errors**: `any` types in `coach.functions.ts`, `analysis.tsx`, `settings.tsx`. All easy to type properly against `Database` types.
-- **~6 real lint warnings**: hook-dependency issues (`expenses.tsx` `allExpenses` in `useMemo`, `settings.tsx` `useEffect` deps), `react-refresh/only-export-components` (minor).
-- **No dead files** at module level — everything under `src/lib`, `src/components`, `src/routes` is referenced. `src/routes/README.md` is a doc, keep.
-- **Duplicate patterns worth extracting** (each used 3+ times, currently copy-pasted):
-  - Household-membership check (`select user_id from household_members where …`) in every protected server fn.
-  - `rowsOrEmpty<T>(rows)` cast helper (currently inlined in `settings.tsx`).
-  - Cycle-bounds computation is already in `src/lib/cycle.ts` but a few callers redo it inline.
-- **`coach.functions.ts`** — `buildContext` is 100 lines, mixes 6 Supabase queries with aggregation. Refactor into a typed helper for readability + reuse by the upcoming "improved coach".
-- **TypeScript strictness**: typecheck is already clean, but explicit `any`s hide the shape of DB rows from future edits.
-- **Console noise**: only server-side `console.error` on real failure paths — fine, leave.
-- **TODOs**: none.
+## Track 1 — Trust & retention
 
-## Plan (small, isolated commits' worth of work — one turn)
+### 1a. Guided onboarding tour (post beta-code)
+A 3-step overlay that runs once after a new user redeems a code and lands on the dashboard. Uses existing routes, no new tables.
 
-1. **Prettier pass** — run `bunx eslint --fix` on `src/**/*.{ts,tsx}` to normalise formatting across the tree. Pure whitespace/line-break changes. Verified by re-running lint + typecheck.
-2. **Kill real `any` usages** (functional code only, not `routeTree.gen.ts`):
-   - `src/lib/coach.functions.ts`: introduce a `Supa` type alias (`SupabaseClient<Database>`) and typed row shapes for the 6 queries in `buildContext`.
-   - `src/routes/_authenticated/analysis.tsx`: type the Recharts `BurnTooltip` props via `TooltipProps` and the buckets reducer via generated types.
-   - `src/routes/_authenticated/settings.tsx`: type `BucketRow` props against `Database["public"]["Tables"]["buckets"]["Row"]`.
-3. **Fix real hook warnings** without changing behaviour:
-   - `expenses.tsx`: memoise `allExpenses` so downstream `useMemo`s have a stable dep.
-   - `settings.tsx`: stabilise the offending `useEffect` with `useCallback`/dep list — same debounced-save behaviour, no re-fires.
-4. **Extract 2 tiny shared helpers** (no new abstractions, only where already duplicated):
-   - `src/lib/household-guard.server.ts` → `assertHouseholdMember(supabase, householdId, userId)` throws `Not a member` — replaces 6 inlined copies across `coach`, `privacy`, `bucket-allocations`, `budget`, `household`, `push` server fns.
-   - `src/lib/query-utils.ts` → `rowsOrEmpty<T>(rows: T[] | null | undefined): T[]` — replaces the ad-hoc helper in `settings.tsx` and 4 similar inline casts.
-5. **Docs**: add a short `AGENTS.md` note under "Conventions" pointing future work at these helpers so we don't re-introduce the duplication.
+Steps:
+1. **Add your income** → highlights "Money In" nav, CTA opens the page.
+2. **Add your fixed costs & loans** → highlights Settings > Fixed expenses / Loans.
+3. **Create your first project (bucket)** → highlights Allocations / Plans.
 
-Explicitly **not** in scope this turn (call them out for later):
-- Splitting large route files (`allocations.tsx` 627 LOC, `settings.tsx` 716 LOC, `dashboard.tsx` 476 LOC) — worth doing before the multi-household work, but is a bigger visual-diff PR and easier to review on its own turn.
-- Multi-household context provider — belongs with the actual feature.
-- Paywall/billing scaffolding — needs product decisions first.
-- Coach v2 refactor — will build on the typed `buildContext` from step 2.
+Progress persisted in `localStorage` (`bynku:onboarding:v1`) + a "Skip tour" option. Fully localized (EN/PT/ES/DE/FR).
 
-## Verification
+### 1b. Contextual empty states
+Currently Dashboard / Plans / Loans / Allocations show empty cards silently when nothing is configured. Replace with friendly empty-state components:
+- Icon + one-line explanation of *why* this screen matters
+- Primary CTA that jumps to the right setup screen
+- Uses existing `dashboard-tips` tone so it feels consistent
 
-After the pass I'll run `tsgo --noEmit` and `eslint` and report: 0 typecheck errors, 0 real lint errors (only the unavoidable `react-refresh/only-export-components` warnings in route files where TanStack requires `Route` + `component` to coexist).
+### 1c. Weekly digest email (activate the scaffolded webhook)
+The route `src/routes/api/public/hooks/weekly-digest.ts` already exists but isn't wired to a proper template. Deliverable:
+- React Email template `src/lib/email-templates/weekly-digest.tsx` — surplus this week, top spending category, one tip pulled from `dashboard-tips` logic
+- Send once per week per household to the owner's email (opt-in via existing `notification_prefs`)
+- pg_cron entry that hits the public webhook every Monday 08:00 in household timezone (fallback UTC)
+
+---
+
+## Track 5 — Smarter, cheaper AI coach
+
+### 5a. Proactive weekly insight
+Once per week, a background job (same cron as digest) calls a lightweight server function that:
+- Loads the household snapshot (surplus, top category, unusual spending vs benchmark)
+- Generates 1 short coach message using `openai/gpt-5.5` with a strict 120-token cap
+- Inserts it into `coach_messages` with `role='assistant'` and a new `kind='weekly_insight'` column so the dock shows a subtle "New from coach" indicator
+
+Cost control: 1 call/household/week, capped at ~200 tokens total.
+
+### 5b. Quick-answer tier
+Split the coach into two paths in `src/lib/coach.functions.ts`:
+- **Quick**: factual/UI questions (< ~30 tokens input, no household context needed). Uses `google/gemini-2.5-flash` with no history, no household payload. ~10× cheaper.
+- **Deep** (current behavior): full context + memory window, used for advice.
+
+Routing heuristic: if the user message matches a small regex/keyword set (what is, how do I, where is, explain) AND is < 200 chars → Quick. Otherwise Deep. Add a "Deep think" toggle in the coach dock to force Deep.
+
+---
+
+## Track 7 — Shareable financial health snapshot
+
+A privacy-safe PNG the user can share on social — **no absolute numbers, only badges & relative scores**.
+
+### What's on it
+- Bynku logo + "My financial health"
+- Overall health score (0–100), computed from:
+  - Emergency fund ratio (fund / monthly fixed costs)
+  - Debt-to-income ratio
+  - Savings rate (surplus / income)
+  - Budget adherence (spent vs estimate)
+- 3–4 badges earned: `Emergency Ready`, `Debt Slayer`, `Budget Hero`, `Consistent Saver`, `Investing`
+- Month label ("July 2026") — no €, no household name
+
+### How it's rendered
+- New route `/_authenticated/snapshot` shows a preview card + "Download PNG" / "Share" buttons
+- Client-side rendering via `html-to-image` (already a small dep, or add it) — no server, no OG image needed
+- Web Share API on mobile with fallback to download
+
+### Where it's promoted
+- Small "Share your progress" button on Dashboard when health score ≥ 60
+- Dismissable
+
+---
+
+## Delivery order & rough scope
+1. Empty states (small, quick win)
+2. Onboarding tour
+3. Snapshot page (self-contained, satisfying)
+4. Weekly digest email (needs cron + template)
+5. Quick/Deep coach split
+6. Proactive weekly insight (needs same cron + new column)
 
 ## Technical notes
-
-- No migrations, no schema changes, no route additions/removals.
-- No package installs.
-- `routeTree.gen.ts` is left untouched (auto-generated).
-- Server-function public signatures unchanged → client callers untouched.
-- I18n dictionary untouched (no new strings).
+- One migration adds `coach_messages.kind text default 'chat'` and a `weekly_insights_sent` timestamp on `households`
+- No schema changes for tracks 1a/1b/7
+- Weekly digest cron uses the existing `project--{id}.lovable.app` stable URL calling the public webhook with a shared secret header
+- All new user-facing strings added to the 5 locale files
+- No new secrets required — reuses `LOVABLE_API_KEY` and email infra already set up
