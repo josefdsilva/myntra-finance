@@ -95,6 +95,7 @@ function OnboardingPage() {
 function Wizard({ householdId, initialCountry }: { householdId: string; initialCountry: string }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const t = useT();
   const updateHh = useServerFn(updateHousehold);
   const finishFn = useServerFn(completeOnboarding);
 
@@ -168,28 +169,29 @@ function Wizard({ householdId, initialCountry }: { householdId: string; initialC
 
         <div className="mt-8 flex items-center justify-between gap-2">
           <Button variant="ghost" onClick={back} disabled={step === 0 || busy}>
-            Back
+            {t("ob.back")}
           </Button>
           <div className="flex items-center gap-2">
             {key !== "welcome" && (
               <Button variant="ghost" onClick={skip} disabled={busy}>
-                Skip
+                {t("ob.skip")}
               </Button>
             )}
             <Button onClick={next} disabled={busy}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {key === "welcome" ? "Get started" : isLast ? "Finish" : "Continue"}
+              {key === "welcome" ? t("ob.getStarted") : isLast ? t("ob.finish") : t("ob.continue")}
             </Button>
           </div>
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          You can skip anything and change it later in Settings.
+          {t("ob.skipHint")}
         </p>
       </div>
     </div>
   );
 }
+
 
 // ---- Step chrome ----------------------------------------------------------
 
