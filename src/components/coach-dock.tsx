@@ -155,7 +155,7 @@ export function CoachDock() {
       const base = hasUser ? p : [...p, { role: "user" as const, content: message }];
       return [...base, { role: "assistant" as const, content: "…" }];
     });
-    chatMut.mutate({ message, conversationId: currentConvId });
+    chatMut.mutate({ message, conversationId: currentConvId, forceDeep: deepThink });
   }
 
   async function send() {
