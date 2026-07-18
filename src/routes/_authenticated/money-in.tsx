@@ -42,11 +42,19 @@ function IncomeHistorySection({ householdId }: { householdId: string }) {
   const { data: rows } = useQuery({
     queryKey: ["income-history", householdId],
     queryFn: async () => {
+      const { data: incomes, error: incErr } = await supabase
+        .from("incomes")
+        .select("label")
+        .eq("household_id", householdId);
+      if (incErr) throw incErr;
+      const labels = (incomes ?? []).map((i) => i.label).filter(Boolean);
+      if (labels.length === 0) return [];
       const { data, error } = await supabase
         .from("expenses")
         .select("id, amount, occurred_at, merchant, note, category")
         .eq("household_id", householdId)
         .eq("kind", "income")
+        .in("merchant", labels)
         .order("occurred_at", { ascending: false })
         .limit(200);
       if (error) throw error;
