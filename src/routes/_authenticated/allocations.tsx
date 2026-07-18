@@ -257,9 +257,13 @@ function AllocationsPage() {
         </CardHeader>
         <CardContent>
           {!data?.buckets?.length ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              {t("alloc.thisMonth.empty")}
-            </p>
+            <EmptyState
+              icon={PiggyBank}
+              title={t("alloc.thisMonth.empty")}
+              description={t("alloc.thisMonth.desc")}
+              ctaLabel={t("emptyState.tryCta")}
+              ctaTo="/settings"
+            />
           ) : (
             <div className="space-y-4">
               {surplus > 0 && (
