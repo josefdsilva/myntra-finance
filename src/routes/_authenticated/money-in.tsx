@@ -51,14 +51,20 @@ function IncomeHistorySection({ householdId }: { householdId: string }) {
       if (labels.length === 0) return [];
       const { data, error } = await supabase
         .from("expenses")
-        .select("id, amount, occurred_at, merchant, note, category")
+        .select("id, amount, occurred_at, merchant, note, category, is_salary")
         .eq("household_id", householdId)
         .eq("kind", "income")
-        .in("merchant", labels)
         .order("occurred_at", { ascending: false })
-        .limit(200);
+        .limit(500);
       if (error) throw error;
-      return data ?? [];
+      const labelSet = new Set(labels.map((l) => l.toLowerCase()));
+      return (data ?? [])
+        .filter(
+          (r) =>
+            r.is_salary ||
+            (r.merchant && labelSet.has(r.merchant.toLowerCase())),
+        )
+        .slice(0, 200);
     },
   });
 
