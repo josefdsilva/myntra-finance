@@ -34,6 +34,7 @@ import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.function
 import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
