@@ -29,6 +29,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { sendWebPush } = await import("@/lib/webpush.server");
+        const { enqueueTemplateEmail } = await import("@/lib/email/send.server");
 
         const { data: prefs } = await supabaseAdmin
           .from("notification_prefs" as never)
@@ -206,13 +207,56 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             }
           }
 
+          // Enqueue weekly digest email if we can resolve the user's email
+          let emailQueued = false
+          try {
+            const { data: userInfo } = await supabaseAdmin.auth.admin.getUserById(p.user_id)
+            const recipient = userInfo?.user?.email
+            if (recipient) {
+              const { data: hhName } = await supabaseAdmin
+                .from("households")
+                .select("name")
+                .eq("id", hhId)
+                .single()
+              const weekKey = weekStart.toISOString().slice(0, 10)
+              const r = await enqueueTemplateEmail({
+                templateName: "weekly-digest",
+                recipientEmail: recipient,
+                idempotencyKey: `weekly:${p.user_id}:${weekKey}`,
+                templateData: {
+                  siteName: "bynku",
+                  appUrl: "https://bynku.app",
+                  householdName: hhName?.name ?? undefined,
+                  spentLast: Math.round(spentLast),
+                  spentPrev: Math.round(spentPrev),
+                  receivedLast: Math.round(receivedLast),
+                  variablePool: Math.round(variablePool),
+                  surplus: Math.round(surplus),
+                  topSpent: topSpent.map((x) => ({
+                    label: x.merchant || x.note || x.category || "—",
+                    amount: Math.round(Number(x.amount)),
+                  })),
+                  topReceived: topReceived.map((x) => ({
+                    label: x.merchant || x.note || x.category || "—",
+                    amount: Math.round(Number(x.amount)),
+                  })),
+                  aiOutlook: aiText || undefined,
+                  currency: "EUR",
+                },
+              })
+              emailQueued = r.ok
+            }
+          } catch (e) {
+            console.error("weekly-digest email enqueue failed", e)
+          }
+
           await supabaseAdmin.from("notification_log" as never).insert({
             user_id: p.user_id,
             kind: "weekly_digest",
             payload_hash: `weekly:${weekStart.toISOString().slice(0, 10)}`,
           } as never);
 
-          details.push({ user_id: p.user_id, devices: list.length, spentLast, receivedLast });
+          details.push({ user_id: p.user_id, devices: list.length, spentLast, receivedLast, emailQueued });
         }
 
         return Response.json({ sent, details });
