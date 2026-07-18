@@ -216,7 +216,7 @@ function SnapshotPage() {
               scores={health.scores}
               badges={health.badges}
               monthLabel={monthLabel}
-              t={t}
+              t={t as unknown as (key: string, vars?: Record<string, string | number>) => string}
             />
           )}
         </div>
