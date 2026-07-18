@@ -148,17 +148,21 @@ export function DebtsSection({
                 .slice(0, 3);
               return (
                 <li key={debt.id} className="rounded-lg border p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <Wallet className="size-4 text-muted-foreground shrink-0" />
                       <span className="font-medium truncate">{debt.label}</span>
                       {debt.taeg_pct != null && (
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="text-[10px] shrink-0">
                           {t("debt.apr", { pct: Number(debt.taeg_pct).toFixed(2) })}
                         </Badge>
                       )}
                     </div>
-                    <Button size="sm" onClick={() => setPayDebt(debt)}>
+                    <Button
+                      size="sm"
+                      className="w-full sm:w-auto shrink-0"
+                      onClick={() => setPayDebt(debt)}
+                    >
                       {t("debt.makePayment")}
                     </Button>
                   </div>
