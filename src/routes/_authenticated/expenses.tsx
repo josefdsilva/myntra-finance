@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
+import { SpendingVsEstimate } from "@/components/spending-vs-estimate";
 import {
   Select,
   SelectTrigger,
@@ -198,6 +199,8 @@ function ExpensesPage() {
           }}
         />
       )}
+
+      {householdId && <SpendingVsEstimate householdId={householdId} />}
 
       <Card>
         <CardHeader>

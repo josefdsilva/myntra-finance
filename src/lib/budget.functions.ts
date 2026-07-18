@@ -284,6 +284,41 @@ export const deleteVariableEstimate = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Set the estimate for a whole category to a figure the user chose (their actual
+ * spend this cycle). Replaces every estimate row for that category with a single
+ * one, so the category's estimate becomes exactly the adopted amount. This is the
+ * "learn from reality" action behind the estimate-vs-actual view.
+ */
+export const adoptCategoryEstimate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        household_id: z.string().uuid(),
+        category: z.string().min(1).max(50),
+        label: z.string().min(1).max(80),
+        monthly_amount: z.number().min(0).max(10_000_000),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const sb = context.supabase;
+    await sb
+      .from("variable_estimates")
+      .delete()
+      .eq("household_id", data.household_id)
+      .eq("category", data.category);
+    const { error } = await sb.from("variable_estimates").insert({
+      household_id: data.household_id,
+      label: data.label,
+      category: data.category,
+      monthly_amount: data.monthly_amount,
+    });
+    if (error) throw error;
+    return { ok: true };
+  });
+
 // ---- Buckets ----
 export const upsertBucket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
