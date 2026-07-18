@@ -13,7 +13,22 @@ import { buildForecast, monthKey, type Plan } from "./plan";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
+const QUICK_MODEL = "google/gemini-2.5-flash-lite";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+/**
+ * Routes short factual/UI questions to a cheaper model with no household
+ * snapshot and no chat history. Deep advice questions still hit the full
+ * context path so recommendations stay grounded in the household's numbers.
+ */
+function isQuickQuestion(msg: string): boolean {
+  if (msg.length > 200) return false;
+  const t = msg.trim().toLowerCase();
+  // Common factual / UI / definition patterns across EN + a few PT/ES/FR/DE cues.
+  return /^(what is|what's|whats|how do i|how can i|how to|where is|where do i|where can i|explain|define|tell me about|show me|can you show|is there|does bynku|what does|meaning of|o que é|o que e|como faço|como posso|onde|qué es|que es|cómo|como|où|comment|was ist|wie)\b/.test(
+    t,
+  );
+}
 
 // Narrow row shapes used only to aggregate the coach snapshot. Kept local so a
 // schema tweak on unrelated columns doesn't force this file to change.
