@@ -338,7 +338,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Fragment>
           ))}
         </nav>
-        <div className="p-3 border-t hidden md:block space-y-1">
+        <div className="p-3 border-t space-y-1">
           <Button
             variant="ghost"
             className="w-full justify-start"
