@@ -3411,7 +3411,7 @@ const de: Record<MessageKey, string> = {
   "nav.dashboard": "Übersicht",
   "nav.moneyIn": "Einnahmen",
   "moneyIn.title": "Einnahmen",
-  "moneyIn.subtitle": "Alles, was monatlich reinkommt, und woher es kommt.",
+  "moneyIn.subtitle": "Erfasse hier nur wiederkehrende Einnahmen, auf die du dich jeden Zyklus verlassen kannst — Gehalt, Renten, Mieteinnahmen, regelmäßige Zuwendungen. Einmalige Eingänge wie Geschenke, Rückerstattungen oder Boni gehören nicht hierher; buche sie stattdessen als erhaltenes Geld auf der Ausgabenseite.",
   "nav.expenses": "Ausgaben",
   "nav.analysis": "Analyse",
   "nav.allocations": "Sparen & Anlegen",
