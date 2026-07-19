@@ -286,6 +286,18 @@ export function DebtsSection({
           onOpenChange={setMoveOpen}
         />
       )}
+      {showSimulator && (
+        <Dialog open={simOpen} onOpenChange={setSimOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t("payoff.openButton")}</DialogTitle>
+              <DialogDescription>{t("payoff.subtitle")}</DialogDescription>
+            </DialogHeader>
+            <PayoffSimulator householdId={householdId} />
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
+
   );
 }
