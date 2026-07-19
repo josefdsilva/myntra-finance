@@ -4,6 +4,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { pickProvider, isGoCardlessConfigured } from "./bank/providers";
 
 /**
+ * Public callback URL that GoCardless redirects back to after the user
+ * consents. Uses the stable published domain by default; can be overridden
+ * with APP_BASE_URL (e.g. for staging / preview). The callback then bounces
+ * the browser back to /settings?bank_linked=<connectionId>.
+ */
+function appBaseUrl(): string {
+  const raw = process.env.APP_BASE_URL?.trim();
+  if (raw) return raw.replace(/\/+$/, "");
+  return "https://bynku.app";
+}
+
+/**
  * Bank connection CRUD + sync. Every sync writes into `pending_transactions`
  * — never directly into `expenses`. Approval is a separate, explicit step
  * in the Inbox (see inbox.functions.ts). Two guardrails prevent double-import:
@@ -254,4 +266,141 @@ export const syncBankConnection = createServerFn({ method: "POST" })
       .update({ last_synced_at: new Date().toISOString() })
       .eq("id", conn.id);
     return { staged, skipped };
+  });
+
+// ---------------------------------------------------------------------------
+// GoCardless requisition flow.
+//
+// UX: user picks a country → we list institutions → user picks their bank →
+// we create a requisition and hand back a hosted consent link. The user
+// authenticates on the bank site, then GoCardless redirects to our public
+// callback with `?ref=<connectionId>`, which bounces to
+// /settings?bank_linked=<connectionId>. The Settings page then calls
+// `finalizeGoCardlessLink` to fetch the granted accounts.
+// ---------------------------------------------------------------------------
+
+export const listGoCardlessInstitutions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ country: z.string().length(2) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    if (!isGoCardlessConfigured()) {
+      throw new Error("GoCardless is not configured on this instance.");
+    }
+    const { listInstitutions } = await import("./bank/gocardless.server");
+    const list = await listInstitutions(data.country);
+    return list.map((i) => ({
+      id: i.id,
+      name: i.name,
+      bic: i.bic,
+      logo: i.logo,
+      transaction_total_days: Number(i.transaction_total_days) || 90,
+    }));
+  });
+
+export const startGoCardlessLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        institution_id: z.string().min(1).max(120),
+        institution_name: z.string().min(1).max(120),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    if (!isGoCardlessConfigured()) {
+      throw new Error("GoCardless is not configured on this instance.");
+    }
+    const { createRequisition } = await import("./bank/gocardless.server");
+
+    // Create the connection row FIRST so we have a stable id to use as
+    // `reference`. If the user abandons the consent flow, the row stays in
+    // status='pending' and they can retry or delete it.
+    const { data: conn, error } = await context.supabase
+      .from("bank_connections")
+      .insert({
+        household_id: data.householdId,
+        provider: "gocardless",
+        institution_id: data.institution_id,
+        institution_name: data.institution_name,
+        requisition_id: null,
+        created_by_user_id: context.userId,
+        status: "pending",
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    const redirect = `${appBaseUrl()}/api/public/bank/callback`;
+    try {
+      const req = await createRequisition({
+        institution_id: data.institution_id,
+        redirect,
+        reference: conn.id,
+      });
+      const { error: uErr } = await context.supabase
+        .from("bank_connections")
+        .update({ requisition_id: req.id, status: "pending" })
+        .eq("id", conn.id);
+      if (uErr) throw uErr;
+      return { connectionId: conn.id, link: req.link, requisitionId: req.id };
+    } catch (e) {
+      // Roll the connection row back so the user doesn't see a broken entry.
+      await context.supabase.from("bank_connections").delete().eq("id", conn.id);
+      throw e;
+    }
+  });
+
+export const finalizeGoCardlessLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ householdId: z.string().uuid(), connectionId: z.string().uuid() })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: conn, error } = await context.supabase
+      .from("bank_connections")
+      .select("*")
+      .eq("id", data.connectionId)
+      .eq("household_id", data.householdId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!conn) throw new Error("Connection not found");
+    if (conn.provider !== "gocardless") throw new Error("Not a GoCardless connection");
+    if (!conn.requisition_id) throw new Error("No requisition to finalize");
+
+    const provider = pickProvider("gocardless");
+    const accounts = await provider.listAccounts({
+      requisition_id: conn.requisition_id,
+      institution_id: conn.institution_id,
+    });
+
+    if (accounts.length) {
+      const { error: aErr } = await context.supabase.from("bank_accounts").upsert(
+        accounts.map((a) => ({
+          household_id: data.householdId,
+          connection_id: conn.id,
+          external_account_id: a.external_account_id,
+          display_name: a.display_name,
+          iban_last4: a.iban_last4,
+          currency: a.currency,
+          sync_enabled: true,
+          last_balance: a.last_balance,
+          last_balance_at: a.last_balance_at,
+        })),
+        { onConflict: "connection_id,external_account_id" },
+      );
+      if (aErr) throw aErr;
+    }
+
+    await context.supabase
+      .from("bank_connections")
+      .update({ status: accounts.length ? "active" : "pending" })
+      .eq("id", conn.id);
+
+    return { accountsAdded: accounts.length };
   });

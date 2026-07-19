@@ -39,6 +39,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/public/hooks/weekly-digest'
 import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
+import { Route as ApiPublicBankCallbackRouteImport } from './routes/api/public/bank.callback'
 
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
@@ -198,6 +199,11 @@ const ApiPublicHooksBudgetAlertsRoute =
     path: '/api/public/hooks/budget-alerts',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBankCallbackRoute = ApiPublicBankCallbackRouteImport.update({
+  id: '/api/public/bank/callback',
+  path: '/api/public/bank/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/bank/callback': typeof ApiPublicBankCallbackRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/bank/callback': typeof ApiPublicBankCallbackRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -286,6 +294,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/bank/callback': typeof ApiPublicBankCallbackRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -319,6 +328,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
+    | '/api/public/bank/callback'
     | '/api/public/hooks/budget-alerts'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
+    | '/api/public/bank/callback'
     | '/api/public/hooks/budget-alerts'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
+    | '/api/public/bank/callback'
     | '/api/public/hooks/budget-alerts'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
@@ -400,6 +412,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicBankCallbackRoute: typeof ApiPublicBankCallbackRoute
   ApiPublicHooksBudgetAlertsRoute: typeof ApiPublicHooksBudgetAlertsRoute
   ApiPublicHooksWeeklyDigestRoute: typeof ApiPublicHooksWeeklyDigestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBudgetAlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bank/callback': {
+      id: '/api/public/bank/callback'
+      path: '/api/public/bank/callback'
+      fullPath: '/api/public/bank/callback'
+      preLoaderRoute: typeof ApiPublicBankCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -672,6 +692,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicBankCallbackRoute: ApiPublicBankCallbackRoute,
   ApiPublicHooksBudgetAlertsRoute: ApiPublicHooksBudgetAlertsRoute,
   ApiPublicHooksWeeklyDigestRoute: ApiPublicHooksWeeklyDigestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

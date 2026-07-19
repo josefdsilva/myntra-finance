@@ -6,12 +6,11 @@
  * transactions land in the Inbox for approval — the provider layer only
  * has to return a normalized shape.
  *
- * Two providers today:
- *  - "mock"       — deterministic synthetic feed, always available, used for
- *                   the UX and integration tests.
+ * Two providers:
+ *  - "mock"       — deterministic synthetic feed, always available.
  *  - "gocardless" — real PSD2 aggregation via GoCardless Bank Account Data.
- *                   Behind a feature flag: only active when the required
- *                   secrets are present in the server env.
+ *                   Server-only imports (`.server.ts`) are lazy-loaded inside
+ *                   the async methods so this module stays client-safe.
  */
 
 export type NormalizedBankTx = {
@@ -144,27 +143,98 @@ export const mockProvider: BankProvider = {
 };
 
 // ---------------------------------------------------------------------------
-// GoCardless provider — stubbed. Wire up when secrets land.
-// Docs: https://developer.gocardless.com/bank-account-data
+// GoCardless provider — real PSD2 aggregation. Requires GOCARDLESS_SECRET_ID
+// and GOCARDLESS_SECRET_KEY. Server-only imports are lazy so this file is
+// still safe to import from client code.
 // ---------------------------------------------------------------------------
 
 export function isGoCardlessConfigured(): boolean {
-  return !!(
-    process.env.GOCARDLESS_SECRET_ID && process.env.GOCARDLESS_SECRET_KEY
-  );
+  return !!(process.env.GOCARDLESS_SECRET_ID && process.env.GOCARDLESS_SECRET_KEY);
+}
+
+function last4(iban?: string | null): string | null {
+  if (!iban) return null;
+  const compact = iban.replace(/\s+/g, "");
+  return compact.length >= 4 ? compact.slice(-4) : null;
+}
+
+function pickMerchant(t: {
+  creditorName?: string;
+  debtorName?: string;
+  amount: number;
+}): string | null {
+  // Expense (negative or "expense" kind): counterparty is the creditor.
+  // Income  (positive): counterparty is the debtor.
+  if (t.amount < 0) return t.creditorName ?? t.debtorName ?? null;
+  return t.debtorName ?? t.creditorName ?? null;
 }
 
 export const gocardlessProvider: BankProvider = {
   id: "gocardless",
-  async listAccounts() {
-    throw new Error(
-      "GoCardless integration is not configured. Add GOCARDLESS_SECRET_ID and GOCARDLESS_SECRET_KEY to enable real bank sync.",
-    );
+  async listAccounts({ requisition_id }) {
+    if (!requisition_id) return [];
+    const gc = await import("./gocardless.server");
+    const req = await gc.getRequisition(requisition_id);
+    const out: NormalizedBankAccount[] = [];
+    for (const id of req.accounts ?? []) {
+      try {
+        const [details, balances] = await Promise.all([
+          gc.getAccountDetails(id),
+          gc.getAccountBalances(id).catch(() => ({ balances: [] as never[] })),
+        ]);
+        const acc = details.account ?? {};
+        const bal = gc.pickCurrentBalance(balances.balances ?? []);
+        out.push({
+          external_account_id: id,
+          display_name:
+            acc.displayName ??
+            acc.name ??
+            acc.ownerName ??
+            acc.product ??
+            (acc.iban ? `Account ${last4(acc.iban)}` : "Bank account"),
+          iban_last4: last4(acc.iban),
+          currency: acc.currency ?? bal?.currency ?? "EUR",
+          last_balance: bal?.amount ?? null,
+          last_balance_at: bal?.at ?? null,
+        });
+      } catch {
+        // A single account failing shouldn't block the rest.
+      }
+    }
+    return out;
   },
-  async fetchTransactions() {
-    throw new Error(
-      "GoCardless integration is not configured. Add GOCARDLESS_SECRET_ID and GOCARDLESS_SECRET_KEY to enable real bank sync.",
-    );
+  async fetchTransactions({ external_account_id, since }) {
+    const gc = await import("./gocardless.server");
+    const { transactions } = await gc.getAccountTransactions(external_account_id, since);
+    const rows: NormalizedBankTx[] = [];
+    for (const t of transactions.booked ?? []) {
+      const amtNum = Number(t.transactionAmount?.amount);
+      if (!Number.isFinite(amtNum) || amtNum === 0) continue;
+      const externalId =
+        t.transactionId ?? t.internalTransactionId ?? t.entryReference ?? null;
+      if (!externalId) continue; // no stable id => skip; would risk dupes
+      const occurred = t.bookingDate ?? t.valueDate ?? new Date().toISOString().slice(0, 10);
+      const noteParts = [
+        t.remittanceInformationUnstructured,
+        ...(t.remittanceInformationUnstructuredArray ?? []),
+        t.additionalInformation,
+      ].filter((x): x is string => !!x && x.trim().length > 0);
+      rows.push({
+        external_transaction_id: externalId,
+        amount: Math.abs(amtNum),
+        kind: amtNum < 0 ? "expense" : "income",
+        currency: t.transactionAmount.currency,
+        occurred_at: new Date(occurred).toISOString(),
+        merchant: pickMerchant({
+          creditorName: t.creditorName,
+          debtorName: t.debtorName,
+          amount: amtNum,
+        }),
+        note: noteParts.length ? noteParts.join(" · ") : null,
+        raw: t as unknown as Record<string, unknown>,
+      });
+    }
+    return rows;
   },
 };
 
