@@ -294,8 +294,13 @@ function InboxBody({ householdId }: { householdId: string }) {
                 fetchFixedMatches={() =>
                   suggestFixedFn({ data: { householdId, pendingId: item.id } })
                 }
-                busy={approve.isPending || dismiss.isPending || merge.isPending}
+                fetchRecurring={() =>
+                  suggestRecurringFn({ data: { householdId, pendingId: item.id } })
+                }
+                onPromote={() => promote.mutate({ pendingId: item.id })}
+                busy={approve.isPending || dismiss.isPending || merge.isPending || promote.isPending}
               />
+
 
 
             ))}
