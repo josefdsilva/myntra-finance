@@ -12,13 +12,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowLeftRight, Wallet, HelpCircle, MessageSquare } from "lucide-react";
+import { ArrowLeftRight, Wallet, HelpCircle, MessageSquare, TrendingDown } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { debtLiveSchedule, debtMonthlyRate, type Debt } from "@/lib/debt-schedule";
 import { bucketBalancesFor, logScheduledDebtPayment, type AccountMovement } from "@/lib/movements";
 import { OverpaymentDialog } from "@/components/overpayment-dialog";
 import { MoveFundsDialog } from "@/components/move-funds-dialog";
+import { PayoffSimulator } from "@/components/payoff-simulator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
 
 type BucketRow = { id: string; name: string; initial_balance: number };
 
