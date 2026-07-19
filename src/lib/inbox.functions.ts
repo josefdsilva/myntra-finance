@@ -165,7 +165,7 @@ export const approveInboxItems = createServerFn({ method: "POST" })
       occurred_at: string;
       note: string | null;
       source: "bank_sync" | "statement";
-      source_meta: Record<string, unknown>;
+      source_meta: Record<string, string | null>;
       kind: "expense" | "income";
       is_salary: boolean;
       labels: string[];
