@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS pending_transactions_bank_dedup_idx ON public.pending_transactions (bank_account_id, external_transaction_id) WHERE bank_account_id IS NOT NULL AND external_transaction_id IS NOT NULL;
