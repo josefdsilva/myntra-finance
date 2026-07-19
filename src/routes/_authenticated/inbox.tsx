@@ -379,13 +379,14 @@ function PendingCard({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => setOpen((o) => !o)}
+            onClick={toggleOpen}
             aria-label="Toggle details"
           >
             <ChevronDown
               className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
             />
           </Button>
+
         </div>
 
         {open ? (
