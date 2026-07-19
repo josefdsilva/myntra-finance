@@ -101,6 +101,9 @@ function InboxBody({ householdId }: { householdId: string }) {
   const dismissFn = useServerFn(dismissInboxItems);
   const listConnFn = useServerFn(listBankConnections);
   const syncFn = useServerFn(syncBankConnection);
+  const mergeFn = useServerFn(mergeInboxItem);
+  const suggestFn = useServerFn(suggestInboxMatches);
+
 
   const inboxQuery = useQuery({
     queryKey: ["inbox", householdId],
