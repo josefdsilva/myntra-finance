@@ -262,8 +262,15 @@ function InboxBody({ householdId }: { householdId: string }) {
                 categoryNames={(cats.data ?? []).map((c) => c.name)}
                 onApprove={() => approve.mutate([item.id])}
                 onDismiss={() => dismiss.mutate([item.id])}
-                busy={approve.isPending || dismiss.isPending}
+                onMerge={(expenseId) =>
+                  merge.mutate({ pendingId: item.id, expenseId })
+                }
+                fetchSuggestions={() =>
+                  suggestFn({ data: { householdId, pendingId: item.id } })
+                }
+                busy={approve.isPending || dismiss.isPending || merge.isPending}
               />
+
             ))}
           </div>
         </>
