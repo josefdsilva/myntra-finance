@@ -61,6 +61,7 @@ const NAV_SECTIONS = [
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/loans", labelKey: "nav.loans", icon: Landmark },
       { to: "/plan", labelKey: "nav.plan", icon: CalendarClock },
+      { to: "/inbox", labelKey: "nav.inbox", icon: Inbox },
     ],
   },
   {
