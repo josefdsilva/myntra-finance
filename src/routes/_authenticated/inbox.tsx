@@ -272,8 +272,12 @@ function InboxBody({ householdId }: { householdId: string }) {
                 fetchSuggestions={() =>
                   suggestFn({ data: { householdId, pendingId: item.id } })
                 }
+                fetchFixedMatches={() =>
+                  suggestFixedFn({ data: { householdId, pendingId: item.id } })
+                }
                 busy={approve.isPending || dismiss.isPending || merge.isPending}
               />
+
 
             ))}
           </div>
