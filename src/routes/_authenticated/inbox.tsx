@@ -439,6 +439,55 @@ function PendingCard({
             </div>
           </div>
         ) : null}
+
+        {open && (loadingSug || (suggestions && suggestions.length > 0)) ? (
+          <div className="mt-3 border-t pt-3">
+            <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <Link2 className="h-3 w-3" />
+              Might match something you already logged
+            </div>
+            {loadingSug ? (
+              <Skeleton className="h-10" />
+            ) : (
+              <div className="space-y-1.5">
+                {suggestions!.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-2 rounded-md border bg-muted/30 p-2 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <span className="font-medium">
+                          {s.merchant ?? s.category}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {new Date(s.occurred_at).toLocaleDateString()}
+                          {" · "}
+                          {money(Number(s.amount))}
+                        </span>
+                      </div>
+                      {s.note ? (
+                        <div className="truncate text-xs text-muted-foreground">
+                          {s.note}
+                        </div>
+                      ) : null}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => onMerge(s.id)}
+                    >
+                      Merge
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+
       </CardContent>
     </Card>
   );
