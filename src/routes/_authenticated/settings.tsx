@@ -107,6 +107,7 @@ function SettingsPage() {
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
           />
           <CategoryManager householdId={householdId} />
+          <BankConnectionsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
           <CreditUsageSection household={hh!.household!} />
