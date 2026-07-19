@@ -62,7 +62,7 @@ export const createBankConnection = createServerFn({ method: "POST" })
     z
       .object({
         householdId: z.string().uuid(),
-        provider: z.enum(["mock", "gocardless"]).default("mock"),
+        provider: z.enum(["mock", "gocardless", "enablebanking"]).default("mock"),
         institution_id: z.string().max(120).nullable().optional(),
         institution_name: z.string().min(1).max(120),
         requisition_id: z.string().max(120).nullable().optional(),
@@ -383,6 +383,158 @@ export const finalizeGoCardlessLink = createServerFn({ method: "POST" })
     const provider = pickProvider("gocardless");
     const accounts = await provider.listAccounts({
       requisition_id: conn.requisition_id,
+      institution_id: conn.institution_id,
+    });
+
+    if (accounts.length) {
+      const { error: aErr } = await context.supabase.from("bank_accounts").upsert(
+        accounts.map((a) => ({
+          household_id: data.householdId,
+          connection_id: conn.id,
+          external_account_id: a.external_account_id,
+          display_name: a.display_name,
+          iban_last4: a.iban_last4,
+          currency: a.currency,
+          sync_enabled: true,
+          last_balance: a.last_balance,
+          last_balance_at: a.last_balance_at,
+        })),
+        { onConflict: "connection_id,external_account_id" },
+      );
+      if (aErr) throw aErr;
+    }
+
+    await context.supabase
+      .from("bank_connections")
+      .update({ status: accounts.length ? "active" : "pending" })
+      .eq("id", conn.id);
+
+    return { accountsAdded: accounts.length };
+  });
+
+// ---------------------------------------------------------------------------
+// Enable Banking authorization flow.
+//
+// UX mirrors GoCardless: pick country → list ASPSPs → user picks bank → we
+// call POST /auth and hand back the hosted consent link (with our
+// connectionId in `state`). Bank redirects to the shared public callback
+// with `?code=...&state=<connectionId>`, which bounces to
+// /settings?bank_linked=<connectionId>&provider=enablebanking&code=<code>.
+// Finalize exchanges the code for a session_id, stores it as requisition_id,
+// then enumerates accounts.
+// ---------------------------------------------------------------------------
+
+export const listEnableBankingAspsps = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ country: z.string().length(2) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    if (!isEnableBankingConfigured()) {
+      throw new Error("Enable Banking is not configured on this instance.");
+    }
+    const { listAspsps } = await import("./bank/enablebanking.server");
+    const list = await listAspsps(data.country);
+    return list.map((a) => ({
+      name: a.name,
+      country: a.country,
+      bic: a.bic,
+      logo: a.logo,
+      maximum_consent_validity: a.maximum_consent_validity ?? 90 * 86400,
+    }));
+  });
+
+export const startEnableBankingLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        aspsp_name: z.string().min(1).max(120),
+        aspsp_country: z.string().length(2),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    if (!isEnableBankingConfigured()) {
+      throw new Error("Enable Banking is not configured on this instance.");
+    }
+    const { startAuthorization } = await import("./bank/enablebanking.server");
+
+    const { data: conn, error } = await context.supabase
+      .from("bank_connections")
+      .insert({
+        household_id: data.householdId,
+        provider: "enablebanking",
+        institution_id: data.aspsp_name,
+        institution_name: data.aspsp_name,
+        requisition_id: null,
+        created_by_user_id: context.userId,
+        status: "pending",
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    const redirect = `${appBaseUrl()}/api/public/bank/callback`;
+    // Consent typically ~90 days; some banks allow more. Send an ISO
+    // timestamp 90 days from now — Enable Banking clamps to the ASPSP max.
+    const validUntil = new Date(Date.now() + 90 * 86400 * 1000).toISOString();
+    try {
+      const auth = await startAuthorization({
+        aspsp_name: data.aspsp_name,
+        aspsp_country: data.aspsp_country,
+        redirect_url: redirect,
+        state: conn.id,
+        psu_type: "personal",
+        valid_until: validUntil,
+      });
+      await context.supabase
+        .from("bank_connections")
+        .update({ requisition_id: auth.authorization_id })
+        .eq("id", conn.id);
+      return { connectionId: conn.id, link: auth.url };
+    } catch (e) {
+      await context.supabase.from("bank_connections").delete().eq("id", conn.id);
+      throw e;
+    }
+  });
+
+export const finalizeEnableBankingLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        connectionId: z.string().uuid(),
+        code: z.string().min(1).max(2048),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: conn, error } = await context.supabase
+      .from("bank_connections")
+      .select("*")
+      .eq("id", data.connectionId)
+      .eq("household_id", data.householdId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!conn) throw new Error("Connection not found");
+    if (conn.provider !== "enablebanking") throw new Error("Not an Enable Banking connection");
+
+    const { createSession } = await import("./bank/enablebanking.server");
+    const session = await createSession(data.code);
+
+    // Store the session_id as requisition_id so downstream listAccounts and
+    // resync can find it via the shared provider interface.
+    await context.supabase
+      .from("bank_connections")
+      .update({ requisition_id: session.session_id })
+      .eq("id", conn.id);
+
+    const provider = pickProvider("enablebanking");
+    const accounts = await provider.listAccounts({
+      requisition_id: session.session_id,
       institution_id: conn.institution_id,
     });
 

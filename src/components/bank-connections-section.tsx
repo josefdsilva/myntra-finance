@@ -35,6 +35,9 @@ import {
   listGoCardlessInstitutions,
   startGoCardlessLink,
   finalizeGoCardlessLink,
+  listEnableBankingAspsps,
+  startEnableBankingLink,
+  finalizeEnableBankingLink,
 } from "@/lib/bank-connections.functions";
 
 /**
@@ -56,6 +59,7 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
   const toggleFn = useServerFn(toggleBankAccountSync);
   const syncFn = useServerFn(syncBankConnection);
   const finalizeFn = useServerFn(finalizeGoCardlessLink);
+  const finalizeEbFn = useServerFn(finalizeEnableBankingLink);
 
   const status = useQuery({ queryKey: ["bank-status"], queryFn: () => statusFn() });
   const connections = useQuery({
@@ -68,12 +72,13 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
     qc.invalidateQueries({ queryKey: ["inbox", householdId] });
   };
 
-  // -- callback handling: /settings?bank_linked=<connectionId>
+  // -- callback handling: /settings?bank_linked=<connectionId>[&bank_code=<code>]
   const [finalizing, setFinalizing] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     const linked = url.searchParams.get("bank_linked");
+    const bankCode = url.searchParams.get("bank_code");
     const err = url.searchParams.get("bank_error");
     if (err) {
       toast.error(`Bank link failed: ${err}`);
@@ -83,7 +88,10 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
     }
     if (!linked) return;
     setFinalizing(linked);
-    finalizeFn({ data: { householdId, connectionId: linked } })
+    const promise = bankCode
+      ? finalizeEbFn({ data: { householdId, connectionId: linked, code: bankCode } })
+      : finalizeFn({ data: { householdId, connectionId: linked } });
+    promise
       .then((res) => {
         toast.success(`Bank linked. ${res.accountsAdded} account(s) added.`);
         invalidate();
@@ -95,6 +103,7 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
         setFinalizing(null);
         const clean = new URL(window.location.href);
         clean.searchParams.delete("bank_linked");
+        clean.searchParams.delete("bank_code");
         window.history.replaceState({}, "", clean.toString());
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,7 +189,7 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
               <div className="min-w-0 flex-1">
                 <div className="font-medium">{c.institution_name}</div>
                 <div className="text-xs text-muted-foreground">
-                  {c.provider === "mock" ? "Mock provider" : "GoCardless"}
+                  {c.provider === "mock" ? "Mock provider" : c.provider === "enablebanking" ? "Enable Banking" : "GoCardless"}
                   {c.status === "pending" ? " · pending consent" : ""}
                   {c.last_synced_at
                     ? ` · last synced ${new Date(c.last_synced_at).toLocaleString()}`
@@ -378,16 +387,10 @@ function AddConnectionDialog({
               onCancel={() => setOpen(false)}
             />
           ) : (
-            <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
-              Enable Banking sync isn't wired up yet. Once credentials are
-              added and the picker is enabled, you'll pick your country and
-              bank here the same way as GoCardless.
-              <div className="mt-3 flex justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
+            <EnableBankingPicker
+              householdId={householdId}
+              onCancel={() => setOpen(false)}
+            />
           )}
 
         </div>
@@ -511,6 +514,147 @@ function GoCardlessPicker({
                       </div>
                     </div>
                     {pending === inst.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          You'll be sent to your bank to authorize read-only access to
+          balances and transactions. Consent typically lasts 90–180 days;
+          you can revoke it anytime from your bank.
+        </p>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={onCancel} disabled={pending !== null}>
+          Cancel
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function EnableBankingPicker({
+  householdId,
+  onCancel,
+}: {
+  householdId: string;
+  onCancel: () => void;
+}) {
+  const listAspspsFn = useServerFn(listEnableBankingAspsps);
+  const startLinkFn = useServerFn(startEnableBankingLink);
+
+  const [country, setCountry] = useState<string>("PT");
+  const [filter, setFilter] = useState("");
+  const [pending, setPending] = useState<string | null>(null);
+
+  const aspsps = useQuery({
+    queryKey: ["eb-aspsps", country],
+    queryFn: () => listAspspsFn({ data: { country } }),
+    staleTime: 12 * 60 * 60 * 1000,
+  });
+
+  const filtered = useMemo(() => {
+    const list = aspsps.data ?? [];
+    const q = filter.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((i) => i.name.toLowerCase().includes(q));
+  }, [aspsps.data, filter]);
+
+  const start = async (aspsp: { name: string; country: string }) => {
+    try {
+      setPending(aspsp.name);
+      const res = await startLinkFn({
+        data: {
+          householdId,
+          aspsp_name: aspsp.name,
+          aspsp_country: aspsp.country,
+        },
+      });
+      window.location.assign(res.link);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start bank link");
+      setPending(null);
+    }
+  };
+
+  return (
+    <>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label>Country</Label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Search</Label>
+            <Input
+              placeholder="e.g. Millennium"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="max-h-72 overflow-y-auto rounded-md border">
+          {aspsps.isLoading ? (
+            <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading banks…
+            </div>
+          ) : aspsps.isError ? (
+            <p className="p-3 text-sm text-destructive">
+              {aspsps.error instanceof Error
+                ? aspsps.error.message
+                : "Failed to load banks"}
+            </p>
+          ) : filtered.length === 0 ? (
+            <p className="p-3 text-sm text-muted-foreground">
+              No banks match your search.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {filtered.map((inst) => (
+                <li key={`${inst.country}-${inst.name}`}>
+                  <button
+                    type="button"
+                    onClick={() => start(inst)}
+                    disabled={pending !== null}
+                    className="flex w-full items-center gap-3 p-2 text-left hover:bg-muted/50 disabled:opacity-50"
+                  >
+                    {inst.logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={inst.logo}
+                        alt=""
+                        className="h-8 w-8 rounded object-contain"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded bg-muted" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{inst.name}</div>
+                      {inst.bic ? (
+                        <div className="text-xs text-muted-foreground">{inst.bic}</div>
+                      ) : null}
+                    </div>
+                    {pending === inst.name ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <ExternalLink className="h-4 w-4 text-muted-foreground" />

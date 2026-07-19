@@ -17,7 +17,11 @@ export const Route = createFileRoute("/api/public/bank/callback")({
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const ref = url.searchParams.get("ref") ?? "";
+        // GoCardless passes our connectionId as `ref`; Enable Banking passes
+        // it as `state` (and returns an auth `code` to exchange for a
+        // session). Support both.
+        const ref = url.searchParams.get("ref") ?? url.searchParams.get("state") ?? "";
+        const code = url.searchParams.get("code");
         const error = url.searchParams.get("error");
         const target = new URL("/settings", url.origin);
         target.searchParams.set("tab", "integrations");
@@ -25,6 +29,7 @@ export const Route = createFileRoute("/api/public/bank/callback")({
           target.searchParams.set("bank_error", error);
         } else if (ref) {
           target.searchParams.set("bank_linked", ref);
+          if (code) target.searchParams.set("bank_code", code);
         }
         return new Response(null, {
           status: 302,
