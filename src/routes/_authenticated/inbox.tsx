@@ -33,7 +33,7 @@ import {
   syncBankConnection,
 } from "@/lib/bank-connections.functions";
 import { useCategories } from "@/hooks/use-categories";
-import { formatCurrency } from "@/lib/format";
+import { money, setCurrentCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
@@ -251,7 +251,7 @@ function InboxBody({ householdId }: { householdId: string }) {
         </>
       ) : (
         <EmptyState
-          icon={<InboxIcon className="h-8 w-8" />}
+          icon={InboxIcon}
           title="Nothing to review"
           description="When you link a bank or import a statement, transactions will appear here for your approval before they touch your budget."
         />
