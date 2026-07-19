@@ -223,8 +223,29 @@ export const approveInboxItems = createServerFn({ method: "POST" })
         .eq("id", pid);
     });
     await Promise.all(updates);
+
+    // Learn merchant → category rules from user approvals so future bank
+    // syncs of the same merchant get auto-categorized without AI calls.
+    const ruleRows = expenseRows
+      .filter((r) => r.kind === "expense" && r.merchant && r.category)
+      .map((r) => ({
+        household_id: r.household_id,
+        merchant_key: r.merchant!.toLowerCase().trim().slice(0, 120),
+        category: r.category,
+        source: "user_approval",
+      }));
+    // Deduplicate on merchant_key (last write wins for the batch).
+    const uniqueRules = Array.from(
+      new Map(ruleRows.map((r) => [`${r.household_id}:${r.merchant_key}`, r])).values(),
+    );
+    if (uniqueRules.length) {
+      await context.supabase
+        .from("merchant_rules")
+        .upsert(uniqueRules, { onConflict: "household_id,merchant_key" });
+    }
     return { approved: inserted?.length ?? 0 };
   });
+
 
 export const dismissInboxItems = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
