@@ -346,3 +346,57 @@ export const suggestInboxMatches = createServerFn({ method: "POST" })
     if (error) throw error;
     return rows ?? [];
   });
+
+/**
+ * Suggest fixed_expenses rows that a pending bank line is likely a
+ * recurring instance of (amount within ±5% of monthly_amount, and merchant
+ * name shares a token with the fixed-expense label). These are already
+ * baked into the household baseline, so approving would double-count —
+ * the UI uses this to warn and offer a one-tap dismiss.
+ */
+export const suggestFixedMatches = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        pendingId: z.string().uuid(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: p, error: pErr } = await context.supabase
+      .from("pending_transactions")
+      .select("amount, kind, merchant")
+      .eq("id", data.pendingId)
+      .eq("household_id", data.householdId)
+      .maybeSingle();
+    if (pErr) throw pErr;
+    if (!p || p.kind !== "expense") return [];
+
+    const amt = Number(p.amount);
+    const tol = Math.max(0.5, amt * 0.05);
+    const { data: fx, error } = await context.supabase
+      .from("fixed_expenses")
+      .select("id, label, monthly_amount, category")
+      .eq("household_id", data.householdId)
+      .gte("monthly_amount", amt - tol)
+      .lte("monthly_amount", amt + tol);
+    if (error) throw error;
+
+    const merchant = (p.merchant ?? "").toLowerCase();
+    const tokens = merchant
+      .split(/[^a-z0-9]+/i)
+      .filter((t) => t.length >= 3);
+    const scored = (fx ?? []).map((row) => {
+      const label = row.label.toLowerCase();
+      const nameHit =
+        tokens.some((t) => label.includes(t)) ||
+        (merchant.length >= 3 && label.includes(merchant.slice(0, 4)));
+      return { ...row, nameHit };
+    });
+    // Prefer name-matching rows; if none, still return amount matches (weaker).
+    const withName = scored.filter((s) => s.nameHit);
+    return (withName.length ? withName : scored).slice(0, 3);
+  });
+
