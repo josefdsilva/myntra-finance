@@ -59,6 +59,7 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
   const toggleFn = useServerFn(toggleBankAccountSync);
   const syncFn = useServerFn(syncBankConnection);
   const finalizeFn = useServerFn(finalizeGoCardlessLink);
+  const finalizeEbFn = useServerFn(finalizeEnableBankingLink);
 
   const status = useQuery({ queryKey: ["bank-status"], queryFn: () => statusFn() });
   const connections = useQuery({
@@ -71,12 +72,13 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
     qc.invalidateQueries({ queryKey: ["inbox", householdId] });
   };
 
-  // -- callback handling: /settings?bank_linked=<connectionId>
+  // -- callback handling: /settings?bank_linked=<connectionId>[&bank_code=<code>]
   const [finalizing, setFinalizing] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     const linked = url.searchParams.get("bank_linked");
+    const bankCode = url.searchParams.get("bank_code");
     const err = url.searchParams.get("bank_error");
     if (err) {
       toast.error(`Bank link failed: ${err}`);
@@ -86,7 +88,10 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
     }
     if (!linked) return;
     setFinalizing(linked);
-    finalizeFn({ data: { householdId, connectionId: linked } })
+    const promise = bankCode
+      ? finalizeEbFn({ data: { householdId, connectionId: linked, code: bankCode } })
+      : finalizeFn({ data: { householdId, connectionId: linked } });
+    promise
       .then((res) => {
         toast.success(`Bank linked. ${res.accountsAdded} account(s) added.`);
         invalidate();
@@ -98,6 +103,7 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
         setFinalizing(null);
         const clean = new URL(window.location.href);
         clean.searchParams.delete("bank_linked");
+        clean.searchParams.delete("bank_code");
         window.history.replaceState({}, "", clean.toString());
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
