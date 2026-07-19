@@ -124,7 +124,7 @@ function pickFocus(
 export function simulatePayoff(input: SimulationInput): PayoffPlan {
   const today = input.today ?? new Date();
   const horizon = input.horizonMonths ?? 600;
-  const loans = initState(input.debts, today);
+  const loans = initState(input.debts, input.lumpSum, today);
 
   if (loans.length === 0) {
     return {
