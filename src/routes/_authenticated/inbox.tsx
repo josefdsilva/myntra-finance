@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown, Link2 } from "lucide-react";
+import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown, Link2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 import { pageShellClass } from "@/components/page-shell";
@@ -29,7 +29,9 @@ import {
   dismissInboxItems,
   mergeInboxItem,
   suggestInboxMatches,
+  suggestFixedMatches,
 } from "@/lib/inbox.functions";
+
 
 import {
   listBankConnections,
@@ -103,6 +105,8 @@ function InboxBody({ householdId }: { householdId: string }) {
   const syncFn = useServerFn(syncBankConnection);
   const mergeFn = useServerFn(mergeInboxItem);
   const suggestFn = useServerFn(suggestInboxMatches);
+  const suggestFixedFn = useServerFn(suggestFixedMatches);
+
 
 
   const inboxQuery = useQuery({
@@ -268,8 +272,12 @@ function InboxBody({ householdId }: { householdId: string }) {
                 fetchSuggestions={() =>
                   suggestFn({ data: { householdId, pendingId: item.id } })
                 }
+                fetchFixedMatches={() =>
+                  suggestFixedFn({ data: { householdId, pendingId: item.id } })
+                }
                 busy={approve.isPending || dismiss.isPending || merge.isPending}
               />
+
 
             ))}
           </div>
@@ -295,6 +303,14 @@ type MatchSuggestion = {
   kind: "expense" | "income";
 };
 
+type FixedMatch = {
+  id: string;
+  label: string;
+  monthly_amount: number;
+  category: string | null;
+  nameHit: boolean;
+};
+
 function PendingCard({
   item,
   selected,
@@ -306,6 +322,7 @@ function PendingCard({
   onDismiss,
   onMerge,
   fetchSuggestions,
+  fetchFixedMatches,
   busy,
 }: {
   item: PendingRow;
@@ -318,10 +335,12 @@ function PendingCard({
   onDismiss: () => void;
   onMerge: (expenseId: string) => void;
   fetchSuggestions: () => Promise<MatchSuggestion[]>;
+  fetchFixedMatches: () => Promise<FixedMatch[]>;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<MatchSuggestion[] | null>(null);
+  const [fixedMatches, setFixedMatches] = useState<FixedMatch[] | null>(null);
   const [loadingSug, setLoadingSug] = useState(false);
   const dateStr = new Date(item.occurred_at).toLocaleDateString();
   const isIncome = item.kind === "income";
@@ -332,15 +351,21 @@ function PendingCard({
     if (next && suggestions === null && !loadingSug) {
       setLoadingSug(true);
       try {
-        const rows = await fetchSuggestions();
+        const [rows, fx] = await Promise.all([
+          fetchSuggestions(),
+          fetchFixedMatches(),
+        ]);
         setSuggestions(rows);
+        setFixedMatches(fx);
       } catch {
         setSuggestions([]);
+        setFixedMatches([]);
       } finally {
         setLoadingSug(false);
       }
     }
   }
+
 
   return (
     <Card>
@@ -439,6 +464,30 @@ function PendingCard({
             </div>
           </div>
         ) : null}
+
+        {open && fixedMatches && fixedMatches.length > 0 ? (
+          <div className="mt-3 rounded-md border border-amber-300/60 bg-amber-50 p-2 text-sm dark:border-amber-500/30 dark:bg-amber-950/30">
+            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="h-3 w-3" />
+              Likely a recurring fixed cost you already track
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Matches:{" "}
+              {fixedMatches
+                .map((f) => `${f.label} (${money(Number(f.monthly_amount))}/mo)`)
+                .join(" · ")}
+              . Approving would double-count against your baseline. Dismiss if
+              this is that same monthly charge.
+            </div>
+            <div className="mt-2">
+              <Button size="sm" variant="outline" onClick={onDismiss} disabled={busy}>
+                <X className="mr-1 h-4 w-4" /> Dismiss (already tracked)
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+
 
         {open && (loadingSug || (suggestions && suggestions.length > 0)) ? (
           <div className="mt-3 border-t pt-3">
