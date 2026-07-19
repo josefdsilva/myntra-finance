@@ -12,28 +12,41 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowLeftRight, Wallet, HelpCircle, MessageSquare } from "lucide-react";
+import { ArrowLeftRight, Wallet, HelpCircle, MessageSquare, TrendingDown } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { debtLiveSchedule, debtMonthlyRate, type Debt } from "@/lib/debt-schedule";
 import { bucketBalancesFor, logScheduledDebtPayment, type AccountMovement } from "@/lib/movements";
 import { OverpaymentDialog } from "@/components/overpayment-dialog";
 import { MoveFundsDialog } from "@/components/move-funds-dialog";
+import { PayoffSimulator } from "@/components/payoff-simulator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
 
 type BucketRow = { id: string; name: string; initial_balance: number };
 
 export function DebtsSection({
   householdId,
   showMoveFunds = true,
+  showSimulator = false,
 }: {
   householdId: string;
   showMoveFunds?: boolean;
+  showSimulator?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [moveOpen, setMoveOpen] = useState(false);
+  const [simOpen, setSimOpen] = useState(false);
   const [payDebt, setPayDebt] = useState<Debt | null>(null);
+
 
   const { data } = useQuery({
     enabled: !!householdId,
@@ -118,18 +131,31 @@ export function DebtsSection({
             {showMoveFunds ? t("debt.sectionDesc") : t("debt.overviewDesc")}
           </CardDescription>
         </div>
-        {showMoveFunds && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="shrink-0 whitespace-nowrap"
-            disabled={buckets.length === 0}
-            onClick={() => setMoveOpen(true)}
-          >
-            <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
-          </Button>
-        )}
+        <div className="flex flex-wrap justify-end gap-2 shrink-0">
+          {showSimulator && debts.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="whitespace-nowrap"
+              onClick={() => setSimOpen(true)}
+            >
+              <TrendingDown className="size-4" /> {t("payoff.openButton")}
+            </Button>
+          )}
+          {showMoveFunds && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="whitespace-nowrap"
+              disabled={buckets.length === 0}
+              onClick={() => setMoveOpen(true)}
+            >
+              <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
+            </Button>
+          )}
+        </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
        <TooltipProvider delayDuration={80}>
         {debts.length === 0 ? (
@@ -260,6 +286,18 @@ export function DebtsSection({
           onOpenChange={setMoveOpen}
         />
       )}
+      {showSimulator && (
+        <Dialog open={simOpen} onOpenChange={setSimOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t("payoff.openButton")}</DialogTitle>
+              <DialogDescription>{t("payoff.subtitle")}</DialogDescription>
+            </DialogHeader>
+            <PayoffSimulator householdId={householdId} />
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
+
   );
 }

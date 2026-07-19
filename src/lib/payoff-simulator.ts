@@ -1,5 +1,7 @@
 import { addMonths } from "date-fns";
-import { debtLiveSchedule, debtMonthlyRate, type Debt } from "@/lib/debt-schedule";
+import { debtLiveSchedule, debtMonthlyRate, previewOverpayment, type Debt } from "@/lib/debt-schedule";
+import type { RecomputeMode } from "@/lib/movements";
+
 
 /**
  * Multi-loan payoff simulator.
@@ -38,30 +40,50 @@ export type PayoffPlan = {
   perLoan: Array<{ id: string; label: string; paidOffMonth: number | null; interestPaid: number }>;
 };
 
+export type LumpSum = {
+  /** Debt to apply the lump sum to. */
+  debtId: string;
+  /** One-off amount to prepay right now. */
+  amount: number;
+  /** shorten_term = keep monthly, finish earlier. reduce_installment = keep maturity, lower monthly. */
+  mode: RecomputeMode;
+};
+
 export type SimulationInput = {
   debts: Debt[];
   /** Extra €/month applied on top of scheduled installments. */
   extraPerMonth: number;
   strategy: Strategy;
+  /** Optional user-defined focus order (debt ids). Overrides the strategy. */
+  customOrder?: string[];
+  /** Optional one-off prepayment applied at month 0. */
+  lumpSum?: LumpSum | null;
   /** Safety cap; sane loans finish well under this. */
   horizonMonths?: number;
   today?: Date;
 };
 
-function initState(debts: Debt[], today: Date): LoanState[] {
+function initState(debts: Debt[], lumpSum: LumpSum | null | undefined, today: Date): LoanState[] {
   return debts
     .map<LoanState | null>((d) => {
       const s = debtLiveSchedule(d, today);
       if (s.paidOff || s.remaining <= 0) return null;
-      const installment = Number(d.monthly_amount ?? 0);
+      let balance = s.remaining;
+      let installment = Number(d.monthly_amount ?? 0);
+      if (lumpSum && lumpSum.debtId === d.id && lumpSum.amount > 0) {
+        const preview = previewOverpayment(d, lumpSum.amount, lumpSum.mode, today);
+        balance = preview.newPrincipal;
+        installment = preview.newInstallment;
+      }
+      if (balance <= 0) return null;
       if (installment <= 0) return null;
       return {
         id: d.id,
         label: d.label,
         monthlyRate: debtMonthlyRate(d),
         installment,
-        balance: s.remaining,
-        startingBalance: s.remaining,
+        balance,
+        startingBalance: balance,
         paidOffMonth: null,
         interestPaid: 0,
       };
@@ -69,10 +91,22 @@ function initState(debts: Debt[], today: Date): LoanState[] {
     .filter((x): x is LoanState => x !== null);
 }
 
-function pickFocus(loans: LoanState[], strategy: Strategy): LoanState | null {
+function pickFocus(
+  loans: LoanState[],
+  strategy: Strategy,
+  customOrder?: string[],
+): LoanState | null {
   const alive = loans.filter((l) => l.balance > 0);
   if (alive.length === 0) return null;
+  if (customOrder && customOrder.length > 0) {
+    for (const id of customOrder) {
+      const hit = alive.find((l) => l.id === id);
+      if (hit) return hit;
+    }
+    // fall through if none of the custom ids are alive
+  }
   if (strategy === "avalanche") {
+
     // Highest monthly rate first; break ties by smallest balance (finish sooner).
     return alive.reduce((a, b) =>
       b.monthlyRate > a.monthlyRate ||
@@ -90,7 +124,7 @@ function pickFocus(loans: LoanState[], strategy: Strategy): LoanState | null {
 export function simulatePayoff(input: SimulationInput): PayoffPlan {
   const today = input.today ?? new Date();
   const horizon = input.horizonMonths ?? 600;
-  const loans = initState(input.debts, today);
+  const loans = initState(input.debts, input.lumpSum, today);
 
   if (loans.length === 0) {
     return {
@@ -133,7 +167,7 @@ export function simulatePayoff(input: SimulationInput): PayoffPlan {
     let extra = input.extraPerMonth + freedInstallments;
     let guard = 0;
     while (extra > 0.005 && guard < 32) {
-      const focus = pickFocus(loans, input.strategy);
+      const focus = pickFocus(loans, input.strategy, input.customOrder);
       if (!focus) break;
       const pay = Math.min(extra, focus.balance);
       focus.balance -= pay;
@@ -166,13 +200,34 @@ export function simulatePayoff(input: SimulationInput): PayoffPlan {
 }
 
 /** Order loans by the strategy's payoff priority (for display). */
-export function payoffOrder(debts: Debt[], strategy: Strategy, today: Date = new Date()): Debt[] {
+export function payoffOrder(
+  debts: Debt[],
+  strategy: Strategy,
+  today: Date = new Date(),
+  customOrder?: string[],
+): Debt[] {
   const withState = debts
     .map((d) => ({ d, s: debtLiveSchedule(d, today), r: debtMonthlyRate(d) }))
     .filter((x) => !x.s.paidOff && x.s.remaining > 0 && Number(x.d.monthly_amount ?? 0) > 0);
+  if (customOrder && customOrder.length > 0) {
+    const byId = new Map(withState.map((x) => [x.d.id, x.d] as const));
+    const ordered: Debt[] = [];
+    for (const id of customOrder) {
+      const d = byId.get(id);
+      if (d) {
+        ordered.push(d);
+        byId.delete(id);
+      }
+    }
+    // append any leftovers (new debts not yet ranked) in strategy order
+    const leftovers = [...byId.values()];
+    const rest = payoffOrder(leftovers, strategy, today);
+    return [...ordered, ...rest];
+  }
   const sorted = [...withState].sort((a, b) => {
     if (strategy === "avalanche") return b.r - a.r || a.s.remaining - b.s.remaining;
     return a.s.remaining - b.s.remaining || b.r - a.r;
   });
   return sorted.map((x) => x.d);
 }
+
