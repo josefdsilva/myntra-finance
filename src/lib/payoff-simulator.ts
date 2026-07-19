@@ -1,5 +1,7 @@
 import { addMonths } from "date-fns";
-import { debtLiveSchedule, debtMonthlyRate, type Debt } from "@/lib/debt-schedule";
+import { debtLiveSchedule, debtMonthlyRate, previewOverpayment, type Debt } from "@/lib/debt-schedule";
+import type { RecomputeMode } from "@/lib/movements";
+
 
 /**
  * Multi-loan payoff simulator.
