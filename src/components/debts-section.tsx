@@ -124,35 +124,37 @@ export function DebtsSection({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-        <div className="min-w-0">
-          <CardTitle>{showMoveFunds ? t("debt.sectionTitle") : t("debt.overviewTitle")}</CardTitle>
-          <CardDescription>
-            {showMoveFunds ? t("debt.sectionDesc") : t("debt.overviewDesc")}
-          </CardDescription>
-        </div>
-        <div className="flex flex-wrap justify-end gap-2 shrink-0">
-          {showSimulator && debts.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="whitespace-nowrap"
-              onClick={() => setSimOpen(true)}
-            >
-              <TrendingDown className="size-4" /> {t("payoff.openButton")}
-            </Button>
-          )}
-          {showMoveFunds && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="whitespace-nowrap"
-              disabled={buckets.length === 0}
-              onClick={() => setMoveOpen(true)}
-            >
-              <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
-            </Button>
-          )}
+      <CardHeader className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle>{showMoveFunds ? t("debt.sectionTitle") : t("debt.overviewTitle")}</CardTitle>
+            <CardDescription>
+              {showMoveFunds ? t("debt.sectionDesc") : t("debt.overviewDesc")}
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2 sm:justify-end sm:shrink-0">
+            {showSimulator && debts.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="whitespace-nowrap"
+                onClick={() => setSimOpen(true)}
+              >
+                <TrendingDown className="size-4" /> {t("payoff.openButton")}
+              </Button>
+            )}
+            {showMoveFunds && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="whitespace-nowrap"
+                disabled={buckets.length === 0}
+                onClick={() => setMoveOpen(true)}
+              >
+                <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
 
