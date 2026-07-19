@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown, Link2, AlertTriangle } from "lucide-react";
+import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown, Link2, AlertTriangle, Repeat } from "lucide-react";
 import { toast } from "sonner";
 
 import { pageShellClass } from "@/components/page-shell";
@@ -30,7 +30,10 @@ import {
   mergeInboxItem,
   suggestInboxMatches,
   suggestFixedMatches,
+  suggestRecurringPromotion,
+  promoteToFixedCost,
 } from "@/lib/inbox.functions";
+
 
 
 import {
@@ -106,6 +109,9 @@ function InboxBody({ householdId }: { householdId: string }) {
   const mergeFn = useServerFn(mergeInboxItem);
   const suggestFn = useServerFn(suggestInboxMatches);
   const suggestFixedFn = useServerFn(suggestFixedMatches);
+  const suggestRecurringFn = useServerFn(suggestRecurringPromotion);
+  const promoteFn = useServerFn(promoteToFixedCost);
+
 
 
 
@@ -184,6 +190,19 @@ function InboxBody({ householdId }: { householdId: string }) {
       toast.success("Merged with existing entry");
       qc.invalidateQueries({ queryKey: ["inbox", householdId] });
       qc.invalidateQueries({ queryKey: ["expenses"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const promote = useMutation({
+    mutationFn: async (v: { pendingId: string; label?: string; monthlyAmount?: number }) =>
+      promoteFn({ data: { householdId, ...v } }),
+    onSuccess: (res) => {
+      toast.success(`Added "${res.label}" as a fixed cost`);
+      qc.invalidateQueries({ queryKey: ["inbox", householdId] });
+      qc.invalidateQueries({ queryKey: ["fixed-expenses"] });
+      qc.invalidateQueries({ queryKey: ["household"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -275,8 +294,13 @@ function InboxBody({ householdId }: { householdId: string }) {
                 fetchFixedMatches={() =>
                   suggestFixedFn({ data: { householdId, pendingId: item.id } })
                 }
-                busy={approve.isPending || dismiss.isPending || merge.isPending}
+                fetchRecurring={() =>
+                  suggestRecurringFn({ data: { householdId, pendingId: item.id } })
+                }
+                onPromote={() => promote.mutate({ pendingId: item.id })}
+                busy={approve.isPending || dismiss.isPending || merge.isPending || promote.isPending}
               />
+
 
 
             ))}
@@ -323,6 +347,8 @@ function PendingCard({
   onMerge,
   fetchSuggestions,
   fetchFixedMatches,
+  fetchRecurring,
+  onPromote,
   busy,
 }: {
   item: PendingRow;
@@ -336,11 +362,15 @@ function PendingCard({
   onMerge: (expenseId: string) => void;
   fetchSuggestions: () => Promise<MatchSuggestion[]>;
   fetchFixedMatches: () => Promise<FixedMatch[]>;
+  fetchRecurring: () => Promise<{ occurrences: number; avgAmount: number; alreadyFixed: boolean }>;
+  onPromote: () => void;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
+
   const [suggestions, setSuggestions] = useState<MatchSuggestion[] | null>(null);
   const [fixedMatches, setFixedMatches] = useState<FixedMatch[] | null>(null);
+  const [recurring, setRecurring] = useState<{ occurrences: number; avgAmount: number; alreadyFixed: boolean } | null>(null);
   const [loadingSug, setLoadingSug] = useState(false);
   const dateStr = new Date(item.occurred_at).toLocaleDateString();
   const isIncome = item.kind === "income";
@@ -351,20 +381,24 @@ function PendingCard({
     if (next && suggestions === null && !loadingSug) {
       setLoadingSug(true);
       try {
-        const [rows, fx] = await Promise.all([
+        const [rows, fx, rc] = await Promise.all([
           fetchSuggestions(),
           fetchFixedMatches(),
+          fetchRecurring(),
         ]);
         setSuggestions(rows);
         setFixedMatches(fx);
+        setRecurring(rc);
       } catch {
         setSuggestions([]);
         setFixedMatches([]);
+        setRecurring(null);
       } finally {
         setLoadingSug(false);
       }
     }
   }
+
 
 
   return (
@@ -486,6 +520,28 @@ function PendingCard({
             </div>
           </div>
         ) : null}
+
+        {open && recurring && recurring.occurrences >= 1 && !recurring.alreadyFixed && !(fixedMatches && fixedMatches.length > 0) ? (
+          <div className="mt-3 rounded-md border border-sky-300/60 bg-sky-50 p-2 text-sm dark:border-sky-500/30 dark:bg-sky-950/30">
+            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-sky-800 dark:text-sky-300">
+              <Repeat className="h-3 w-3" />
+              Looks like a recurring monthly charge
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Seen in {recurring.occurrences} prior month
+              {recurring.occurrences === 1 ? "" : "s"} at ~{money(recurring.avgAmount)}.
+              Add it as a fixed cost so it counts toward your baseline (and future
+              bank syncs won't double-count it).
+            </div>
+            <div className="mt-2">
+              <Button size="sm" variant="outline" onClick={onPromote} disabled={busy}>
+                <Repeat className="mr-1 h-4 w-4" /> Add as fixed cost
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+
 
 
 

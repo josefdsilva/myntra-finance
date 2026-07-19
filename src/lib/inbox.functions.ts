@@ -421,3 +421,126 @@ export const suggestFixedMatches = createServerFn({ method: "POST" })
     return (withName.length ? withName : scored).slice(0, 3);
   });
 
+/**
+ * Detect whether a pending bank line is likely a recurring monthly charge:
+ * we look at approved expenses (any source) from the same household for the
+ * same merchant within ±5% of the amount, in earlier calendar months. Two or
+ * more prior occurrences → very likely recurring; one prior occurrence → maybe.
+ * The UI uses this to offer "Add as fixed cost" so the household baseline
+ * captures it and future syncs warn instead of double-counting.
+ */
+export const suggestRecurringPromotion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        pendingId: z.string().uuid(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: p, error: pErr } = await context.supabase
+      .from("pending_transactions")
+      .select("amount, kind, merchant, occurred_at")
+      .eq("id", data.pendingId)
+      .eq("household_id", data.householdId)
+      .maybeSingle();
+    if (pErr) throw pErr;
+    if (!p || p.kind !== "expense" || !p.merchant) {
+      return { occurrences: 0, avgAmount: 0, alreadyFixed: false };
+    }
+
+    // Already a tracked fixed cost? Skip suggestion.
+    const amt = Number(p.amount);
+    const tol = Math.max(0.5, amt * 0.05);
+    const { data: fx } = await context.supabase
+      .from("fixed_expenses")
+      .select("id, label, monthly_amount")
+      .eq("household_id", data.householdId)
+      .gte("monthly_amount", amt - tol)
+      .lte("monthly_amount", amt + tol);
+    const merchantLc = p.merchant.toLowerCase();
+    const alreadyFixed = (fx ?? []).some((f) => {
+      const label = f.label.toLowerCase();
+      return label.includes(merchantLc.slice(0, 4)) || merchantLc.includes(label.slice(0, 4));
+    });
+    if (alreadyFixed) return { occurrences: 0, avgAmount: 0, alreadyFixed: true };
+
+    const now = new Date(p.occurred_at);
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - 4); // look back 4 months
+    const { data: prior, error } = await context.supabase
+      .from("expenses")
+      .select("amount, occurred_at, merchant")
+      .eq("household_id", data.householdId)
+      .eq("kind", "expense")
+      .ilike("merchant", `%${p.merchant.slice(0, 20)}%`)
+      .gte("amount", amt - tol)
+      .lte("amount", amt + tol)
+      .gte("occurred_at", from.toISOString())
+      .lt("occurred_at", new Date(now.getFullYear(), now.getMonth(), 1).toISOString())
+      .limit(6);
+    if (error) throw error;
+
+    // Group by calendar month to count distinct monthly occurrences.
+    const months = new Set(
+      (prior ?? []).map((r) => {
+        const d = new Date(r.occurred_at);
+        return `${d.getFullYear()}-${d.getMonth()}`;
+      }),
+    );
+    const total = (prior ?? []).reduce((s, r) => s + Number(r.amount), 0);
+    const avg = prior && prior.length ? total / prior.length : amt;
+    return {
+      occurrences: months.size,
+      avgAmount: Math.round(avg * 100) / 100,
+      alreadyFixed: false,
+    };
+  });
+
+/**
+ * Promote a pending bank line into a recurring fixed_expenses row so future
+ * baseline calculations include it. Does NOT approve the pending item — the
+ * user decides separately whether this specific instance should still be
+ * logged as an expense (usually not, since the fixed cost now covers it).
+ */
+export const promoteToFixedCost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        pendingId: z.string().uuid(),
+        label: z.string().min(1).max(120).optional(),
+        monthlyAmount: z.number().positive().max(1_000_000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: p, error: pErr } = await context.supabase
+      .from("pending_transactions")
+      .select("amount, merchant, suggested_category")
+      .eq("id", data.pendingId)
+      .eq("household_id", data.householdId)
+      .maybeSingle();
+    if (pErr) throw pErr;
+    if (!p) throw new Error("Pending item not found");
+
+    const label = data.label ?? p.merchant ?? "Recurring charge";
+    const amount = data.monthlyAmount ?? Number(p.amount);
+    const { data: inserted, error } = await context.supabase
+      .from("fixed_expenses")
+      .insert({
+        household_id: data.householdId,
+        label,
+        monthly_amount: amount,
+        category: p.suggested_category,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { id: inserted.id, label, monthlyAmount: amount };
+  });
+
+
