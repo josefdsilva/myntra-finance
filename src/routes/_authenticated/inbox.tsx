@@ -109,6 +109,9 @@ function InboxBody({ householdId }: { householdId: string }) {
   const mergeFn = useServerFn(mergeInboxItem);
   const suggestFn = useServerFn(suggestInboxMatches);
   const suggestFixedFn = useServerFn(suggestFixedMatches);
+  const suggestRecurringFn = useServerFn(suggestRecurringPromotion);
+  const promoteFn = useServerFn(promoteToFixedCost);
+
 
 
 
