@@ -189,7 +189,7 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
               <div className="min-w-0 flex-1">
                 <div className="font-medium">{c.institution_name}</div>
                 <div className="text-xs text-muted-foreground">
-                  {c.provider === "mock" ? "Mock provider" : "GoCardless"}
+                  {c.provider === "mock" ? "Mock provider" : c.provider === "enablebanking" ? "Enable Banking" : "GoCardless"}
                   {c.status === "pending" ? " · pending consent" : ""}
                   {c.last_synced_at
                     ? ` · last synced ${new Date(c.last_synced_at).toLocaleString()}`
