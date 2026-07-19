@@ -27,7 +27,10 @@ import {
   listInbox,
   approveInboxItems,
   dismissInboxItems,
+  mergeInboxItem,
+  suggestInboxMatches,
 } from "@/lib/inbox.functions";
+
 import {
   listBankConnections,
   syncBankConnection,
