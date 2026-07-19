@@ -40,30 +40,50 @@ export type PayoffPlan = {
   perLoan: Array<{ id: string; label: string; paidOffMonth: number | null; interestPaid: number }>;
 };
 
+export type LumpSum = {
+  /** Debt to apply the lump sum to. */
+  debtId: string;
+  /** One-off amount to prepay right now. */
+  amount: number;
+  /** shorten_term = keep monthly, finish earlier. reduce_installment = keep maturity, lower monthly. */
+  mode: RecomputeMode;
+};
+
 export type SimulationInput = {
   debts: Debt[];
   /** Extra €/month applied on top of scheduled installments. */
   extraPerMonth: number;
   strategy: Strategy;
+  /** Optional user-defined focus order (debt ids). Overrides the strategy. */
+  customOrder?: string[];
+  /** Optional one-off prepayment applied at month 0. */
+  lumpSum?: LumpSum | null;
   /** Safety cap; sane loans finish well under this. */
   horizonMonths?: number;
   today?: Date;
 };
 
-function initState(debts: Debt[], today: Date): LoanState[] {
+function initState(debts: Debt[], lumpSum: LumpSum | null | undefined, today: Date): LoanState[] {
   return debts
     .map<LoanState | null>((d) => {
       const s = debtLiveSchedule(d, today);
       if (s.paidOff || s.remaining <= 0) return null;
-      const installment = Number(d.monthly_amount ?? 0);
+      let balance = s.remaining;
+      let installment = Number(d.monthly_amount ?? 0);
+      if (lumpSum && lumpSum.debtId === d.id && lumpSum.amount > 0) {
+        const preview = previewOverpayment(d, lumpSum.amount, lumpSum.mode, today);
+        balance = preview.newPrincipal;
+        installment = preview.newInstallment;
+      }
+      if (balance <= 0) return null;
       if (installment <= 0) return null;
       return {
         id: d.id,
         label: d.label,
         monthlyRate: debtMonthlyRate(d),
         installment,
-        balance: s.remaining,
-        startingBalance: s.remaining,
+        balance,
+        startingBalance: balance,
         paidOffMonth: null,
         interestPaid: 0,
       };
@@ -71,10 +91,22 @@ function initState(debts: Debt[], today: Date): LoanState[] {
     .filter((x): x is LoanState => x !== null);
 }
 
-function pickFocus(loans: LoanState[], strategy: Strategy): LoanState | null {
+function pickFocus(
+  loans: LoanState[],
+  strategy: Strategy,
+  customOrder?: string[],
+): LoanState | null {
   const alive = loans.filter((l) => l.balance > 0);
   if (alive.length === 0) return null;
+  if (customOrder && customOrder.length > 0) {
+    for (const id of customOrder) {
+      const hit = alive.find((l) => l.id === id);
+      if (hit) return hit;
+    }
+    // fall through if none of the custom ids are alive
+  }
   if (strategy === "avalanche") {
+
     // Highest monthly rate first; break ties by smallest balance (finish sooner).
     return alive.reduce((a, b) =>
       b.monthlyRate > a.monthlyRate ||
