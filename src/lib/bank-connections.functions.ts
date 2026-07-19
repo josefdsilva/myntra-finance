@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { pickProvider, isGoCardlessConfigured } from "./bank/providers";
+import { pickProvider, isGoCardlessConfigured, isEnableBankingConfigured } from "./bank/providers";
 
 /**
  * Public callback URL that GoCardless redirects back to after the user
@@ -30,9 +30,16 @@ function appBaseUrl(): string {
 export const bankIntegrationStatus = createServerFn({ method: "GET" }).handler(async () => {
   return {
     mockAvailable: true,
+    // GoCardless Bank Account Data is no longer accepting new registrations
+    // and is winding down. We keep the code path for existing connections
+    // but the UI now surfaces this as "coming soon" until we migrate to
+    // Enable Banking (see enablebanking.server.ts).
     gocardlessAvailable: isGoCardlessConfigured(),
+    gocardlessDeprecated: true,
+    enableBankingAvailable: isEnableBankingConfigured(),
   };
 });
+
 
 export const listBankConnections = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
