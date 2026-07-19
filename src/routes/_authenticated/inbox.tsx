@@ -465,6 +465,30 @@ function PendingCard({
           </div>
         ) : null}
 
+        {open && fixedMatches && fixedMatches.length > 0 ? (
+          <div className="mt-3 rounded-md border border-amber-300/60 bg-amber-50 p-2 text-sm dark:border-amber-500/30 dark:bg-amber-950/30">
+            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="h-3 w-3" />
+              Likely a recurring fixed cost you already track
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Matches:{" "}
+              {fixedMatches
+                .map((f) => `${f.label} (${money(Number(f.monthly_amount))}/mo)`)
+                .join(" · ")}
+              . Approving would double-count against your baseline. Dismiss if
+              this is that same monthly charge.
+            </div>
+            <div className="mt-2">
+              <Button size="sm" variant="outline" onClick={onDismiss} disabled={busy}>
+                <X className="mr-1 h-4 w-4" /> Dismiss (already tracked)
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+
+
         {open && (loadingSug || (suggestions && suggestions.length > 0)) ? (
           <div className="mt-3 border-t pt-3">
             <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
