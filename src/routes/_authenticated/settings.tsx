@@ -21,6 +21,7 @@ import {
   deleteDebt,
 } from "@/lib/budget.functions";
 import { getHouseholdCreditUsage } from "@/lib/credits.functions";
+import { BankConnectionsSection } from "@/components/bank-connections-section";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
