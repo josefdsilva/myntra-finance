@@ -37,25 +37,41 @@ async function mintToken(): Promise<string> {
   if (!appId || !privateKeyPem) {
     throw new Error("Enable Banking is not configured (missing secrets).");
   }
-  // TODO: implement RS256 signing.
-  //   const { createSign } = await import("crypto");
-  //   const header = { alg: "RS256", typ: "JWT", kid: appId };
-  //   const payload = {
-  //     iss: "enablebanking.com",
-  //     aud: "api.enablebanking.com",
-  //     iat: Math.floor(Date.now() / 1000),
-  //     exp: Math.floor(Date.now() / 1000) + 3600,
-  //   };
-  //   const enc = (o: unknown) =>
-  //     Buffer.from(JSON.stringify(o)).toString("base64url");
-  //   const signingInput = `${enc(header)}.${enc(payload)}`;
-  //   const signer = createSign("RSA-SHA256");
-  //   signer.update(signingInput);
-  //   const sig = signer.sign(privateKeyPem).toString("base64url");
-  //   return `${signingInput}.${sig}`;
-  throw new Error(
-    "Enable Banking JWT signing is not implemented yet. Fill in mintToken() in enablebanking.server.ts.",
-  );
+  const { createSign } = await import("crypto");
+  const header = { typ: "JWT", alg: "RS256", kid: appId };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: "enablebanking.com",
+    aud: "api.enablebanking.com",
+    iat: now,
+    exp: now + 3600,
+  };
+  const b64url = (buf: Buffer) =>
+    buf.toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+  const signingInput = `${b64url(Buffer.from(JSON.stringify(header)))}.${b64url(
+    Buffer.from(JSON.stringify(payload)),
+  )}`;
+  const signer = createSign("RSA-SHA256");
+  signer.update(signingInput);
+  const sig = b64url(signer.sign(privateKeyPem));
+  return `${signingInput}.${sig}`;
+}
+
+/**
+ * Exchange the authorization `code` returned in the redirect for a session.
+ * The session carries the list of granted account UIDs used downstream.
+ */
+export type EbCreateSession = {
+  session_id: string;
+  accounts: Array<{ uid: string; identification_hash?: string }>;
+  aspsp?: { name: string; country: string };
+};
+
+export async function createSession(code: string): Promise<EbCreateSession> {
+  return ebFetch<EbCreateSession>(`/sessions`, {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
 }
 
 async function ebFetch<T>(path: string, init?: RequestInit): Promise<T> {
