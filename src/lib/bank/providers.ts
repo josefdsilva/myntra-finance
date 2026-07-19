@@ -239,7 +239,91 @@ export const gocardlessProvider: BankProvider = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Enable Banking provider — PSD2 aggregation alternative to GoCardless.
+// Requires ENABLE_BANKING_APP_ID and ENABLE_BANKING_PRIVATE_KEY. Server-only
+// imports are lazy so this file is still safe to import from client code.
+//
+// SKELETON: the underlying enablebanking.server client is stubbed. The
+// provider will throw "not implemented" until the JWT signing + endpoint
+// wiring is completed against real credentials.
+// ---------------------------------------------------------------------------
+
+export function isEnableBankingConfigured(): boolean {
+  return !!(process.env.ENABLE_BANKING_APP_ID && process.env.ENABLE_BANKING_PRIVATE_KEY);
+}
+
+export const enableBankingProvider: BankProvider = {
+  id: "enablebanking",
+  async listAccounts({ requisition_id }) {
+    // For Enable Banking we reuse `requisition_id` on bank_connections to
+    // store the session_id returned after user consent.
+    if (!requisition_id) return [];
+    const eb = await import("./enablebanking.server");
+    const session = await eb.getSession(requisition_id);
+    const out: NormalizedBankAccount[] = [];
+    for (const acc of session.accounts ?? []) {
+      try {
+        const [details, balances] = await Promise.all([
+          eb.getAccountDetails(acc.uid),
+          eb.getAccountBalances(acc.uid).catch(() => ({ balances: [] as never[] })),
+        ]);
+        const iban = details.account_id?.iban ?? null;
+        const bal = eb.pickEbCurrentBalance(balances.balances ?? []);
+        out.push({
+          external_account_id: acc.uid,
+          display_name:
+            details.name ??
+            details.product ??
+            (iban ? `Account ${last4(iban)}` : "Bank account"),
+          iban_last4: last4(iban),
+          currency: details.currency ?? bal?.currency ?? "EUR",
+          last_balance: bal?.amount ?? null,
+          last_balance_at: bal?.at ?? null,
+        });
+      } catch {
+        // One account failure shouldn't block the rest.
+      }
+    }
+    return out;
+  },
+  async fetchTransactions({ external_account_id, since }) {
+    const eb = await import("./enablebanking.server");
+    const { transactions } = await eb.getAccountTransactions(external_account_id, since);
+    const rows: NormalizedBankTx[] = [];
+    for (const t of transactions ?? []) {
+      if (t.status && t.status !== "BOOK") continue; // skip pending
+      const amtNum = Number(t.transaction_amount?.amount);
+      if (!Number.isFinite(amtNum) || amtNum === 0) continue;
+      const externalId = t.transaction_id ?? t.entry_reference ?? null;
+      if (!externalId) continue;
+      const isDebit = t.credit_debit_indicator === "DBIT";
+      const occurred =
+        t.booking_date ?? t.value_date ?? new Date().toISOString().slice(0, 10);
+      const noteParts = (t.remittance_information ?? []).filter(
+        (x): x is string => !!x && x.trim().length > 0,
+      );
+      rows.push({
+        external_transaction_id: externalId,
+        amount: Math.abs(amtNum),
+        kind: isDebit ? "expense" : "income",
+        currency: t.transaction_amount.currency,
+        occurred_at: new Date(occurred).toISOString(),
+        merchant: isDebit
+          ? (t.creditor?.name ?? t.debtor?.name ?? null)
+          : (t.debtor?.name ?? t.creditor?.name ?? null),
+        note: noteParts.length ? noteParts.join(" · ") : null,
+        raw: t as unknown as Record<string, unknown>,
+      });
+    }
+    return rows;
+  },
+};
+
 export function pickProvider(id: string): BankProvider {
   if (id === "gocardless") return gocardlessProvider;
+  if (id === "enablebanking") return enableBankingProvider;
   return mockProvider;
+}
+
 }
