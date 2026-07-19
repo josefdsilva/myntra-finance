@@ -33,7 +33,7 @@ import {
   syncBankConnection,
 } from "@/lib/bank-connections.functions";
 import { useCategories } from "@/hooks/use-categories";
-import { money, setCurrentCurrency } from "@/lib/format";
+import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
@@ -317,7 +317,7 @@ function PendingCard({
             }`}
           >
             {isIncome ? "+" : ""}
-            {formatCurrency(Number(item.amount), currency)}
+            {money(Number(item.amount))}
           </div>
           <Button
             size="icon"
