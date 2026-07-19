@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown } from "lucide-react";
+import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown, Link2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { pageShellClass } from "@/components/page-shell";
