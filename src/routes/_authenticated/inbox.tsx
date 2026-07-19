@@ -285,6 +285,16 @@ function InboxBody({ householdId }: { householdId: string }) {
   );
 }
 
+type MatchSuggestion = {
+  id: string;
+  amount: number;
+  category: string;
+  merchant: string | null;
+  occurred_at: string;
+  note: string | null;
+  kind: "expense" | "income";
+};
+
 function PendingCard({
   item,
   selected,
@@ -294,6 +304,8 @@ function PendingCard({
   categoryNames,
   onApprove,
   onDismiss,
+  onMerge,
+  fetchSuggestions,
   busy,
 }: {
   item: PendingRow;
@@ -304,12 +316,32 @@ function PendingCard({
   categoryNames: string[];
   onApprove: () => void;
   onDismiss: () => void;
+  onMerge: (expenseId: string) => void;
+  fetchSuggestions: () => Promise<MatchSuggestion[]>;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<MatchSuggestion[] | null>(null);
+  const [loadingSug, setLoadingSug] = useState(false);
   const dateStr = new Date(item.occurred_at).toLocaleDateString();
-  const currency = item.currency ?? "EUR";
   const isIncome = item.kind === "income";
+
+  async function toggleOpen() {
+    const next = !open;
+    setOpen(next);
+    if (next && suggestions === null && !loadingSug) {
+      setLoadingSug(true);
+      try {
+        const rows = await fetchSuggestions();
+        setSuggestions(rows);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setLoadingSug(false);
+      }
+    }
+  }
+
   return (
     <Card>
       <CardContent className="p-3">
