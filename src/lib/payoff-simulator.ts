@@ -200,13 +200,34 @@ export function simulatePayoff(input: SimulationInput): PayoffPlan {
 }
 
 /** Order loans by the strategy's payoff priority (for display). */
-export function payoffOrder(debts: Debt[], strategy: Strategy, today: Date = new Date()): Debt[] {
+export function payoffOrder(
+  debts: Debt[],
+  strategy: Strategy,
+  today: Date = new Date(),
+  customOrder?: string[],
+): Debt[] {
   const withState = debts
     .map((d) => ({ d, s: debtLiveSchedule(d, today), r: debtMonthlyRate(d) }))
     .filter((x) => !x.s.paidOff && x.s.remaining > 0 && Number(x.d.monthly_amount ?? 0) > 0);
+  if (customOrder && customOrder.length > 0) {
+    const byId = new Map(withState.map((x) => [x.d.id, x.d] as const));
+    const ordered: Debt[] = [];
+    for (const id of customOrder) {
+      const d = byId.get(id);
+      if (d) {
+        ordered.push(d);
+        byId.delete(id);
+      }
+    }
+    // append any leftovers (new debts not yet ranked) in strategy order
+    const leftovers = [...byId.values()];
+    const rest = payoffOrder(leftovers, strategy, today);
+    return [...ordered, ...rest];
+  }
   const sorted = [...withState].sort((a, b) => {
     if (strategy === "avalanche") return b.r - a.r || a.s.remaining - b.s.remaining;
     return a.s.remaining - b.s.remaining || b.r - a.r;
   });
   return sorted.map((x) => x.d);
 }
+
