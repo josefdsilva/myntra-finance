@@ -167,7 +167,7 @@ export function simulatePayoff(input: SimulationInput): PayoffPlan {
     let extra = input.extraPerMonth + freedInstallments;
     let guard = 0;
     while (extra > 0.005 && guard < 32) {
-      const focus = pickFocus(loans, input.strategy);
+      const focus = pickFocus(loans, input.strategy, input.customOrder);
       if (!focus) break;
       const pay = Math.min(extra, focus.balance);
       focus.balance -= pay;
