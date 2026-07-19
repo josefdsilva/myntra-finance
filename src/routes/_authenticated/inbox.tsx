@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown } from "lucide-react";
+import { Inbox as InboxIcon, Check, X, RefreshCw, ChevronDown, Link2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { pageShellClass } from "@/components/page-shell";
@@ -27,7 +27,10 @@ import {
   listInbox,
   approveInboxItems,
   dismissInboxItems,
+  mergeInboxItem,
+  suggestInboxMatches,
 } from "@/lib/inbox.functions";
+
 import {
   listBankConnections,
   syncBankConnection,
@@ -98,6 +101,9 @@ function InboxBody({ householdId }: { householdId: string }) {
   const dismissFn = useServerFn(dismissInboxItems);
   const listConnFn = useServerFn(listBankConnections);
   const syncFn = useServerFn(syncBankConnection);
+  const mergeFn = useServerFn(mergeInboxItem);
+  const suggestFn = useServerFn(suggestInboxMatches);
+
 
   const inboxQuery = useQuery({
     queryKey: ["inbox", householdId],
@@ -166,6 +172,18 @@ function InboxBody({ householdId }: { householdId: string }) {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Sync failed"),
   });
+
+  const merge = useMutation({
+    mutationFn: async (v: { pendingId: string; expenseId: string }) =>
+      mergeFn({ data: { householdId, ...v } }),
+    onSuccess: () => {
+      toast.success("Merged with existing entry");
+      qc.invalidateQueries({ queryKey: ["inbox", householdId] });
+      qc.invalidateQueries({ queryKey: ["expenses"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
 
   return (
     <div className={pageShellClass("3xl")}>
@@ -244,8 +262,15 @@ function InboxBody({ householdId }: { householdId: string }) {
                 categoryNames={(cats.data ?? []).map((c) => c.name)}
                 onApprove={() => approve.mutate([item.id])}
                 onDismiss={() => dismiss.mutate([item.id])}
-                busy={approve.isPending || dismiss.isPending}
+                onMerge={(expenseId) =>
+                  merge.mutate({ pendingId: item.id, expenseId })
+                }
+                fetchSuggestions={() =>
+                  suggestFn({ data: { householdId, pendingId: item.id } })
+                }
+                busy={approve.isPending || dismiss.isPending || merge.isPending}
               />
+
             ))}
           </div>
         </>
@@ -260,6 +285,16 @@ function InboxBody({ householdId }: { householdId: string }) {
   );
 }
 
+type MatchSuggestion = {
+  id: string;
+  amount: number;
+  category: string;
+  merchant: string | null;
+  occurred_at: string;
+  note: string | null;
+  kind: "expense" | "income";
+};
+
 function PendingCard({
   item,
   selected,
@@ -269,6 +304,8 @@ function PendingCard({
   categoryNames,
   onApprove,
   onDismiss,
+  onMerge,
+  fetchSuggestions,
   busy,
 }: {
   item: PendingRow;
@@ -279,12 +316,32 @@ function PendingCard({
   categoryNames: string[];
   onApprove: () => void;
   onDismiss: () => void;
+  onMerge: (expenseId: string) => void;
+  fetchSuggestions: () => Promise<MatchSuggestion[]>;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<MatchSuggestion[] | null>(null);
+  const [loadingSug, setLoadingSug] = useState(false);
   const dateStr = new Date(item.occurred_at).toLocaleDateString();
-  const currency = item.currency ?? "EUR";
   const isIncome = item.kind === "income";
+
+  async function toggleOpen() {
+    const next = !open;
+    setOpen(next);
+    if (next && suggestions === null && !loadingSug) {
+      setLoadingSug(true);
+      try {
+        const rows = await fetchSuggestions();
+        setSuggestions(rows);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setLoadingSug(false);
+      }
+    }
+  }
+
   return (
     <Card>
       <CardContent className="p-3">
@@ -322,13 +379,14 @@ function PendingCard({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => setOpen((o) => !o)}
+            onClick={toggleOpen}
             aria-label="Toggle details"
           >
             <ChevronDown
               className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
             />
           </Button>
+
         </div>
 
         {open ? (
@@ -381,6 +439,55 @@ function PendingCard({
             </div>
           </div>
         ) : null}
+
+        {open && (loadingSug || (suggestions && suggestions.length > 0)) ? (
+          <div className="mt-3 border-t pt-3">
+            <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <Link2 className="h-3 w-3" />
+              Might match something you already logged
+            </div>
+            {loadingSug ? (
+              <Skeleton className="h-10" />
+            ) : (
+              <div className="space-y-1.5">
+                {suggestions!.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-2 rounded-md border bg-muted/30 p-2 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <span className="font-medium">
+                          {s.merchant ?? s.category}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {new Date(s.occurred_at).toLocaleDateString()}
+                          {" · "}
+                          {money(Number(s.amount))}
+                        </span>
+                      </div>
+                      {s.note ? (
+                        <div className="truncate text-xs text-muted-foreground">
+                          {s.note}
+                        </div>
+                      ) : null}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => onMerge(s.id)}
+                    >
+                      Merge
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+
       </CardContent>
     </Card>
   );
