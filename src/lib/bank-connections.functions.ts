@@ -191,25 +191,50 @@ export const syncBankConnection = createServerFn({ method: "POST" })
           .filter((v): v is string => !!v),
       );
 
+      // Auto-categorize using the household's learned merchant_rules cache
+      // (free — no AI). Unknown merchants fall back to "other" and the user
+      // can correct on approval; saveMerchantRule learns the correction.
+      const merchantKeys = Array.from(
+        new Set(
+          txs
+            .map((t) => (t.merchant ?? "").trim())
+            .filter((m): m is string => m.length > 0),
+        ),
+      );
+      const catMap = new Map<string, string>();
+      if (merchantKeys.length) {
+        const { data: rules } = await sb
+          .from("merchant_rules")
+          .select("merchant_key, category")
+          .eq("household_id", data.householdId)
+          .in("merchant_key", merchantKeys);
+        for (const r of rules ?? []) catMap.set(r.merchant_key, r.category);
+      }
+
       const rows = txs
         .filter((t) => !approvedSet.has(t.external_transaction_id))
-        .map((t) => ({
-          household_id: data.householdId,
-          source: "bank_sync" as const,
-          bank_account_id: account.id,
-          external_transaction_id: t.external_transaction_id,
-          batch_id: batchId,
-          amount: t.amount,
-          kind: t.kind,
-          currency: t.currency,
-          occurred_at: t.occurred_at,
-          merchant: t.merchant,
-          note: t.note,
-          suggested_category: "other",
-          suggested_labels: [] as string[],
-          raw: t.raw as never,
-          status: "pending" as const,
-        }));
+        .map((t) => {
+          const key = (t.merchant ?? "").trim();
+          const cat = catMap.get(key) ?? (t.kind === "income" ? "income" : "other");
+          return {
+            household_id: data.householdId,
+            source: "bank_sync" as const,
+            bank_account_id: account.id,
+            external_transaction_id: t.external_transaction_id,
+            batch_id: batchId,
+            amount: t.amount,
+            kind: t.kind,
+            currency: t.currency,
+            occurred_at: t.occurred_at,
+            merchant: t.merchant,
+            note: t.note,
+            suggested_category: cat,
+            suggested_labels: [] as string[],
+            raw: t.raw as never,
+            status: "pending" as const,
+          };
+        });
+
       skipped += txs.length - rows.length;
       if (!rows.length) continue;
 
