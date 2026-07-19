@@ -48,8 +48,10 @@ function LoansPage() {
           description={t("loans.empty.desc")}
         />
       )}
-      {householdId && <DebtsOverview householdId={householdId} showMoveFunds={false} />}
-      {householdId && <PayoffSimulator householdId={householdId} />}
+      {householdId && (
+        <DebtsOverview householdId={householdId} showMoveFunds={false} showSimulator />
+      )}
+
       {householdId && <DebtsSetup householdId={householdId} />}
     </div>
   );
