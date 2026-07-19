@@ -24,7 +24,6 @@ import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
 import { getInboxCount } from "@/lib/inbox.functions";
-import { Link } from "@tanstack/react-router";
 import { Inbox as InboxIcon } from "lucide-react";
 import { pageShellClass } from "@/components/page-shell";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
