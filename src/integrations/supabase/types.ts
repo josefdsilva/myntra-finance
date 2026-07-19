@@ -147,6 +147,122 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          connection_id: string
+          created_at: string
+          currency: string
+          display_name: string
+          external_account_id: string
+          household_id: string
+          iban_last4: string | null
+          id: string
+          last_balance: number | null
+          last_balance_at: string | null
+          sync_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          currency?: string
+          display_name: string
+          external_account_id: string
+          household_id: string
+          iban_last4?: string | null
+          id?: string
+          last_balance?: number | null
+          last_balance_at?: string | null
+          sync_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          currency?: string
+          display_name?: string
+          external_account_id?: string
+          household_id?: string
+          iban_last4?: string | null
+          id?: string
+          last_balance?: number | null
+          last_balance_at?: string | null
+          sync_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "bank_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_accounts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_connections: {
+        Row: {
+          consent_expires_at: string | null
+          created_at: string
+          created_by_user_id: string | null
+          household_id: string
+          id: string
+          institution_id: string | null
+          institution_logo_url: string | null
+          institution_name: string
+          last_synced_at: string | null
+          provider: string
+          requisition_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          consent_expires_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          household_id: string
+          id?: string
+          institution_id?: string | null
+          institution_logo_url?: string | null
+          institution_name: string
+          last_synced_at?: string | null
+          provider?: string
+          requisition_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          consent_expires_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          household_id?: string
+          id?: string
+          institution_id?: string | null
+          institution_logo_url?: string | null
+          institution_name?: string
+          last_synced_at?: string | null
+          provider?: string
+          requisition_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_connections_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_imports: {
         Row: {
           created_at: string
@@ -710,6 +826,7 @@ export type Database = {
         Row: {
           added_by_user_id: string | null
           amount: number
+          bank_transaction_id: string | null
           category: string
           created_at: string
           household_id: string
@@ -726,6 +843,7 @@ export type Database = {
         Insert: {
           added_by_user_id?: string | null
           amount: number
+          bank_transaction_id?: string | null
           category?: string
           created_at?: string
           household_id: string
@@ -742,6 +860,7 @@ export type Database = {
         Update: {
           added_by_user_id?: string | null
           amount?: number
+          bank_transaction_id?: string | null
           category?: string
           created_at?: string
           household_id?: string
@@ -1047,6 +1166,110 @@ export type Database = {
           weekly_digest?: boolean
         }
         Relationships: []
+      }
+      pending_transactions: {
+        Row: {
+          amount: number
+          approved_expense_id: string | null
+          bank_account_id: string | null
+          batch_id: string | null
+          created_at: string
+          currency: string
+          external_transaction_id: string | null
+          household_id: string
+          id: string
+          kind: Database["public"]["Enums"]["entry_kind"]
+          matched_expense_id: string | null
+          merchant: string | null
+          note: string | null
+          occurred_at: string
+          raw: Json
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          source: string
+          status: string
+          suggested_category: string
+          suggested_labels: string[]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_expense_id?: string | null
+          bank_account_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          currency?: string
+          external_transaction_id?: string | null
+          household_id: string
+          id?: string
+          kind?: Database["public"]["Enums"]["entry_kind"]
+          matched_expense_id?: string | null
+          merchant?: string | null
+          note?: string | null
+          occurred_at: string
+          raw?: Json
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          source: string
+          status?: string
+          suggested_category?: string
+          suggested_labels?: string[]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_expense_id?: string | null
+          bank_account_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          currency?: string
+          external_transaction_id?: string | null
+          household_id?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["entry_kind"]
+          matched_expense_id?: string | null
+          merchant?: string | null
+          note?: string | null
+          occurred_at?: string
+          raw?: Json
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          source?: string
+          status?: string
+          suggested_category?: string
+          suggested_labels?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_transactions_approved_expense_id_fkey"
+            columns: ["approved_expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_transactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_transactions_matched_expense_id_fkey"
+            columns: ["matched_expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {
@@ -1356,6 +1579,7 @@ export type Database = {
         | "ai_voice"
         | "statement"
         | "ai_photo"
+        | "bank_sync"
       import_status: "pending" | "parsed" | "approved" | "failed"
       member_role: "owner" | "member"
       movement_account_type: "cash" | "bucket" | "debt"
@@ -1501,6 +1725,7 @@ export const Constants = {
         "ai_voice",
         "statement",
         "ai_photo",
+        "bank_sync",
       ],
       import_status: ["pending", "parsed", "approved", "failed"],
       member_role: ["owner", "member"],

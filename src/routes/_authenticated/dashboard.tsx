@@ -23,6 +23,8 @@ import { markSalaryReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
+import { getInboxCount } from "@/lib/inbox.functions";
+import { Inbox as InboxIcon } from "lucide-react";
 import { pageShellClass } from "@/components/page-shell";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 import { useT } from "@/lib/i18n";
@@ -292,6 +294,8 @@ function Dashboard() {
         <p className="text-sm text-muted-foreground">{cycleLabel}</p>
         <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
       </header>
+
+      {householdId ? <InboxBanner householdId={householdId} /> : null}
 
       {setupIncomplete ? (
         <Card className="border-warning/40 bg-warning/5">
@@ -732,5 +736,30 @@ function Sparkline({
         </g>
       ))}
     </svg>
+  );
+}
+
+function InboxBanner({ householdId }: { householdId: string }) {
+  const fetchCount = useServerFn(getInboxCount);
+  const { data } = useQuery({
+    queryKey: ["inbox-count", householdId],
+    queryFn: () => fetchCount({ data: { householdId } }),
+    refetchOnWindowFocus: true,
+  });
+  const count = data?.count ?? 0;
+  if (!count) return null;
+  return (
+    <Link
+      to="/inbox"
+      className="flex items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-3 text-sm hover:bg-primary/10"
+    >
+      <InboxIcon className="h-4 w-4 text-primary" />
+      <span className="flex-1">
+        <strong>{count}</strong>{" "}
+        {count === 1 ? "transaction is" : "transactions are"} waiting for your
+        approval in the Inbox.
+      </span>
+      <span className="text-xs font-medium text-primary">Review →</span>
+    </Link>
   );
 }

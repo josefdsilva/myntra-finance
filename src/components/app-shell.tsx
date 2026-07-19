@@ -26,6 +26,7 @@ import {
   Plus,
   FileText,
   Sparkles,
+  Inbox,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,6 +61,7 @@ const NAV_SECTIONS = [
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/loans", labelKey: "nav.loans", icon: Landmark },
       { to: "/plan", labelKey: "nav.plan", icon: CalendarClock },
+      { to: "/inbox", labelKey: "nav.inbox", icon: Inbox },
     ],
   },
   {

@@ -21,6 +21,7 @@ import {
   deleteDebt,
 } from "@/lib/budget.functions";
 import { getHouseholdCreditUsage } from "@/lib/credits.functions";
+import { BankConnectionsSection } from "@/components/bank-connections-section";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -107,6 +108,7 @@ function SettingsPage() {
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
           />
           <CategoryManager householdId={householdId} />
+          <BankConnectionsSection householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
           <CreditUsageSection household={hh!.household!} />

@@ -23,6 +23,7 @@ import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMoneyInRouteImport } from './routes/_authenticated/money-in'
 import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
+import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -107,6 +108,11 @@ const AuthenticatedMoneyInRoute = AuthenticatedMoneyInRouteImport.update({
 const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
   id: '/loans',
   path: '/loans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHouseholdsRoute = AuthenticatedHouseholdsRouteImport.update({
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/households': typeof AuthenticatedHouseholdsRoute
+  '/inbox': typeof AuthenticatedInboxRoute
   '/loans': typeof AuthenticatedLoansRoute
   '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/households': typeof AuthenticatedHouseholdsRoute
+  '/inbox': typeof AuthenticatedInboxRoute
   '/loans': typeof AuthenticatedLoansRoute
   '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -265,6 +273,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
+  '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/loans': typeof AuthenticatedLoansRoute
   '/_authenticated/money-in': typeof AuthenticatedMoneyInRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -297,6 +306,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/households'
+    | '/inbox'
     | '/loans'
     | '/money-in'
     | '/onboarding'
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/households'
+    | '/inbox'
     | '/loans'
     | '/money-in'
     | '/onboarding'
@@ -358,6 +369,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
     | '/_authenticated/households'
+    | '/_authenticated/inbox'
     | '/_authenticated/loans'
     | '/_authenticated/money-in'
     | '/_authenticated/onboarding'
@@ -497,6 +509,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLoansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inbox': {
+      id: '/_authenticated/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AuthenticatedInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/households': {
       id: '/_authenticated/households'
       path: '/households'
@@ -612,6 +631,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
+  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
   AuthenticatedMoneyInRoute: typeof AuthenticatedMoneyInRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -629,6 +649,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
+  AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedLoansRoute: AuthenticatedLoansRoute,
   AuthenticatedMoneyInRoute: AuthenticatedMoneyInRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
@@ -662,13 +683,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
