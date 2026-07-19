@@ -34,7 +34,7 @@ export type NormalizedBankAccount = {
 };
 
 export type BankProvider = {
-  id: "mock" | "gocardless";
+  id: "mock" | "gocardless" | "enablebanking";
   listAccounts(connection: {
     requisition_id: string | null;
     institution_id: string | null;
@@ -44,6 +44,7 @@ export type BankProvider = {
     since: string | null;
   }): Promise<NormalizedBankTx[]>;
 };
+
 
 // ---------------------------------------------------------------------------
 // Mock provider — deterministic feed. Every call returns the same seeded set
