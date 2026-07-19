@@ -26,6 +26,7 @@ import {
   Plus,
   FileText,
   Sparkles,
+  Inbox,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
