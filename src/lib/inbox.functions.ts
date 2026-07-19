@@ -298,3 +298,51 @@ export const mergeInboxItem = createServerFn({ method: "POST" })
     if (uErr) throw uErr;
     return { ok: true };
   });
+
+/**
+ * Suggest existing expenses that likely correspond to a pending bank line
+ * — same kind, within ±7 days, and within ±2% (or ±€1) of the amount.
+ * The client can offer these as "merge" targets so users don't double-count
+ * fixed costs they already logged manually.
+ */
+export const suggestInboxMatches = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        householdId: z.string().uuid(),
+        pendingId: z.string().uuid(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: p, error: pErr } = await context.supabase
+      .from("pending_transactions")
+      .select("amount, kind, occurred_at")
+      .eq("id", data.pendingId)
+      .eq("household_id", data.householdId)
+      .maybeSingle();
+    if (pErr) throw pErr;
+    if (!p) return [];
+
+    const amt = Number(p.amount);
+    const tol = Math.max(1, amt * 0.02);
+    const day = new Date(p.occurred_at);
+    const from = new Date(day.getTime() - 7 * 86400_000).toISOString();
+    const to = new Date(day.getTime() + 7 * 86400_000).toISOString();
+
+    const { data: rows, error } = await context.supabase
+      .from("expenses")
+      .select("id, amount, category, merchant, occurred_at, note, kind")
+      .eq("household_id", data.householdId)
+      .eq("kind", p.kind)
+      .is("bank_transaction_id", null)
+      .gte("occurred_at", from)
+      .lte("occurred_at", to)
+      .gte("amount", amt - tol)
+      .lte("amount", amt + tol)
+      .order("occurred_at", { ascending: false })
+      .limit(5);
+    if (error) throw error;
+    return rows ?? [];
+  });
