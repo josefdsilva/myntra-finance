@@ -264,8 +264,7 @@ const SnapshotCard = ({
 }: CardProps & { ref: React.Ref<HTMLDivElement> }) => {
   const ringColor =
     overall >= 80 ? "#34d399" : overall >= 60 ? "#facc15" : overall >= 40 ? "#fb923c" : "#f87171";
-  const circumference = 2 * Math.PI * 52;
-  const dash = (overall / 100) * circumference;
+
 
   return (
     <div
