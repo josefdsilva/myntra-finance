@@ -370,6 +370,7 @@ function PendingCard({
 
   const [suggestions, setSuggestions] = useState<MatchSuggestion[] | null>(null);
   const [fixedMatches, setFixedMatches] = useState<FixedMatch[] | null>(null);
+  const [recurring, setRecurring] = useState<{ occurrences: number; avgAmount: number; alreadyFixed: boolean } | null>(null);
   const [loadingSug, setLoadingSug] = useState(false);
   const dateStr = new Date(item.occurred_at).toLocaleDateString();
   const isIncome = item.kind === "income";
@@ -380,20 +381,24 @@ function PendingCard({
     if (next && suggestions === null && !loadingSug) {
       setLoadingSug(true);
       try {
-        const [rows, fx] = await Promise.all([
+        const [rows, fx, rc] = await Promise.all([
           fetchSuggestions(),
           fetchFixedMatches(),
+          fetchRecurring(),
         ]);
         setSuggestions(rows);
         setFixedMatches(fx);
+        setRecurring(rc);
       } catch {
         setSuggestions([]);
         setFixedMatches([]);
+        setRecurring(null);
       } finally {
         setLoadingSug(false);
       }
     }
   }
+
 
 
   return (
