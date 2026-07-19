@@ -326,4 +326,4 @@ export function pickProvider(id: string): BankProvider {
   return mockProvider;
 }
 
-}
+
