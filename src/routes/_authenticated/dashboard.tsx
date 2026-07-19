@@ -23,6 +23,9 @@ import { markSalaryReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
+import { getInboxCount } from "@/lib/inbox.functions";
+import { Link } from "@tanstack/react-router";
+import { Inbox as InboxIcon } from "lucide-react";
 import { pageShellClass } from "@/components/page-shell";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 import { useT } from "@/lib/i18n";
@@ -292,6 +295,8 @@ function Dashboard() {
         <p className="text-sm text-muted-foreground">{cycleLabel}</p>
         <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
       </header>
+
+      {householdId ? <InboxBanner householdId={householdId} /> : null}
 
       {setupIncomplete ? (
         <Card className="border-warning/40 bg-warning/5">
