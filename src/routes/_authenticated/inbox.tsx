@@ -347,6 +347,8 @@ function PendingCard({
   onMerge,
   fetchSuggestions,
   fetchFixedMatches,
+  fetchRecurring,
+  onPromote,
   busy,
 }: {
   item: PendingRow;
@@ -360,9 +362,12 @@ function PendingCard({
   onMerge: (expenseId: string) => void;
   fetchSuggestions: () => Promise<MatchSuggestion[]>;
   fetchFixedMatches: () => Promise<FixedMatch[]>;
+  fetchRecurring: () => Promise<{ occurrences: number; avgAmount: number; alreadyFixed: boolean }>;
+  onPromote: () => void;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
+
   const [suggestions, setSuggestions] = useState<MatchSuggestion[] | null>(null);
   const [fixedMatches, setFixedMatches] = useState<FixedMatch[] | null>(null);
   const [loadingSug, setLoadingSug] = useState(false);
