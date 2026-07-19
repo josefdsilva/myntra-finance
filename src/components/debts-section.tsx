@@ -34,15 +34,19 @@ type BucketRow = { id: string; name: string; initial_balance: number };
 export function DebtsSection({
   householdId,
   showMoveFunds = true,
+  showSimulator = false,
 }: {
   householdId: string;
   showMoveFunds?: boolean;
+  showSimulator?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [moveOpen, setMoveOpen] = useState(false);
+  const [simOpen, setSimOpen] = useState(false);
   const [payDebt, setPayDebt] = useState<Debt | null>(null);
+
 
   const { data } = useQuery({
     enabled: !!householdId,
