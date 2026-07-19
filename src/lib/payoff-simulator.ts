@@ -58,6 +58,13 @@ export type SimulationInput = {
   customOrder?: string[];
   /** Optional one-off prepayment applied at month 0. */
   lumpSum?: LumpSum | null;
+  /**
+   * When true (default), a cleared loan's freed installment rolls into the
+   * focus debt — the classic avalanche/snowball rollover. Set false for the
+   * honest "do nothing" baseline, where each loan simply runs to its own
+   * maturity and freed money is not redirected.
+   */
+  rollFreed?: boolean;
   /** Safety cap; sane loans finish well under this. */
   horizonMonths?: number;
   today?: Date;
@@ -124,6 +131,7 @@ function pickFocus(
 export function simulatePayoff(input: SimulationInput): PayoffPlan {
   const today = input.today ?? new Date();
   const horizon = input.horizonMonths ?? 600;
+  const rollFreed = input.rollFreed ?? true;
   const loans = initState(input.debts, input.lumpSum, today);
 
   if (loans.length === 0) {
@@ -158,7 +166,7 @@ export function simulatePayoff(input: SimulationInput): PayoffPlan {
         l.balance = 0;
         if (l.paidOffMonth === null) {
           l.paidOffMonth = month;
-          freedInstallments += l.installment;
+          if (rollFreed) freedInstallments += l.installment;
         }
       }
     }
@@ -176,7 +184,7 @@ export function simulatePayoff(input: SimulationInput): PayoffPlan {
         focus.balance = 0;
         if (focus.paidOffMonth === null) {
           focus.paidOffMonth = month;
-          freedInstallments += focus.installment;
+          if (rollFreed) freedInstallments += focus.installment;
         }
       }
       guard += 1;

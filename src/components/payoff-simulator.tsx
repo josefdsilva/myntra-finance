@@ -87,8 +87,11 @@ export function PayoffSimulator({ householdId }: { householdId: string }) {
   );
   const orderIds = useMemo(() => effectiveOrder.map((d) => d.id), [effectiveOrder]);
 
+  // "Current path" = do nothing: each loan runs to its own maturity, no
+  // rollover of freed installments. This matches the per-loan overview and is
+  // the honest status quo the extra/strategy is measured against.
   const baseline = useMemo(
-    () => simulatePayoff({ debts: activeDebts, extraPerMonth: 0, strategy }),
+    () => simulatePayoff({ debts: activeDebts, extraPerMonth: 0, strategy, rollFreed: false }),
     [activeDebts, strategy],
   );
   const withExtra = useMemo(
@@ -273,21 +276,29 @@ export function PayoffSimulator({ householdId }: { householdId: string }) {
             </div>
           </div>
 
-          {(extraNum > 0 || lumpNum > 0) && (monthsSaved > 0 || interestSaved > 0.5) ? (
-            <p className="text-sm">
-              {t("payoff.savings", {
-                time:
-                  yearsSaved > 0
-                    ? t("payoff.yearsMonths", { years: yearsSaved, months: remMonths })
-                    : t("payoff.monthsCount", { count: monthsSaved }),
-                money: money(interestSaved),
-              })}
-            </p>
-          ) : extraNum > 0 || lumpNum > 0 ? (
-            <p className="text-sm text-muted-foreground">{t("payoff.noSavings")}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("payoff.tryExtra")}</p>
-          )}
+          {(() => {
+            const engaged = extraNum > 0 || lumpNum > 0;
+            const hasSavings = monthsSaved > 0 || interestSaved > 0.5;
+            const timeStr =
+              yearsSaved > 0
+                ? t("payoff.yearsMonths", { years: yearsSaved, months: remMonths })
+                : t("payoff.monthsCount", { count: monthsSaved });
+            if (hasSavings) {
+              return (
+                <p className="text-sm">
+                  {t(engaged ? "payoff.savings" : "payoff.rolloverBenefit", {
+                    time: timeStr,
+                    money: money(interestSaved),
+                  })}
+                </p>
+              );
+            }
+            return (
+              <p className="text-sm text-muted-foreground">
+                {t(engaged ? "payoff.noSavings" : "payoff.tryExtra")}
+              </p>
+            );
+          })()}
           <p className="text-xs text-muted-foreground">
             {t("payoff.payoffOn", { date: fmtDate(withExtra.payoffDate) })}
           </p>
