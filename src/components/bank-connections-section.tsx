@@ -387,16 +387,10 @@ function AddConnectionDialog({
               onCancel={() => setOpen(false)}
             />
           ) : (
-            <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
-              Enable Banking sync isn't wired up yet. Once credentials are
-              added and the picker is enabled, you'll pick your country and
-              bank here the same way as GoCardless.
-              <div className="mt-3 flex justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
+            <EnableBankingPicker
+              householdId={householdId}
+              onCancel={() => setOpen(false)}
+            />
           )}
 
         </div>
