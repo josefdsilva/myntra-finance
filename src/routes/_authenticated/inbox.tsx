@@ -303,6 +303,14 @@ type MatchSuggestion = {
   kind: "expense" | "income";
 };
 
+type FixedMatch = {
+  id: string;
+  label: string;
+  monthly_amount: number;
+  category: string | null;
+  nameHit: boolean;
+};
+
 function PendingCard({
   item,
   selected,
@@ -314,6 +322,7 @@ function PendingCard({
   onDismiss,
   onMerge,
   fetchSuggestions,
+  fetchFixedMatches,
   busy,
 }: {
   item: PendingRow;
@@ -326,10 +335,12 @@ function PendingCard({
   onDismiss: () => void;
   onMerge: (expenseId: string) => void;
   fetchSuggestions: () => Promise<MatchSuggestion[]>;
+  fetchFixedMatches: () => Promise<FixedMatch[]>;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<MatchSuggestion[] | null>(null);
+  const [fixedMatches, setFixedMatches] = useState<FixedMatch[] | null>(null);
   const [loadingSug, setLoadingSug] = useState(false);
   const dateStr = new Date(item.occurred_at).toLocaleDateString();
   const isIncome = item.kind === "income";
@@ -340,15 +351,21 @@ function PendingCard({
     if (next && suggestions === null && !loadingSug) {
       setLoadingSug(true);
       try {
-        const rows = await fetchSuggestions();
+        const [rows, fx] = await Promise.all([
+          fetchSuggestions(),
+          fetchFixedMatches(),
+        ]);
         setSuggestions(rows);
+        setFixedMatches(fx);
       } catch {
         setSuggestions([]);
+        setFixedMatches([]);
       } finally {
         setLoadingSug(false);
       }
     }
   }
+
 
   return (
     <Card>
