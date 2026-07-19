@@ -131,18 +131,31 @@ export function DebtsSection({
             {showMoveFunds ? t("debt.sectionDesc") : t("debt.overviewDesc")}
           </CardDescription>
         </div>
-        {showMoveFunds && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="shrink-0 whitespace-nowrap"
-            disabled={buckets.length === 0}
-            onClick={() => setMoveOpen(true)}
-          >
-            <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
-          </Button>
-        )}
+        <div className="flex flex-wrap justify-end gap-2 shrink-0">
+          {showSimulator && debts.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="whitespace-nowrap"
+              onClick={() => setSimOpen(true)}
+            >
+              <TrendingDown className="size-4" /> {t("payoff.openButton")}
+            </Button>
+          )}
+          {showMoveFunds && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="whitespace-nowrap"
+              disabled={buckets.length === 0}
+              onClick={() => setMoveOpen(true)}
+            >
+              <ArrowLeftRight className="size-4" /> {t("debt.moveFunds")}
+            </Button>
+          )}
+        </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
        <TooltipProvider delayDuration={80}>
         {debts.length === 0 ? (
