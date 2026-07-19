@@ -539,3 +539,144 @@ function GoCardlessPicker({
     </>
   );
 }
+
+function EnableBankingPicker({
+  householdId,
+  onCancel,
+}: {
+  householdId: string;
+  onCancel: () => void;
+}) {
+  const listAspspsFn = useServerFn(listEnableBankingAspsps);
+  const startLinkFn = useServerFn(startEnableBankingLink);
+
+  const [country, setCountry] = useState<string>("PT");
+  const [filter, setFilter] = useState("");
+  const [pending, setPending] = useState<string | null>(null);
+
+  const aspsps = useQuery({
+    queryKey: ["eb-aspsps", country],
+    queryFn: () => listAspspsFn({ data: { country } }),
+    staleTime: 12 * 60 * 60 * 1000,
+  });
+
+  const filtered = useMemo(() => {
+    const list = aspsps.data ?? [];
+    const q = filter.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((i) => i.name.toLowerCase().includes(q));
+  }, [aspsps.data, filter]);
+
+  const start = async (aspsp: { name: string; country: string }) => {
+    try {
+      setPending(aspsp.name);
+      const res = await startLinkFn({
+        data: {
+          householdId,
+          aspsp_name: aspsp.name,
+          aspsp_country: aspsp.country,
+        },
+      });
+      window.location.assign(res.link);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start bank link");
+      setPending(null);
+    }
+  };
+
+  return (
+    <>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label>Country</Label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Search</Label>
+            <Input
+              placeholder="e.g. Millennium"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="max-h-72 overflow-y-auto rounded-md border">
+          {aspsps.isLoading ? (
+            <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading banks…
+            </div>
+          ) : aspsps.isError ? (
+            <p className="p-3 text-sm text-destructive">
+              {aspsps.error instanceof Error
+                ? aspsps.error.message
+                : "Failed to load banks"}
+            </p>
+          ) : filtered.length === 0 ? (
+            <p className="p-3 text-sm text-muted-foreground">
+              No banks match your search.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {filtered.map((inst) => (
+                <li key={`${inst.country}-${inst.name}`}>
+                  <button
+                    type="button"
+                    onClick={() => start(inst)}
+                    disabled={pending !== null}
+                    className="flex w-full items-center gap-3 p-2 text-left hover:bg-muted/50 disabled:opacity-50"
+                  >
+                    {inst.logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={inst.logo}
+                        alt=""
+                        className="h-8 w-8 rounded object-contain"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded bg-muted" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{inst.name}</div>
+                      {inst.bic ? (
+                        <div className="text-xs text-muted-foreground">{inst.bic}</div>
+                      ) : null}
+                    </div>
+                    {pending === inst.name ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          You'll be sent to your bank to authorize read-only access to
+          balances and transactions. Consent typically lasts 90–180 days;
+          you can revoke it anytime from your bank.
+        </p>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={onCancel} disabled={pending !== null}>
+          Cancel
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
