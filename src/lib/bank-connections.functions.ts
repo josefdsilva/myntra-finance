@@ -4,6 +4,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { pickProvider, isGoCardlessConfigured } from "./bank/providers";
 
 /**
+ * Public callback URL that GoCardless redirects back to after the user
+ * consents. Uses the stable published domain by default; can be overridden
+ * with APP_BASE_URL (e.g. for staging / preview). The callback then bounces
+ * the browser back to /settings?bank_linked=<connectionId>.
+ */
+function appBaseUrl(): string {
+  const raw = process.env.APP_BASE_URL?.trim();
+  if (raw) return raw.replace(/\/+$/, "");
+  return "https://bynku.app";
+}
+
+/**
  * Bank connection CRUD + sync. Every sync writes into `pending_transactions`
  * — never directly into `expenses`. Approval is a separate, explicit step
  * in the Inbox (see inbox.functions.ts). Two guardrails prevent double-import:
