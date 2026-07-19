@@ -194,6 +194,19 @@ function InboxBody({ householdId }: { householdId: string }) {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const promote = useMutation({
+    mutationFn: async (v: { pendingId: string; label?: string; monthlyAmount?: number }) =>
+      promoteFn({ data: { householdId, ...v } }),
+    onSuccess: (res) => {
+      toast.success(`Added "${res.label}" as a fixed cost`);
+      qc.invalidateQueries({ queryKey: ["inbox", householdId] });
+      qc.invalidateQueries({ queryKey: ["fixed-expenses"] });
+      qc.invalidateQueries({ queryKey: ["household"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
 
   return (
     <div className={pageShellClass("3xl")}>
