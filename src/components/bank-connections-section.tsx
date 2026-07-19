@@ -147,10 +147,12 @@ export function BankConnectionsSection({ householdId }: { householdId: string })
           </div>
           <AddConnectionDialog
             gocardlessAvailable={!!status.data?.gocardlessAvailable}
+            enableBankingAvailable={!!status.data?.enableBankingAvailable}
             householdId={householdId}
             onMockSubmit={(v) => createMockMut.mutate(v)}
             mockPending={createMockMut.isPending}
           />
+
         </div>
         <p className="text-sm text-muted-foreground">
           Optional. Auto-fetch transactions from your bank; nothing is added
@@ -272,18 +274,25 @@ const COUNTRIES: Array<{ code: string; label: string }> = [
 
 function AddConnectionDialog({
   gocardlessAvailable,
+  enableBankingAvailable,
   householdId,
   onMockSubmit,
   mockPending,
 }: {
   gocardlessAvailable: boolean;
+  enableBankingAvailable: boolean;
   householdId: string;
   onMockSubmit: (v: { institution_name: string }) => void;
   mockPending: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [provider, setProvider] = useState<"mock" | "gocardless">(
-    gocardlessAvailable ? "gocardless" : "mock",
+  // Default to the first genuinely available real provider, else mock.
+  const [provider, setProvider] = useState<"mock" | "gocardless" | "enablebanking">(
+    enableBankingAvailable
+      ? "enablebanking"
+      : gocardlessAvailable
+        ? "gocardless"
+        : "mock",
   );
   const [mockName, setMockName] = useState("");
 
@@ -303,20 +312,35 @@ function AddConnectionDialog({
             <Label>Provider</Label>
             <Select
               value={provider}
-              onValueChange={(v) => setProvider(v as "mock" | "gocardless")}
+              onValueChange={(v) =>
+                setProvider(v as "mock" | "gocardless" | "enablebanking")
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="enablebanking" disabled={!enableBankingAvailable}>
+                  Real bank (Enable Banking · PSD2)
+                  {!enableBankingAvailable ? " — coming soon" : ""}
+                </SelectItem>
                 <SelectItem value="gocardless" disabled={!gocardlessAvailable}>
-                  Real bank (GoCardless PSD2)
-                  {!gocardlessAvailable ? " — not configured" : ""}
+                  Real bank (GoCardless · PSD2)
+                  {!gocardlessAvailable ? " — coming soon" : ""}
                 </SelectItem>
                 <SelectItem value="mock">Mock (try the flow)</SelectItem>
               </SelectContent>
             </Select>
+            {!enableBankingAvailable && !gocardlessAvailable ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Direct bank sync is being migrated to Enable Banking and
+                will be back shortly. In the meantime you can import
+                statements or add entries manually — everything still lands
+                in the same Inbox for approval.
+              </p>
+            ) : null}
           </div>
+
 
           {provider === "mock" ? (
             <>
