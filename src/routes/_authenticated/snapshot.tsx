@@ -208,7 +208,7 @@ function SnapshotPage() {
       </div>
 
       <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <div className="min-w-[560px] px-4 sm:px-0">
+        <div className="min-w-[600px] px-4 sm:px-0">
           {health && (
             <SnapshotCard
               ref={cardRef}
@@ -264,64 +264,72 @@ const SnapshotCard = ({
 }: CardProps & { ref: React.Ref<HTMLDivElement> }) => {
   const ringColor =
     overall >= 80 ? "#34d399" : overall >= 60 ? "#facc15" : overall >= 40 ? "#fb923c" : "#f87171";
-  const circumference = 2 * Math.PI * 52;
-  const dash = (overall / 100) * circumference;
+
 
   return (
     <div
       ref={ref}
-      className="rounded-2xl p-8 text-white shadow-2xl"
+      className="rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden"
       style={{
         background:
-          "radial-gradient(circle at 20% 0%, #4c1d95 0%, transparent 50%), radial-gradient(circle at 80% 100%, #0e7490 0%, transparent 50%), linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
-        width: 560,
+          "radial-gradient(circle at 15% -10%, #6d28d9 0%, transparent 55%), radial-gradient(circle at 100% 110%, #0891b2 0%, transparent 55%), linear-gradient(135deg, #0b1024 0%, #1e1b4b 55%, #0f172a 100%)",
+        width: 600,
       }}
     >
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src={appIcon.url} alt="" className="size-8 rounded-lg" />
-          <span className="font-display text-xl tracking-tight">bynku</span>
+        <div className="flex items-center gap-2.5">
+          <img src={appIcon.url} alt="" className="size-9 rounded-xl ring-1 ring-white/20" />
+          <span className="font-display text-2xl tracking-tight">bynku</span>
         </div>
-        <span className="text-xs uppercase tracking-widest text-white/60">{monthLabel}</span>
+        <span className="text-[11px] uppercase tracking-[0.2em] text-white/60">{monthLabel}</span>
       </div>
 
-      <div className="mt-6 flex items-center gap-6">
+      {/* Hero score */}
+      <div className="mt-8 flex items-center gap-7">
         <div className="relative shrink-0">
-          <svg width={128} height={128} viewBox="0 0 128 128">
-            <circle cx={64} cy={64} r={52} stroke="rgba(255,255,255,0.12)" strokeWidth={10} fill="none" />
+          <svg width={144} height={144} viewBox="0 0 144 144">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={ringColor} stopOpacity="1" />
+                <stop offset="100%" stopColor={ringColor} stopOpacity="0.55" />
+              </linearGradient>
+            </defs>
+            <circle cx={72} cy={72} r={60} stroke="rgba(255,255,255,0.1)" strokeWidth={11} fill="none" />
             <circle
-              cx={64}
-              cy={64}
-              r={52}
-              stroke={ringColor}
-              strokeWidth={10}
+              cx={72}
+              cy={72}
+              r={60}
+              stroke="url(#ringGrad)"
+              strokeWidth={11}
               fill="none"
               strokeLinecap="round"
-              strokeDasharray={`${dash} ${circumference}`}
-              transform="rotate(-90 64 64)"
+              strokeDasharray={`${(overall / 100) * (2 * Math.PI * 60)} ${2 * Math.PI * 60}`}
+              transform="rotate(-90 72 72)"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-display tabular-nums">{overall}</span>
-            <span className="text-[10px] uppercase tracking-widest text-white/60">/ 100</span>
+            <span className="text-5xl font-display tabular-nums leading-none">{overall}</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/60 mt-1">/ 100</span>
           </div>
         </div>
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-widest text-white/60">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">
             {t("snapshot.tagline")}
           </p>
-          <h2 className="text-2xl font-display leading-tight mt-1">{t("snapshot.overall")}</h2>
+          <h2 className="text-3xl font-display leading-tight mt-1.5">{t("snapshot.overall")}</h2>
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-2">
+      {/* Score breakdown */}
+      <div className="mt-7 grid grid-cols-2 gap-2.5">
         {scores.map((s) => (
-          <div key={s.key} className="rounded-xl bg-white/5 ring-1 ring-white/10 px-3 py-2">
+          <div key={s.key} className="rounded-xl bg-white/[0.06] ring-1 ring-white/10 px-3.5 py-2.5 backdrop-blur">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-white/70">{t(SCORE_LABELS[s.key])}</span>
-              <span className="tabular-nums font-medium">{s.value}</span>
+              <span className="text-white/75">{t(SCORE_LABELS[s.key])}</span>
+              <span className="tabular-nums font-semibold">{s.value}</span>
             </div>
-            <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div
                 className="h-full rounded-full"
                 style={{
@@ -341,6 +349,7 @@ const SnapshotCard = ({
         ))}
       </div>
 
+      {/* Badges */}
       <div className="mt-6 flex flex-wrap gap-1.5">
         {badges.map((b) => {
           const meta = BADGE_META[b];
@@ -348,18 +357,25 @@ const SnapshotCard = ({
           return (
             <span
               key={b}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ring-1 ${meta.tone}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ring-1 ${meta.tone}`}
             >
-              <Icon className="size-3" />
+              <Icon className="size-3.5" />
               {t(`snapshot.badge.${b}`)}
             </span>
           );
         })}
       </div>
 
-      <p className="mt-6 text-[10px] uppercase tracking-widest text-white/40 text-right">
-        bynku.app
-      </p>
+      {/* CTA footer — the growth loop */}
+      <div className="mt-8 pt-5 border-t border-white/10 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-white/90">{t("snapshot.ctaHeadline")}</p>
+          <p className="text-xs text-white/60 mt-0.5">{t("snapshot.buildYours")}</p>
+        </div>
+        <div className="shrink-0 rounded-xl bg-white text-slate-900 px-4 py-2.5 text-sm font-semibold shadow-lg">
+          bynku.app
+        </div>
+      </div>
     </div>
   );
 };
