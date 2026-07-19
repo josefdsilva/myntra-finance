@@ -521,6 +521,28 @@ function PendingCard({
           </div>
         ) : null}
 
+        {open && recurring && recurring.occurrences >= 1 && !recurring.alreadyFixed && !(fixedMatches && fixedMatches.length > 0) ? (
+          <div className="mt-3 rounded-md border border-sky-300/60 bg-sky-50 p-2 text-sm dark:border-sky-500/30 dark:bg-sky-950/30">
+            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-sky-800 dark:text-sky-300">
+              <Repeat className="h-3 w-3" />
+              Looks like a recurring monthly charge
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Seen in {recurring.occurrences} prior month
+              {recurring.occurrences === 1 ? "" : "s"} at ~{money(recurring.avgAmount)}.
+              Add it as a fixed cost so it counts toward your baseline (and future
+              bank syncs won't double-count it).
+            </div>
+            <div className="mt-2">
+              <Button size="sm" variant="outline" onClick={onPromote} disabled={busy}>
+                <Repeat className="mr-1 h-4 w-4" /> Add as fixed cost
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+
+
 
 
         {open && (loadingSug || (suggestions && suggestions.length > 0)) ? (
