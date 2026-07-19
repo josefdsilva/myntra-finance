@@ -141,7 +141,10 @@ export const approveInboxItems = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const editById = new Map(data.edits.map((e) => [e.id, e]));
+    type EditPatch = z.infer<typeof approvedEdit>;
+    const editById = new Map<string, EditPatch>(
+      data.edits.map((e) => [e.id, e]),
+    );
     const { data: pending, error: fetchErr } = await context.supabase
       .from("pending_transactions")
       .select("*")
@@ -168,13 +171,10 @@ export const approveInboxItems = createServerFn({ method: "POST" })
       labels: string[];
       bank_transaction_id: string | null;
     }> = [];
-    const pendingIdByExpenseKey = new Map<string, string>();
 
     for (const p of pending ?? []) {
-      const edit = editById.get(p.id) ?? {};
+      const edit: EditPatch = editById.get(p.id) ?? { id: p.id };
       const kind = (edit.kind ?? p.kind) as "expense" | "income";
-      const key = `${p.id}`;
-      pendingIdByExpenseKey.set(key, p.id);
       expenseRows.push({
         household_id: p.household_id,
         added_by_user_id: context.userId,
