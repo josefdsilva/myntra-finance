@@ -173,6 +173,18 @@ function InboxBody({ householdId }: { householdId: string }) {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Sync failed"),
   });
 
+  const merge = useMutation({
+    mutationFn: async (v: { pendingId: string; expenseId: string }) =>
+      mergeFn({ data: { householdId, ...v } }),
+    onSuccess: () => {
+      toast.success("Merged with existing entry");
+      qc.invalidateQueries({ queryKey: ["inbox", householdId] });
+      qc.invalidateQueries({ queryKey: ["expenses"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+
   return (
     <div className={pageShellClass("3xl")}>
       <InboxHeader pendingCount={items.length} />
