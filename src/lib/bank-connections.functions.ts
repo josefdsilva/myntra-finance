@@ -62,7 +62,7 @@ export const createBankConnection = createServerFn({ method: "POST" })
     z
       .object({
         householdId: z.string().uuid(),
-        provider: z.enum(["mock", "gocardless"]).default("mock"),
+        provider: z.enum(["mock", "gocardless", "enablebanking"]).default("mock"),
         institution_id: z.string().max(120).nullable().optional(),
         institution_name: z.string().min(1).max(120),
         requisition_id: z.string().max(120).nullable().optional(),
