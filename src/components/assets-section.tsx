@@ -44,6 +44,10 @@ const LIQ_TONE: Record<string, string> = {
   illiquid: "bg-muted text-muted-foreground",
 };
 
+// Asset kinds that commonly generate rent — show the rent-link affordance on
+// these even before a rent income exists, so the connection is discoverable.
+const RENTAL_KINDS = new Set(["property", "land", "business"]);
+
 export function AssetsSection({ householdId }: { householdId: string }) {
   const t = useT();
   const qc = useQueryClient();
@@ -212,38 +216,51 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                         })}
                       </p>
                     )}
-                    {(rentIncomes.length > 0 || r.income_id) && (
+                    {(rentIncomes.length > 0 || r.income_id || RENTAL_KINDS.has(r.kind)) && (
                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <Select
-                          value={r.income_id ?? "none"}
-                          onValueChange={(v) => linkIncome(r.id, v === "none" ? null : v)}
-                        >
-                          <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
-                            <SelectValue placeholder={t("assets.rentLabel")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">{t("assets.rentNone")}</SelectItem>
-                            {rentIncomes.map((inc) => (
-                              <SelectItem key={inc.id} value={inc.id}>
-                                {inc.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {(() => {
-                          const inc = rentIncomes.find((i) => i.id === r.income_id);
-                          if (!inc || Number(r.current_value) <= 0) return null;
-                          const annual = Number(inc.monthly_amount) * 12;
-                          const yieldPct = (annual / Number(r.current_value)) * 100;
-                          return (
-                            <span className="text-[11px] text-muted-foreground">
-                              {t("assets.rentYield", {
-                                pct: yieldPct.toFixed(1),
-                                annual: money(annual),
-                              })}
-                            </span>
-                          );
-                        })()}
+                        {rentIncomes.length > 0 || r.income_id ? (
+                          <>
+                            <Select
+                              value={r.income_id ?? "none"}
+                              onValueChange={(v) => linkIncome(r.id, v === "none" ? null : v)}
+                            >
+                              <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
+                                <SelectValue placeholder={t("assets.rentLabel")} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">{t("assets.rentNone")}</SelectItem>
+                                {rentIncomes.map((inc) => (
+                                  <SelectItem key={inc.id} value={inc.id}>
+                                    {inc.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {(() => {
+                              const inc = rentIncomes.find((i) => i.id === r.income_id);
+                              if (!inc || Number(r.current_value) <= 0) return null;
+                              const cur = Number(r.current_value);
+                              const annual = Number(inc.monthly_amount) * 12;
+                              const yieldPct = (annual / cur) * 100;
+                              const ratio = annual > 0 ? cur / annual : 0;
+                              return (
+                                <span className="text-[11px] text-muted-foreground">
+                                  {t("assets.rentYield", {
+                                    pct: yieldPct.toFixed(1),
+                                    annual: money(annual),
+                                  })}
+                                  {annual > 0
+                                    ? ` · ${t("assets.priceToRent", { ratio: ratio.toFixed(1) })}`
+                                    : ""}
+                                </span>
+                              );
+                            })()}
+                          </>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">
+                            {t("assets.rentHint")}
+                          </span>
+                        )}
                       </div>
                     )}
                     {(investmentBuckets.length > 0 || r.bucket_id) && (
