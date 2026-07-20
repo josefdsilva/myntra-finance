@@ -305,7 +305,10 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                   ? Number(r.current_value) - Number(r.acquired_value)
                   : null;
               return (
-                <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                <li
+                  key={r.id}
+                  className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-medium">{r.name}</span>
@@ -401,36 +404,38 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-right">
+                  <div className="flex items-center justify-between gap-2 sm:justify-end sm:shrink-0">
+                    <div>
                       <span className="tabular-nums font-medium">{money(r.current_value)}</span>
                       {gain != null && Math.abs(gain) >= 0.005 && (
-                        <p
-                          className={`text-xs tabular-nums ${gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
+                        <span
+                          className={`ml-2 text-xs tabular-nums ${gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
                         >
                           {gain >= 0 ? "▲" : "▼"} {money(Math.abs(gain))}
-                        </p>
+                        </span>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={t("common.edit")}
-                      onClick={() => startEdit(r)}
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={t("assets.askCoach")}
-                      onClick={() => askCoach(r)}
-                    >
-                      <Sparkles className="size-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <div className="flex shrink-0 items-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t("common.edit")}
+                        onClick={() => startEdit(r)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t("assets.askCoach")}
+                        onClick={() => askCoach(r)}
+                      >
+                        <Sparkles className="size-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                 </li>
               );

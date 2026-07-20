@@ -77,12 +77,15 @@ export function NetWorthCard({ householdId }: { householdId: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {rows.map((r) => (
-            <div key={r.label} className="rounded-lg border bg-muted/30 p-2.5">
+            <div
+              key={r.label}
+              className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 p-2.5 sm:block"
+            >
               <p className="text-xs text-muted-foreground">{r.label}</p>
               <p
-                className={`tabular-nums font-medium ${r.sign < 0 ? "text-destructive" : "text-foreground"}`}
+                className={`tabular-nums font-medium whitespace-nowrap ${r.sign < 0 ? "text-destructive" : "text-foreground"}`}
               >
                 {r.sign < 0 ? "−" : ""}
                 {money(r.value)}
