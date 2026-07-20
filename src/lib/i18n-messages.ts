@@ -2350,7 +2350,7 @@ const pt: Record<MessageKey, string> = {
   "ob.continue": "Continuar",
   "ob.finish": "Concluir",
   "ob.getStarted": "Começar",
-  "ob.skipHint": "Pode saltar qualquer passo e atualizá-lo depois em Entradas, Despesas, Empréstimos ou Planos.",
+  "ob.skipHint": "Pode saltar qualquer passo e atualizá-lo depois em Rendimentos, Despesas, Empréstimos ou Planear.",
   "ob.orAddManually": "ou adicione manualmente abaixo",
   "ob.orEstimateManually": "ou estime manualmente abaixo",
   "ob.amountPh": "{sym}/mês",
