@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
 import { pageShellClass } from "@/components/page-shell";
+import { NetWorthCard } from "@/components/net-worth-card";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 import { useT } from "@/lib/i18n";
 
@@ -487,6 +488,8 @@ function Dashboard() {
         />
         <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
+
+      {householdId && <NetWorthCard householdId={householdId} />}
 
       {householdId && (
         <DashboardTips

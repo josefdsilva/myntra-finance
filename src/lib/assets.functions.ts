@@ -77,6 +77,37 @@ export const upsertAsset = createServerFn({ method: "POST" })
     return row;
   });
 
+/**
+ * Set an asset's optional links: the rent income it generates, and/or the
+ * investment project (bucket) that funds it. Passing null clears a link;
+ * omitting a field leaves it unchanged. RLS ensures the caller owns the asset.
+ */
+export const setAssetLinks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        household_id: z.string().uuid(),
+        income_id: z.string().uuid().nullable().optional(),
+        bucket_id: z.string().uuid().nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const patch: Record<string, string | null> = {};
+    if (data.income_id !== undefined) patch.income_id = data.income_id;
+    if (data.bucket_id !== undefined) patch.bucket_id = data.bucket_id;
+    if (Object.keys(patch).length === 0) return { ok: true };
+    const { error } = await context.supabase
+      .from("assets")
+      .update(patch)
+      .eq("id", data.id)
+      .eq("household_id", data.household_id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const deleteAsset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))

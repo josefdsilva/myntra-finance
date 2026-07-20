@@ -17,7 +17,13 @@ import {
 import { Plus, Trash2, Gem, Sparkles } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { upsertAsset, deleteAsset, ASSET_KINDS, liquidityForKind } from "@/lib/assets.functions";
+import {
+  upsertAsset,
+  deleteAsset,
+  setAssetLinks,
+  ASSET_KINDS,
+  liquidityForKind,
+} from "@/lib/assets.functions";
 
 type AssetRow = {
   id: string;
@@ -27,6 +33,7 @@ type AssetRow = {
   acquired_on: string | null;
   current_value: number;
   liquidity: string;
+  income_id: string | null;
 };
 
 const LIQ_TONE: Record<string, string> = {
@@ -42,18 +49,38 @@ export function AssetsSection({ householdId }: { householdId: string }) {
   const upsert = useServerFn(upsertAsset);
   const del = useServerFn(deleteAsset);
 
+  const linkFn = useServerFn(setAssetLinks);
   const { data: rows, refetch } = useQuery({
     queryKey: ["assets", householdId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select("id, name, kind, acquired_value, acquired_on, current_value, liquidity")
+        .select("id, name, kind, acquired_value, acquired_on, current_value, liquidity, income_id")
         .eq("household_id", householdId)
         .order("current_value", { ascending: false });
       if (error) throw error;
       return (data ?? []) as AssetRow[];
     },
   });
+
+  // Rent-type incomes available to attach to an asset, so we can show which
+  // assets generate recurring income and their rent-to-value (gross yield).
+  const { data: rentIncomes = [] } = useQuery({
+    queryKey: ["assets-rent-incomes", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("incomes")
+        .select("id, label, monthly_amount")
+        .eq("household_id", householdId)
+        .eq("type", "rent");
+      return (data ?? []) as Array<{ id: string; label: string; monthly_amount: number }>;
+    },
+  });
+
+  async function linkIncome(assetId: string, incomeId: string | null) {
+    await linkFn({ data: { id: assetId, household_id: householdId, income_id: incomeId } });
+    refetch();
+  }
 
   const [name, setName] = useState("");
   const [kind, setKind] = useState<(typeof ASSET_KINDS)[number]>("property");
@@ -159,6 +186,40 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                           date: r.acquired_on ? fmtDate(r.acquired_on) : "—",
                         })}
                       </p>
+                    )}
+                    {(rentIncomes.length > 0 || r.income_id) && (
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <Select
+                          value={r.income_id ?? "none"}
+                          onValueChange={(v) => linkIncome(r.id, v === "none" ? null : v)}
+                        >
+                          <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
+                            <SelectValue placeholder={t("assets.rentLabel")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{t("assets.rentNone")}</SelectItem>
+                            {rentIncomes.map((inc) => (
+                              <SelectItem key={inc.id} value={inc.id}>
+                                {inc.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {(() => {
+                          const inc = rentIncomes.find((i) => i.id === r.income_id);
+                          if (!inc || Number(r.current_value) <= 0) return null;
+                          const annual = Number(inc.monthly_amount) * 12;
+                          const yieldPct = (annual / Number(r.current_value)) * 100;
+                          return (
+                            <span className="text-[11px] text-muted-foreground">
+                              {t("assets.rentYield", {
+                                pct: yieldPct.toFixed(1),
+                                annual: money(annual),
+                              })}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
