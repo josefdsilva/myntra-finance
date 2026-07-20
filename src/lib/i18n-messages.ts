@@ -1172,6 +1172,9 @@ const en = {
   "ob.variable.namePh": "e.g. Groceries",
   "ob.debt.title": "Any loans or credit?",
   "ob.debt.subtitle": "Mortgage, car loan, credit lines. Add the monthly payment; principal, rate and maturity power the payoff tools.",
+  "ob.assets.title": "Anything valuable you own?",
+  "ob.assets.subtitle": "Property, a car, stocks or funds. This powers your net worth. Skip if you'd rather not.",
+  "ob.assets.namePh": "e.g. Apartment",
   "ob.debt.namePh": "e.g. Mortgage",
   "ob.debt.principalPh": "Principal {sym}",
   "ob.debt.ratePh": "Rate %",
@@ -1222,6 +1225,8 @@ const en = {
   "snapshot.badge.consistent_saver": "Consistent saver",
   "snapshot.badge.budget_hero": "Budget hero",
   "snapshot.badge.investing": "Investing",
+  "snapshot.badge.net_worth_positive": "Positive net worth",
+  "snapshot.netWorthPrivate": "Private, not shown on the shared card",
   "snapshot.badge.getting_started": "Getting started",
   "tour.header": "Quick tour",
   "tour.step": "Step {current} of {total}",
@@ -1833,7 +1838,7 @@ const pt: Record<MessageKey, string> = {
   "incomeSuggestion.extraDebtPayment": "Pagamento extra de dívida",
   "incomeSuggestion.taeg": "· TAEG {pct}%",
   "incomeSuggestion.debtNote":
-    "Só registramos isso aqui — lance o pagamento como uma despesa normal quando você o fizer.",
+    "Apenas registamos isto aqui; registe o pagamento como uma despesa normal quando o fizer.",
   "incomeSuggestion.distributed": "Distribuído",
   "incomeSuggestion.keepInAccount": "Manter na conta",
   "incomeSuggestion.overspendWarning":
@@ -1860,11 +1865,11 @@ const pt: Record<MessageKey, string> = {
   "coach.freshLabel": "Recente",
   "coach.generatedPrefix": "gerado em",
   "coach.emptyState":
-    "Clique em {label} para obter um resumo do que está indo bem, pontos de atenção e recomendações. Usa uma chamada de IA.",
+    "Clique em {label} para obter um resumo do que está a correr bem, pontos de atenção e recomendações. Usa uma chamada de IA.",
   "coach.askAnything":
     "Pergunte qualquer coisa — orçamento do dia a dia ou grandes decisões de vida. Experimente:",
   "coach.suggestion1":
-    "Estamos pensando em mudar de casa. Que valor de aluguel mensal conseguimos pagar confortavelmente?",
+    "Estamos a pensar em mudar de casa. Que valor de renda mensal conseguimos pagar confortavelmente?",
   "coach.suggestion2":
     "O nosso carro avariou. Devemos comprar um usado com as poupanças ou pedir um empréstimo? Que faixa de preço?",
   "coach.suggestion3":
@@ -1893,8 +1898,8 @@ const pt: Record<MessageKey, string> = {
     'Eliminar a categoria "{name}"? As entradas existentes serão movidas para "other".',
   "labelsInput.placeholder": "ex.: férias, festa de aniversário",
   "labelsInput.removeAria": "Remover {label}",
-  "benchmarks.title": "Como você se compara",
-  "benchmarks.titleWithCountry": "Como você se compara · {country}",
+  "benchmarks.title": "Como se compara",
+  "benchmarks.titleWithCountry": "Como se compara · {country}",
   "benchmarks.notSupported":
     "Ainda não há dados de referência públicos para o seu país ({country}).",
   "benchmarks.notSupportedBody":
@@ -1935,7 +1940,7 @@ const pt: Record<MessageKey, string> = {
   "benchmarks.incomeBottomPercentile":
     "O seu rendimento está entre os {pct}% mais baixos dos agregados do {country} do seu tamanho.",
   "benchmarks.incomeDetail":
-    "Comparado com {household} em todo o {country}, cerca de {bottomPct}% ganham menos do que você e {topPct}% ganham mais (ajustado ao tamanho do agregado).",
+    "Comparado com {household} em todo o {country}, cerca de {bottomPct}% ganham menos do que o seu agregado e {topPct}% ganham mais (ajustado ao tamanho do agregado).",
   "benchmarks.savingsNegative": "Está a gastar mais do que ganha (taxa de poupança de {pct}%).",
   "benchmarks.savingsAboveAvg":
     "Poupa {pct}% do rendimento — bem acima da média do {country}, de {avg}%.",
@@ -1944,9 +1949,9 @@ const pt: Record<MessageKey, string> = {
   "benchmarks.savingsBelowAvg":
     "Poupa {pct}% do rendimento — abaixo da média do {country}, de {avg}%.",
   "benchmarks.savingsDetailAbove":
-    "Isso é {delta} pontos percentuais acima da média — uma almofada mais forte do que a maioria dos agregados.",
+    "Isto é {delta} pontos percentuais acima da média — uma almofada mais forte do que a maioria dos agregados.",
   "benchmarks.savingsDetailBelow":
-    "Isso é {delta} pontos percentuais abaixo da média — reduzir essa diferença reforçaria a sua almofada financeira.",
+    "Isto é {delta} pontos percentuais abaixo da média — reduzir essa diferença reforçaria a sua almofada financeira.",
   "benchmarks.spendLess":
     "Gasta cerca de {pct}% menos por mês do que o agregado típico do {country} do seu tamanho.",
   "benchmarks.spendAverage":
@@ -1954,7 +1959,7 @@ const pt: Record<MessageKey, string> = {
   "benchmarks.spendMore":
     "Gasta cerca de {pct}% mais por mês do que o agregado típico do {country} do seu tamanho.",
   "benchmarks.spendDetailFull":
-    "Você: {user}/mês · Típico {household} no {country}: {typical}/mês ({sign}{diff}).",
+    "O seu: {user}/mês · Típico {household} no {country}: {typical}/mês ({sign}{diff}).",
   "benchmarks.bandBottom": "mais baixo",
   "benchmarks.bandLowerMid": "médio-baixo",
   "benchmarks.bandMid": "médio",
@@ -2433,6 +2438,9 @@ const pt: Record<MessageKey, string> = {
   "ob.variable.namePh": "ex. Mercearia",
   "ob.debt.title": "Empréstimos ou crédito?",
   "ob.debt.subtitle": "Crédito habitação, automóvel, cartões. Adicione a prestação mensal; capital, taxa e maturidade alimentam as ferramentas de amortização.",
+  "ob.assets.title": "Tem algo de valor?",
+  "ob.assets.subtitle": "Imóveis, um carro, ações ou fundos. Isto alimenta o seu património líquido. Pode ignorar se preferir.",
+  "ob.assets.namePh": "ex.: Apartamento",
   "ob.debt.namePh": "ex. Crédito habitação",
   "ob.debt.principalPh": "Capital {sym}",
   "ob.debt.ratePh": "Taxa %",
@@ -2483,6 +2491,8 @@ const pt: Record<MessageKey, string> = {
   "snapshot.badge.consistent_saver": "Poupador constante",
   "snapshot.badge.budget_hero": "Herói do orçamento",
   "snapshot.badge.investing": "Investidor",
+  "snapshot.badge.net_worth_positive": "Património positivo",
+  "snapshot.netWorthPrivate": "Privado, não aparece no cartão partilhado",
   "snapshot.badge.getting_started": "A começar",
   "tour.header": "Visita rápida",
   "tour.step": "Passo {current} de {total}",
@@ -3690,6 +3700,9 @@ const es: Record<MessageKey, string> = {
   "ob.variable.namePh": "p. ej. Compra",
   "ob.debt.title": "¿Préstamos o créditos?",
   "ob.debt.subtitle": "Hipoteca, préstamo del coche, líneas de crédito. Añade la cuota mensual; capital, tasa y vencimiento alimentan las herramientas de amortización.",
+  "ob.assets.title": "¿Tienes algo de valor?",
+  "ob.assets.subtitle": "Propiedades, un coche, acciones o fondos. Esto alimenta tu patrimonio neto. Puedes omitirlo si prefieres.",
+  "ob.assets.namePh": "p. ej.: Apartamento",
   "ob.debt.namePh": "p. ej. Hipoteca",
   "ob.debt.principalPh": "Capital {sym}",
   "ob.debt.ratePh": "Tasa %",
@@ -3740,6 +3753,8 @@ const es: Record<MessageKey, string> = {
   "snapshot.badge.consistent_saver": "Ahorrador constante",
   "snapshot.badge.budget_hero": "Héroe del presupuesto",
   "snapshot.badge.investing": "Invirtiendo",
+  "snapshot.badge.net_worth_positive": "Patrimonio positivo",
+  "snapshot.netWorthPrivate": "Privado, no aparece en la tarjeta compartida",
   "snapshot.badge.getting_started": "Empezando",
   "tour.header": "Visita rápida",
   "tour.step": "Paso {current} de {total}",
@@ -4955,6 +4970,9 @@ const de: Record<MessageKey, string> = {
   "ob.variable.namePh": "z. B. Lebensmittel",
   "ob.debt.title": "Kredite oder Darlehen?",
   "ob.debt.subtitle": "Hypothek, Autokredit, Kreditlinien. Trage die Monatsrate ein; Restschuld, Zins und Laufzeit versorgen die Tilgungstools.",
+  "ob.assets.title": "Etwas Wertvolles im Besitz?",
+  "ob.assets.subtitle": "Immobilien, ein Auto, Aktien oder Fonds. Das speist dein Nettovermögen. Überspringe es, wenn du magst.",
+  "ob.assets.namePh": "z. B. Wohnung",
   "ob.debt.namePh": "z. B. Hypothek",
   "ob.debt.principalPh": "Restschuld {sym}",
   "ob.debt.ratePh": "Zins %",
@@ -5005,6 +5023,8 @@ const de: Record<MessageKey, string> = {
   "snapshot.badge.consistent_saver": "Konstanter Sparer",
   "snapshot.badge.budget_hero": "Budget-Held",
   "snapshot.badge.investing": "Investierend",
+  "snapshot.badge.net_worth_positive": "Positives Nettovermögen",
+  "snapshot.netWorthPrivate": "Privat, nicht auf der geteilten Karte",
   "snapshot.badge.getting_started": "Am Anfang",
   "tour.header": "Kurze Tour",
   "tour.step": "Schritt {current} von {total}",
@@ -6220,6 +6240,9 @@ const fr: Record<MessageKey, string> = {
   "ob.variable.namePh": "ex. Courses",
   "ob.debt.title": "Prêts ou crédits ?",
   "ob.debt.subtitle": "Prêt immobilier, auto, lignes de crédit. Indiquez la mensualité ; capital, taux et échéance alimentent les outils de remboursement.",
+  "ob.assets.title": "Un bien de valeur ?",
+  "ob.assets.subtitle": "Un logement, une voiture, des actions ou des fonds. Cela alimente votre valeur nette. Passez si vous préférez.",
+  "ob.assets.namePh": "ex. : Appartement",
   "ob.debt.namePh": "ex. Prêt immobilier",
   "ob.debt.principalPh": "Capital {sym}",
   "ob.debt.ratePh": "Taux %",
@@ -6270,6 +6293,8 @@ const fr: Record<MessageKey, string> = {
   "snapshot.badge.consistent_saver": "Épargnant régulier",
   "snapshot.badge.budget_hero": "Héros du budget",
   "snapshot.badge.investing": "Investit",
+  "snapshot.badge.net_worth_positive": "Valeur nette positive",
+  "snapshot.netWorthPrivate": "Privé, pas sur la carte partagée",
   "snapshot.badge.getting_started": "Débute",
   "tour.header": "Visite rapide",
   "tour.step": "Étape {current} sur {total}",

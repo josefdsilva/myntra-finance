@@ -17,6 +17,12 @@ export type ScoreInputs = {
   debtMonthly: number;
   /** Sum of current balances across all buckets/projects. */
   bucketsTotal: number;
+  /** Current value of quickly-sellable assets (stocks, bonds, funds) — a real,
+   * if secondary, emergency backstop on top of project balances. */
+  liquidAssets: number;
+  /** Net worth = assets + project balances − outstanding loan balances. Used for
+   * the positive-net-worth badge; not a scored pillar (it's a stock, not a flow). */
+  netWorth: number;
   /** Whether at least one bucket has kind = "investment". */
   hasInvestment: boolean;
   /** Variable pool for the current cycle (baseline - fixed). */
@@ -35,6 +41,7 @@ export type Badge =
   | "consistent_saver"
   | "budget_hero"
   | "investing"
+  | "net_worth_positive"
   | "getting_started";
 
 export type HealthResult = {
@@ -58,6 +65,8 @@ export function computeHealth(input: ScoreInputs): HealthResult {
     fixedTotal,
     debtMonthly,
     bucketsTotal,
+    liquidAssets,
+    netWorth,
     hasInvestment,
     variablePool,
     variableSpent,
@@ -71,8 +80,11 @@ export function computeHealth(input: ScoreInputs): HealthResult {
   const debtRatio = income > 0 ? debtMonthly / income : 0;
   // Emergency runway is measured against TOTAL monthly outgoings (fixed +
   // everyday pool), not fixed costs alone — money you'd actually need to cover.
+  // Accessible buffer = project balances + quickly-sellable assets (stocks,
+  // bonds, funds); illiquid assets like a house are not a real emergency source.
   const totalOutgoings = Math.max(1, fixedTotal + Math.max(0, variablePool));
-  const monthsOfEmergency = bucketsTotal / totalOutgoings;
+  const accessibleBuffer = bucketsTotal + Math.max(0, liquidAssets);
+  const monthsOfEmergency = accessibleBuffer / totalOutgoings;
 
   // --- Sub-scores. sqrt curves are "encouraging": they reward early progress
   //     while still requiring a lot for a perfect mark. ------------------------
@@ -118,6 +130,7 @@ export function computeHealth(input: ScoreInputs): HealthResult {
   if (savedRate >= 0.1) badges.push("consistent_saver");
   if (budgetScored && budget >= 80) badges.push("budget_hero");
   if (hasInvestment) badges.push("investing");
+  if (netWorth > 0) badges.push("net_worth_positive");
   if (badges.length === 0) badges.push("getting_started");
 
   return {

@@ -135,6 +135,14 @@ type CoachContext = {
   liquidReserve: number;
   /** True if the household has at least one project tagged as its emergency fund. */
   hasEmergencyBucket: boolean;
+  /** Significant things owned (property, vehicles, investments), current value each. */
+  assets: Array<{ name: string; kind: string; currentValue: number }>;
+  /** Sum of current values of all assets. */
+  assetsTotal: number;
+  /** Quickly-sellable assets (stocks, bonds, funds) — a secondary emergency backstop. */
+  liquidAssetsTotal: number;
+  /** assetsTotal + totalSavings − debtPrincipalOutstanding. Bank cash is not tracked, so excluded. */
+  netWorth: number;
   cycleTotals: {
     spent: number;
     received: number;
@@ -257,6 +265,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     { data: allAllocs },
     { data: bucketMoves },
     { data: plansData },
+    { data: assetsData },
   ] = await Promise.all([
     supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
     supabase
@@ -291,6 +300,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       .from("plans")
       .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
       .eq("household_id", householdId),
+    supabase.from("assets").select("name, kind, current_value").eq("household_id", householdId),
   ]);
 
   const sumMonthly = (rows: unknown): number =>
@@ -435,6 +445,20 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   // investments: the emergency-tagged projects if any exist, otherwise all
   // non-investment savings. Investments are deliberately excluded.
   const liquidReserve = hasEmergencyBucket ? emergencyBalance : savingsBalance + emergencyBalance;
+
+  // Assets & net worth. Liquidity of an asset is a property of its type; the
+  // quickly-sellable kinds double as a secondary emergency backstop.
+  const LIQUID_ASSET_KINDS = new Set(["stocks", "bonds", "fund"]);
+  const assets = rowsOrEmpty<{ name: string; kind: string; current_value: number | string }>(
+    assetsData,
+  ).map((a) => ({ name: a.name, kind: a.kind, currentValue: Number(a.current_value) || 0 }));
+  const assetsTotal = Math.round(assets.reduce((s, a) => s + a.currentValue, 0) * 100) / 100;
+  const liquidAssetsTotal =
+    Math.round(
+      assets.filter((a) => LIQUID_ASSET_KINDS.has(a.kind)).reduce((s, a) => s + a.currentValue, 0) *
+        100,
+    ) / 100;
+  const netWorth = Math.round((assetsTotal + totalSavings - debtPrincipalOutstanding) * 100) / 100;
 
   let spent = 0,
     received = 0;
@@ -629,6 +653,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     savingsBalance,
     liquidReserve,
     hasEmergencyBucket,
+    assets,
+    assetsTotal,
+    liquidAssetsTotal,
+    netWorth,
     cycleTotals: { spent, received, net: spent - received, byCategory },
     previousCycleTotals,
     buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
@@ -703,6 +731,7 @@ function slimContext(ctx: CoachContext): CoachContext {
     topSpends: ctx.topSpends.slice(0, 6),
     upcomingPlans: ctx.upcomingPlans.slice(0, 8),
     resolvedPlansRecent: ctx.resolvedPlansRecent.slice(0, 4),
+    assets: ctx.assets.slice(0, 10),
   };
 }
 
@@ -721,6 +750,7 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - savingsRatePct is the REALIZED savings rate: what the household actually set aside vs. what it actually earned (avgRealAllocPerCycle ÷ avgIncomePerCycle over savingsRateCycles complete months). This is the headline rate — quote it as the savings rate. If savingsRatePct is null, there isn't a full month of income history yet; say so and lean on potentialSavingsRatePct instead of inventing a rate.
 - potentialSavingsRatePct is the household's CAPACITY to save (monthlySurplus ÷ income). Use it to contrast with the realized rate: when potential exceeds realized, encourage saving/investing more of the headroom; when they are close, acknowledge they're already converting most of their surplus. emergencyFundMonths already counts pre-funded project balances, so trust it.
 - Projects are typed: each buckets[] item has kind ∈ savings | emergency | investment. Balances are split into emergencyBalance, savingsBalance and investmentBalance; liquidReserve is the safety cushion (emergency projects if hasEmergencyBucket, else all non-investment savings) and is what emergencyFundMonths measures — investments are excluded on purpose because they shouldn't be raided.
+- assets[] are significant things the household owns (property, vehicles, stocks, bonds, funds, a business) with currentValue; assetsTotal is their sum and liquidAssetsTotal is the quickly-sellable part (stocks/bonds/funds). netWorth = assetsTotal + totalSavings − debtPrincipalOutstanding (bank cash is not tracked, so it is excluded). Use netWorth for the big-picture "how am I really doing" and solvency questions, and treat liquidAssetsTotal as a secondary emergency backstop BEHIND liquidReserve — but never assume selling property or a business is quick or free, and never tell someone to sell an asset lightly.
 - debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
 - avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
 - benchmark — national averages from Eurostat / national statistics, never other users.

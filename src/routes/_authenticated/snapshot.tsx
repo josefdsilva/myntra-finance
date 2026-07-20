@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import { Download, Share2, Sparkles, ShieldCheck, TrendingUp, Landmark, PiggyBank, Target } from "lucide-react";
+import { Download, Share2, Sparkles, ShieldCheck, TrendingUp, Landmark, PiggyBank, Target, Gem } from "lucide-react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,8 @@ import {
   debtsQuery,
 } from "@/lib/household-queries";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
+import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
+import { money } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
 import { computeHealth, type Badge as BadgeKind } from "@/lib/health-score";
 import { pageShellClass } from "@/components/page-shell";
@@ -59,22 +61,21 @@ function SnapshotPage() {
           .limit(6),
       ]);
       const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
-      const [{ data: allocs }, { data: moves }, { data: expenses }] = await Promise.all([
-        supabase
-          .from("bucket_allocations")
-          .select("bucket_id, amount, period")
-          .eq("household_id", householdId!),
-        supabase
-          .from("account_movements")
-          .select("*")
-          .eq("household_id", householdId!),
-        supabase
-          .from("expenses")
-          .select("amount, kind, is_salary")
-          .eq("household_id", householdId!)
-          .gte("occurred_at", cycle.start.toISOString())
-          .lt("occurred_at", cycle.end.toISOString()),
-      ]);
+      const [{ data: allocs }, { data: moves }, { data: expenses }, { data: assetsRows }] =
+        await Promise.all([
+          supabase
+            .from("bucket_allocations")
+            .select("bucket_id, amount, period")
+            .eq("household_id", householdId!),
+          supabase.from("account_movements").select("*").eq("household_id", householdId!),
+          supabase
+            .from("expenses")
+            .select("amount, kind, is_salary")
+            .eq("household_id", householdId!)
+            .gte("occurred_at", cycle.start.toISOString())
+            .lt("occurred_at", cycle.end.toISOString()),
+          supabase.from("assets").select("current_value, kind").eq("household_id", householdId!),
+        ]);
 
       const income = incomes.reduce((s, r) => s + Number(r.monthly_amount), 0);
       const fixedTotal =
@@ -127,9 +128,25 @@ function SnapshotPage() {
       }, 0);
       const savedThisCycle = Math.max(0, confirmedThisCycle + netIntoProjects);
 
+      // Assets & net worth. Liquid assets (stocks/bonds/funds) count as an
+      // accessible emergency backstop; net worth = assets + savings − debt owed.
+      const LIQUID_ASSET_KINDS = new Set(["stocks", "bonds", "fund"]);
+      const assetsTotal = (assetsRows ?? []).reduce((s, a) => s + Number(a.current_value), 0);
+      const liquidAssets = (assetsRows ?? [])
+        .filter((a) => LIQUID_ASSET_KINDS.has(a.kind))
+        .reduce((s, a) => s + Number(a.current_value), 0);
+      const debtRemaining = ((debts ?? []) as Debt[]).reduce(
+        (s, d) => s + debtLiveSchedule(d).remaining,
+        0,
+      );
+      const netWorth = assetsTotal + bucketsTotal - debtRemaining;
+
       return {
         income,
         savedThisCycle,
+        assetsTotal,
+        liquidAssets,
+        netWorth,
         fixedTotal,
         debtMonthly,
         bucketsTotal,
@@ -244,6 +261,20 @@ function SnapshotPage() {
         </div>
       </div>
 
+      {data && (data.assetsTotal > 0 || data.bucketsTotal > 0 || data.debtMonthly > 0) && (
+        <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">{t("netWorth.title")}</p>
+            <p className="text-xs text-muted-foreground">{t("snapshot.netWorthPrivate")}</p>
+          </div>
+          <span
+            className={`text-lg font-display tabular-nums shrink-0 ${data.netWorth >= 0 ? "" : "text-destructive"}`}
+          >
+            {money(data.netWorth)}
+          </span>
+        </div>
+      )}
+
       <p className="text-xs text-muted-foreground">{t("snapshot.privacyNote")}</p>
     </div>
   );
@@ -258,6 +289,7 @@ const BADGE_META: Record<
   consistent_saver: { icon: PiggyBank, tone: "bg-fuchsia-500/20 text-fuchsia-100 ring-fuchsia-400/40" },
   budget_hero: { icon: Target, tone: "bg-amber-500/20 text-amber-100 ring-amber-400/40" },
   investing: { icon: TrendingUp, tone: "bg-violet-500/20 text-violet-100 ring-violet-400/40" },
+  net_worth_positive: { icon: Gem, tone: "bg-teal-500/20 text-teal-100 ring-teal-400/40" },
   getting_started: { icon: Sparkles, tone: "bg-slate-500/20 text-slate-100 ring-slate-400/40" },
 };
 

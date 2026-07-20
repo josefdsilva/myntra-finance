@@ -12,6 +12,7 @@ import {
   upsertBucket,
 } from "@/lib/budget.functions";
 import { upsertPlan } from "@/lib/plan.functions";
+import { upsertAsset, ASSET_KINDS } from "@/lib/assets.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ import {
   CalendarClock,
   TrendingUp,
   TrendingDown,
+  Gem,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -70,6 +72,7 @@ const STEPS = [
   "fixed",
   "variable",
   "debt",
+  "assets",
   "projects",
   "plans",
 ] as const;
@@ -163,6 +166,7 @@ function Wizard({ householdId, initialCountry }: { householdId: string; initialC
           {key === "fixed" && <FixedStep householdId={householdId} />}
           {key === "variable" && <VariableStep householdId={householdId} />}
           {key === "debt" && <DebtStep householdId={householdId} />}
+          {key === "assets" && <AssetsStep householdId={householdId} />}
           {key === "projects" && <ProjectsStep householdId={householdId} />}
           {key === "plans" && <PlansStep householdId={householdId} />}
         </div>
@@ -517,6 +521,106 @@ function DebtStep({ householdId }: { householdId: string }) {
         </div>
       </div>
       <EntryList items={items} />
+    </div>
+  );
+}
+
+
+// ---- Assets ---------------------------------------------------------------
+
+function AssetsStep({ householdId }: { householdId: string }) {
+  const qc = useQueryClient();
+  const t = useT();
+  const sym = currencySymbol();
+  const add = useServerFn(upsertAsset);
+  const { data: items = [] } = useQuery({
+    queryKey: ["ob-assets", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("assets")
+        .select("id, name, kind, current_value")
+        .eq("household_id", householdId)
+        .order("created_at");
+      return (data ?? []) as Array<{ id: string; name: string; kind: string; current_value: number }>;
+    },
+  });
+  const [name, setName] = useState("");
+  const [kind, setKind] = useState<(typeof ASSET_KINDS)[number]>("property");
+  const [current, setCurrent] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const KIND_LABEL: Record<string, string> = {
+    property: t("assets.kindProperty"),
+    land: t("assets.kindLand"),
+    vehicle: t("assets.kindVehicle"),
+    stocks: t("assets.kindStocks"),
+    bonds: t("assets.kindBonds"),
+    fund: t("assets.kindFund"),
+    business: t("assets.kindBusiness"),
+    other: t("assets.kindOther"),
+  };
+
+  async function submit() {
+    if (!name || !current) return;
+    setSaving(true);
+    try {
+      await add({
+        data: {
+          household_id: householdId,
+          name,
+          kind,
+          current_value: parseFloat(current.replace(",", ".")) || 0,
+        },
+      });
+      setName("");
+      setCurrent("");
+      qc.invalidateQueries({ queryKey: ["ob-assets", householdId] });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <StepHead icon={Gem} title={t("ob.assets.title")} subtitle={t("ob.assets.subtitle")} />
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Input placeholder={t("ob.assets.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
+          <Input className="w-32" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={current} onChange={(e) => setCurrent(e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ASSET_KINDS.map((k) => (
+                <SelectItem key={k} value={k}>
+                  {KIND_LABEL[k]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={submit} disabled={saving || !name || !current}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+          </Button>
+        </div>
+      </div>
+      {items.length > 0 && (
+        <ul className="mt-4 divide-y rounded-xl border">
+          {items.map((r) => (
+            <li key={r.id} className="flex items-center justify-between px-4 py-2 text-sm">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate">{r.name}</span>
+                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                  {KIND_LABEL[r.kind] ?? r.kind}
+                </span>
+              </span>
+              <span className="tabular-nums font-medium">{money(Number(r.current_value))}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
