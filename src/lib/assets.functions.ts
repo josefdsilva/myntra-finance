@@ -15,6 +15,28 @@ export const ASSET_KINDS = [
 
 export const ASSET_LIQUIDITY = ["liquid", "semi_liquid", "illiquid"] as const;
 
+/**
+ * Liquidity is a property of the asset type, not something the user judges per
+ * item — tradable securities are liquid, a car sells in weeks, property and a
+ * business take months. Derived here so it stays consistent everywhere.
+ */
+export function liquidityForKind(kind: string): (typeof ASSET_LIQUIDITY)[number] {
+  switch (kind) {
+    case "stocks":
+    case "bonds":
+    case "fund":
+      return "liquid";
+    case "vehicle":
+      return "semi_liquid";
+    case "property":
+    case "land":
+    case "business":
+      return "illiquid";
+    default:
+      return "semi_liquid";
+  }
+}
+
 /** Create or update an asset (a significant thing the household owns). */
 export const upsertAsset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -28,17 +50,18 @@ export const upsertAsset = createServerFn({ method: "POST" })
         acquired_value: z.number().min(0).max(1_000_000_000).nullable().optional(),
         acquired_on: z.string().date().nullable().optional(),
         current_value: z.number().min(0).max(1_000_000_000),
-        liquidity: z.enum(ASSET_LIQUIDITY).default("semi_liquid"),
         note: z.string().max(500).nullable().optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     const { id, ...rest } = data;
+    // Liquidity is always derived from the type — never trusted from the client.
+    const payload = { ...rest, liquidity: liquidityForKind(rest.kind) };
     if (id) {
       const { data: row, error } = await context.supabase
         .from("assets")
-        .update(rest)
+        .update(payload)
         .eq("id", id)
         .select()
         .single();
@@ -47,7 +70,7 @@ export const upsertAsset = createServerFn({ method: "POST" })
     }
     const { data: row, error } = await context.supabase
       .from("assets")
-      .insert({ ...rest, created_by: context.userId })
+      .insert({ ...payload, created_by: context.userId })
       .select()
       .single();
     if (error) throw error;

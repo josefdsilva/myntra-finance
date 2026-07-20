@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,10 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Plus, Trash2, Gem } from "lucide-react";
+import { Plus, Trash2, Gem, Sparkles } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { upsertAsset, deleteAsset, ASSET_KINDS, ASSET_LIQUIDITY } from "@/lib/assets.functions";
+import { upsertAsset, deleteAsset, ASSET_KINDS, liquidityForKind } from "@/lib/assets.functions";
 
 type AssetRow = {
   id: string;
@@ -37,6 +38,7 @@ const LIQ_TONE: Record<string, string> = {
 export function AssetsSection({ householdId }: { householdId: string }) {
   const t = useT();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const upsert = useServerFn(upsertAsset);
   const del = useServerFn(deleteAsset);
 
@@ -55,7 +57,6 @@ export function AssetsSection({ householdId }: { householdId: string }) {
 
   const [name, setName] = useState("");
   const [kind, setKind] = useState<(typeof ASSET_KINDS)[number]>("property");
-  const [liquidity, setLiquidity] = useState<(typeof ASSET_LIQUIDITY)[number]>("illiquid");
   const [current, setCurrent] = useState("");
   const [acquired, setAcquired] = useState("");
   const [acquiredOn, setAcquiredOn] = useState("");
@@ -76,6 +77,18 @@ export function AssetsSection({ householdId }: { householdId: string }) {
     illiquid: t("assets.liqIlliquid"),
   };
 
+  const formLiquidity = liquidityForKind(kind);
+
+  function askCoach(a: { name: string; kind: string; acquired_value: number | null; acquired_on: string | null }) {
+    const ask = t("assets.estimatePrompt", {
+      name: a.name,
+      kind: (KIND_LABEL[a.kind] ?? a.kind).toLowerCase(),
+      acquired: a.acquired_value != null ? money(a.acquired_value) : "—",
+      date: a.acquired_on ? fmtDate(a.acquired_on) : "—",
+    });
+    navigate({ to: "/analysis", search: { ask } as never });
+  }
+
   async function add() {
     if (!name || !current) return;
     await upsert({
@@ -83,7 +96,6 @@ export function AssetsSection({ householdId }: { householdId: string }) {
         household_id: householdId,
         name,
         kind,
-        liquidity,
         current_value: parseFloat(current.replace(",", ".")) || 0,
         acquired_value: acquired ? parseFloat(acquired.replace(",", ".")) || 0 : null,
         acquired_on: acquiredOn || null,
@@ -94,11 +106,13 @@ export function AssetsSection({ householdId }: { householdId: string }) {
     setAcquired("");
     setAcquiredOn("");
     refetch();
+    qc.invalidateQueries({ queryKey: ["net-worth", householdId] });
   }
 
   async function remove(id: string) {
     await del({ data: { id } });
     refetch();
+    qc.invalidateQueries({ queryKey: ["net-worth", householdId] });
   }
 
   const list = rows ?? [];
@@ -147,7 +161,7 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
                       <span className="tabular-nums font-medium">{money(r.current_value)}</span>
                       {gain != null && Math.abs(gain) >= 0.005 && (
@@ -158,6 +172,14 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                         </p>
                       )}
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title={t("assets.askCoach")}
+                      onClick={() => askCoach(r)}
+                    >
+                      <Sparkles className="size-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                       <Trash2 className="size-4" />
                     </Button>
@@ -169,36 +191,29 @@ export function AssetsSection({ householdId }: { householdId: string }) {
         )}
 
         <div className="space-y-2">
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-[2fr_1fr_1fr]">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[2fr_1fr]">
             <Input
               placeholder={t("assets.namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
-            <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ASSET_KINDS.map((k) => (
-                  <SelectItem key={k} value={k}>
-                    {KIND_LABEL[k]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={liquidity} onValueChange={(v) => setLiquidity(v as typeof liquidity)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ASSET_LIQUIDITY.map((l) => (
-                  <SelectItem key={l} value={l}>
-                    {LIQ_LABEL[l]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-1">
+              <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSET_KINDS.map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {KIND_LABEL[k]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground px-1">
+                {t("assets.liquidityAuto", { level: LIQ_LABEL[formLiquidity] })}
+              </p>
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
             <div className="grid gap-1">
@@ -229,6 +244,21 @@ export function AssetsSection({ householdId }: { householdId: string }) {
               </Button>
             </div>
           </div>
+          <button
+            type="button"
+            disabled={!name}
+            onClick={() =>
+              askCoach({
+                name,
+                kind,
+                acquired_value: acquired ? parseFloat(acquired.replace(",", ".")) || 0 : null,
+                acquired_on: acquiredOn || null,
+              })
+            }
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40 disabled:no-underline"
+          >
+            <Sparkles className="size-3.5" /> {t("assets.askCoachHelp")}
+          </button>
         </div>
       </CardContent>
     </Card>

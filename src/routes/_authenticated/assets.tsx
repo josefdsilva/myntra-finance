@@ -5,6 +5,7 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { pageShellClass } from "@/components/page-shell";
 import { AssetsSection } from "@/components/assets-section";
+import { NetWorthCard } from "@/components/net-worth-card";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/assets")({
@@ -28,6 +29,7 @@ function AssetsPage() {
         <h1 className="text-3xl md:text-4xl font-display">{t("assets.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("assets.subtitle")}</p>
       </header>
+      {householdId && <NetWorthCard householdId={householdId} />}
       {householdId && <AssetsSection householdId={householdId} />}
     </div>
   );
