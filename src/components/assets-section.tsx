@@ -14,7 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Plus, Trash2, Gem, Sparkles } from "lucide-react";
+import { Plus, Trash2, Gem, Sparkles, Pencil } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import {
@@ -116,6 +116,14 @@ export function AssetsSection({ householdId }: { householdId: string }) {
   const [acquired, setAcquired] = useState("");
   const [acquiredOn, setAcquiredOn] = useState("");
 
+  // Inline edit of an existing asset (one row at a time).
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [eName, setEName] = useState("");
+  const [eKind, setEKind] = useState<(typeof ASSET_KINDS)[number]>("property");
+  const [eCurrent, setECurrent] = useState("");
+  const [eAcquired, setEAcquired] = useState("");
+  const [eAcquiredOn, setEAcquiredOn] = useState("");
+
   const KIND_LABEL: Record<string, string> = {
     property: t("assets.kindProperty"),
     land: t("assets.kindLand"),
@@ -170,6 +178,41 @@ export function AssetsSection({ householdId }: { householdId: string }) {
     qc.invalidateQueries({ queryKey: ["net-worth", householdId] });
   }
 
+  function startEdit(r: AssetRow) {
+    setEditingId(r.id);
+    setEName(r.name);
+    setEKind(
+      (ASSET_KINDS as readonly string[]).includes(r.kind)
+        ? (r.kind as (typeof ASSET_KINDS)[number])
+        : "other",
+    );
+    setECurrent(String(r.current_value));
+    setEAcquired(r.acquired_value != null ? String(r.acquired_value) : "");
+    setEAcquiredOn(r.acquired_on ? r.acquired_on.slice(0, 10) : "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit() {
+    if (!editingId || !eName || !eCurrent) return;
+    await upsert({
+      data: {
+        id: editingId,
+        household_id: householdId,
+        name: eName,
+        kind: eKind,
+        current_value: parseFloat(eCurrent.replace(",", ".")) || 0,
+        acquired_value: eAcquired ? parseFloat(eAcquired.replace(",", ".")) || 0 : null,
+        acquired_on: eAcquiredOn || null,
+      },
+    });
+    setEditingId(null);
+    refetch();
+    qc.invalidateQueries({ queryKey: ["net-worth", householdId] });
+  }
+
   const list = rows ?? [];
   const totalCurrent = list.reduce((s, r) => s + Number(r.current_value), 0);
   const linkedBuckets = new Set(list.map((a) => a.bucket_id).filter((x): x is string => !!x));
@@ -190,6 +233,73 @@ export function AssetsSection({ householdId }: { householdId: string }) {
         {list.length > 0 && (
           <ul className="divide-y">
             {list.map((r) => {
+              if (editingId === r.id) {
+                return (
+                  <li key={r.id} className="py-2.5">
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-[2fr_1fr]">
+                        <Input
+                          placeholder={t("assets.namePlaceholder")}
+                          value={eName}
+                          onChange={(e) => setEName(e.target.value)}
+                        />
+                        <Select value={eKind} onValueChange={(v) => setEKind(v as typeof eKind)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ASSET_KINDS.map((k) => (
+                              <SelectItem key={k} value={k}>
+                                {KIND_LABEL[k]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                        <div className="grid gap-1">
+                          <Label className="text-xs text-muted-foreground">
+                            {t("assets.currentValue")}
+                          </Label>
+                          <Input
+                            inputMode="decimal"
+                            value={eCurrent}
+                            onChange={(e) => setECurrent(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label className="text-xs text-muted-foreground">
+                            {t("assets.acquiredValue")}
+                          </Label>
+                          <Input
+                            inputMode="decimal"
+                            value={eAcquired}
+                            onChange={(e) => setEAcquired(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label className="text-xs text-muted-foreground">
+                            {t("assets.acquiredOn")}
+                          </Label>
+                          <Input
+                            type="date"
+                            value={eAcquiredOn}
+                            onChange={(e) => setEAcquiredOn(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                          {t("common.cancel")}
+                        </Button>
+                        <Button size="sm" onClick={saveEdit} disabled={!eName || !eCurrent}>
+                          {t("common.save")}
+                        </Button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              }
               const gain =
                 r.acquired_value != null
                   ? Number(r.current_value) - Number(r.acquired_value)
@@ -302,6 +412,14 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                         </p>
                       )}
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title={t("common.edit")}
+                      onClick={() => startEdit(r)}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
