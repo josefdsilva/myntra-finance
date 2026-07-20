@@ -150,6 +150,34 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
+  // When a lazily-loaded route chunk fails to load (flaky mobile network, or a
+  // stale build after a deploy), Vite fires `vite:preloadError`. Without this,
+  // the failed dynamic import bubbles up to the error boundary as "This page
+  // didn't load" and only a manual refresh recovers it — which is exactly what
+  // installed-PWA users hit on back/forward. Reload once to fetch fresh assets,
+  // guarded so a genuinely-missing chunk can't cause an endless reload loop.
+  useEffect(() => {
+    const KEY = "preloadReloadAt";
+    const onPreloadError = (e: Event) => {
+      e.preventDefault();
+      let last = 0;
+      try {
+        last = Number(sessionStorage.getItem(KEY) || 0);
+      } catch {
+        /* sessionStorage may be unavailable */
+      }
+      if (Date.now() - last < 15000) return; // already tried very recently
+      try {
+        sessionStorage.setItem(KEY, String(Date.now()));
+      } catch {
+        /* ignore */
+      }
+      window.location.reload();
+    };
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
+  }, []);
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;

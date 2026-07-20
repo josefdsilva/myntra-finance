@@ -18,6 +18,11 @@ const FRESH = 60_000;
  */
 export function invalidateHouseholdData(qc: QueryClient) {
   const keys = [
+    // The household row carries baseline_budget (recomputed by a DB trigger on
+    // every fixed/variable/debt change). Without this, "How much you need" and
+    // everything derived from it (safe-to-spend, surplus, analysis) stays stale
+    // after an add/delete until a manual refresh.
+    ["household"],
     ["household-buckets"],
     ["household-incomes"],
     ["household-fixed-expenses"],
@@ -25,6 +30,9 @@ export function invalidateHouseholdData(qc: QueryClient) {
     ["household-variable-estimates"],
     ["dashboard"],
     ["dashboard-tips"],
+    // Whole-picture views that also read the stored baseline / balances.
+    ["snapshot"],
+    ["net-worth"],
   ];
   return Promise.all(keys.map((queryKey) => qc.invalidateQueries({ queryKey })));
 }
