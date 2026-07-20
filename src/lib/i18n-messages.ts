@@ -2355,7 +2355,7 @@ const pt: Record<MessageKey, string> = {
   "ob.orEstimateManually": "ou estime manualmente abaixo",
   "ob.amountPh": "{sym}/mês",
   "ob.welcome.title": "Bem-vindo — vamos configurar o seu orçamento",
-  "ob.welcome.body": "Algumas perguntas rápidas para começar. Salte qualquer uma e preencha depois — cada tema tem a sua página (Entradas, Despesas, Empréstimos, Planos). Também pode carregar um extrato bancário para preencher a maior parte automaticamente.",
+  "ob.welcome.body": "Algumas perguntas rápidas para começar. Salte qualquer uma e preencha depois — cada tema tem a sua página (Rendimentos, Despesas, Empréstimos, Planear). Também pode carregar um extrato bancário para preencher a maior parte automaticamente.",
   "ob.country.title": "Onde vive?",
   "ob.country.subtitle": "Usado para a moeda e para comparar com médias nacionais.",
   "ob.household.title": "Fale-nos sobre o seu agregado",
