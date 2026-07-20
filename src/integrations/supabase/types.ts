@@ -1078,6 +1078,7 @@ export type Database = {
       households: {
         Row: {
           adults: number
+          advisor_email: string | null
           baseline_budget: number
           children: number
           country: string
@@ -1086,6 +1087,7 @@ export type Database = {
           credit_cap: number
           currency: string
           id: string
+          kind: string
           margin_pct: number
           name: string
           onboarded_at: string | null
@@ -1093,6 +1095,7 @@ export type Database = {
         }
         Insert: {
           adults?: number
+          advisor_email?: string | null
           baseline_budget?: number
           children?: number
           country?: string
@@ -1101,6 +1104,7 @@ export type Database = {
           credit_cap?: number
           currency?: string
           id?: string
+          kind?: string
           margin_pct?: number
           name?: string
           onboarded_at?: string | null
@@ -1108,6 +1112,7 @@ export type Database = {
         }
         Update: {
           adults?: number
+          advisor_email?: string | null
           baseline_budget?: number
           children?: number
           country?: string
@@ -1116,6 +1121,7 @@ export type Database = {
           credit_cap?: number
           currency?: string
           id?: string
+          kind?: string
           margin_pct?: number
           name?: string
           onboarded_at?: string | null
