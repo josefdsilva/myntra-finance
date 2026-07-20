@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold, updateHousehold, inviteMember } from "@/lib/household.functions";
+import { Switch } from "@/components/ui/switch";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { invalidateHouseholdData } from "@/lib/household-queries";
 import { pageShellClass } from "@/components/page-shell";
@@ -274,6 +275,8 @@ function HouseholdSection({
     adults?: number | null;
     children?: number | null;
     currency?: string | null;
+    kind?: string | null;
+    advisor_email?: string | null;
   };
   onChange: () => void;
 }) {
@@ -288,6 +291,8 @@ function HouseholdSection({
   const [currency, setCurrency] = useState<"EUR" | "USD" | "GBP">(
     (String(household.currency ?? "EUR").toUpperCase() as "EUR" | "USD" | "GBP") ?? "EUR",
   );
+  const [isBusiness, setIsBusiness] = useState(household.kind === "business");
+  const [advisorEmail, setAdvisorEmail] = useState(household.advisor_email ?? "");
 
   const { data: fixedRows } = useQuery({
     queryKey: ["fixed-total", household.id],
@@ -355,6 +360,32 @@ function HouseholdSection({
     }
   }
 
+  async function toggleBusiness(next: boolean) {
+    setIsBusiness(next);
+    try {
+      await update({
+        data: { household_id: household.id, kind: next ? "business" : "personal" },
+      });
+      onChange();
+      qc.invalidateQueries({ queryKey: ["household"] });
+    } catch (e) {
+      setIsBusiness(!next);
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
+    }
+  }
+
+  async function saveAdvisor() {
+    try {
+      await update({
+        data: { household_id: household.id, advisor_email: advisorEmail.trim() || null },
+      });
+      toast.success(t("hh.savedToast"));
+      onChange();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
+    }
+  }
+
   async function saveCurrency(next: "EUR" | "USD" | "GBP") {
     setCurrency(next);
     setCurrentCurrency(next); // update money() formatting immediately
@@ -395,6 +426,33 @@ function HouseholdSection({
         <CardDescription>{t("hh.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="rounded-lg border p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium">{t("settings.business.label")}</div>
+              <div className="text-xs text-muted-foreground">{t("settings.business.hint")}</div>
+            </div>
+            <Switch checked={isBusiness} onCheckedChange={toggleBusiness} />
+          </div>
+          {isBusiness && (
+            <div className="mt-3 grid gap-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t("settings.business.advisorLabel")}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder={t("settings.business.advisorPh")}
+                  value={advisorEmail}
+                  onChange={(e) => setAdvisorEmail(e.target.value)}
+                />
+                <Button variant="outline" onClick={saveAdvisor}>
+                  {t("common.save")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>{t("hh.name")}</Label>

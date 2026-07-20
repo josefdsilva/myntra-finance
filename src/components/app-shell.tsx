@@ -27,6 +27,9 @@ import {
   Plus,
   FileText,
   Sparkles,
+  Building2,
+  User,
+  Send,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,7 +41,7 @@ import { CoachDock } from "@/components/coach-dock";
 
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -110,6 +113,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   });
   const householdName = hh?.household?.name?.trim() || "Household";
   const resolvedId = hh?.household?.id ?? null;
+  // Business mode: the active space's `kind` flips labels and unlocks the
+  // business-only surfaces. Same app, same data model — mode-aware UI.
+  const isBusiness = hh?.household?.kind === "business";
+  const BUSINESS_LABELS: Record<string, MessageKey> = {
+    "/money-in": "nav.receivables",
+    "/expenses": "nav.costs",
+    "/loans": "nav.debt",
+  };
 
   // Drive money() formatting from the active household's currency. Set during
   // render so child screens format amounts in the right currency immediately.
@@ -223,8 +234,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           aria-label="Switch household"
         >
           <div className="min-w-0">
-            <div className="font-display text-lg leading-tight truncate max-w-[140px]">
-              {householdName}
+            <div className="flex items-center gap-1.5">
+              <div className="font-display text-lg leading-tight truncate max-w-[120px]">
+                {householdName}
+              </div>
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide",
+                  isBusiness
+                    ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {isBusiness ? <Building2 className="size-2.5" /> : <User className="size-2.5" />}
+                {isBusiness ? t("shell.business") : t("shell.personal")}
+              </span>
             </div>
             <div className="text-xs text-muted-foreground">{t("shell.subtitle")}</div>
           </div>
@@ -323,7 +347,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.to;
-                const label = t(item.labelKey);
+                const override = isBusiness ? BUSINESS_LABELS[item.to] : undefined;
+                const label = t(override ?? item.labelKey);
                 return (
                   <Link
                     key={item.to}
@@ -340,6 +365,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </Link>
                 );
               })}
+              {isBusiness && section.titleKey === "navSection.manage" && (
+                <Link
+                  to="/handoff"
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    pathname === "/handoff"
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <Send className="size-4" />
+                  {t("nav.handoff")}
+                </Link>
+              )}
             </Fragment>
           ))}
         </nav>

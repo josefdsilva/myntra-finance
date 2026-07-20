@@ -168,6 +168,8 @@ export const updateHousehold = createServerFn({ method: "POST" })
         currency: z.enum(["EUR", "USD", "GBP"]).optional(),
         adults: z.number().int().min(1).max(20).optional(),
         children: z.number().int().min(0).max(20).optional(),
+        kind: z.enum(["personal", "business"]).optional(),
+        advisor_email: z.string().max(200).nullable().optional(),
       })
       .parse(input),
   )
