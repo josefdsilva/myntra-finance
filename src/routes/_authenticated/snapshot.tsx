@@ -60,21 +60,32 @@ function SnapshotPage() {
           .limit(6),
       ]);
       const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
-      const [{ data: allocs }, { data: moves }, { data: expenses }, { data: assetsRows }] =
-        await Promise.all([
-          supabase
-            .from("bucket_allocations")
-            .select("bucket_id, amount, period")
-            .eq("household_id", householdId!),
-          supabase.from("account_movements").select("*").eq("household_id", householdId!),
-          supabase
-            .from("expenses")
-            .select("amount, kind, is_salary")
-            .eq("household_id", householdId!)
-            .gte("occurred_at", cycle.start.toISOString())
-            .lt("occurred_at", cycle.end.toISOString()),
-          supabase.from("assets").select("current_value, kind, bucket_id").eq("household_id", householdId!),
-        ]);
+      const [
+        { data: allocs },
+        { data: moves },
+        { data: expenses },
+        { data: assetsRows },
+        { data: debtRows },
+      ] = await Promise.all([
+        supabase
+          .from("bucket_allocations")
+          .select("bucket_id, amount, period")
+          .eq("household_id", householdId!),
+        supabase.from("account_movements").select("*").eq("household_id", householdId!),
+        supabase
+          .from("expenses")
+          .select("amount, kind, is_salary")
+          .eq("household_id", householdId!)
+          .gte("occurred_at", cycle.start.toISOString())
+          .lt("occurred_at", cycle.end.toISOString()),
+        supabase
+          .from("assets")
+          .select("current_value, kind, bucket_id")
+          .eq("household_id", householdId!),
+        // Full debt rows: debtLiveSchedule needs principal/rate/dates to compute
+        // the outstanding balance (debtsQuery only carries id + monthly_amount).
+        supabase.from("debts").select("*").eq("household_id", householdId!),
+      ]);
 
       const income = incomes.reduce((s, r) => s + Number(r.monthly_amount), 0);
       const fixedTotal =
@@ -142,7 +153,7 @@ function SnapshotPage() {
       const liquidAssets = (assetsRows ?? [])
         .filter((a) => LIQUID_ASSET_KINDS.has(a.kind))
         .reduce((s, a) => s + Number(a.current_value), 0);
-      const debtRemaining = ((debts ?? []) as Debt[]).reduce(
+      const debtRemaining = ((debtRows ?? []) as Debt[]).reduce(
         (s, d) => s + debtLiveSchedule(d).remaining,
         0,
       );
