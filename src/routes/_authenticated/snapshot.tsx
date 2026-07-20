@@ -16,7 +16,6 @@ import {
 } from "@/lib/household-queries";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
-import { money } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
 import { computeHealth, type Badge as BadgeKind } from "@/lib/health-score";
 import { pageShellClass } from "@/components/page-shell";
@@ -148,6 +147,7 @@ function SnapshotPage() {
         0,
       );
       const netWorth = assetsTotal + bucketsTotal - debtRemaining;
+      const hasNetWorthData = assetsTotal > 0 || bucketsTotal > 0 || debtRemaining > 0;
 
       return {
         income,
@@ -155,6 +155,7 @@ function SnapshotPage() {
         assetsTotal,
         liquidAssets,
         netWorth,
+        hasNetWorthData,
         fixedTotal,
         debtMonthly,
         bucketsTotal,
@@ -269,20 +270,6 @@ function SnapshotPage() {
         </div>
       </div>
 
-      {data && (data.assetsTotal > 0 || data.bucketsTotal > 0 || data.debtMonthly > 0) && (
-        <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium">{t("netWorth.title")}</p>
-            <p className="text-xs text-muted-foreground">{t("snapshot.netWorthPrivate")}</p>
-          </div>
-          <span
-            className={`text-lg font-display tabular-nums shrink-0 ${data.netWorth >= 0 ? "" : "text-destructive"}`}
-          >
-            {money(data.netWorth)}
-          </span>
-        </div>
-      )}
-
       <p className="text-xs text-muted-foreground">{t("snapshot.privacyNote")}</p>
     </div>
   );
@@ -305,6 +292,7 @@ const SCORE_LABELS: Record<string, string> = {
   savings: "snapshot.score.savings",
   emergency: "snapshot.score.emergency",
   debt: "snapshot.score.debt",
+  networth: "snapshot.score.networth",
   budget: "snapshot.score.budget",
 };
 

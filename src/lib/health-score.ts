@@ -20,9 +20,12 @@ export type ScoreInputs = {
   /** Current value of quickly-sellable assets (stocks, bonds, funds) — a real,
    * if secondary, emergency backstop on top of project balances. */
   liquidAssets: number;
-  /** Net worth = assets + project balances − outstanding loan balances. Used for
-   * the positive-net-worth badge; not a scored pillar (it's a stock, not a flow). */
+  /** Net worth = assets + project balances − outstanding loan balances. Scored as
+   * its own pillar (a multiple of annual income) and drives the net-worth badge. */
   netWorth: number;
+  /** Whether the household has enough recorded (assets, savings, or debt) for net
+   * worth to be meaningful. When false, the net-worth pillar is not scored. */
+  hasNetWorthData: boolean;
   /** Whether at least one bucket has kind = "investment". */
   hasInvestment: boolean;
   /** Variable pool for the current cycle (baseline - fixed). */
@@ -33,7 +36,10 @@ export type ScoreInputs = {
   cycleProgress: number;
 };
 
-export type SubScore = { key: "savings" | "emergency" | "debt" | "budget"; value: number };
+export type SubScore = {
+  key: "savings" | "emergency" | "debt" | "budget" | "networth";
+  value: number;
+};
 
 export type Badge =
   | "emergency_ready"
@@ -67,6 +73,7 @@ export function computeHealth(input: ScoreInputs): HealthResult {
     bucketsTotal,
     liquidAssets,
     netWorth,
+    hasNetWorthData,
     hasInvestment,
     variablePool,
     variableSpent,
@@ -109,17 +116,41 @@ export function computeHealth(input: ScoreInputs): HealthResult {
     budget = clamp(60 + (raw - 60) * confidence);
   }
 
+  // Net worth pillar: a stock, scored as a multiple of annual income. Negative
+  // (underwater) scores low, zero is weak, and it climbs with wealth, saturating
+  // around 6x annual income. Only scored once there's something to measure.
+  const netWorthScored = hasNetWorthData;
+  const annualIncome = Math.max(1, income * 12);
+  const nwMult = netWorth / annualIncome;
+  let netWorthScore: number;
+  if (nwMult >= 6) netWorthScore = 100;
+  else if (nwMult >= 3) netWorthScore = 85 + 5 * (nwMult - 3);
+  else if (nwMult >= 1) netWorthScore = 60 + 12.5 * (nwMult - 1);
+  else if (nwMult >= 0) netWorthScore = 30 + 30 * nwMult;
+  else if (nwMult > -1) netWorthScore = 30 * (1 + nwMult);
+  else netWorthScore = 0;
+  netWorthScore = clamp(netWorthScore);
+
   const scores: SubScore[] = [
     { key: "savings", value: Math.round(savings) },
     { key: "emergency", value: Math.round(emergency) },
     { key: "debt", value: Math.round(debt) },
     { key: "budget", value: Math.round(budget) },
   ];
+  if (netWorthScored) {
+    scores.splice(3, 0, { key: "networth", value: Math.round(netWorthScore) });
+  }
 
   // Overall blends the average with the weakest pillar so one genuinely weak
-  // area drags the headline down without zeroing it out. Budget only counts
-  // once it is actually measurable.
-  const agg = [savings, emergency, debt, ...(budgetScored ? [budget] : [])];
+  // area drags the headline down without zeroing it out. Budget and net worth
+  // only count once they are actually measurable.
+  const agg = [
+    savings,
+    emergency,
+    debt,
+    ...(budgetScored ? [budget] : []),
+    ...(netWorthScored ? [netWorthScore] : []),
+  ];
   const mean = agg.reduce((s, v) => s + v, 0) / agg.length;
   const weakest = Math.min(...agg);
   const overall = clamp(Math.round(0.8 * mean + 0.2 * weakest));
