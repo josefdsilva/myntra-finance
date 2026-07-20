@@ -272,8 +272,8 @@ const en = {
   // Buckets
   "buckets.title": "Projects",
   "buckets.description":
-    "Distribute your surplus (income − baseline). % buckets currently total {pct}% of surplus.",
-  "buckets.add": "Add bucket",
+    "Split what's left (income − how much you need) across projects. % projects currently total {pct}%.",
+  "buckets.add": "Add project",
   "buckets.name": "Name",
   "buckets.color": "Color",
   "buckets.targetType": "Target type",
@@ -313,7 +313,7 @@ const en = {
   "credits.opParseVoice": "AI expense capture — voice",
   "credits.opParsePhoto": "AI expense capture — photo",
   "credits.opParseStatement": "AI bank statement import",
-  "buckets.newBucketName": "New bucket",
+  "buckets.newBucketName": "New project",
   "members.invitationCreatedToast": "Invitation created — share the link below",
   "members.failedToast": "Failed",
   "members.fallbackName": "Member",
@@ -433,11 +433,11 @@ const en = {
   "dashboard.chip.balance": "Balance {value}",
   "dashboard.chip.pool": "{value} pool",
   "dashboard.buckets.none":
-    "No savings buckets configured — set targets in Settings to see impact.",
-  "dashboard.buckets.onTrack": "Buckets on track",
+    "No projects yet — set targets in Save & Invest to see impact.",
+  "dashboard.buckets.onTrack": "Projects on track",
   "dashboard.buckets.onTrackBody":
-    "Spending up to {perDay}/day keeps all {count} buckets fully funded this month ({total} total).",
-  "dashboard.buckets.overspent": "Overspent by {value} — buckets at risk",
+    "Spending up to {perDay}/day keeps all {count} projects fully funded this month ({total} total).",
+  "dashboard.buckets.overspent": "Overspent by {value} — projects at risk",
   "dashboard.buckets.loss": "{value} this month",
   "tips.title": "Issues & tips",
   "tips.description":
@@ -1544,8 +1544,8 @@ const pt: Record<MessageKey, string> = {
 
   "buckets.title": "Projetos",
   "buckets.description":
-    "Distribua o excedente (rendimento − base). Os baldes em % somam atualmente {pct}% do excedente.",
-  "buckets.add": "Adicionar balde",
+    "Distribua o que sobra (rendimento − quanto precisa) pelos projetos. Os projetos em % somam atualmente {pct}%.",
+  "buckets.add": "Adicionar projeto",
   "buckets.name": "Nome",
   "buckets.color": "Cor",
   "buckets.targetType": "Tipo de objetivo",
@@ -1583,7 +1583,7 @@ const pt: Record<MessageKey, string> = {
   "credits.opParseVoice": "Captura de despesa por IA — voz",
   "credits.opParsePhoto": "Captura de despesa por IA — foto",
   "credits.opParseStatement": "Importação de extrato bancário por IA",
-  "buckets.newBucketName": "Nova reserva",
+  "buckets.newBucketName": "Novo projeto",
   "members.invitationCreatedToast": "Convite criado — partilhe o link abaixo",
   "members.failedToast": "Falhou",
   "members.fallbackName": "Membro",
@@ -1704,11 +1704,11 @@ const pt: Record<MessageKey, string> = {
   "dashboard.chip.balance": "Saldo {value}",
   "dashboard.chip.pool": "pool {value}",
   "dashboard.buckets.none":
-    "Sem baldes configurados — defina objetivos nas Definições para ver o impacto.",
-  "dashboard.buckets.onTrack": "Baldes em dia",
+    "Ainda sem projetos — defina objetivos em Poupar & Investir para ver o impacto.",
+  "dashboard.buckets.onTrack": "Projetos em dia",
   "dashboard.buckets.onTrackBody":
-    "Gastar até {perDay}/dia mantém todos os {count} baldes financiados este mês ({total} no total).",
-  "dashboard.buckets.overspent": "Excesso de {value} — baldes em risco",
+    "Gastar até {perDay}/dia mantém todos os {count} projetos financiados este mês ({total} no total).",
+  "dashboard.buckets.overspent": "Excesso de {value} — projetos em risco",
   "dashboard.buckets.loss": "{value} este mês",
   "tips.title": "Problemas e sugestões",
   "tips.description":
@@ -2816,8 +2816,8 @@ const es: Record<MessageKey, string> = {
 
   "buckets.title": "Proyectos",
   "buckets.description":
-    "Distribuye tu excedente (ingresos − base). Los cubos en % suman actualmente el {pct}% del excedente.",
-  "buckets.add": "Añadir cubo",
+    "Reparte lo que queda (ingresos − cuánto necesitas) entre proyectos. Los proyectos en % suman actualmente el {pct}%.",
+  "buckets.add": "Añadir proyecto",
   "buckets.name": "Nombre",
   "buckets.color": "Color",
   "buckets.targetType": "Tipo de objetivo",
@@ -2855,7 +2855,7 @@ const es: Record<MessageKey, string> = {
   "credits.opParseVoice": "Captura de gasto con IA — voz",
   "credits.opParsePhoto": "Captura de gasto con IA — foto",
   "credits.opParseStatement": "Importación de extracto bancario con IA",
-  "buckets.newBucketName": "Nueva reserva",
+  "buckets.newBucketName": "Nuevo proyecto",
   "members.invitationCreatedToast": "Invitación creada — comparte el enlace abajo",
   "members.failedToast": "Falló",
   "members.fallbackName": "Miembro",
@@ -2974,11 +2974,11 @@ const es: Record<MessageKey, string> = {
   "dashboard.chip.balance": "Saldo {value}",
   "dashboard.chip.pool": "pool {value}",
   "dashboard.buckets.none":
-    "Sin cubos configurados — define objetivos en Ajustes para ver el impacto.",
-  "dashboard.buckets.onTrack": "Cubos al día",
+    "Aún sin proyectos — define objetivos en Ahorrar e invertir para ver el impacto.",
+  "dashboard.buckets.onTrack": "Proyectos al día",
   "dashboard.buckets.onTrackBody":
-    "Gastar hasta {perDay}/día mantiene los {count} cubos financiados este mes ({total} en total).",
-  "dashboard.buckets.overspent": "Sobregasto de {value} — cubos en riesgo",
+    "Gastar hasta {perDay}/día mantiene los {count} proyectos financiados este mes ({total} en total).",
+  "dashboard.buckets.overspent": "Sobregasto de {value} — proyectos en riesgo",
   "dashboard.buckets.loss": "{value} este mes",
   "tips.title": "Problemas y sugerencias",
   "tips.description":
@@ -4088,8 +4088,8 @@ const de: Record<MessageKey, string> = {
 
   "buckets.title": "Projekte",
   "buckets.description":
-    "Verteile deinen Überschuss (Einkommen − Basis). %-Töpfe ergeben aktuell {pct}% des Überschusses.",
-  "buckets.add": "Topf hinzufügen",
+    "Verteile, was übrig bleibt (Einkommen − wie viel du brauchst), auf Projekte. Die %-Projekte ergeben aktuell {pct}%.",
+  "buckets.add": "Projekt hinzufügen",
   "buckets.name": "Name",
   "buckets.color": "Farbe",
   "buckets.targetType": "Zielart",
@@ -4127,7 +4127,7 @@ const de: Record<MessageKey, string> = {
   "credits.opParseVoice": "KI-Ausgabenerfassung — Sprache",
   "credits.opParsePhoto": "KI-Ausgabenerfassung — Foto",
   "credits.opParseStatement": "KI-Kontoauszug-Import",
-  "buckets.newBucketName": "Neuer Topf",
+  "buckets.newBucketName": "Neues Projekt",
   "members.invitationCreatedToast": "Einladung erstellt — teile den Link unten",
   "members.failedToast": "Fehlgeschlagen",
   "members.fallbackName": "Mitglied",
@@ -4247,11 +4247,11 @@ const de: Record<MessageKey, string> = {
   "dashboard.chip.received": "Erhalten {value}",
   "dashboard.chip.balance": "Saldo {value}",
   "dashboard.chip.pool": "Pool {value}",
-  "dashboard.buckets.none": "Keine Töpfe konfiguriert — Ziele in den Einstellungen definieren.",
-  "dashboard.buckets.onTrack": "Töpfe im Plan",
+  "dashboard.buckets.none": "Noch keine Projekte — Ziele unter Sparen & Anlegen festlegen.",
+  "dashboard.buckets.onTrack": "Projekte im Plan",
   "dashboard.buckets.onTrackBody":
-    "Ausgaben bis {perDay}/Tag halten alle {count} Töpfe diesen Monat finanziert (insgesamt {total}).",
-  "dashboard.buckets.overspent": "Überzogen um {value} — Töpfe in Gefahr",
+    "Ausgaben bis {perDay}/Tag halten alle {count} Projekte diesen Monat finanziert (insgesamt {total}).",
+  "dashboard.buckets.overspent": "Überzogen um {value} — Projekte in Gefahr",
   "dashboard.buckets.loss": "{value} in diesem Monat",
   "tips.title": "Probleme & Tipps",
   "tips.description":
@@ -5367,8 +5367,8 @@ const fr: Record<MessageKey, string> = {
 
   "buckets.title": "Projets",
   "buckets.description":
-    "Répartissez votre excédent (revenu − base). Les enveloppes en % totalisent actuellement {pct}% de l'excédent.",
-  "buckets.add": "Ajouter une enveloppe",
+    "Répartissez ce qu'il reste (revenu − ce qu'il vous faut) entre vos projets. Les projets en % totalisent actuellement {pct}%.",
+  "buckets.add": "Ajouter un projet",
   "buckets.name": "Nom",
   "buckets.color": "Couleur",
   "buckets.targetType": "Type d'objectif",
@@ -5406,7 +5406,7 @@ const fr: Record<MessageKey, string> = {
   "credits.opParseVoice": "Saisie de dépense IA — voix",
   "credits.opParsePhoto": "Saisie de dépense IA — photo",
   "credits.opParseStatement": "Import de relevé bancaire IA",
-  "buckets.newBucketName": "Nouvelle réserve",
+  "buckets.newBucketName": "Nouveau projet",
   "members.invitationCreatedToast": "Invitation créée — partagez le lien ci-dessous",
   "members.failedToast": "Échec",
   "members.fallbackName": "Membre",
@@ -5526,11 +5526,11 @@ const fr: Record<MessageKey, string> = {
   "dashboard.chip.balance": "Solde {value}",
   "dashboard.chip.pool": "pool {value}",
   "dashboard.buckets.none":
-    "Aucune enveloppe configurée — définissez des objectifs dans les Paramètres.",
-  "dashboard.buckets.onTrack": "Enveloppes en bonne voie",
+    "Aucun projet pour l'instant — définissez des objectifs dans Épargner & Investir.",
+  "dashboard.buckets.onTrack": "Projets en bonne voie",
   "dashboard.buckets.onTrackBody":
-    "Dépenser jusqu'à {perDay}/jour maintient les {count} enveloppes financées ce mois ({total} au total).",
-  "dashboard.buckets.overspent": "Dépassement de {value} — enveloppes en danger",
+    "Dépenser jusqu'à {perDay}/jour maintient les {count} projets financés ce mois ({total} au total).",
+  "dashboard.buckets.overspent": "Dépassement de {value} — projets en danger",
   "dashboard.buckets.loss": "{value} ce mois",
   "tips.title": "Problèmes et conseils",
   "tips.description":

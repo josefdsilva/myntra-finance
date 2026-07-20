@@ -744,6 +744,85 @@ export const WIKI_SECTIONS: WikiSection[] = [
     ),
   },
 
+  // ------------------------------------------------------------ assets & net worth
+  {
+    id: "assets",
+    icon: "Wallet",
+    title: L(
+      "Assets & net worth",
+      "Ativos e património",
+      "Activos y patrimonio",
+      "Vermögen & Nettovermögen",
+      "Actifs & valeur nette",
+    ),
+    paragraphs: L(
+      [
+        "Assets are the significant things you own that hold real value — a home, land, a car, stocks, bonds, funds, or a business. Everyday things you use up (groceries, a phone) are not assets. bynku keeps a simple list so your whole financial picture is visible, not just your monthly cash flow.",
+        "Together with your projects and loans, assets give you your net worth: what you own, plus what you've set aside, minus what you still owe. (Cash sitting in your bank account isn't tracked, so it isn't included.)",
+      ],
+      [
+        "Os ativos são as coisas de valor que possui — uma casa, um terreno, um carro, ações, obrigações, fundos ou um negócio. Aquilo que consome no dia a dia (compras, um telemóvel) não é um ativo. O bynku mantém uma lista simples para que veja a sua situação financeira completa, e não apenas o fluxo de caixa mensal.",
+        "Em conjunto com os seus projetos e créditos, os ativos dão-lhe o património líquido: o que possui, mais o que reservou, menos o que ainda deve. (O dinheiro na conta bancária não é acompanhado, por isso não está incluído.)",
+      ],
+      [
+        "Los activos son las cosas de valor que posees: una casa, un terreno, un coche, acciones, bonos, fondos o un negocio. Lo que consumes a diario (la compra, un móvil) no es un activo. bynku mantiene una lista sencilla para que veas tu situación financiera completa, no solo el flujo de caja mensual.",
+        "Junto con tus proyectos y préstamos, los activos te dan tu patrimonio neto: lo que posees, más lo que has reservado, menos lo que aún debes. (El efectivo en tu cuenta no se registra, así que no se incluye.)",
+      ],
+      [
+        "Vermögenswerte sind die bedeutenden Dinge, die du besitzt und die echten Wert haben — ein Zuhause, Grundstück, ein Auto, Aktien, Anleihen, Fonds oder ein Unternehmen. Was du im Alltag verbrauchst (Einkäufe, ein Handy), ist kein Vermögenswert. bynku führt eine einfache Liste, damit dein ganzes Finanzbild sichtbar ist, nicht nur der monatliche Geldfluss.",
+        "Zusammen mit deinen Projekten und Krediten ergeben Vermögenswerte dein Nettovermögen: was du besitzt, plus was du zurückgelegt hast, minus was du noch schuldest. (Bargeld auf dem Konto wird nicht erfasst und ist daher nicht enthalten.)",
+      ],
+      [
+        "Les actifs sont les biens de valeur que tu possèdes — un logement, un terrain, une voiture, des actions, des obligations, des fonds ou une entreprise. Ce que tu consommes au quotidien (les courses, un téléphone) n'est pas un actif. bynku tient une liste simple pour que toute ta situation financière soit visible, pas seulement les flux du mois.",
+        "Avec tes projets et tes crédits, les actifs donnent ta valeur nette : ce que tu possèdes, plus ce que tu as mis de côté, moins ce que tu dois encore. (Les liquidités sur ton compte ne sont pas suivies, donc pas incluses.)",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Value and cost", body: "Record what an asset is worth now and, optionally, what it cost and when. bynku shows the gain or loss, and you can edit the current value anytime as the market moves." },
+        { label: "Liquidity", body: "How fast it can become cash, set automatically by type: stocks, bonds and funds are liquid; a vehicle is semi-liquid; property, land and a business are illiquid. Liquid assets act as a backstop to your emergency buffer." },
+        { label: "Link a project", body: "Connect an investment project (from Save & Invest) to an asset. Money you put into that project then updates the asset's value and cost automatically — and net worth counts it once, never twice." },
+        { label: "Link rent income", body: "Attach a rent-type income to a property to see its yield and price-to-rent ratio, so you can judge a rental at a glance." },
+        { label: "Ask the coach", body: "Not sure what something is worth? Ask the coach for a current estimate and how to find a more precise figure." },
+      ],
+      [
+        { label: "Valor e custo", body: "Registe quanto vale agora um ativo e, se quiser, quanto custou e quando. O bynku mostra o ganho ou a perda, e pode editar o valor atual sempre que o mercado mudar." },
+        { label: "Liquidez", body: "A rapidez com que se transforma em dinheiro, definida automaticamente pelo tipo: ações, obrigações e fundos são líquidos; um veículo é semilíquido; imóveis, terrenos e um negócio são ilíquidos. Os ativos líquidos servem de reforço ao fundo de emergência." },
+        { label: "Associar um projeto", body: "Ligue um projeto de investimento (em Poupar & Investir) a um ativo. O dinheiro que colocar nesse projeto passa a atualizar automaticamente o valor e o custo do ativo — e o património conta-o uma só vez, nunca duas." },
+        { label: "Associar rendimento de renda", body: "Associe um rendimento do tipo renda a um imóvel para ver a rentabilidade e o rácio preço-renda, e avaliar o arrendamento de relance." },
+        { label: "Peça ao assistente", body: "Não sabe quanto vale algo? Peça uma estimativa atual ao assistente e como obter um valor mais preciso." },
+      ],
+      [
+        { label: "Valor y coste", body: "Registra cuánto vale ahora un activo y, si quieres, cuánto costó y cuándo. bynku muestra la ganancia o pérdida, y puedes editar el valor actual cuando el mercado cambie." },
+        { label: "Liquidez", body: "La rapidez con que se convierte en efectivo, fijada automáticamente por el tipo: acciones, bonos y fondos son líquidos; un vehículo es semilíquido; inmuebles, terrenos y un negocio son ilíquidos. Los activos líquidos refuerzan tu fondo de emergencia." },
+        { label: "Vincular un proyecto", body: "Conecta un proyecto de inversión (en Ahorrar e invertir) a un activo. El dinero que aportes a ese proyecto actualiza automáticamente el valor y el coste del activo, y el patrimonio lo cuenta una sola vez, nunca dos." },
+        { label: "Vincular ingreso por alquiler", body: "Asocia un ingreso de tipo alquiler a un inmueble para ver su rentabilidad y su ratio precio-alquiler, y juzgar el alquiler de un vistazo." },
+        { label: "Pregunta al asistente", body: "¿No sabes cuánto vale algo? Pide al asistente una estimación actual y cómo obtener una cifra más precisa." },
+      ],
+      [
+        { label: "Wert und Kosten", body: "Erfasse, was ein Vermögenswert jetzt wert ist und optional, was er gekostet hat und wann. bynku zeigt Gewinn oder Verlust, und du kannst den aktuellen Wert jederzeit anpassen, wenn sich der Markt bewegt." },
+        { label: "Liquidität", body: "Wie schnell er zu Bargeld wird, automatisch nach Typ: Aktien, Anleihen und Fonds sind liquide; ein Fahrzeug ist halbliquide; Immobilien, Grundstücke und ein Unternehmen sind illiquide. Liquide Werte stützen deinen Notgroschen." },
+        { label: "Projekt verknüpfen", body: "Verbinde ein Anlageprojekt (aus Sparen & Anlegen) mit einem Vermögenswert. Geld, das du in dieses Projekt steckst, aktualisiert dann automatisch Wert und Kosten des Vermögenswerts — und das Nettovermögen zählt es einmal, nie doppelt." },
+        { label: "Mieteinnahme verknüpfen", body: "Verknüpfe eine Einnahme vom Typ Miete mit einer Immobilie, um Rendite und Preis-Miete-Verhältnis zu sehen und die Vermietung auf einen Blick zu beurteilen." },
+        { label: "Frag den Coach", body: "Unsicher, was etwas wert ist? Bitte den Coach um eine aktuelle Schätzung und wie du einen genaueren Wert findest." },
+      ],
+      [
+        { label: "Valeur et coût", body: "Enregistre ce que vaut un actif aujourd'hui et, si tu veux, ce qu'il a coûté et quand. bynku affiche la plus-value ou la moins-value, et tu peux modifier la valeur actuelle quand le marché bouge." },
+        { label: "Liquidité", body: "La vitesse à laquelle il devient liquide, définie automatiquement par type : actions, obligations et fonds sont liquides ; un véhicule est semi-liquide ; l'immobilier, un terrain et une entreprise sont illiquides. Les actifs liquides renforcent ton fonds d'urgence." },
+        { label: "Lier un projet", body: "Relie un projet d'investissement (dans Épargner & Investir) à un actif. L'argent versé dans ce projet met alors à jour automatiquement la valeur et le coût de l'actif — et la valeur nette le compte une fois, jamais deux." },
+        { label: "Lier un revenu locatif", body: "Associe un revenu de type loyer à un bien pour voir son rendement et son ratio prix-loyer, et juger la location d'un coup d'œil." },
+        { label: "Demande à l'assistant", body: "Pas sûr de la valeur ? Demande à l'assistant une estimation actuelle et comment obtenir un chiffre plus précis." },
+      ],
+    ),
+    callout: L(
+      "Net worth is a stock, not a flow — it changes slowly. Keep asset values roughly up to date and it becomes a reliable gut-check on how you're really doing over time.",
+      "O património líquido é um stock, não um fluxo — muda devagar. Mantenha os valores dos ativos mais ou menos atualizados e terá uma verificação fiável de como está realmente a evoluir ao longo do tempo.",
+      "El patrimonio neto es un stock, no un flujo: cambia despacio. Mantén los valores de los activos más o menos al día y tendrás una comprobación fiable de cómo te va realmente con el tiempo.",
+      "Nettovermögen ist ein Bestand, kein Fluss — es ändert sich langsam. Halte die Werte grob aktuell, dann wird es zu einer verlässlichen Bauchprüfung, wie du dich über die Zeit wirklich entwickelst.",
+      "La valeur nette est un stock, pas un flux — elle évolue lentement. Garde les valeurs à peu près à jour et elle devient un repère fiable de ta trajectoire réelle au fil du temps.",
+    ),
+  },
+
   // ------------------------------------------------------------ plans
   {
     id: "plans",
