@@ -426,6 +426,79 @@ export type Database = {
           },
         ]
       }
+      assets: {
+        Row: {
+          acquired_on: string | null
+          acquired_value: number | null
+          created_at: string
+          created_by: string | null
+          current_value: number
+          debt_id: string | null
+          household_id: string
+          id: string
+          income_id: string | null
+          kind: string
+          liquidity: string
+          name: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          acquired_on?: string | null
+          acquired_value?: number | null
+          created_at?: string
+          created_by?: string | null
+          current_value?: number
+          debt_id?: string | null
+          household_id: string
+          id?: string
+          income_id?: string | null
+          kind?: string
+          liquidity?: string
+          name: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acquired_on?: string | null
+          acquired_value?: number | null
+          created_at?: string
+          created_by?: string | null
+          current_value?: number
+          debt_id?: string | null
+          household_id?: string
+          id?: string
+          income_id?: string | null
+          kind?: string
+          liquidity?: string
+          name?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "debts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_income_id_fkey"
+            columns: ["income_id"]
+            isOneToOne: false
+            referencedRelation: "incomes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buckets: {
         Row: {
           color: string | null

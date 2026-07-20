@@ -16,6 +16,7 @@ import {
   BarChart3,
   CalendarClock,
   Landmark,
+  Gem,
   Sun,
   Moon,
   BookOpen,
@@ -56,6 +57,7 @@ const NAV_SECTIONS = [
     titleKey: "navSection.manage",
     items: [
       { to: "/money-in", labelKey: "nav.moneyIn", icon: Banknote },
+      { to: "/assets", labelKey: "nav.assets", icon: Gem },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/loans", labelKey: "nav.loans", icon: Landmark },
