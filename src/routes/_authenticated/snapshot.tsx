@@ -62,7 +62,7 @@ function SnapshotPage() {
       const [{ data: allocs }, { data: moves }, { data: expenses }] = await Promise.all([
         supabase
           .from("bucket_allocations")
-          .select("bucket_id, amount")
+          .select("bucket_id, amount, period")
           .eq("household_id", householdId!),
         supabase
           .from("account_movements")
@@ -106,8 +106,30 @@ function SnapshotPage() {
       );
       const cycleProgress = elapsed / totalDays;
 
+      // Real money set aside this cycle = confirmed allocations for this period
+      // + net deposits into projects this calendar month (mirrors the Save &
+      // Invest page's "real allocated"). This is the honest savings numerator.
+      const nowMonth = new Date();
+      const period = `${nowMonth.getFullYear()}-${String(nowMonth.getMonth() + 1).padStart(2, "0")}-01`;
+      const monthStart = new Date(nowMonth.getFullYear(), nowMonth.getMonth(), 1);
+      const nextMonth = new Date(nowMonth.getFullYear(), nowMonth.getMonth() + 1, 1);
+      const confirmedThisCycle = (allocs ?? [])
+        .filter((a) => a.period === period)
+        .reduce((s, a) => s + Number(a.amount), 0);
+      const netIntoProjects = ((moves ?? []) as AccountMovement[]).reduce((s, m) => {
+        const created = new Date(m.created_at);
+        if (created < monthStart || created >= nextMonth) return s;
+        if (m.reason === "plan_payment") return s; // paying a plan isn't new saving
+        let d = 0;
+        if (m.to_type === "bucket") d += Number(m.amount);
+        if (m.from_type === "bucket") d -= Number(m.amount);
+        return s + d;
+      }, 0);
+      const savedThisCycle = Math.max(0, confirmedThisCycle + netIntoProjects);
+
       return {
         income,
+        savedThisCycle,
         fixedTotal,
         debtMonthly,
         bucketsTotal,

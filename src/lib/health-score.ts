@@ -8,6 +8,9 @@
 export type ScoreInputs = {
   /** Monthly recurring income. */
   income: number;
+  /** Real money set aside into projects this cycle (confirmed allocations +
+   * net deposits into projects). This is actual saving, not leftover surplus. */
+  savedThisCycle: number;
   /** Monthly fixed expenses + monthly debt payments. */
   fixedTotal: number;
   /** Monthly debt payments only. */
@@ -49,27 +52,49 @@ function clamp(n: number, lo = 0, hi = 100): number {
 }
 
 export function computeHealth(input: ScoreInputs): HealthResult {
-  const { income, fixedTotal, debtMonthly, bucketsTotal, hasInvestment, variablePool, variableSpent, cycleProgress } = input;
+  const {
+    income,
+    savedThisCycle,
+    fixedTotal,
+    debtMonthly,
+    bucketsTotal,
+    hasInvestment,
+    variablePool,
+    variableSpent,
+    cycleProgress,
+  } = input;
 
-  const surplus = Math.max(0, income - fixedTotal);
-  const savingsRate = income > 0 ? surplus / income : 0;
+  // --- Ratios with honest denominators --------------------------------------
+  // Savings = money actually moved into projects this cycle, not the leftover
+  // after fixed costs (which most households have but never save).
+  const savedRate = income > 0 ? Math.max(0, savedThisCycle) / income : 0;
   const debtRatio = income > 0 ? debtMonthly / income : 0;
-  const fixedMonthly = Math.max(1, fixedTotal); // avoid div/0
-  const monthsOfEmergency = bucketsTotal / fixedMonthly;
+  // Emergency runway is measured against TOTAL monthly outgoings (fixed +
+  // everyday pool), not fixed costs alone — money you'd actually need to cover.
+  const totalOutgoings = Math.max(1, fixedTotal + Math.max(0, variablePool));
+  const monthsOfEmergency = bucketsTotal / totalOutgoings;
 
-  // 20% savings rate = perfect
-  const savings = clamp(savingsRate * 500);
-  // 3 months of fixed costs covered = perfect
-  const emergency = clamp((monthsOfEmergency / 3) * 100);
-  // 0% debt = 100, 40% debt = 0
+  // --- Sub-scores. sqrt curves are "encouraging": they reward early progress
+  //     while still requiring a lot for a perfect mark. ------------------------
+  // 20% real savings rate = 100; ~5% already reaches ~50.
+  const savings = clamp(100 * Math.sqrt(Math.min(1, savedRate / 0.2)));
+  // 6 months of total outgoings = 100; 3 months ≈ 71, 1 month ≈ 41.
+  const emergency = clamp(100 * Math.sqrt(Math.min(1, monthsOfEmergency / 6)));
+  // 0% debt-to-income = 100, 40% = 0.
   const debt = clamp(100 - debtRatio * 250);
-  // Compare pace of spend vs cycle progress. Perfect when spending pace matches
-  // elapsed fraction; penalise both wild under- and overspending equally.
-  let budget = 100;
-  if (variablePool > 0) {
+
+  // Budget discipline: spend pace vs elapsed fraction. Only meaningful once the
+  // household has everyday estimates AND some of the cycle has elapsed; until
+  // then it stays a neutral 50 and is excluded from the overall (no free 100).
+  const budgetScored = variablePool > 0;
+  let budget = 50;
+  if (budgetScored) {
     const expected = variablePool * cycleProgress;
     const drift = Math.abs(variableSpent - expected) / variablePool;
-    budget = clamp(100 - drift * 150);
+    const raw = clamp(100 - drift * 150);
+    // Damp early-cycle certainty toward a neutral 60 until ~40% has elapsed.
+    const confidence = Math.min(1, cycleProgress / 0.4);
+    budget = clamp(60 + (raw - 60) * confidence);
   }
 
   const scores: SubScore[] = [
@@ -79,13 +104,19 @@ export function computeHealth(input: ScoreInputs): HealthResult {
     { key: "budget", value: Math.round(budget) },
   ];
 
-  const overall = Math.round(scores.reduce((s, x) => s + x.value, 0) / scores.length);
+  // Overall blends the average with the weakest pillar so one genuinely weak
+  // area drags the headline down without zeroing it out. Budget only counts
+  // once it is actually measurable.
+  const agg = [savings, emergency, debt, ...(budgetScored ? [budget] : [])];
+  const mean = agg.reduce((s, v) => s + v, 0) / agg.length;
+  const weakest = Math.min(...agg);
+  const overall = clamp(Math.round(0.8 * mean + 0.2 * weakest));
 
   const badges: Badge[] = [];
   if (monthsOfEmergency >= 3) badges.push("emergency_ready");
   if (debtRatio < 0.15) badges.push("debt_slayer");
-  if (savingsRate >= 0.15) badges.push("consistent_saver");
-  if (budget >= 80) badges.push("budget_hero");
+  if (savedRate >= 0.1) badges.push("consistent_saver");
+  if (budgetScored && budget >= 80) badges.push("budget_hero");
   if (hasInvestment) badges.push("investing");
   if (badges.length === 0) badges.push("getting_started");
 
@@ -94,7 +125,7 @@ export function computeHealth(input: ScoreInputs): HealthResult {
     scores,
     badges,
     monthsOfEmergency: Math.round(monthsOfEmergency * 10) / 10,
-    savingsRate: Math.round(savingsRate * 100) / 100,
+    savingsRate: Math.round(savedRate * 100) / 100,
     debtRatio: Math.round(debtRatio * 100) / 100,
   };
 }
