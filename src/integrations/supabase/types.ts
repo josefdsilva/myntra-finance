@@ -430,6 +430,7 @@ export type Database = {
         Row: {
           acquired_on: string | null
           acquired_value: number | null
+          bucket_id: string | null
           created_at: string
           created_by: string | null
           current_value: number
@@ -446,6 +447,7 @@ export type Database = {
         Insert: {
           acquired_on?: string | null
           acquired_value?: number | null
+          bucket_id?: string | null
           created_at?: string
           created_by?: string | null
           current_value?: number
@@ -462,6 +464,7 @@ export type Database = {
         Update: {
           acquired_on?: string | null
           acquired_value?: number | null
+          bucket_id?: string | null
           created_at?: string
           created_by?: string | null
           current_value?: number
@@ -476,6 +479,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "assets_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assets_debt_id_fkey"
             columns: ["debt_id"]

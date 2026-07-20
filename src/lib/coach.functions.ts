@@ -300,7 +300,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       .from("plans")
       .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
       .eq("household_id", householdId),
-    supabase.from("assets").select("name, kind, current_value").eq("household_id", householdId),
+    supabase
+      .from("assets")
+      .select("name, kind, current_value, bucket_id")
+      .eq("household_id", householdId),
   ]);
 
   const sumMonthly = (rows: unknown): number =>
@@ -449,16 +452,35 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   // Assets & net worth. Liquidity of an asset is a property of its type; the
   // quickly-sellable kinds double as a secondary emergency backstop.
   const LIQUID_ASSET_KINDS = new Set(["stocks", "bonds", "fund"]);
-  const assets = rowsOrEmpty<{ name: string; kind: string; current_value: number | string }>(
-    assetsData,
-  ).map((a) => ({ name: a.name, kind: a.kind, currentValue: Number(a.current_value) || 0 }));
+  const assetRows = rowsOrEmpty<{
+    name: string;
+    kind: string;
+    current_value: number | string;
+    bucket_id: string | null;
+  }>(assetsData);
+  const assets = assetRows.map((a) => ({
+    name: a.name,
+    kind: a.kind,
+    currentValue: Number(a.current_value) || 0,
+  }));
   const assetsTotal = Math.round(assets.reduce((s, a) => s + a.currentValue, 0) * 100) / 100;
   const liquidAssetsTotal =
     Math.round(
       assets.filter((a) => LIQUID_ASSET_KINDS.has(a.kind)).reduce((s, a) => s + a.currentValue, 0) *
         100,
     ) / 100;
-  const netWorth = Math.round((assetsTotal + totalSavings - debtPrincipalOutstanding) * 100) / 100;
+  // A project linked to an asset is already represented by that asset, so its
+  // balance must not double-count as savings inside net worth.
+  const linkedBucketIds = new Set(
+    assetRows.map((a) => a.bucket_id).filter((x): x is string => !!x),
+  );
+  const linkedBucketBalance = Object.entries(totalByBucket).reduce(
+    (s, [id, v]) => (linkedBucketIds.has(id) ? s + Number(v) : s),
+    0,
+  );
+  const netWorth =
+    Math.round((assetsTotal + (totalSavings - linkedBucketBalance) - debtPrincipalOutstanding) * 100) /
+    100;
 
   let spent = 0,
     received = 0;

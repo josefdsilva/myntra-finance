@@ -21,6 +21,7 @@ import {
   upsertAsset,
   deleteAsset,
   setAssetLinks,
+  linkAssetBucket,
   ASSET_KINDS,
   liquidityForKind,
 } from "@/lib/assets.functions";
@@ -34,6 +35,7 @@ type AssetRow = {
   current_value: number;
   liquidity: string;
   income_id: string | null;
+  bucket_id: string | null;
 };
 
 const LIQ_TONE: Record<string, string> = {
@@ -55,7 +57,9 @@ export function AssetsSection({ householdId }: { householdId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select("id, name, kind, acquired_value, acquired_on, current_value, liquidity, income_id")
+        .select(
+          "id, name, kind, acquired_value, acquired_on, current_value, liquidity, income_id, bucket_id",
+        )
         .eq("household_id", householdId)
         .order("current_value", { ascending: false });
       if (error) throw error;
@@ -80,6 +84,26 @@ export function AssetsSection({ householdId }: { householdId: string }) {
   async function linkIncome(assetId: string, incomeId: string | null) {
     await linkFn({ data: { id: assetId, household_id: householdId, income_id: incomeId } });
     refetch();
+  }
+
+  // Investment projects that can fund an asset. Contributions into a linked
+  // project automatically raise the asset's value and cost basis.
+  const { data: investmentBuckets = [] } = useQuery({
+    queryKey: ["assets-investment-buckets", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("buckets")
+        .select("id, name")
+        .eq("household_id", householdId)
+        .eq("kind", "investment");
+      return (data ?? []) as Array<{ id: string; name: string }>;
+    },
+  });
+  const bucketLinkFn = useServerFn(linkAssetBucket);
+  async function linkBucket(assetId: string, bucketId: string | null) {
+    await bucketLinkFn({ data: { id: assetId, household_id: householdId, bucket_id: bucketId } });
+    refetch();
+    qc.invalidateQueries({ queryKey: ["net-worth", householdId] });
   }
 
   const [name, setName] = useState("");
@@ -144,6 +168,7 @@ export function AssetsSection({ householdId }: { householdId: string }) {
 
   const list = rows ?? [];
   const totalCurrent = list.reduce((s, r) => s + Number(r.current_value), 0);
+  const linkedBuckets = new Set(list.map((a) => a.bucket_id).filter((x): x is string => !!x));
 
   return (
     <Card>
@@ -219,6 +244,33 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                             </span>
                           );
                         })()}
+                      </div>
+                    )}
+                    {(investmentBuckets.length > 0 || r.bucket_id) && (
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <Select
+                          value={r.bucket_id ?? "none"}
+                          onValueChange={(v) => linkBucket(r.id, v === "none" ? null : v)}
+                        >
+                          <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
+                            <SelectValue placeholder={t("assets.projectLabel")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{t("assets.projectNone")}</SelectItem>
+                            {investmentBuckets
+                              .filter((b) => !linkedBuckets.has(b.id) || b.id === r.bucket_id)
+                              .map((b) => (
+                                <SelectItem key={b.id} value={b.id}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        {r.bucket_id && (
+                          <span className="text-[11px] text-muted-foreground">
+                            {t("assets.projectSynced")}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

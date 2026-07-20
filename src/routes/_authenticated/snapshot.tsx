@@ -74,7 +74,7 @@ function SnapshotPage() {
             .eq("household_id", householdId!)
             .gte("occurred_at", cycle.start.toISOString())
             .lt("occurred_at", cycle.end.toISOString()),
-          supabase.from("assets").select("current_value, kind").eq("household_id", householdId!),
+          supabase.from("assets").select("current_value, kind, bucket_id").eq("household_id", householdId!),
         ]);
 
       const income = incomes.reduce((s, r) => s + Number(r.monthly_amount), 0);
@@ -87,7 +87,15 @@ function SnapshotPage() {
         allocs ?? [],
         (moves ?? []) as AccountMovement[],
       );
-      const bucketsTotal = Object.values(balances).reduce((s, v) => s + v, 0);
+      // A project linked to an asset is represented by that asset; exclude its
+      // balance from savings so net worth and the emergency buffer don't double-count.
+      const linkedBucketIds = new Set(
+        (assetsRows ?? []).map((a) => a.bucket_id).filter((x): x is string => !!x),
+      );
+      const bucketsTotal = Object.entries(balances).reduce(
+        (s, [id, v]) => (linkedBucketIds.has(id) ? s : s + v),
+        0,
+      );
       const hasInvestment = buckets.some((b) => b.kind === "investment");
       const variablePool = Math.max(0, baseline - fixedTotal);
       const spent = (expenses ?? [])

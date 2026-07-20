@@ -19,7 +19,7 @@ export function NetWorthCard({ householdId }: { householdId: string }) {
     queryFn: async () => {
       const [{ data: assets }, { data: buckets }, { data: allocs }, { data: moves }, { data: debts }] =
         await Promise.all([
-          supabase.from("assets").select("current_value").eq("household_id", householdId),
+          supabase.from("assets").select("current_value, bucket_id").eq("household_id", householdId),
           supabase.from("buckets").select("id, initial_balance").eq("household_id", householdId),
           supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId),
           supabase.from("account_movements").select("*").eq("household_id", householdId),
@@ -32,7 +32,15 @@ export function NetWorthCard({ householdId }: { householdId: string }) {
         allocs ?? [],
         (moves ?? []) as AccountMovement[],
       );
-      const savings = Object.values(balances).reduce((s, v) => s + v, 0);
+      // A project linked to an asset is already counted as that asset, so its
+      // balance must not also count as savings (would double-count net worth).
+      const linkedBucketIds = new Set(
+        (assets ?? []).map((a) => a.bucket_id).filter((x): x is string => !!x),
+      );
+      const savings = Object.entries(balances).reduce(
+        (s, [id, v]) => (linkedBucketIds.has(id) ? s : s + v),
+        0,
+      );
       const debtTotal = ((debts ?? []) as Debt[]).reduce(
         (s, d) => s + debtLiveSchedule(d).remaining,
         0,
