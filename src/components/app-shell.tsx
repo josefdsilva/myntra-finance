@@ -237,19 +237,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="font-display text-lg leading-tight truncate max-w-[150px]">
               {householdName}
             </div>
-            <div className="mt-0.5 flex items-center gap-1.5">
+            <div className="mt-1 flex items-center">
               <span
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide leading-none",
+                  "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide leading-none",
                   isBusiness
                     ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300"
                     : "bg-muted text-muted-foreground",
                 )}
               >
-                {isBusiness ? <Building2 className="size-2.5" /> : <User className="size-2.5" />}
+                {isBusiness ? <Building2 className="size-3" /> : <User className="size-3" />}
                 {isBusiness ? t("shell.business") : t("shell.personal")}
               </span>
-              <div className="text-xs text-muted-foreground truncate">{t("shell.subtitle")}</div>
             </div>
           </div>
           <ChevronsUpDown className="size-4 text-muted-foreground opacity-70 group-hover:opacity-100" />
