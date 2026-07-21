@@ -969,30 +969,36 @@ export type Database = {
       }
       fixed_expenses: {
         Row: {
+          cadence: string
           category: string | null
           created_at: string
           household_id: string
           id: string
           label: string
           monthly_amount: number
+          native_amount: number | null
           updated_at: string
         }
         Insert: {
+          cadence?: string
           category?: string | null
           created_at?: string
           household_id: string
           id?: string
           label: string
           monthly_amount?: number
+          native_amount?: number | null
           updated_at?: string
         }
         Update: {
+          cadence?: string
           category?: string | null
           created_at?: string
           household_id?: string
           id?: string
           label?: string
           monthly_amount?: number
+          native_amount?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1131,31 +1137,37 @@ export type Database = {
       }
       incomes: {
         Row: {
+          cadence: string
           created_at: string
           household_id: string
           id: string
           label: string
           monthly_amount: number
+          native_amount: number | null
           owner_user_id: string | null
           type: string
           updated_at: string
         }
         Insert: {
+          cadence?: string
           created_at?: string
           household_id: string
           id?: string
           label: string
           monthly_amount?: number
+          native_amount?: number | null
           owner_user_id?: string | null
           type?: string
           updated_at?: string
         }
         Update: {
+          cadence?: string
           created_at?: string
           household_id?: string
           id?: string
           label?: string
           monthly_amount?: number
+          native_amount?: number | null
           owner_user_id?: string | null
           type?: string
           updated_at?: string
