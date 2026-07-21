@@ -95,7 +95,7 @@ export const setAssetLinks = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const patch: Record<string, string | null> = {};
+    const patch: { income_id?: string | null; bucket_id?: string | null } = {};
     if (data.income_id !== undefined) patch.income_id = data.income_id;
     if (data.bucket_id !== undefined) patch.bucket_id = data.bucket_id;
     if (Object.keys(patch).length === 0) return { ok: true };
