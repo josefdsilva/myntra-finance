@@ -914,8 +914,8 @@ export function BucketsSection({ householdId }: { householdId: string }) {
       <CardHeader>
         <CardTitle>{t("buckets.title")}</CardTitle>
         <CardDescription>
-          {t("buckets.description", { pct: `<${pctTotal}>` })
-            .split(`<${pctTotal}>`)
+          {t("buckets.description", { pct: "<PCT>" })
+            .split("<PCT>")
             .flatMap((part, i, arr) =>
               i < arr.length - 1
                 ? [
