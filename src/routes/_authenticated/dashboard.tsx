@@ -284,8 +284,16 @@ function Dashboard() {
       : t("dashboard.cycle.calendar", { month: monthName })
     : monthName;
 
-  const setupIncomplete = baseline === 0;
   const isLoading = !hh || dashboardLoading || !dashboard;
+  // Resume-onboarding checklist: the essentials the wizard collects that make
+  // the budget meaningful. Optional steps (debt, assets, plans) don't block.
+  const setupSteps = [
+    { key: "income", done: income > 0 },
+    { key: "spending", done: baseline > 0 },
+    { key: "projects", done: buckets.length > 0 },
+  ] as const;
+  const setupDone = setupSteps.filter((s) => s.done).length;
+  const onboardingIncomplete = setupDone < setupSteps.length;
 
   return (
     <div className={pageShellClass("5xl")}>
@@ -294,15 +302,25 @@ function Dashboard() {
         <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
       </header>
 
-      {setupIncomplete ? (
+      {!isLoading && onboardingIncomplete ? (
         <Card className="border-warning/40 bg-warning/5">
           <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-6">
-            <div>
-              <p className="font-medium">{t("dashboard.setup.title")}</p>
-              <p className="text-sm text-muted-foreground">{t("dashboard.setup.body")}</p>
+            <div className="space-y-1">
+              <p className="font-medium">{t("dashboard.resume.title")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("dashboard.resume.body", { done: setupDone, total: setupSteps.length })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.resume.missing", {
+                  items: setupSteps
+                    .filter((s) => !s.done)
+                    .map((s) => t(`dashboard.resume.item.${s.key}`))
+                    .join(", "),
+                })}
+              </p>
             </div>
             <Button asChild>
-              <Link to="/settings">{t("dashboard.setup.action")}</Link>
+              <Link to="/onboarding">{t("dashboard.resume.action")}</Link>
             </Button>
           </CardContent>
         </Card>

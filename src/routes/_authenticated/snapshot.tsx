@@ -19,8 +19,8 @@ import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import { computeCycle } from "@/lib/cycle";
 import { computeHealth, type Badge as BadgeKind } from "@/lib/health-score";
 import { pageShellClass } from "@/components/page-shell";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
 import { useT } from "@/lib/i18n";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 
@@ -247,41 +247,45 @@ function SnapshotPage() {
         <p className="text-sm text-muted-foreground max-w-2xl">{t("snapshot.subtitle")}</p>
       </header>
 
-      {setupIncomplete && (
-        <Card className="border-warning/40 bg-warning/5">
-          <CardContent className="pt-6">
-            <p className="text-sm">{t("snapshot.setupNeeded")}</p>
-          </CardContent>
-        </Card>
+      {setupIncomplete ? (
+        <EmptyState
+          icon={Sparkles}
+          title={t("snapshot.empty.title")}
+          description={t("snapshot.setupNeeded")}
+          ctaLabel={t("snapshot.empty.cta")}
+          ctaTo="/money-in"
+        />
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleShare} disabled={busy || !health}>
+              <Share2 className="size-4" />
+              {t("snapshot.share")}
+            </Button>
+            <Button variant="outline" onClick={handleDownload} disabled={busy || !health}>
+              <Download className="size-4" />
+              {t("snapshot.download")}
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="min-w-[600px] px-4 sm:px-0">
+              {health && (
+                <SnapshotCard
+                  ref={cardRef}
+                  overall={health.overall}
+                  scores={health.scores}
+                  badges={health.badges}
+                  monthLabel={monthLabel}
+                  t={t as unknown as (key: string, vars?: Record<string, string | number>) => string}
+                />
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground">{t("snapshot.privacyNote")}</p>
+        </>
       )}
-
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={handleShare} disabled={busy || !health}>
-          <Share2 className="size-4" />
-          {t("snapshot.share")}
-        </Button>
-        <Button variant="outline" onClick={handleDownload} disabled={busy || !health}>
-          <Download className="size-4" />
-          {t("snapshot.download")}
-        </Button>
-      </div>
-
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <div className="min-w-[600px] px-4 sm:px-0">
-          {health && (
-            <SnapshotCard
-              ref={cardRef}
-              overall={health.overall}
-              scores={health.scores}
-              badges={health.badges}
-              monthLabel={monthLabel}
-              t={t as unknown as (key: string, vars?: Record<string, string | number>) => string}
-            />
-          )}
-        </div>
-      </div>
-
-      <p className="text-xs text-muted-foreground">{t("snapshot.privacyNote")}</p>
     </div>
   );
 }
