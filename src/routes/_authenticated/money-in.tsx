@@ -37,7 +37,13 @@ function MoneyInPage() {
           {t(isBusiness ? "moneyIn.subtitleBiz" : "moneyIn.subtitle")}
         </p>
       </header>
-      {householdId && <IncomesSection householdId={householdId} cycle={cycleForSpace(hh?.household)} />}
+      {householdId && (
+        <IncomesSection
+          householdId={householdId}
+          cycle={cycleForSpace(hh?.household)}
+          isBusiness={isBusiness}
+        />
+      )}
       {householdId && <IncomeHistorySection householdId={householdId} />}
     </div>
   );
