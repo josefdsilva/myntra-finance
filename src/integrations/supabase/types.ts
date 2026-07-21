@@ -1092,6 +1092,7 @@ export type Database = {
           created_by: string
           credit_cap: number
           currency: string
+          cycle: string
           id: string
           kind: string
           margin_pct: number
@@ -1109,6 +1110,7 @@ export type Database = {
           created_by: string
           credit_cap?: number
           currency?: string
+          cycle?: string
           id?: string
           kind?: string
           margin_pct?: number
@@ -1126,6 +1128,7 @@ export type Database = {
           created_by?: string
           credit_cap?: number
           currency?: string
+          cycle?: string
           id?: string
           kind?: string
           margin_pct?: number

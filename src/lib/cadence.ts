@@ -24,3 +24,26 @@ export function monthlyEquivalent(nativeAmount: number, cadence: Cadence): numbe
 export function isCadence(v: unknown): v is Cadence {
   return typeof v === "string" && (CADENCES as readonly string[]).includes(v);
 }
+
+// A space's budgeting/reporting cycle — the period aggregate figures are shown
+// in. A subset of the cadences (no fortnightly): individuals run weekly/monthly,
+// firms often quarterly/yearly.
+export const CYCLES = ["weekly", "monthly", "quarterly", "yearly"] as const;
+export type Cycle = (typeof CYCLES)[number];
+
+/** Express a monthly-equivalent amount in the given cycle's period. */
+export function perCycleFromMonthly(monthlyAmount: number, cycle: Cycle): number {
+  return Math.round((monthlyAmount / MONTHLY_FACTOR[cycle]) * 100) / 100;
+}
+
+/** Sensible default cycle for a space kind. */
+export function defaultCycleForKind(kind: string | null | undefined): Cycle {
+  return kind === "business" ? "quarterly" : "monthly";
+}
+
+/** Resolve a household's stored cycle, falling back to the kind default. */
+export function cycleForSpace(space: { cycle?: string | null; kind?: string | null } | null | undefined): Cycle {
+  const c = space?.cycle;
+  if (c && (CYCLES as readonly string[]).includes(c)) return c as Cycle;
+  return defaultCycleForKind(space?.kind);
+}
