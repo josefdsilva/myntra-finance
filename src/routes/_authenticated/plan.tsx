@@ -13,7 +13,13 @@ import {
   resolvePlan,
   reopenPlan,
 } from "@/lib/plan.functions";
-import { buildForecast, plansForMonth, monthKey, type Plan } from "@/lib/plan";
+import {
+  buildForecast,
+  plansForMonth,
+  monthKey,
+  type Plan,
+  type PlanRecurrence,
+} from "@/lib/plan";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { PlanTimeline, HorizonToggle, type Horizon } from "@/components/plan-charts";
 import { pageShellClass } from "@/components/page-shell";
@@ -66,6 +72,24 @@ type PlanRow = Plan & { note: string | null };
 const monthLabel = (ym: string) =>
   new Date(`${ym}-01T00:00:00`).toLocaleDateString(undefined, { month: "short", year: "numeric" });
 
+// Recurrence options, in the order shown in the selects.
+const RECURRENCES: PlanRecurrence[] = ["one_off", "ongoing", "quarterly", "semiannual", "annual"];
+
+function recurrenceLabelKey(r: string) {
+  switch (r) {
+    case "ongoing":
+      return "plan.ongoing" as const;
+    case "quarterly":
+      return "plan.quarterly" as const;
+    case "semiannual":
+      return "plan.semiannual" as const;
+    case "annual":
+      return "plan.annual" as const;
+    default:
+      return "plan.once" as const;
+  }
+}
+
 function PlanPage() {
   const t = useT();
   const qc = useQueryClient();
@@ -117,9 +141,10 @@ function PlanPage() {
   const plans = useMemo(() => data?.plans ?? [], [data?.plans]);
   const projects = useMemo(() => data?.projects ?? [], [data?.projects]);
   const monthlyIncome = data?.monthlyIncome ?? 0;
+  const [forecastHorizon, setForecastHorizon] = useState<Horizon>(6);
   const forecast = useMemo(
-    () => buildForecast({ plans, baseline, monthlyIncome, months: 6 }),
-    [plans, baseline, monthlyIncome],
+    () => buildForecast({ plans, baseline, monthlyIncome, months: forecastHorizon }),
+    [plans, baseline, monthlyIncome, forecastHorizon],
   );
 
   // Add-plan form.
@@ -127,7 +152,7 @@ function PlanPage() {
   const [amount, setAmount] = useState("");
   const [direction, setDirection] = useState<"spend" | "income">("spend");
   const [month, setMonth] = useState(() => monthKey(new Date()));
-  const [recurrence, setRecurrence] = useState<"one_off" | "annual" | "ongoing">("one_off");
+  const [recurrence, setRecurrence] = useState<PlanRecurrence>("one_off");
   const [busy, setBusy] = useState(false);
 
   async function add() {
@@ -182,7 +207,7 @@ function PlanPage() {
   const [eAmount, setEAmount] = useState("");
   const [eDirection, setEDirection] = useState<"spend" | "income">("spend");
   const [eMonth, setEMonth] = useState("");
-  const [eRecurrence, setERecurrence] = useState<"one_off" | "annual" | "ongoing">("one_off");
+  const [eRecurrence, setERecurrence] = useState<PlanRecurrence>("one_off");
 
   function openEdit(p: PlanRow) {
     setEditRow(p);
@@ -339,15 +364,17 @@ function PlanPage() {
               <Label className="text-xs">{t("plan.recurrence")}</Label>
               <Select
                 value={recurrence}
-                onValueChange={(v) => setRecurrence(v as typeof recurrence)}
+                onValueChange={(v) => setRecurrence(v as PlanRecurrence)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="one_off">{t("plan.once")}</SelectItem>
-                  <SelectItem value="annual">{t("plan.annual")}</SelectItem>
-                  <SelectItem value="ongoing">{t("plan.ongoing")}</SelectItem>
+                  {RECURRENCES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {t(recurrenceLabelKey(r))}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -362,9 +389,12 @@ function PlanPage() {
 
       {/* Forecast */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t("plan.forecastTitle")}</CardTitle>
-          <CardDescription>{t("plan.forecastDesc")}</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle>{t("plan.forecastTitle")}</CardTitle>
+            <CardDescription>{t("plan.forecastDesc")}</CardDescription>
+          </div>
+          <HorizonToggle horizon={forecastHorizon} onChange={setForecastHorizon} />
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -479,7 +509,7 @@ function PlanPage() {
                           <div className="flex flex-wrap gap-1 min-w-0">
                             {p.recurrence !== "one_off" && (
                               <Badge variant="outline" className="text-[10px] whitespace-nowrap">
-                                {t(p.recurrence === "annual" ? "plan.annual" : "plan.ongoing")}
+                                {t(recurrenceLabelKey(p.recurrence))}
                               </Badge>
                             )}
                             {p.bucket_id && (
@@ -510,7 +540,7 @@ function PlanPage() {
                               variant="ghost"
                               className="size-7"
                               onClick={() => openResolve(p)}
-                              title={t("plan.markDone")}
+                              title={t(p.direction === "income" ? "plan.markReceived" : "plan.markPaid")}
                             >
                               <Check className="size-3.5" />
                             </Button>
@@ -639,15 +669,17 @@ function PlanPage() {
                 <Label className="text-xs">{t("plan.recurrence")}</Label>
                 <Select
                   value={eRecurrence}
-                  onValueChange={(v) => setERecurrence(v as typeof eRecurrence)}
+                  onValueChange={(v) => setERecurrence(v as PlanRecurrence)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="one_off">{t("plan.once")}</SelectItem>
-                    <SelectItem value="annual">{t("plan.annual")}</SelectItem>
-                    <SelectItem value="ongoing">{t("plan.ongoing")}</SelectItem>
+                    {RECURRENCES.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {t(recurrenceLabelKey(r))}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -668,7 +700,9 @@ function PlanPage() {
       <Dialog open={!!resolveRow} onOpenChange={(v) => !v && setResolveRow(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("plan.resolveTitle")}</DialogTitle>
+            <DialogTitle>
+              {t(resolveRow?.direction === "income" ? "plan.markReceived" : "plan.markPaid")}
+            </DialogTitle>
             <DialogDescription>{t("plan.resolveDesc")}</DialogDescription>
           </DialogHeader>
           {resolveRow && (
@@ -680,25 +714,27 @@ function PlanPage() {
             <Label className="text-xs">{t("plan.actualAmount")}</Label>
             <Input inputMode="decimal" value={actual} onChange={(e) => setActual(e.target.value)} />
           </div>
-          <div>
-            <Label className="text-xs">{t("plan.payFrom")}</Label>
-            <Select
-              value={payFrom || "leftover"}
-              onValueChange={(v) => setPayFrom(v === "leftover" ? "" : v)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="leftover">{t("plan.payFromLeftover")}</SelectItem>
-                {projects.map((pr) => (
-                  <SelectItem key={pr.id} value={pr.id}>
-                    {pr.name} ({money(pr.balance)})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {resolveRow?.direction !== "income" && (
+            <div>
+              <Label className="text-xs">{t("plan.payFrom")}</Label>
+              <Select
+                value={payFrom || "leftover"}
+                onValueChange={(v) => setPayFrom(v === "leftover" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leftover">{t("plan.payFromLeftover")}</SelectItem>
+                  {projects.map((pr) => (
+                    <SelectItem key={pr.id} value={pr.id}>
+                      {pr.name} ({money(pr.balance)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <DialogFooter className="gap-2 sm:justify-between">
             <Button variant="ghost" onClick={() => saveResolve(0)} disabled={busy}>
               {t("plan.didntHappen")}
@@ -708,7 +744,7 @@ function PlanPage() {
                 {t("plan.cancel")}
               </Button>
               <Button onClick={() => saveResolve()} disabled={busy}>
-                {t("plan.resolve")}
+                {t(resolveRow?.direction === "income" ? "plan.markReceived" : "plan.markPaid")}
               </Button>
             </div>
           </DialogFooter>

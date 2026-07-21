@@ -10,7 +10,7 @@ import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { planAppliesToMonth, monthKey, type Plan } from "@/lib/plan";
 
-export type Horizon = 3 | 6 | 12;
+export type Horizon = 3 | 6 | 12 | 24;
 
 const shortLabel = (d: Date) =>
   d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
@@ -25,7 +25,7 @@ export function HorizonToggle({
 }) {
   return (
     <div className="flex gap-1 shrink-0">
-      {([3, 6, 12] as const).map((h) => (
+      {([3, 6, 12, 24] as const).map((h) => (
         <Button
           key={h}
           size="sm"

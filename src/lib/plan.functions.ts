@@ -19,7 +19,9 @@ export const upsertPlan = createServerFn({ method: "POST" })
         amount: z.number().positive().max(10_000_000),
         direction: z.enum(["spend", "income"]).default("spend"),
         month: z.string().date(),
-        recurrence: z.enum(["one_off", "annual", "ongoing"]).default("one_off"),
+        recurrence: z
+          .enum(["one_off", "ongoing", "quarterly", "semiannual", "annual"])
+          .default("one_off"),
         category: z.string().max(50).nullable().optional(),
         note: z.string().max(500).nullable().optional(),
         done: z.boolean().optional(),
