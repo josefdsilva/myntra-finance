@@ -24,12 +24,17 @@ function MoneyInPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
+  const isBusiness = hh?.household?.kind === "business";
 
   return (
     <div className={pageShellClass("3xl")}>
       <header>
-        <h1 className="text-3xl md:text-4xl font-display">{t("moneyIn.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("moneyIn.subtitle")}</p>
+        <h1 className="text-3xl md:text-4xl font-display">
+          {t(isBusiness ? "moneyIn.titleBiz" : "moneyIn.title")}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {t(isBusiness ? "moneyIn.subtitleBiz" : "moneyIn.subtitle")}
+        </p>
       </header>
       {householdId && <IncomesSection householdId={householdId} />}
       {householdId && <IncomeHistorySection householdId={householdId} />}

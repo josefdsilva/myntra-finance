@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { differenceInCalendarMonths } from "date-fns";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { impliedAnnualRate } from "@/lib/amortization";
+import { CADENCES, monthlyEquivalent } from "@/lib/cadence";
 import { z } from "zod";
 
 const expenseInput = z.object({
@@ -160,14 +161,31 @@ export const upsertIncome = createServerFn({ method: "POST" })
         id: z.string().uuid().optional(),
         household_id: z.string().uuid(),
         label: z.string().min(1).max(80),
-        monthly_amount: z.number().min(0),
+        // Either monthly_amount (legacy callers) or native_amount + cadence.
+        monthly_amount: z.number().min(0).optional(),
+        native_amount: z.number().min(0).optional(),
+        cadence: z.enum(CADENCES).optional(),
         type: z.enum(["salary", "rent", "pension", "benefits", "other"]).optional(),
         owner_user_id: z.string().uuid().nullable().optional(),
+      })
+      .refine((d) => d.monthly_amount != null || d.native_amount != null, {
+        message: "amount required",
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { id, ...payload } = data;
+    const { id, native_amount, cadence, monthly_amount, ...rest } = data;
+    const cad = cadence ?? "monthly";
+    // native_amount is the figure at the chosen cadence; monthly_amount is the
+    // canonical monthly-equivalent all budget math reads. Legacy callers send
+    // only monthly_amount (implicitly monthly), so native falls back to it.
+    const native = native_amount ?? monthly_amount ?? 0;
+    const payload = {
+      ...rest,
+      cadence: cad,
+      native_amount: native,
+      monthly_amount: monthlyEquivalent(native, cad),
+    };
     if (id) {
       const { data: row, error } = await context.supabase
         .from("incomes")
@@ -206,12 +224,25 @@ export const upsertFixedExpense = createServerFn({ method: "POST" })
         household_id: z.string().uuid(),
         label: z.string().min(1).max(80),
         category: z.string().max(50).optional().nullable(),
-        monthly_amount: z.number().min(0),
+        monthly_amount: z.number().min(0).optional(),
+        native_amount: z.number().min(0).optional(),
+        cadence: z.enum(CADENCES).optional(),
+      })
+      .refine((d) => d.monthly_amount != null || d.native_amount != null, {
+        message: "amount required",
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { id, ...payload } = data;
+    const { id, native_amount, cadence, monthly_amount, ...rest } = data;
+    const cad = cadence ?? "monthly";
+    const native = native_amount ?? monthly_amount ?? 0;
+    const payload = {
+      ...rest,
+      cadence: cad,
+      native_amount: native,
+      monthly_amount: monthlyEquivalent(native, cad),
+    };
     if (id) {
       const { data: row, error } = await context.supabase
         .from("fixed_expenses")

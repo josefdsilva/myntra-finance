@@ -36,6 +36,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { money, setCurrentCurrency } from "@/lib/format";
+import { CADENCES, type Cadence } from "@/lib/cadence";
 import { impliedAnnualRate, scheduleSummary, monthlyRateFromTaeg } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
@@ -651,6 +652,71 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
   );
 }
 
+function useCadenceMaps() {
+  const t = useT();
+  const label: Record<Cadence, string> = {
+    weekly: t("cadence.weekly"),
+    fortnightly: t("cadence.fortnightly"),
+    monthly: t("cadence.monthly"),
+    quarterly: t("cadence.quarterly"),
+    yearly: t("cadence.yearly"),
+  };
+  const short: Record<Cadence, string> = {
+    weekly: t("cadence.short.weekly"),
+    fortnightly: t("cadence.short.fortnightly"),
+    monthly: t("cadence.short.monthly"),
+    quarterly: t("cadence.short.quarterly"),
+    yearly: t("cadence.short.yearly"),
+  };
+  return { label, short };
+}
+
+function CadenceSelect({ value, onChange }: { value: Cadence; onChange: (v: Cadence) => void }) {
+  const { label } = useCadenceMaps();
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as Cadence)}>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {CADENCES.map((c) => (
+          <SelectItem key={c} value={c}>
+            {label[c]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+// Value column for a recurring line: the native amount at its cadence, plus the
+// monthly-equivalent underneath when the cadence isn't already monthly.
+function CadenceLineValue({
+  nativeAmount,
+  monthlyAmount,
+  cadence,
+}: {
+  nativeAmount: number;
+  monthlyAmount: number;
+  cadence: Cadence;
+}) {
+  const t = useT();
+  const { short } = useCadenceMaps();
+  return (
+    <div className="flex flex-col items-end leading-tight">
+      <span className="tabular-nums font-medium">
+        {money(nativeAmount)}
+        {short[cadence]}
+      </span>
+      {cadence !== "monthly" && (
+        <span className="text-[10px] text-muted-foreground tabular-nums">
+          {t("cadence.monthlyEquiv", { amount: money(monthlyAmount) })}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function IncomesSection({ householdId }: { householdId: string }) {
   const t = useT();
   const qc = useQueryClient();
@@ -671,6 +737,7 @@ export function IncomesSection({ householdId }: { householdId: string }) {
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"salary" | "rent" | "pension" | "benefits" | "other">("salary");
+  const [cadence, setCadence] = useState<Cadence>("monthly");
 
   const TYPE_LABEL: Record<string, string> = {
     salary: t("income.typeSalary"),
@@ -683,10 +750,17 @@ export function IncomesSection({ householdId }: { householdId: string }) {
   async function add() {
     if (!label || !amount) return;
     await upsert({
-      data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0, type },
+      data: {
+        household_id: householdId,
+        label,
+        native_amount: parseFloat(amount) || 0,
+        cadence,
+        type,
+      },
     });
     setLabel("");
     setAmount("");
+    setCadence("monthly");
     refetch();
     invalidateHouseholdData(qc);
     qc.invalidateQueries({ queryKey: ["allocations"] });
@@ -707,7 +781,11 @@ export function IncomesSection({ householdId }: { householdId: string }) {
           <div>
             <CardTitle>{t("income.title")}</CardTitle>
             <CardDescription>
-              {t("common.total")}: <span className="font-medium text-foreground">{money(total)}</span>
+              {t("common.total")}:{" "}
+              <span className="font-medium text-foreground">
+                {money(total)}
+                {t("common.perMonthShort")}
+              </span>
             </CardDescription>
           </div>
           <StatementImportButton householdId={householdId} />
@@ -724,7 +802,11 @@ export function IncomesSection({ householdId }: { householdId: string }) {
                 </span>
               </span>
               <div className="flex items-center gap-3 shrink-0">
-                <span className="tabular-nums font-medium">{money(r.monthly_amount)}</span>
+                <CadenceLineValue
+                  nativeAmount={Number(r.native_amount ?? r.monthly_amount)}
+                  monthlyAmount={Number(r.monthly_amount)}
+                  cadence={(r.cadence as Cadence) ?? "monthly"}
+                />
                 <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
@@ -732,7 +814,7 @@ export function IncomesSection({ householdId }: { householdId: string }) {
             </li>
           ))}
         </ul>
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1fr_auto] gap-2">
           <Input
             placeholder={t("income.placeholder")}
             value={label}
@@ -750,6 +832,7 @@ export function IncomesSection({ householdId }: { householdId: string }) {
               <SelectItem value="other">{t("income.typeOther")}</SelectItem>
             </SelectContent>
           </Select>
+          <CadenceSelect value={cadence} onChange={setCadence} />
           <Input
             inputMode="decimal"
             placeholder="0.00"
@@ -784,6 +867,7 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
   });
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
+  const [cadence, setCadence] = useState<Cadence>("monthly");
   const { names: catNames } = useCategoryNames(householdId);
   const categoryOptions = catNames.length ? catNames : ["housing", "other"];
   const [category, setCategory] = useState("housing");
@@ -797,10 +881,17 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
   async function add() {
     if (!label || !amount) return;
     await upsert({
-      data: { household_id: householdId, label, category, monthly_amount: parseFloat(amount) || 0 },
+      data: {
+        household_id: householdId,
+        label,
+        category,
+        native_amount: parseFloat(amount) || 0,
+        cadence,
+      },
     });
     setLabel("");
     setAmount("");
+    setCadence("monthly");
     refetch();
     qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
@@ -824,7 +915,10 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
             <CardTitle>{t("fixed.title")}</CardTitle>
             <CardDescription>
               {t("fixed.description")} {t("common.total")}:{" "}
-              <span className="font-medium text-foreground">{money(total)}</span>
+              <span className="font-medium text-foreground">
+                {money(total)}
+                {t("common.perMonthShort")}
+              </span>
             </CardDescription>
           </div>
           <StatementImportButton householdId={householdId} />
@@ -833,13 +927,17 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
       <CardContent className="space-y-3">
         <ul className="divide-y">
           {(rows ?? []).map((r) => (
-            <li key={r.id} className="flex items-center justify-between py-2">
-              <div>
-                <p>{r.label}</p>
+            <li key={r.id} className="flex items-center justify-between gap-2 py-2">
+              <div className="min-w-0">
+                <p className="truncate">{r.label}</p>
                 <p className="text-xs text-muted-foreground">{r.category}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="tabular-nums font-medium">{money(r.monthly_amount)}</span>
+              <div className="flex items-center gap-3 shrink-0">
+                <CadenceLineValue
+                  nativeAmount={Number(r.native_amount ?? r.monthly_amount)}
+                  monthlyAmount={Number(r.monthly_amount)}
+                  cadence={(r.cadence as Cadence) ?? "monthly"}
+                />
                 <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
@@ -847,7 +945,7 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
             </li>
           ))}
         </ul>
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1fr_auto] gap-2">
           <Input
             placeholder={t("fixed.placeholder")}
             value={label}
@@ -865,6 +963,7 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
               ))}
             </SelectContent>
           </Select>
+          <CadenceSelect value={cadence} onChange={setCadence} />
           <Input
             inputMode="decimal"
             placeholder="0.00"
