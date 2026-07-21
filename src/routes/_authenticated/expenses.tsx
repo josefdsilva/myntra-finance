@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
+import { cycleForSpace } from "@/lib/cadence";
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
@@ -333,7 +334,9 @@ function ExpensesPage() {
         </TabsContent>
 
         <TabsContent value="plan" className="space-y-6">
-          {householdId && <FixedExpensesSection householdId={householdId} />}
+          {householdId && (
+            <FixedExpensesSection householdId={householdId} cycle={cycleForSpace(hh?.household)} />
+          )}
           {householdId && <VariableEstimatesSection householdId={householdId} />}
           {householdId && <SpendingVsEstimate householdId={householdId} />}
         </TabsContent>

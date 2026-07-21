@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
+import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/cashflow")({
@@ -30,6 +31,8 @@ function CashflowPage() {
   });
   const householdId = hh?.household?.id;
   const isBusiness = hh?.household?.kind === "business";
+  const cycle = cycleForSpace(hh?.household);
+  const cycleSuffix = t(`cadence.short.${cycle}`);
 
   const [view, setView] = useState<"all" | "in" | "out">("all");
 
@@ -65,11 +68,20 @@ function CashflowPage() {
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <SummaryStat label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")} value={money(totalIn)} />
-        <SummaryStat label={t(isBusiness ? "cashflow.outBiz" : "cashflow.out")} value={money(totalOut)} />
+        <SummaryStat
+          label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
+          value={money(perCycleFromMonthly(totalIn, cycle))}
+          suffix={cycleSuffix}
+        />
+        <SummaryStat
+          label={t(isBusiness ? "cashflow.outBiz" : "cashflow.out")}
+          value={money(perCycleFromMonthly(totalOut, cycle))}
+          suffix={cycleSuffix}
+        />
         <SummaryStat
           label={t("cashflow.net")}
-          value={money(net)}
+          value={money(perCycleFromMonthly(net, cycle))}
+          suffix={cycleSuffix}
           highlight
           tone={net >= 0 ? "good" : "bad"}
         />
@@ -83,9 +95,11 @@ function CashflowPage() {
         </TabsList>
       </Tabs>
 
-      {householdId && (view === "all" || view === "in") && <IncomesSection householdId={householdId} />}
+      {householdId && (view === "all" || view === "in") && (
+        <IncomesSection householdId={householdId} cycle={cycle} />
+      )}
       {householdId && (view === "all" || view === "out") && (
-        <FixedExpensesSection householdId={householdId} />
+        <FixedExpensesSection householdId={householdId} cycle={cycle} />
       )}
 
       <Card className="border-dashed bg-muted/30">
@@ -108,15 +122,16 @@ function CashflowPage() {
 function SummaryStat({
   label,
   value,
+  suffix,
   highlight,
   tone,
 }: {
   label: string;
   value: string;
+  suffix: string;
   highlight?: boolean;
   tone?: "good" | "bad";
 }) {
-  const t = useT();
   const toneCls =
     tone === "good"
       ? "text-emerald-600 dark:text-emerald-400"
@@ -129,7 +144,7 @@ function SummaryStat({
         <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
         <p className={`text-2xl font-display mt-1 tabular-nums ${toneCls}`}>
           {value}
-          <span className="text-sm font-sans text-muted-foreground">{t("common.perMonthShort")}</span>
+          <span className="text-sm font-sans text-muted-foreground">{suffix}</span>
         </p>
       </CardContent>
     </Card>

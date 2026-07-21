@@ -36,7 +36,14 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { money, setCurrentCurrency } from "@/lib/format";
-import { CADENCES, type Cadence } from "@/lib/cadence";
+import {
+  CADENCES,
+  type Cadence,
+  CYCLES,
+  type Cycle,
+  cycleForSpace,
+  perCycleFromMonthly,
+} from "@/lib/cadence";
 import { impliedAnnualRate, scheduleSummary, monthlyRateFromTaeg } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
@@ -277,6 +284,7 @@ function HouseholdSection({
     currency?: string | null;
     kind?: string | null;
     advisor_email?: string | null;
+    cycle?: string | null;
   };
   onChange: () => void;
 }) {
@@ -293,6 +301,8 @@ function HouseholdSection({
   );
   const isBusiness = household.kind === "business";
   const [advisorEmail, setAdvisorEmail] = useState(household.advisor_email ?? "");
+  const [cycle, setCycle] = useState<Cycle>(cycleForSpace(household));
+  const cadenceMaps = useCadenceMaps();
 
   const { data: fixedRows } = useQuery({
     queryKey: ["fixed-total", household.id],
@@ -386,6 +396,19 @@ function HouseholdSection({
     }
   }
 
+  async function saveCycle(next: Cycle) {
+    setCycle(next);
+    try {
+      await update({ data: { household_id: household.id, cycle: next } });
+      onChange();
+      qc.invalidateQueries({ queryKey: ["household", household.id] });
+      qc.invalidateQueries({ queryKey: ["household"] });
+      toast.success(t("hh.savedToast"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
+    }
+  }
+
   async function saveProfile() {
     try {
       await update({
@@ -465,6 +488,22 @@ function HouseholdSection({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">{t("hh.currencyHint")}</p>
+          </div>
+          <div>
+            <Label>{t("hh.cycle")}</Label>
+            <Select value={cycle} onValueChange={(v) => saveCycle(v as Cycle)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CYCLES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {cadenceMaps.label[c]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">{t("hh.cycleHint")}</p>
           </div>
         </div>
         <div className="rounded-lg border p-4 space-y-3">
@@ -689,18 +728,20 @@ function CadenceSelect({ value, onChange }: { value: Cadence; onChange: (v: Cade
   );
 }
 
-// Value column for a recurring line: the native amount at its cadence, plus the
-// monthly-equivalent underneath when the cadence isn't already monthly.
+// Value column for a recurring line: the native amount at its own cadence, plus
+// the cycle-equivalent underneath when the line's cadence differs from the
+// space cycle (so a weekly wage in a monthly cycle shows "≈ €X/mo").
 function CadenceLineValue({
   nativeAmount,
   monthlyAmount,
   cadence,
+  cycle,
 }: {
   nativeAmount: number;
   monthlyAmount: number;
   cadence: Cadence;
+  cycle: Cycle;
 }) {
-  const t = useT();
   const { short } = useCadenceMaps();
   return (
     <div className="flex flex-col items-end leading-tight">
@@ -708,18 +749,26 @@ function CadenceLineValue({
         {money(nativeAmount)}
         {short[cadence]}
       </span>
-      {cadence !== "monthly" && (
+      {cadence !== cycle && (
         <span className="text-[10px] text-muted-foreground tabular-nums">
-          {t("cadence.monthlyEquiv", { amount: money(monthlyAmount) })}
+          ≈ {money(perCycleFromMonthly(monthlyAmount, cycle))}
+          {short[cycle]}
         </span>
       )}
     </div>
   );
 }
 
-export function IncomesSection({ householdId }: { householdId: string }) {
+export function IncomesSection({
+  householdId,
+  cycle = "monthly",
+}: {
+  householdId: string;
+  cycle?: Cycle;
+}) {
   const t = useT();
   const qc = useQueryClient();
+  const cadenceMaps = useCadenceMaps();
   const upsert = useServerFn(upsertIncome);
   const del = useServerFn(deleteIncome);
   const { data: rows, refetch } = useQuery({
@@ -783,8 +832,8 @@ export function IncomesSection({ householdId }: { householdId: string }) {
             <CardDescription>
               {t("common.total")}:{" "}
               <span className="font-medium text-foreground">
-                {money(total)}
-                {t("common.perMonthShort")}
+                {money(perCycleFromMonthly(total, cycle))}
+                {cadenceMaps.short[cycle]}
               </span>
             </CardDescription>
           </div>
@@ -806,6 +855,7 @@ export function IncomesSection({ householdId }: { householdId: string }) {
                   nativeAmount={Number(r.native_amount ?? r.monthly_amount)}
                   monthlyAmount={Number(r.monthly_amount)}
                   cadence={(r.cadence as Cadence) ?? "monthly"}
+                  cycle={cycle}
                 />
                 <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
@@ -848,9 +898,16 @@ export function IncomesSection({ householdId }: { householdId: string }) {
   );
 }
 
-export function FixedExpensesSection({ householdId }: { householdId: string }) {
+export function FixedExpensesSection({
+  householdId,
+  cycle = "monthly",
+}: {
+  householdId: string;
+  cycle?: Cycle;
+}) {
   const t = useT();
   const qc = useQueryClient();
+  const cadenceMaps = useCadenceMaps();
   const upsert = useServerFn(upsertFixedExpense);
   const del = useServerFn(deleteFixedExpense);
   const { data: rows, refetch } = useQuery({
@@ -916,8 +973,8 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
             <CardDescription>
               {t("fixed.description")} {t("common.total")}:{" "}
               <span className="font-medium text-foreground">
-                {money(total)}
-                {t("common.perMonthShort")}
+                {money(perCycleFromMonthly(total, cycle))}
+                {cadenceMaps.short[cycle]}
               </span>
             </CardDescription>
           </div>
@@ -937,6 +994,7 @@ export function FixedExpensesSection({ householdId }: { householdId: string }) {
                   nativeAmount={Number(r.native_amount ?? r.monthly_amount)}
                   monthlyAmount={Number(r.monthly_amount)}
                   cadence={(r.cadence as Cadence) ?? "monthly"}
+                  cycle={cycle}
                 />
                 <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />

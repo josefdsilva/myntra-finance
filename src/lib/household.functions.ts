@@ -202,6 +202,7 @@ export const updateHousehold = createServerFn({ method: "POST" })
         children: z.number().int().min(0).max(20).optional(),
         kind: z.enum(["personal", "business"]).optional(),
         advisor_email: z.string().max(200).nullable().optional(),
+        cycle: z.enum(["weekly", "monthly", "quarterly", "yearly"]).optional(),
       })
       .parse(input),
   )
@@ -344,7 +345,14 @@ export const createHousehold = createServerFn({ method: "POST" })
 
     const { data: household, error } = await supabaseAdmin
       .from("households")
-      .insert({ name: data.name, kind, created_by: userId, baseline_budget: 0, margin_pct: 10 })
+      .insert({
+        name: data.name,
+        kind,
+        created_by: userId,
+        baseline_budget: 0,
+        margin_pct: 10,
+        cycle: kind === "business" ? "quarterly" : "monthly",
+      })
       .select()
       .single();
     if (error || !household) throw error ?? new Error("Failed to create household");

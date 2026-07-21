@@ -9,6 +9,7 @@ import { useT } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { money, fmtDate } from "@/lib/format";
+import { cycleForSpace } from "@/lib/cadence";
 
 export const Route = createFileRoute("/_authenticated/money-in")({
   head: () => ({ meta: [{ title: "Money in · bynku" }] }),
@@ -36,7 +37,7 @@ function MoneyInPage() {
           {t(isBusiness ? "moneyIn.subtitleBiz" : "moneyIn.subtitle")}
         </p>
       </header>
-      {householdId && <IncomesSection householdId={householdId} />}
+      {householdId && <IncomesSection householdId={householdId} cycle={cycleForSpace(hh?.household)} />}
       {householdId && <IncomeHistorySection householdId={householdId} />}
     </div>
   );
