@@ -10,7 +10,14 @@
  */
 
 export type PlanDirection = "spend" | "income";
-export type PlanRecurrence = "one_off" | "annual" | "ongoing";
+// "ongoing" = every month; "quarterly"/"semiannual"/"annual" recur at that
+// interval from the start month. All repeating options are perpetual.
+export type PlanRecurrence =
+  | "one_off"
+  | "ongoing"
+  | "quarterly"
+  | "semiannual"
+  | "annual";
 
 export type Plan = {
   id: string;
@@ -34,13 +41,22 @@ export function monthKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+/** Whole calendar months from one "yyyy-mm" to another (can be negative). */
+function monthsBetween(fromYm: string, toYm: string): number {
+  const [fy, fm] = fromYm.split("-").map(Number);
+  const [ty, tm] = toYm.split("-").map(Number);
+  return (ty - fy) * 12 + (tm - fm);
+}
+
 /** Does a plan apply to the given "yyyy-mm" month? */
 export function planAppliesToMonth(plan: Plan, ym: string): boolean {
   const pym = String(plan.month).slice(0, 7); // yyyy-mm the plan starts in
   if (plan.recurrence === "one_off") return pym === ym;
-  if (plan.recurrence === "ongoing") return ym >= pym; // from its month onward
+  if (ym < pym) return false; // repeating plans never apply before their start
+  if (plan.recurrence === "ongoing") return true; // every month from its start
+  if (plan.recurrence === "quarterly") return monthsBetween(pym, ym) % 3 === 0;
+  if (plan.recurrence === "semiannual") return monthsBetween(pym, ym) % 6 === 0;
   // annual: same calendar month each year, from its start year onward.
-  if (ym < pym) return false;
   return ym.slice(5, 7) === pym.slice(5, 7);
 }
 
