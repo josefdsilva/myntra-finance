@@ -165,7 +165,20 @@ export const upsertIncome = createServerFn({ method: "POST" })
         monthly_amount: z.number().min(0).optional(),
         native_amount: z.number().min(0).optional(),
         cadence: z.enum(CADENCES).optional(),
-        type: z.enum(["salary", "rent", "pension", "benefits", "other"]).optional(),
+        type: z
+          .enum([
+            "salary",
+            "rent",
+            "pension",
+            "benefits",
+            "services",
+            "sales",
+            "subscriptions",
+            "interest",
+            "grants",
+            "other",
+          ])
+          .optional(),
         owner_user_id: z.string().uuid().nullable().optional(),
       })
       .refine((d) => d.monthly_amount != null || d.native_amount != null, {

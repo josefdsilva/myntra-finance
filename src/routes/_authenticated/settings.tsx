@@ -759,12 +759,30 @@ function CadenceLineValue({
   );
 }
 
+// Recurring-income categories, split by space kind. Personal life vs a firm's
+// income streams need different words (salary vs services rendered).
+const PERSONAL_INCOME_TYPES = ["salary", "rent", "pension", "benefits", "other"] as const;
+const BUSINESS_INCOME_TYPES = [
+  "services",
+  "sales",
+  "subscriptions",
+  "rent",
+  "interest",
+  "grants",
+  "other",
+] as const;
+type IncomeType =
+  | (typeof PERSONAL_INCOME_TYPES)[number]
+  | (typeof BUSINESS_INCOME_TYPES)[number];
+
 export function IncomesSection({
   householdId,
   cycle = "monthly",
+  isBusiness = false,
 }: {
   householdId: string;
   cycle?: Cycle;
+  isBusiness?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -785,14 +803,20 @@ export function IncomesSection({
   });
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState<"salary" | "rent" | "pension" | "benefits" | "other">("salary");
+  const [type, setType] = useState<IncomeType>(isBusiness ? "services" : "salary");
   const [cadence, setCadence] = useState<Cadence>("monthly");
+  const typeOptions = isBusiness ? BUSINESS_INCOME_TYPES : PERSONAL_INCOME_TYPES;
 
   const TYPE_LABEL: Record<string, string> = {
     salary: t("income.typeSalary"),
     rent: t("income.typeRent"),
     pension: t("income.typePension"),
     benefits: t("income.typeBenefits"),
+    services: t("income.typeServices"),
+    sales: t("income.typeSales"),
+    subscriptions: t("income.typeSubscriptions"),
+    interest: t("income.typeInterest"),
+    grants: t("income.typeGrants"),
     other: t("income.typeOther"),
   };
 
@@ -870,16 +894,16 @@ export function IncomesSection({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
-          <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
+          <Select value={type} onValueChange={(v) => setType(v as IncomeType)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="salary">{t("income.typeSalary")}</SelectItem>
-              <SelectItem value="rent">{t("income.typeRent")}</SelectItem>
-              <SelectItem value="pension">{t("income.typePension")}</SelectItem>
-              <SelectItem value="benefits">{t("income.typeBenefits")}</SelectItem>
-              <SelectItem value="other">{t("income.typeOther")}</SelectItem>
+              {typeOptions.map((ty) => (
+                <SelectItem key={ty} value={ty}>
+                  {TYPE_LABEL[ty]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <CadenceSelect value={cadence} onChange={setCadence} />

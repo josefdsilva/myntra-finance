@@ -96,7 +96,7 @@ function CashflowPage() {
       </Tabs>
 
       {householdId && (view === "all" || view === "in") && (
-        <IncomesSection householdId={householdId} cycle={cycle} />
+        <IncomesSection householdId={householdId} cycle={cycle} isBusiness={isBusiness} />
       )}
       {householdId && (view === "all" || view === "out") && (
         <FixedExpensesSection householdId={householdId} cycle={cycle} />
