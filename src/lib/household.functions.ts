@@ -2,36 +2,68 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const DEFAULT_BUCKETS = [
+// Starter example projects, seeded on space creation so the app isn't empty.
+// Deliberately neutral: no "Kids savings" (odd for households without children,
+// and for businesses). Child-specific goals are only suggested in onboarding
+// when the household actually has children.
+const DEFAULT_BUCKETS_PERSONAL = [
   {
     name: "Long-term investments",
     target_type: "pct_surplus" as const,
     target_value: 40,
     color: "#2c6e6b",
+    kind: "investment" as const,
     sort_order: 0,
   },
   {
     name: "Emergency savings",
     target_type: "pct_surplus" as const,
-    target_value: 20,
+    target_value: 25,
     color: "#7aa874",
+    kind: "emergency" as const,
     sort_order: 1,
-  },
-  {
-    name: "Kids savings",
-    target_type: "fixed_monthly" as const,
-    target_value: 200,
-    color: "#d4a373",
-    sort_order: 2,
   },
   {
     name: "Life projects",
     target_type: "pct_surplus" as const,
     target_value: 20,
     color: "#bc6c25",
-    sort_order: 3,
+    kind: "savings" as const,
+    sort_order: 2,
   },
 ];
+
+// Business starters: reserves and reinvestment, not personal goals.
+const DEFAULT_BUCKETS_BUSINESS = [
+  {
+    name: "Tax reserve",
+    target_type: "pct_surplus" as const,
+    target_value: 30,
+    color: "#7a6c5d",
+    kind: "emergency" as const,
+    sort_order: 0,
+  },
+  {
+    name: "Cash buffer",
+    target_type: "pct_surplus" as const,
+    target_value: 20,
+    color: "#7aa874",
+    kind: "emergency" as const,
+    sort_order: 1,
+  },
+  {
+    name: "Reinvestment",
+    target_type: "pct_surplus" as const,
+    target_value: 20,
+    color: "#2c6e6b",
+    kind: "investment" as const,
+    sort_order: 2,
+  },
+];
+
+function defaultBucketsFor(kind: "personal" | "business") {
+  return kind === "business" ? DEFAULT_BUCKETS_BUSINESS : DEFAULT_BUCKETS_PERSONAL;
+}
 
 /**
  * Returns the current user's household. If `household_id` is provided and the
@@ -129,10 +161,10 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
       .insert({ household_id: household.id, user_id: userId, role: "owner" });
     if (mErr) throw mErr;
 
-    // Seed buckets
+    // Seed starter projects (a first household is always personal here).
     await supabaseAdmin
       .from("buckets")
-      .insert(DEFAULT_BUCKETS.map((b) => ({ ...b, household_id: household.id })));
+      .insert(defaultBucketsFor("personal").map((b) => ({ ...b, household_id: household.id })));
 
     return { household, role: "owner" as const, needsBetaCode: false as const };
   });
@@ -273,29 +305,46 @@ export const listMyHouseholds = createServerFn({ method: "POST" })
 export const createHousehold = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ name: z.string().trim().min(1).max(100) }).parse(input),
+    z
+      .object({
+        name: z.string().trim().min(1).max(100),
+        kind: z.enum(["personal", "business"]).default("personal"),
+      })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const kind = data.kind;
 
-    // Enforce max 1 owned household per user on the free tier.
-    const { count: ownedCount, error: countErr } = await supabaseAdmin
+    // Limits are per kind so a user can own one personal household AND separate
+    // businesses (businesses are the future paid track). Prototype caps below.
+    const PERSONAL_LIMIT = 1;
+    const BUSINESS_LIMIT = 3;
+    const { data: owned, error: countErr } = await supabaseAdmin
       .from("household_members")
-      .select("household_id", { count: "exact", head: true })
+      .select("households(kind)")
       .eq("user_id", userId)
       .eq("role", "owner");
     if (countErr) throw countErr;
-    if ((ownedCount ?? 0) >= 1) {
+    const ownedOfKind = (owned ?? []).filter(
+      (r) =>
+        ((r.households as { kind?: string } | null)?.kind ?? "personal") === kind,
+    ).length;
+    if (kind === "personal" && ownedOfKind >= PERSONAL_LIMIT) {
       throw new Error(
-        "HOUSEHOLD_LIMIT_REACHED: The free tier includes 1 household. Buying additional household slots will be available soon.",
+        "HOUSEHOLD_LIMIT_REACHED: The free tier includes 1 personal household.",
+      );
+    }
+    if (kind === "business" && ownedOfKind >= BUSINESS_LIMIT) {
+      throw new Error(
+        `BUSINESS_LIMIT_REACHED: This prototype allows up to ${BUSINESS_LIMIT} businesses.`,
       );
     }
 
-
     const { data: household, error } = await supabaseAdmin
       .from("households")
-      .insert({ name: data.name, created_by: userId, baseline_budget: 0, margin_pct: 10 })
+      .insert({ name: data.name, kind, created_by: userId, baseline_budget: 0, margin_pct: 10 })
       .select()
       .single();
     if (error || !household) throw error ?? new Error("Failed to create household");
@@ -308,7 +357,7 @@ export const createHousehold = createServerFn({ method: "POST" })
 
     await supabaseAdmin
       .from("buckets")
-      .insert(DEFAULT_BUCKETS.map((b) => ({ ...b, household_id: household.id })));
+      .insert(defaultBucketsFor(kind).map((b) => ({ ...b, household_id: household.id })));
 
     return { household, role: "owner" as const };
   });

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Check, LogOut, Plus, Trash2, Users } from "lucide-react";
+import { Check, LogOut, Plus, Trash2, Users, Building2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { pageShellClass } from "@/components/page-shell";
@@ -47,13 +47,21 @@ function HouseholdsPage() {
     queryFn: () => list(),
   });
 
+  const personal = households.filter((h) => (h.household.kind ?? "personal") !== "business");
+  const businesses = households.filter((h) => h.household.kind === "business");
+  const ownedPersonal = personal.filter((h) => h.role === "owner").length;
+  const ownedBusiness = businesses.filter((h) => h.role === "owner").length;
+  const BUSINESS_LIMIT = 3;
+
   const [newName, setNewName] = useState("");
+  const [newBizName, setNewBizName] = useState("");
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => create({ data: { name } }),
+    mutationFn: (v: { name: string; kind: "personal" | "business" }) => create({ data: v }),
     onSuccess: (res) => {
       toast.success(t("households.createdToast"));
       setNewName("");
+      setNewBizName("");
       qc.invalidateQueries({ queryKey: ["my-households"] });
       setActiveHouseholdId(res.household.id);
       qc.clear();
@@ -67,6 +75,41 @@ function HouseholdsPage() {
     toast.success(t("households.switchedToast"));
   }
 
+  const renderCard = (h: (typeof households)[number]) => (
+    <HouseholdCard
+      key={h.household.id}
+      id={h.household.id}
+      name={h.household.name ?? t("households.untitled")}
+      role={h.role}
+      isActive={h.household.id === activeId}
+      onSwitch={() => switchTo(h.household.id)}
+      onRename={async (name) => {
+        await rename({ data: { household_id: h.household.id, name } });
+        qc.invalidateQueries({ queryKey: ["my-households"] });
+        qc.invalidateQueries({ queryKey: ["household"] });
+        toast.success(t("households.renamedToast"));
+      }}
+      onLeave={async () => {
+        await leave({ data: { household_id: h.household.id } });
+        qc.invalidateQueries({ queryKey: ["my-households"] });
+        if (h.household.id === activeId) {
+          setActiveHouseholdId(null);
+          qc.clear();
+        }
+        toast.success(t("households.leftToast"));
+      }}
+      onDelete={async () => {
+        await remove({ data: { household_id: h.household.id, confirm: "DELETE" } });
+        qc.invalidateQueries({ queryKey: ["my-households"] });
+        if (h.household.id === activeId) {
+          setActiveHouseholdId(null);
+          qc.clear();
+        }
+        toast.success(t("households.deletedToast"));
+      }}
+    />
+  );
+
   return (
     <div className={pageShellClass("3xl")}>
       <header>
@@ -76,100 +119,113 @@ function HouseholdsPage() {
         <p className="text-sm text-muted-foreground">{t("households.description")}</p>
       </header>
 
-      {(() => {
-        const ownedCount = households.filter((h) => h.role === "owner").length;
-        const atLimit = ownedCount >= 1;
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Plus className="size-4" /> {t("households.createTitle")}
-              </CardTitle>
-              <CardDescription>
-                {t("households.createDescription")}
-                <span className="block mt-1 text-xs">
-                  Free tier: 1 owned household ({ownedCount}/1 used). Buying additional household
-                  slots will be available soon.
-                </span>
-
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form
-                className="flex flex-col sm:flex-row gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const n = newName.trim();
-                  if (!n) return;
-                  createMutation.mutate(n);
-                }}
-              >
-                <div className="flex-1">
-                  <Label htmlFor="new-hh" className="sr-only">
-                    {t("households.nameSrLabel")}
-                  </Label>
-                  <Input
-                    id="new-hh"
-                    placeholder={t("households.namePlaceholder")}
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    maxLength={100}
-                    disabled={atLimit}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={!newName.trim() || createMutation.isPending || atLimit}
-                >
-                  {createMutation.isPending ? t("households.creating") : t("households.create")}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        );
-      })()}
-
+      {/* Personal households */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Plus className="size-4" /> {t("households.createTitle")}
+          </CardTitle>
+          <CardDescription>
+            {t("households.createDescription")}
+            <span className="block mt-1 text-xs">
+              {t("households.limitNote", { count: ownedPersonal })}
+            </span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="flex flex-col sm:flex-row gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = newName.trim();
+              if (!n) return;
+              createMutation.mutate({ name: n, kind: "personal" });
+            }}
+          >
+            <div className="flex-1">
+              <Label htmlFor="new-hh" className="sr-only">
+                {t("households.nameSrLabel")}
+              </Label>
+              <Input
+                id="new-hh"
+                placeholder={t("households.namePlaceholder")}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                maxLength={100}
+                disabled={ownedPersonal >= 1}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={!newName.trim() || createMutation.isPending || ownedPersonal >= 1}
+            >
+              {createMutation.isPending ? t("households.creating") : t("households.create")}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <div className="space-y-3">
         <h2 className="text-lg font-medium">{t("households.yourHouseholds")}</h2>
         {isLoading && <div className="h-24 rounded-lg bg-muted animate-pulse" />}
-        {!isLoading && households.length === 0 && (
+        {!isLoading && personal.length === 0 && (
           <p className="text-sm text-muted-foreground">{t("households.noHouseholds")}</p>
         )}
-        {households.map((h) => (
-          <HouseholdCard
-            key={h.household.id}
-            id={h.household.id}
-            name={h.household.name ?? t("households.untitled")}
-            role={h.role}
-            isActive={h.household.id === activeId}
-            onSwitch={() => switchTo(h.household.id)}
-            onRename={async (name) => {
-              await rename({ data: { household_id: h.household.id, name } });
-              qc.invalidateQueries({ queryKey: ["my-households"] });
-              qc.invalidateQueries({ queryKey: ["household"] });
-              toast.success(t("households.renamedToast"));
+        {personal.map(renderCard)}
+      </div>
+
+      {/* Businesses */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Building2 className="size-4" /> {t("businesses.createTitle")}
+          </CardTitle>
+          <CardDescription>
+            {t("businesses.createDescription")}
+            <span className="block mt-1 text-xs">
+              {t("businesses.limitNote", { count: ownedBusiness, limit: BUSINESS_LIMIT })}
+            </span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="flex flex-col sm:flex-row gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = newBizName.trim();
+              if (!n) return;
+              createMutation.mutate({ name: n, kind: "business" });
             }}
-            onLeave={async () => {
-              await leave({ data: { household_id: h.household.id } });
-              qc.invalidateQueries({ queryKey: ["my-households"] });
-              if (h.household.id === activeId) {
-                setActiveHouseholdId(null);
-                qc.clear();
+          >
+            <div className="flex-1">
+              <Input
+                placeholder={t("businesses.namePlaceholder")}
+                value={newBizName}
+                onChange={(e) => setNewBizName(e.target.value)}
+                maxLength={100}
+                disabled={ownedBusiness >= BUSINESS_LIMIT}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={
+                !newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT
               }
-              toast.success(t("households.leftToast"));
-            }}
-            onDelete={async () => {
-              await remove({ data: { household_id: h.household.id, confirm: "DELETE" } });
-              qc.invalidateQueries({ queryKey: ["my-households"] });
-              if (h.household.id === activeId) {
-                setActiveHouseholdId(null);
-                qc.clear();
-              }
-              toast.success(t("households.deletedToast"));
-            }}
-          />
-        ))}
+            >
+              {createMutation.isPending ? t("households.creating") : t("businesses.create")}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-medium flex items-center gap-2">
+          <Building2 className="size-5" /> {t("businesses.sectionTitle")}
+        </h2>
+        {!isLoading && businesses.length === 0 && (
+          <p className="text-sm text-muted-foreground">{t("businesses.empty")}</p>
+        )}
+        {businesses.map(renderCard)}
       </div>
 
       <p className="text-xs text-muted-foreground">
