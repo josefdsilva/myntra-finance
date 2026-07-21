@@ -30,6 +30,7 @@ import {
   Building2,
   User,
   Send,
+  ArrowLeftRight,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -59,6 +60,7 @@ const NAV_SECTIONS = [
   {
     titleKey: "navSection.manage",
     items: [
+      { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
       { to: "/money-in", labelKey: "nav.moneyIn", icon: Banknote },
       { to: "/assets", labelKey: "nav.assets", icon: Gem },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
@@ -117,6 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // business-only surfaces. Same app, same data model — mode-aware UI.
   const isBusiness = hh?.household?.kind === "business";
   const BUSINESS_LABELS: Record<string, MessageKey> = {
+    "/cashflow": "nav.payablesReceivables",
     "/money-in": "nav.receivables",
     "/expenses": "nav.costs",
     "/loans": "nav.debt",
