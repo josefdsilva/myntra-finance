@@ -92,10 +92,24 @@ function OnboardingPage() {
       </div>
     );
   }
-  return <Wizard householdId={householdId} initialCountry={hh?.household?.country ?? "PT"} />;
+  return (
+    <Wizard
+      householdId={householdId}
+      initialCountry={hh?.household?.country ?? "PT"}
+      kind={(hh?.household?.kind as "personal" | "business") ?? "personal"}
+    />
+  );
 }
 
-function Wizard({ householdId, initialCountry }: { householdId: string; initialCountry: string }) {
+function Wizard({
+  householdId,
+  initialCountry,
+  kind,
+}: {
+  householdId: string;
+  initialCountry: string;
+  kind: "personal" | "business";
+}) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const t = useT();
@@ -108,8 +122,10 @@ function Wizard({ householdId, initialCountry }: { householdId: string; initialC
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
 
-  const key = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+  // A business space skips the household (adults/children) demographics step.
+  const steps = STEPS.filter((s) => s !== "household" || kind !== "business");
+  const key = steps[step];
+  const isLast = step === steps.length - 1;
 
   async function next() {
     setBusy(true);
@@ -149,7 +165,7 @@ function Wizard({ householdId, initialCountry }: { householdId: string; initialC
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
       <div className="mx-auto flex min-h-full max-w-xl flex-col px-5 py-8">
-        <Progress value={(step / (STEPS.length - 1)) * 100} className="mb-8" />
+        <Progress value={(step / (steps.length - 1)) * 100} className="mb-8" />
 
         <div className="flex-1">
           {key === "welcome" && <Welcome />}
