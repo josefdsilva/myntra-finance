@@ -35,6 +35,8 @@ import { computeCycle } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
 import { BenchmarksCard } from "@/components/benchmarks-card";
 import { pageShellClass } from "@/components/page-shell";
+import { EmptyState } from "@/components/empty-state";
+import { LineChart } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
@@ -246,6 +248,21 @@ function AnalysisPage() {
     () => fixedRows.reduce((s, r) => s + Number(r.monthly_amount), 0),
     [fixedRows],
   );
+
+  // Whether the household has anything to analyse at all (independent of the
+  // selected range, so an empty older range doesn't hide the page).
+  const { data: totalTxCount = 0, isLoading: txCountLoading } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["analysis-has-data", householdId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("expenses")
+        .select("id", { count: "exact", head: true })
+        .eq("household_id", householdId!);
+      return count ?? 0;
+    },
+  });
+  const hasAnyData = totalTxCount > 0 || fixedRows.length > 0 || salaryAsc.length > 0;
 
   // ---- Burndown (current pay cycle) ----
   const { data: cycleData } = useQuery({
@@ -463,6 +480,23 @@ function AnalysisPage() {
   const totalSpend = includeFixed ? totalVariableSpend + proratedFixed : totalVariableSpend;
 
   const cycleLabel = cycleCount === 1 ? "cycle" : "cycles";
+
+  if (householdId && !txCountLoading && !hasAnyData) {
+    return (
+      <div className={pageShellClass("6xl")}>
+        <header>
+          <h1 className="text-3xl font-display">{t("ana.title")}</h1>
+        </header>
+        <EmptyState
+          icon={LineChart}
+          title={t("ana.empty.title")}
+          description={t("ana.empty.desc")}
+          ctaLabel={t("ana.empty.cta")}
+          ctaTo="/expenses"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={pageShellClass("6xl")}>
