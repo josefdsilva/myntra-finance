@@ -122,6 +122,7 @@ function Wizard({
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
 
+  const isBusiness = kind === "business";
   // A business space skips the household (adults/children) demographics step.
   const steps = STEPS.filter((s) => s !== "household" || kind !== "business");
   const key = steps[step];
@@ -168,8 +169,10 @@ function Wizard({
         <Progress value={(step / (steps.length - 1)) * 100} className="mb-8" />
 
         <div className="flex-1">
-          {key === "welcome" && <Welcome />}
-          {key === "country" && <CountryStep country={country} setCountry={setCountry} />}
+          {key === "welcome" && <Welcome isBusiness={isBusiness} />}
+          {key === "country" && (
+            <CountryStep country={country} setCountry={setCountry} isBusiness={isBusiness} />
+          )}
           {key === "household" && (
             <HouseholdStep
               adults={adults}
@@ -178,13 +181,13 @@ function Wizard({
               setChildren={setChildren}
             />
           )}
-          {key === "income" && <IncomeStep householdId={householdId} />}
+          {key === "income" && <IncomeStep householdId={householdId} isBusiness={isBusiness} />}
           {key === "fixed" && <FixedStep householdId={householdId} />}
-          {key === "variable" && <VariableStep householdId={householdId} />}
-          {key === "debt" && <DebtStep householdId={householdId} />}
-          {key === "assets" && <AssetsStep householdId={householdId} />}
-          {key === "projects" && <ProjectsStep householdId={householdId} />}
-          {key === "plans" && <PlansStep householdId={householdId} />}
+          {key === "variable" && <VariableStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "debt" && <DebtStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "assets" && <AssetsStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "projects" && <ProjectsStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "plans" && <PlansStep householdId={householdId} isBusiness={isBusiness} />}
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-2">
@@ -235,24 +238,24 @@ function StepHead({
   );
 }
 
-function Welcome() {
+function Welcome({ isBusiness }: { isBusiness: boolean }) {
   const t = useT();
   return (
     <div className="space-y-4 pt-6">
       <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Sparkles className="size-7" />
       </div>
-      <h1 className="font-display text-3xl">{t("ob.welcome.title")}</h1>
-      <p className="text-muted-foreground">{t("ob.welcome.body")}</p>
+      <h1 className="font-display text-3xl">{t(isBusiness ? "ob.welcome.titleBiz" : "ob.welcome.title")}</h1>
+      <p className="text-muted-foreground">{t(isBusiness ? "ob.welcome.bodyBiz" : "ob.welcome.body")}</p>
     </div>
   );
 }
 
-function CountryStep({ country, setCountry }: { country: string; setCountry: (v: string) => void }) {
+function CountryStep({ country, setCountry, isBusiness }: { country: string; setCountry: (v: string) => void; isBusiness: boolean }) {
   const t = useT();
   return (
     <div>
-      <StepHead icon={Home} title={t("ob.country.title")} subtitle={t("ob.country.subtitle")} />
+      <StepHead icon={Home} title={t(isBusiness ? "ob.country.titleBiz" : "ob.country.title")} subtitle={t("ob.country.subtitle")} />
       <Select value={country} onValueChange={setCountry}>
         <SelectTrigger className="w-full">
           <SelectValue />
@@ -354,7 +357,7 @@ function useList(table: "incomes" | "fixed_expenses" | "variable_estimates" | "d
   });
 }
 
-function IncomeStep({ householdId }: { householdId: string }) {
+function IncomeStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -379,7 +382,7 @@ function IncomeStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Wallet} title={t("ob.income.title")} subtitle={t("ob.income.subtitle")} />
+      <StepHead icon={Wallet} title={t("ob.income.title")} subtitle={t(isBusiness ? "ob.income.subtitleBiz" : "ob.income.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
@@ -438,7 +441,7 @@ function FixedStep({ householdId }: { householdId: string }) {
   );
 }
 
-function VariableStep({ householdId }: { householdId: string }) {
+function VariableStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -463,7 +466,7 @@ function VariableStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Receipt} title={t("ob.variable.title")} subtitle={t("ob.variable.subtitle")} />
+      <StepHead icon={Receipt} title={t("ob.variable.title")} subtitle={t(isBusiness ? "ob.variable.subtitleBiz" : "ob.variable.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orEstimateManually")}</span>
@@ -480,7 +483,7 @@ function VariableStep({ householdId }: { householdId: string }) {
   );
 }
 
-function DebtStep({ householdId }: { householdId: string }) {
+function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -521,10 +524,10 @@ function DebtStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Wallet} title={t("ob.debt.title")} subtitle={t("ob.debt.subtitle")} />
+      <StepHead icon={Wallet} title={t(isBusiness ? "ob.debt.titleBiz" : "ob.debt.title")} subtitle={t(isBusiness ? "ob.debt.subtitleBiz" : "ob.debt.subtitle")} />
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input placeholder={t("ob.debt.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+          <Input placeholder={t(isBusiness ? "ob.debt.namePhBiz" : "ob.debt.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
           <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
         </div>
         <div className="flex gap-2">
@@ -544,7 +547,7 @@ function DebtStep({ householdId }: { householdId: string }) {
 
 // ---- Assets ---------------------------------------------------------------
 
-function AssetsStep({ householdId }: { householdId: string }) {
+function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -598,10 +601,10 @@ function AssetsStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={Gem} title={t("ob.assets.title")} subtitle={t("ob.assets.subtitle")} />
+      <StepHead icon={Gem} title={t(isBusiness ? "ob.assets.titleBiz" : "ob.assets.title")} subtitle={t(isBusiness ? "ob.assets.subtitleBiz" : "ob.assets.subtitle")} />
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input placeholder={t("ob.assets.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder={t(isBusiness ? "ob.assets.namePhBiz" : "ob.assets.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
           <Input className="w-32" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={current} onChange={(e) => setCurrent(e.target.value)} />
         </div>
         <div className="flex gap-2">
@@ -647,7 +650,7 @@ function AssetsStep({ householdId }: { householdId: string }) {
 type BucketKind = "savings" | "emergency" | "investment";
 type Suggestion = { name: string; target_type: "pct_surplus" | "fixed_monthly"; target_value: number; why: string; kind: BucketKind };
 
-function ProjectsStep({ householdId }: { householdId: string }) {
+function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -680,10 +683,15 @@ function ProjectsStep({ householdId }: { householdId: string }) {
   const suggestions: Suggestion[] = [
     { name: t("ob.projects.sug.emergency"), target_type: "pct_surplus", target_value: 30, why: t("ob.projects.sug.emergencyWhy"), kind: "emergency" },
     { name: t("ob.projects.sug.invest"), target_type: "pct_surplus", target_value: 20, why: t("ob.projects.sug.investWhy"), kind: "investment" },
-    { name: t("ob.projects.sug.holidays"), target_type: "fixed_monthly", target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5), why: t("ob.projects.sug.holidaysWhy"), kind: "savings" },
-    ...(data && data.children > 0
-      ? [{ name: t("ob.projects.sug.kids"), target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5), why: t("ob.projects.sug.kidsWhy"), kind: "savings" as const }]
-      : []),
+    // Holidays and kids are personal-only suggestions.
+    ...(isBusiness
+      ? []
+      : [
+          { name: t("ob.projects.sug.holidays"), target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5), why: t("ob.projects.sug.holidaysWhy"), kind: "savings" as const },
+          ...(data && data.children > 0
+            ? [{ name: t("ob.projects.sug.kids"), target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5), why: t("ob.projects.sug.kidsWhy"), kind: "savings" as const }]
+            : []),
+        ]),
   ];
 
   const [name, setName] = useState("");
@@ -728,7 +736,7 @@ function ProjectsStep({ householdId }: { householdId: string }) {
 
   return (
     <div>
-      <StepHead icon={PiggyBank} title={t("ob.projects.title")} subtitle={t("ob.projects.subtitle", { amount: money(surplus) })} />
+      <StepHead icon={PiggyBank} title={t(isBusiness ? "ob.projects.titleBiz" : "ob.projects.title")} subtitle={t("ob.projects.subtitle", { amount: money(surplus) })} />
 
       <p className="mb-2 text-sm font-medium">{t("ob.projects.suggested")}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -761,7 +769,7 @@ function ProjectsStep({ householdId }: { householdId: string }) {
 
       <p className="mb-2 mt-6 text-sm font-medium">{t("ob.projects.orCustom")}</p>
       <div className="space-y-2">
-        <Input placeholder={t("ob.projects.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder={t(isBusiness ? "ob.projects.namePhBiz" : "ob.projects.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
         <div className="flex gap-2">
           <Input inputMode="decimal" placeholder={t("ob.projects.balancePh", { sym })} value={balance} onChange={(e) => setBalance(e.target.value)} />
           <Input inputMode="decimal" placeholder={t("ob.projects.targetPh", { sym })} value={target} onChange={(e) => setTarget(e.target.value)} />
@@ -786,7 +794,7 @@ function ProjectsStep({ householdId }: { householdId: string }) {
 
 // ---- Plans (future costs / income the user already knows about) -----------
 
-function PlansStep({ householdId }: { householdId: string }) {
+function PlansStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
   const qc = useQueryClient();
   const t = useT();
   const add = useServerFn(upsertPlan);
@@ -839,7 +847,7 @@ function PlansStep({ householdId }: { householdId: string }) {
       <StepHead
         icon={CalendarClock}
         title={t("ob.plans.title")}
-        subtitle={t("ob.plans.subtitle")}
+        subtitle={t(isBusiness ? "ob.plans.subtitleBiz" : "ob.plans.subtitle")}
       />
       <div className="space-y-2">
         <div className="flex gap-2">
