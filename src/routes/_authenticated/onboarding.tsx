@@ -382,13 +382,13 @@ function IncomeStep({ householdId, isBusiness }: { householdId: string; isBusine
 
   return (
     <div>
-      <StepHead icon={Wallet} title={t("ob.income.title")} subtitle={t(isBusiness ? "ob.income.subtitleBiz" : "ob.income.subtitle")} />
+      <StepHead icon={Wallet} title={t(isBusiness ? "ob.income.titleBiz" : "ob.income.title")} subtitle={t(isBusiness ? "ob.income.subtitleBiz" : "ob.income.subtitle")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder={t("ob.income.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input placeholder={t(isBusiness ? "ob.income.namePhBiz" : "ob.income.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
         <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
@@ -472,7 +472,7 @@ function VariableStep({ householdId, isBusiness }: { householdId: string; isBusi
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orEstimateManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder={t("ob.variable.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <Input placeholder={t(isBusiness ? "ob.variable.namePhBiz" : "ob.variable.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
         <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
@@ -566,6 +566,8 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
   const [name, setName] = useState("");
   const [kind, setKind] = useState<(typeof ASSET_KINDS)[number]>("property");
   const [current, setCurrent] = useState("");
+  const [acquired, setAcquired] = useState("");
+  const [acquiredOn, setAcquiredOn] = useState("");
   const [saving, setSaving] = useState(false);
 
   const KIND_LABEL: Record<string, string> = {
@@ -588,11 +590,15 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
           household_id: householdId,
           name,
           kind,
+          acquired_value: acquired ? parseFloat(acquired.replace(",", ".")) : null,
+          acquired_on: acquiredOn || null,
           current_value: parseFloat(current.replace(",", ".")) || 0,
         },
       });
       setName("");
       setCurrent("");
+      setAcquired("");
+      setAcquiredOn("");
       qc.invalidateQueries({ queryKey: ["ob-assets", householdId] });
     } finally {
       setSaving(false);
@@ -603,11 +609,13 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
     <div>
       <StepHead icon={Gem} title={t(isBusiness ? "ob.assets.titleBiz" : "ob.assets.title")} subtitle={t(isBusiness ? "ob.assets.subtitleBiz" : "ob.assets.subtitle")} />
       <div className="space-y-2">
+        <Input placeholder={t(isBusiness ? "ob.assets.namePhBiz" : "ob.assets.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
         <div className="flex gap-2">
-          <Input placeholder={t(isBusiness ? "ob.assets.namePhBiz" : "ob.assets.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
-          <Input className="w-32" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={current} onChange={(e) => setCurrent(e.target.value)} />
+          <Input inputMode="decimal" placeholder={t("ob.assets.acquiredValuePh", { sym })} value={acquired} onChange={(e) => setAcquired(e.target.value)} />
+          <Input type="date" aria-label={t("ob.assets.acquiredOnLabel")} value={acquiredOn} onChange={(e) => setAcquiredOn(e.target.value)} />
         </div>
         <div className="flex gap-2">
+          <Input className="w-40" inputMode="decimal" placeholder={t("ob.assets.valuePh", { sym })} value={current} onChange={(e) => setCurrent(e.target.value)} />
           <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
             <SelectTrigger>
               <SelectValue />
