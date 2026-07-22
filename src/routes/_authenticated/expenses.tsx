@@ -337,9 +337,8 @@ function ExpensesPage() {
           {householdId && (
             <FixedExpensesSection householdId={householdId} cycle={cycleForSpace(hh?.household)} />
           )}
-          {householdId && <VariableEstimatesSection householdId={householdId} />}
-          {householdId && <SpendingVsEstimate householdId={householdId} />}
         </TabsContent>
+
       </Tabs>
     </div>
   );
