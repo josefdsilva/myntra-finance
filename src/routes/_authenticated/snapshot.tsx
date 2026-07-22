@@ -253,7 +253,7 @@ function SnapshotPage() {
           title={t("snapshot.empty.title")}
           description={t("snapshot.setupNeeded")}
           ctaLabel={t("snapshot.empty.cta")}
-          ctaTo="/money-in"
+          ctaTo="/cashflow"
         />
       ) : (
         <>

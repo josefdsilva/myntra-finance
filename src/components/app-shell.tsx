@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Banknote,
   Receipt,
   PiggyBank,
   Settings,
@@ -61,7 +60,6 @@ const NAV_SECTIONS = [
     titleKey: "navSection.manage",
     items: [
       { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
-      { to: "/money-in", labelKey: "nav.moneyIn", icon: Banknote },
       { to: "/assets", labelKey: "nav.assets", icon: Gem },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
@@ -120,7 +118,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isBusiness = hh?.household?.kind === "business";
   const BUSINESS_LABELS: Record<string, MessageKey> = {
     "/cashflow": "nav.payablesReceivables",
-    "/money-in": "nav.receivables",
     "/expenses": "nav.costs",
     "/loans": "nav.debt",
   };
