@@ -119,7 +119,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isBusiness = hh?.household?.kind === "business";
   const BUSINESS_LABELS: Record<string, MessageKey> = {
     "/cashflow": "nav.payablesReceivables",
-    "/money-in": "nav.receivables",
     "/expenses": "nav.costs",
     "/loans": "nav.debt",
   };
