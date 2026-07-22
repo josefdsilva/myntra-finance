@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Banknote,
   Receipt,
   PiggyBank,
   Settings,
