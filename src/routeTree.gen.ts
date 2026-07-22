@@ -21,7 +21,6 @@ import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
-import { Route as AuthenticatedMoneyInRouteImport } from './routes/_authenticated/money-in'
 import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
 import { Route as AuthenticatedHandoffRouteImport } from './routes/_authenticated/handoff'
@@ -100,11 +99,6 @@ const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMoneyInRoute = AuthenticatedMoneyInRouteImport.update({
-  id: '/money-in',
-  path: '/money-in',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
@@ -225,7 +219,6 @@ export interface FileRoutesByFullPath {
   '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/loans': typeof AuthenticatedLoansRoute
-  '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -258,7 +251,6 @@ export interface FileRoutesByTo {
   '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/loans': typeof AuthenticatedLoansRoute
-  '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -293,7 +285,6 @@ export interface FileRoutesById {
   '/_authenticated/handoff': typeof AuthenticatedHandoffRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
   '/_authenticated/loans': typeof AuthenticatedLoansRoute
-  '/_authenticated/money-in': typeof AuthenticatedMoneyInRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -328,7 +319,6 @@ export interface FileRouteTypes {
     | '/handoff'
     | '/households'
     | '/loans'
-    | '/money-in'
     | '/onboarding'
     | '/plan'
     | '/settings'
@@ -361,7 +351,6 @@ export interface FileRouteTypes {
     | '/handoff'
     | '/households'
     | '/loans'
-    | '/money-in'
     | '/onboarding'
     | '/plan'
     | '/settings'
@@ -395,7 +384,6 @@ export interface FileRouteTypes {
     | '/_authenticated/handoff'
     | '/_authenticated/households'
     | '/_authenticated/loans'
-    | '/_authenticated/money-in'
     | '/_authenticated/onboarding'
     | '/_authenticated/plan'
     | '/_authenticated/settings'
@@ -517,13 +505,6 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/money-in': {
-      id: '/_authenticated/money-in'
-      path: '/money-in'
-      fullPath: '/money-in'
-      preLoaderRoute: typeof AuthenticatedMoneyInRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/loans': {
@@ -673,7 +654,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHandoffRoute: typeof AuthenticatedHandoffRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
   AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
-  AuthenticatedMoneyInRoute: typeof AuthenticatedMoneyInRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -693,7 +673,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHandoffRoute: AuthenticatedHandoffRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
   AuthenticatedLoansRoute: AuthenticatedLoansRoute,
-  AuthenticatedMoneyInRoute: AuthenticatedMoneyInRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
