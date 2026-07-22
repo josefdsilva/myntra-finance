@@ -102,6 +102,13 @@ function CashflowPage() {
       {householdId && (view === "all" || view === "out") && (
         <FixedExpensesSection householdId={householdId} cycle={cycle} />
       )}
+      {householdId && (view === "all" || view === "out") && (
+        <VariableEstimatesSection householdId={householdId} />
+      )}
+      {householdId && (view === "all" || view === "out") && (
+        <SpendingVsEstimate householdId={householdId} />
+      )}
+
 
       <Card className="border-dashed bg-muted/30">
         <CardHeader>
