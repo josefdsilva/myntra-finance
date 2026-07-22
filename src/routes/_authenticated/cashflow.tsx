@@ -8,7 +8,8 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
 import { pageShellClass } from "@/components/page-shell";
-import { IncomesSection, FixedExpensesSection } from "@/routes/_authenticated/settings";
+import { IncomesSection, FixedExpensesSection, VariableEstimatesSection } from "@/routes/_authenticated/settings";
+import { SpendingVsEstimate } from "@/components/spending-vs-estimate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,13 @@ function CashflowPage() {
       {householdId && (view === "all" || view === "out") && (
         <FixedExpensesSection householdId={householdId} cycle={cycle} />
       )}
+      {householdId && (view === "all" || view === "out") && (
+        <VariableEstimatesSection householdId={householdId} />
+      )}
+      {householdId && (view === "all" || view === "out") && (
+        <SpendingVsEstimate householdId={householdId} />
+      )}
+
 
       <Card className="border-dashed bg-muted/30">
         <CardHeader>
