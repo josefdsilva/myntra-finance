@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
-import { FixedExpensesSection } from "@/routes/_authenticated/settings";
+
 import {
   Select,
   SelectTrigger,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
-import { cycleForSpace } from "@/lib/cadence";
+
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
@@ -175,14 +175,7 @@ function ExpensesPage() {
         <p className="text-sm text-muted-foreground">{t("exp.subtitle")}</p>
       </header>
 
-      <Tabs defaultValue="spending">
-        <TabsList className="mb-4">
-          <TabsTrigger value="spending">{t("exp.tabSpending")}</TabsTrigger>
-          <TabsTrigger value="plan">{t("exp.tabPlan")}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="spending" className="space-y-6">
-          {householdId && (
+      {householdId && (
         <Card>
           <CardContent className="pt-6">
             <Tabs defaultValue="add">
@@ -330,15 +323,7 @@ function ExpensesPage() {
           )}
         </CardContent>
       </Card>
-        </TabsContent>
 
-        <TabsContent value="plan" className="space-y-6">
-          {householdId && (
-            <FixedExpensesSection householdId={householdId} cycle={cycleForSpace(hh?.household)} />
-          )}
-        </TabsContent>
-
-      </Tabs>
     </div>
   );
 }
