@@ -61,7 +61,6 @@ const NAV_SECTIONS = [
     titleKey: "navSection.manage",
     items: [
       { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
-      { to: "/money-in", labelKey: "nav.moneyIn", icon: Banknote },
       { to: "/assets", labelKey: "nav.assets", icon: Gem },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
