@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
-import { FixedExpensesSection } from "@/routes/_authenticated/settings";
+
 import {
   Select,
   SelectTrigger,
