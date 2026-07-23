@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
+import { computeCycle } from "@/lib/cycle";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/cashflow")({
@@ -37,25 +38,68 @@ function CashflowPage() {
 
   const [view, setView] = useState<"all" | "in" | "out">("all");
 
-  // Net recurring cashflow per month = recurring income − recurring costs, both
-  // read from the canonical monthly-equivalent so cadence is already baked in.
+  // Estimated (monthly-equivalent) recurring inflows and outflows, plus
+  // actual money in/out logged so far in the current cycle. Everything is
+  // normalized to the household's chosen cycle before display.
   const { data: summary } = useQuery({
     enabled: !!householdId,
     queryKey: ["cashflow-summary", householdId],
     queryFn: async () => {
-      const [inc, fx] = await Promise.all([
+      const [inc, fx, ve, salaries] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
+        supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId!),
+        supabase
+          .from("expenses")
+          .select("occurred_at")
+          .eq("household_id", householdId!)
+          .eq("kind", "income")
+          .eq("is_salary", true)
+          .order("occurred_at", { ascending: false })
+          .limit(12),
       ]);
       const totalIn = (inc.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      const totalOut = (fx.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      return { totalIn, totalOut, net: totalIn - totalOut };
+      const totalFixed = (fx.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      const totalVar = (ve.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      const cycleBounds = computeCycle((salaries.data ?? []).map((r) => r.occurred_at as string));
+      const { data: exps } = await supabase
+        .from("expenses")
+        .select("amount, kind")
+        .eq("household_id", householdId!)
+        .gte("occurred_at", cycleBounds.start.toISOString())
+        .lt("occurred_at", cycleBounds.end.toISOString());
+      let actualIn = 0;
+      let actualOut = 0;
+      for (const e of exps ?? []) {
+        const a = Number(e.amount) || 0;
+        if (e.kind === "income") actualIn += a;
+        else actualOut += a;
+      }
+      return {
+        totalIn,
+        totalFixed,
+        totalVar,
+        totalOut: totalFixed + totalVar,
+        net: totalIn - totalFixed - totalVar,
+        actualIn,
+        actualOut,
+        actualNet: actualIn - actualOut,
+      };
     },
   });
 
   const totalIn = summary?.totalIn ?? 0;
+  const totalFixed = summary?.totalFixed ?? 0;
+  const totalVar = summary?.totalVar ?? 0;
   const totalOut = summary?.totalOut ?? 0;
   const net = summary?.net ?? 0;
+  const actualIn = summary?.actualIn ?? 0;
+  const actualOut = summary?.actualOut ?? 0;
+  const actualNet = summary?.actualNet ?? 0;
+  // Estimate-vs-actual gap for outflows in the current cycle. Positive means
+  // spending exceeds the plan; negative means under budget.
+  const expectedOutCycle = perCycleFromMonthly(totalOut, cycle);
+  const gap = actualOut - expectedOutCycle;
 
   return (
     <div className={pageShellClass("3xl")}>
@@ -68,25 +112,66 @@ function CashflowPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <SummaryStat
-          label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
-          value={money(perCycleFromMonthly(totalIn, cycle))}
-          suffix={cycleSuffix}
-        />
-        <SummaryStat
-          label={t(isBusiness ? "cashflow.outBiz" : "cashflow.out")}
-          value={money(perCycleFromMonthly(totalOut, cycle))}
-          suffix={cycleSuffix}
-        />
-        <SummaryStat
-          label={t("cashflow.net")}
-          value={money(perCycleFromMonthly(net, cycle))}
-          suffix={cycleSuffix}
-          highlight
-          tone={net >= 0 ? "good" : "bad"}
-        />
-      </div>
+      <section className="space-y-2">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {t("cashflow.estimatedSection")}
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <SummaryStat
+            label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
+            value={money(perCycleFromMonthly(totalIn, cycle))}
+            suffix={cycleSuffix}
+          />
+          <SummaryStat
+            label={t("cashflow.fixed")}
+            value={money(perCycleFromMonthly(totalFixed, cycle))}
+            suffix={cycleSuffix}
+          />
+          <SummaryStat
+            label={t("cashflow.variable")}
+            value={money(perCycleFromMonthly(totalVar, cycle))}
+            suffix={cycleSuffix}
+          />
+          <SummaryStat
+            label={t("cashflow.net")}
+            value={money(perCycleFromMonthly(net, cycle))}
+            suffix={cycleSuffix}
+            highlight
+            tone={net >= 0 ? "good" : "bad"}
+          />
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {t("cashflow.actualSection")}
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <SummaryStat
+            label={t("cashflow.realIn")}
+            value={money(actualIn)}
+            suffix=""
+          />
+          <SummaryStat
+            label={t("cashflow.realOut")}
+            value={money(actualOut)}
+            suffix=""
+          />
+          <SummaryStat
+            label={t("cashflow.gap")}
+            value={`${gap >= 0 ? "+" : "−"}${money(Math.abs(gap))}`}
+            suffix=""
+            tone={gap > 0 ? "bad" : "good"}
+          />
+          <SummaryStat
+            label={t("cashflow.netReal")}
+            value={money(actualNet)}
+            suffix=""
+            highlight
+            tone={actualNet >= 0 ? "good" : "bad"}
+          />
+        </div>
+      </section>
 
       <Tabs value={view} onValueChange={(v) => setView(v as typeof view)}>
         <TabsList>
