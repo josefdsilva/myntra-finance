@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarClock, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { getOrCreateHousehold } from "@/lib/household.functions";
@@ -12,9 +12,9 @@ import { pageShellClass } from "@/components/page-shell";
 import { IncomesSection, FixedExpensesSection, VariableEstimatesSection } from "@/routes/_authenticated/settings";
 import { SpendingVsEstimate } from "@/components/spending-vs-estimate";
 import { CommittedThisCycle, PlannedThisCycle } from "@/components/cycle-ledger";
+import { PlanPanel } from "@/routes/_authenticated/plan";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { money } from "@/lib/format";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
 import { computeCycle } from "@/lib/cycle";
@@ -37,6 +37,7 @@ function CashflowPage() {
   const isBusiness = hh?.household?.kind === "business";
   const cycle = cycleForSpace(hh?.household);
   const cycleSuffix = t(`cadence.short.${cycle}`);
+  const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
   const [lens, setLens] = useState<"recurring" | "cycle" | "planned">("recurring");
 
@@ -104,7 +105,7 @@ function CashflowPage() {
   const gap = actualOut - expectedOutCycle;
 
   return (
-    <div className={pageShellClass("3xl")}>
+    <div className={pageShellClass("5xl")}>
       <header>
         <h1 className="text-3xl md:text-4xl font-display">
           {t(isBusiness ? "cashflow.titleBiz" : "cashflow.title")}
@@ -213,21 +214,9 @@ function CashflowPage() {
         </>
       )}
 
-      {/* Planned lens: dated one-offs and the forward forecast (folds in next). */}
-      {lens === "planned" && (
-        <Card className="border-dashed bg-muted/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarClock className="size-4" /> {t("cashflow.plansTitle")}
-            </CardTitle>
-            <CardDescription>{t("cashflow.plansBody")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/plan">{t("cashflow.plansCta")}</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Planned lens: dated one-offs and the forward forecast, fully in-hub. */}
+      {lens === "planned" && householdId && (
+        <PlanPanel householdId={householdId} baseline={baseline} />
       )}
     </div>
   );
