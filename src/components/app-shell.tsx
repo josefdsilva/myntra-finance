@@ -13,7 +13,6 @@ import {
   Eye,
   EyeOff,
   BarChart3,
-  CalendarClock,
   Landmark,
   Gem,
   Sun,
@@ -64,7 +63,6 @@ const NAV_SECTIONS = [
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/loans", labelKey: "nav.loans", icon: Landmark },
-      { to: "/plan", labelKey: "nav.plan", icon: CalendarClock },
     ],
   },
   {

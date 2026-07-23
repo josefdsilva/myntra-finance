@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -64,6 +64,11 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/plan")({
   head: () => ({ meta: [{ title: "Plan · bynku" }] }),
+  // Plans now live inside the Payables & Receivables hub. Keep the route as a
+  // redirect so old links and bookmarks land on the hub's Planned lens.
+  beforeLoad: () => {
+    throw redirect({ to: "/cashflow", search: { lens: "planned" } });
+  },
   component: PlanPage,
 });
 
