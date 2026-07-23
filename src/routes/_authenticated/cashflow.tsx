@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
@@ -121,16 +122,19 @@ function CashflowPage() {
             label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
             value={money(perCycleFromMonthly(totalIn, cycle))}
             suffix={cycleSuffix}
+            info={t("cashflow.info.in")}
           />
           <SummaryStat
             label={t("cashflow.fixed")}
             value={money(perCycleFromMonthly(totalFixed, cycle))}
             suffix={cycleSuffix}
+            info={t("cashflow.info.fixed")}
           />
           <SummaryStat
             label={t("cashflow.variable")}
             value={money(perCycleFromMonthly(totalVar, cycle))}
             suffix={cycleSuffix}
+            info={t("cashflow.info.variable")}
           />
           <SummaryStat
             label={t("cashflow.net")}
@@ -138,6 +142,7 @@ function CashflowPage() {
             suffix={cycleSuffix}
             highlight
             tone={net >= 0 ? "good" : "bad"}
+            info={t("cashflow.info.net")}
           />
         </div>
       </section>
@@ -151,17 +156,20 @@ function CashflowPage() {
             label={t("cashflow.realIn")}
             value={money(actualIn)}
             suffix=""
+            info={t("cashflow.info.realIn")}
           />
           <SummaryStat
             label={t("cashflow.realOut")}
             value={money(actualOut)}
             suffix=""
+            info={t("cashflow.info.realOut")}
           />
           <SummaryStat
             label={t("cashflow.gap")}
             value={`${gap >= 0 ? "+" : "−"}${money(Math.abs(gap))}`}
             suffix=""
             tone={gap > 0 ? "bad" : "good"}
+            info={t("cashflow.info.gap")}
           />
           <SummaryStat
             label={t("cashflow.netReal")}
@@ -169,6 +177,7 @@ function CashflowPage() {
             suffix=""
             highlight
             tone={actualNet >= 0 ? "good" : "bad"}
+            info={t("cashflow.info.netReal")}
           />
         </div>
       </section>
@@ -218,12 +227,14 @@ function SummaryStat({
   suffix,
   highlight,
   tone,
+  info,
 }: {
   label: string;
   value: string;
   suffix: string;
   highlight?: boolean;
   tone?: "good" | "bad";
+  info?: string;
 }) {
   const toneCls =
     tone === "good"
@@ -234,7 +245,25 @@ function SummaryStat({
   return (
     <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
       <CardContent className="pt-6">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+          {info && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`${label} — info`}
+                  className="shrink-0 text-muted-foreground/70 hover:text-foreground transition-colors"
+                >
+                  <Info className="size-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" className="text-xs leading-relaxed w-64">
+                {info}
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
         <p className={`text-2xl font-display mt-1 tabular-nums ${toneCls}`}>
           {value}
           <span className="text-sm font-sans text-muted-foreground">{suffix}</span>
