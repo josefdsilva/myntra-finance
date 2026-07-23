@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { pageShellClass } from "@/components/page-shell";
 import { IncomesSection, FixedExpensesSection, VariableEstimatesSection } from "@/routes/_authenticated/settings";
 import { SpendingVsEstimate } from "@/components/spending-vs-estimate";
+import { CommittedThisCycle, PlannedThisCycle } from "@/components/cycle-ledger";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -204,7 +205,11 @@ function CashflowPage() {
             </div>
           </section>
 
+          {householdId && (
+            <CommittedThisCycle householdId={householdId} cycle={cycle} isBusiness={isBusiness} />
+          )}
           {householdId && <SpendingVsEstimate householdId={householdId} />}
+          {householdId && <PlannedThisCycle householdId={householdId} />}
         </>
       )}
 
