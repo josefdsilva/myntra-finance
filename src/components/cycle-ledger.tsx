@@ -30,7 +30,7 @@ export function CommittedThisCycle({
   const { data } = useQuery({
     queryKey: ["cycle-committed", householdId],
     queryFn: async () => {
-      const [fx, inc] = await Promise.all([
+      const [fx, inc, db] = await Promise.all([
         supabase
           .from("fixed_expenses")
           .select("id, label, monthly_amount")
@@ -41,16 +41,23 @@ export function CommittedThisCycle({
           .select("id, label, monthly_amount")
           .eq("household_id", householdId)
           .order("created_at"),
+        supabase
+          .from("debts")
+          .select("id, label, monthly_amount")
+          .eq("household_id", householdId)
+          .order("created_at"),
       ]);
       return {
         fixed: (fx.data ?? []) as Array<{ id: string; label: string; monthly_amount: number }>,
         incomes: (inc.data ?? []) as Array<{ id: string; label: string; monthly_amount: number }>,
+        debts: (db.data ?? []) as Array<{ id: string; label: string; monthly_amount: number }>,
       };
     },
   });
   const fixed = data?.fixed ?? [];
   const incomes = data?.incomes ?? [];
-  if (!fixed.length && !incomes.length) return null;
+  const debts = data?.debts ?? [];
+  if (!fixed.length && !incomes.length && !debts.length) return null;
 
   return (
     <Card>
@@ -84,6 +91,24 @@ export function CommittedThisCycle({
             </p>
             <ul className="divide-y">
               {fixed.map((r) => (
+                <li key={r.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                  <span className="min-w-0 truncate">{r.label}</span>
+                  <span className="shrink-0 tabular-nums">
+                    −{money(perCycleFromMonthly(Number(r.monthly_amount), cycle))}
+                    {suffix}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {debts.length > 0 && (
+          <div>
+            <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+              {t("cashflow.debt")}
+            </p>
+            <ul className="divide-y">
+              {debts.map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
                   <span className="min-w-0 truncate">{r.label}</span>
                   <span className="shrink-0 tabular-nums">

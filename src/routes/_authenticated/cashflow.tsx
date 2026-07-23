@@ -53,10 +53,11 @@ function CashflowPage() {
     enabled: !!householdId,
     queryKey: ["cashflow-summary", householdId],
     queryFn: async () => {
-      const [inc, fx, ve, salaries] = await Promise.all([
+      const [inc, fx, ve, db, salaries] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId!),
+        supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
         supabase
           .from("expenses")
           .select("occurred_at")
@@ -69,6 +70,9 @@ function CashflowPage() {
       const totalIn = (inc.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const totalFixed = (fx.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const totalVar = (ve.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      // Debt servicing is real recurring money out — the baseline already counts
+      // it, so the cashflow roll-up must too, or "net" reads too rosy.
+      const totalDebt = (db.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const cycleBounds = computeCycle((salaries.data ?? []).map((r) => r.occurred_at as string));
       const { data: exps } = await supabase
         .from("expenses")
@@ -87,8 +91,9 @@ function CashflowPage() {
         totalIn,
         totalFixed,
         totalVar,
-        totalOut: totalFixed + totalVar,
-        net: totalIn - totalFixed - totalVar,
+        totalDebt,
+        totalOut: totalFixed + totalVar + totalDebt,
+        net: totalIn - totalFixed - totalVar - totalDebt,
         actualIn,
         actualOut,
         actualNet: actualIn - actualOut,
@@ -99,6 +104,7 @@ function CashflowPage() {
   const totalIn = summary?.totalIn ?? 0;
   const totalFixed = summary?.totalFixed ?? 0;
   const totalVar = summary?.totalVar ?? 0;
+  const totalDebt = summary?.totalDebt ?? 0;
   const totalOut = summary?.totalOut ?? 0;
   const net = summary?.net ?? 0;
   const actualIn = summary?.actualIn ?? 0;
@@ -135,7 +141,7 @@ function CashflowPage() {
             <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t("cashflow.estimatedSection")}
             </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               <SummaryStat
                 label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
                 value={money(perCycleFromMonthly(totalIn, cycle))}
@@ -153,6 +159,12 @@ function CashflowPage() {
                 value={money(perCycleFromMonthly(totalVar, cycle))}
                 suffix={cycleSuffix}
                 info={t("cashflow.info.variable")}
+              />
+              <SummaryStat
+                label={t("cashflow.debt")}
+                value={money(perCycleFromMonthly(totalDebt, cycle))}
+                suffix={cycleSuffix}
+                info={t("cashflow.info.debt")}
               />
               <SummaryStat
                 label={t("cashflow.net")}
