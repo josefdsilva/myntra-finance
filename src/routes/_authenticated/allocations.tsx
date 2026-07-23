@@ -223,12 +223,6 @@ function AllocationsPage() {
         <p className="text-sm text-muted-foreground">{t("alloc.subtitle")}</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Stat label={t("alloc.stat.income")} value={money(income)} />
-        <Stat label={t("alloc.stat.baseline")} value={money(baseline)} />
-        <Stat label={t("alloc.stat.surplus")} value={money(surplus)} highlight />
-      </div>
-
       {showCloseWarning && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 flex items-start gap-3">
           <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
@@ -517,17 +511,6 @@ function YearToDate({
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
-      <CardContent className="pt-6">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
-        <p className="text-2xl font-display mt-1">{value}</p>
       </CardContent>
     </Card>
   );
