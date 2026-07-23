@@ -37,7 +37,7 @@ function CashflowPage() {
   const cycle = cycleForSpace(hh?.household);
   const cycleSuffix = t(`cadence.short.${cycle}`);
 
-  const [view, setView] = useState<"all" | "in" | "out">("all");
+  const [lens, setLens] = useState<"recurring" | "cycle" | "planned">("recurring");
 
   // Estimated (monthly-equivalent) recurring inflows and outflows, plus
   // actual money in/out logged so far in the current cycle. Everything is
@@ -113,110 +113,117 @@ function CashflowPage() {
         </p>
       </header>
 
-      <section className="space-y-2">
-        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t("cashflow.estimatedSection")}
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <SummaryStat
-            label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
-            value={money(perCycleFromMonthly(totalIn, cycle))}
-            suffix={cycleSuffix}
-            info={t("cashflow.info.in")}
-          />
-          <SummaryStat
-            label={t("cashflow.fixed")}
-            value={money(perCycleFromMonthly(totalFixed, cycle))}
-            suffix={cycleSuffix}
-            info={t("cashflow.info.fixed")}
-          />
-          <SummaryStat
-            label={t("cashflow.variable")}
-            value={money(perCycleFromMonthly(totalVar, cycle))}
-            suffix={cycleSuffix}
-            info={t("cashflow.info.variable")}
-          />
-          <SummaryStat
-            label={t("cashflow.net")}
-            value={money(perCycleFromMonthly(net, cycle))}
-            suffix={cycleSuffix}
-            highlight
-            tone={net >= 0 ? "good" : "bad"}
-            info={t("cashflow.info.net")}
-          />
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t("cashflow.actualSection")}
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <SummaryStat
-            label={t("cashflow.realIn")}
-            value={money(actualIn)}
-            suffix=""
-            info={t("cashflow.info.realIn")}
-          />
-          <SummaryStat
-            label={t("cashflow.realOut")}
-            value={money(actualOut)}
-            suffix=""
-            info={t("cashflow.info.realOut")}
-          />
-          <SummaryStat
-            label={t("cashflow.gap")}
-            value={`${gap >= 0 ? "+" : "−"}${money(Math.abs(gap))}`}
-            suffix=""
-            tone={gap > 0 ? "bad" : "good"}
-            info={t("cashflow.info.gap")}
-          />
-          <SummaryStat
-            label={t("cashflow.netReal")}
-            value={money(actualNet)}
-            suffix=""
-            highlight
-            tone={actualNet >= 0 ? "good" : "bad"}
-            info={t("cashflow.info.netReal")}
-          />
-        </div>
-      </section>
-
-      <Tabs value={view} onValueChange={(v) => setView(v as typeof view)}>
+      <Tabs value={lens} onValueChange={(v) => setLens(v as typeof lens)}>
         <TabsList>
-          <TabsTrigger value="all">{t("cashflow.all")}</TabsTrigger>
-          <TabsTrigger value="in">{t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}</TabsTrigger>
-          <TabsTrigger value="out">{t(isBusiness ? "cashflow.outBiz" : "cashflow.out")}</TabsTrigger>
+          <TabsTrigger value="recurring">{t("cashflow.lensRecurring")}</TabsTrigger>
+          <TabsTrigger value="cycle">{t("cashflow.lensCycle")}</TabsTrigger>
+          <TabsTrigger value="planned">{t("cashflow.lensPlanned")}</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {householdId && (view === "all" || view === "in") && (
-        <IncomesSection householdId={householdId} cycle={cycle} isBusiness={isBusiness} />
-      )}
-      {householdId && (view === "all" || view === "out") && (
-        <FixedExpensesSection householdId={householdId} cycle={cycle} />
-      )}
-      {householdId && (view === "all" || view === "out") && (
-        <VariableEstimatesSection householdId={householdId} />
-      )}
-      {householdId && (view === "all" || view === "out") && (
-        <SpendingVsEstimate householdId={householdId} />
+      {/* Recurring lens: the steady-state definitions that repeat every cycle. */}
+      {lens === "recurring" && (
+        <>
+          <section className="space-y-2">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {t("cashflow.estimatedSection")}
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <SummaryStat
+                label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
+                value={money(perCycleFromMonthly(totalIn, cycle))}
+                suffix={cycleSuffix}
+                info={t("cashflow.info.in")}
+              />
+              <SummaryStat
+                label={t("cashflow.fixed")}
+                value={money(perCycleFromMonthly(totalFixed, cycle))}
+                suffix={cycleSuffix}
+                info={t("cashflow.info.fixed")}
+              />
+              <SummaryStat
+                label={t("cashflow.variable")}
+                value={money(perCycleFromMonthly(totalVar, cycle))}
+                suffix={cycleSuffix}
+                info={t("cashflow.info.variable")}
+              />
+              <SummaryStat
+                label={t("cashflow.net")}
+                value={money(perCycleFromMonthly(net, cycle))}
+                suffix={cycleSuffix}
+                highlight
+                tone={net >= 0 ? "good" : "bad"}
+                info={t("cashflow.info.net")}
+              />
+            </div>
+          </section>
+
+          {householdId && (
+            <IncomesSection householdId={householdId} cycle={cycle} isBusiness={isBusiness} />
+          )}
+          {householdId && <FixedExpensesSection householdId={householdId} cycle={cycle} />}
+          {householdId && <VariableEstimatesSection householdId={householdId} />}
+        </>
       )}
 
+      {/* This-cycle lens: expected vs what has actually happened this cycle. */}
+      {lens === "cycle" && (
+        <>
+          <section className="space-y-2">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {t("cashflow.actualSection")}
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <SummaryStat
+                label={t("cashflow.realIn")}
+                value={money(actualIn)}
+                suffix=""
+                info={t("cashflow.info.realIn")}
+              />
+              <SummaryStat
+                label={t("cashflow.realOut")}
+                value={money(actualOut)}
+                suffix=""
+                info={t("cashflow.info.realOut")}
+              />
+              <SummaryStat
+                label={t("cashflow.gap")}
+                value={`${gap >= 0 ? "+" : "−"}${money(Math.abs(gap))}`}
+                suffix=""
+                tone={gap > 0 ? "bad" : "good"}
+                info={t("cashflow.info.gap")}
+              />
+              <SummaryStat
+                label={t("cashflow.netReal")}
+                value={money(actualNet)}
+                suffix=""
+                highlight
+                tone={actualNet >= 0 ? "good" : "bad"}
+                info={t("cashflow.info.netReal")}
+              />
+            </div>
+          </section>
 
-      <Card className="border-dashed bg-muted/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CalendarClock className="size-4" /> {t("cashflow.plansTitle")}
-          </CardTitle>
-          <CardDescription>{t("cashflow.plansBody")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/plan">{t("cashflow.plansCta")}</Link>
-          </Button>
-        </CardContent>
-      </Card>
+          {householdId && <SpendingVsEstimate householdId={householdId} />}
+        </>
+      )}
+
+      {/* Planned lens: dated one-offs and the forward forecast (folds in next). */}
+      {lens === "planned" && (
+        <Card className="border-dashed bg-muted/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarClock className="size-4" /> {t("cashflow.plansTitle")}
+            </CardTitle>
+            <CardDescription>{t("cashflow.plansBody")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/plan">{t("cashflow.plansCta")}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
