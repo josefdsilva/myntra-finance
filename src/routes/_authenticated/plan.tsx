@@ -92,21 +92,38 @@ function recurrenceLabelKey(r: string) {
 
 function PlanPage() {
   const t = useT();
-  const qc = useQueryClient();
   const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
-  const upsertFn = useServerFn(upsertPlan);
-  const deleteFn = useServerFn(deletePlan);
-  const fundFn = useServerFn(fundPlanAsProject);
-  const resolveFn = useServerFn(resolvePlan);
-  const reopenFn = useServerFn(reopenPlan);
-
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
+
+  return (
+    <div className={pageShellClass("5xl")}>
+      <header>
+        <h1 className="text-3xl md:text-4xl font-display">{t("plan.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("plan.subtitle")}</p>
+      </header>
+      {householdId && <PlanPanel householdId={householdId} baseline={baseline} />}
+    </div>
+  );
+}
+
+/**
+ * The full plan management surface (add, forecast, timeline, resolve, history),
+ * reused by the /plan route and by the Payables & Receivables hub's Planned lens.
+ */
+export function PlanPanel({ householdId, baseline }: { householdId: string; baseline: number }) {
+  const t = useT();
+  const qc = useQueryClient();
+  const upsertFn = useServerFn(upsertPlan);
+  const deleteFn = useServerFn(deletePlan);
+  const fundFn = useServerFn(fundPlanAsProject);
+  const resolveFn = useServerFn(resolvePlan);
+  const reopenFn = useServerFn(reopenPlan);
 
   const { data, refetch } = useQuery({
     enabled: !!householdId,
@@ -311,12 +328,7 @@ function PlanPage() {
   }, [plans]);
 
   return (
-    <div className={pageShellClass("5xl")}>
-      <header>
-        <h1 className="text-3xl md:text-4xl font-display">{t("plan.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("plan.subtitle")}</p>
-      </header>
-
+    <div className="space-y-6">
       {/* Add a plan */}
       <Card>
         <CardHeader>
