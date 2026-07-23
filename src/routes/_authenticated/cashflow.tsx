@@ -115,6 +115,51 @@ function CashflowPage() {
   const expectedOutCycle = perCycleFromMonthly(totalOut, cycle);
   const gap = actualOut - expectedOutCycle;
 
+  // Estimated per-cycle breakdown (income, fixed, variable, debt, net). Shown in
+  // both the Recurring lens (the definition view) and the This-cycle lens (as the
+  // "expected" half of the expected-vs-actual reconciliation).
+  const estimatedSection = (
+    <section className="space-y-2">
+      <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {t("cashflow.estimatedSection")}
+      </h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <SummaryStat
+          label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
+          value={money(perCycleFromMonthly(totalIn, cycle))}
+          suffix={cycleSuffix}
+          info={t("cashflow.info.in")}
+        />
+        <SummaryStat
+          label={t("cashflow.fixed")}
+          value={money(perCycleFromMonthly(totalFixed, cycle))}
+          suffix={cycleSuffix}
+          info={t("cashflow.info.fixed")}
+        />
+        <SummaryStat
+          label={t("cashflow.variable")}
+          value={money(perCycleFromMonthly(totalVar, cycle))}
+          suffix={cycleSuffix}
+          info={t("cashflow.info.variable")}
+        />
+        <SummaryStat
+          label={t("cashflow.debt")}
+          value={money(perCycleFromMonthly(totalDebt, cycle))}
+          suffix={cycleSuffix}
+          info={t("cashflow.info.debt")}
+        />
+        <SummaryStat
+          label={t("cashflow.net")}
+          value={money(perCycleFromMonthly(net, cycle))}
+          suffix={cycleSuffix}
+          highlight
+          tone={net >= 0 ? "good" : "bad"}
+          info={t("cashflow.info.net")}
+        />
+      </div>
+    </section>
+  );
+
   return (
     <div className={pageShellClass("5xl")}>
       <header>
@@ -137,45 +182,7 @@ function CashflowPage() {
       {/* Recurring lens: the steady-state definitions that repeat every cycle. */}
       {lens === "recurring" && (
         <>
-          <section className="space-y-2">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t("cashflow.estimatedSection")}
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              <SummaryStat
-                label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
-                value={money(perCycleFromMonthly(totalIn, cycle))}
-                suffix={cycleSuffix}
-                info={t("cashflow.info.in")}
-              />
-              <SummaryStat
-                label={t("cashflow.fixed")}
-                value={money(perCycleFromMonthly(totalFixed, cycle))}
-                suffix={cycleSuffix}
-                info={t("cashflow.info.fixed")}
-              />
-              <SummaryStat
-                label={t("cashflow.variable")}
-                value={money(perCycleFromMonthly(totalVar, cycle))}
-                suffix={cycleSuffix}
-                info={t("cashflow.info.variable")}
-              />
-              <SummaryStat
-                label={t("cashflow.debt")}
-                value={money(perCycleFromMonthly(totalDebt, cycle))}
-                suffix={cycleSuffix}
-                info={t("cashflow.info.debt")}
-              />
-              <SummaryStat
-                label={t("cashflow.net")}
-                value={money(perCycleFromMonthly(net, cycle))}
-                suffix={cycleSuffix}
-                highlight
-                tone={net >= 0 ? "good" : "bad"}
-                info={t("cashflow.info.net")}
-              />
-            </div>
-          </section>
+          {estimatedSection}
 
           {householdId && (
             <IncomesSection householdId={householdId} cycle={cycle} isBusiness={isBusiness} />
@@ -185,9 +192,11 @@ function CashflowPage() {
         </>
       )}
 
-      {/* This-cycle lens: expected vs what has actually happened this cycle. */}
+      {/* This-cycle lens: expected (incl. debt) vs what actually happened. */}
       {lens === "cycle" && (
         <>
+          {estimatedSection}
+
           <section className="space-y-2">
             <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t("cashflow.actualSection")}
@@ -262,8 +271,8 @@ function SummaryStat({
         : "";
   return (
     <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between gap-2">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-1">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
           {info && (
             <Popover>
@@ -282,9 +291,11 @@ function SummaryStat({
             </Popover>
           )}
         </div>
-        <p className={`text-2xl font-display mt-1 tabular-nums ${toneCls}`}>
+        <p
+          className={`mt-1 font-display tabular-nums leading-tight whitespace-nowrap text-lg lg:text-xl ${toneCls}`}
+        >
           {value}
-          <span className="text-sm font-sans text-muted-foreground">{suffix}</span>
+          <span className="text-xs font-sans text-muted-foreground">{suffix}</span>
         </p>
       </CardContent>
     </Card>
