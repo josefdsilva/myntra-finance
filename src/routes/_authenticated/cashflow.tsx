@@ -108,11 +108,13 @@ function CashflowPage() {
   const net = summary?.net ?? 0;
   const actualIn = summary?.actualIn ?? 0;
   const loggedOut = summary?.actualOut ?? 0;
-  // Debt servicing is real money out even though it's auto-paid (recorded as a
-  // scheduled movement, not a logged expense). Fold the cycle's debt into actual
-  // spend + net so the actuals don't understate what actually left the account.
+  // True money out this cycle = assumed fixed costs + assumed debt servicing +
+  // everything logged as spending. Fixed costs and debt are auto-paid (not
+  // recorded as individual expenses), so they don't overlap with loggedOut and
+  // adding them can't double-count — it just stops the actuals understating.
+  const fixedThisCycle = perCycleFromMonthly(totalFixed, cycle);
   const debtThisCycle = perCycleFromMonthly(totalDebt, cycle);
-  const actualOut = loggedOut + debtThisCycle;
+  const actualOut = loggedOut + fixedThisCycle + debtThisCycle;
   const actualNet = actualIn - actualOut;
   // Estimate-vs-actual gap for outflows in the current cycle. Positive means
   // spending exceeds the plan; negative means under budget.
