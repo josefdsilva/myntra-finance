@@ -22,6 +22,10 @@ import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/cashflow")({
   head: () => ({ meta: [{ title: "Payables & Receivables · bynku" }] }),
+  // ?lens=cycle|planned deep-links a specific lens (used by redirects + CTAs).
+  validateSearch: (search: Record<string, unknown>) => ({
+    lens: search.lens === "cycle" || search.lens === "planned" ? search.lens : undefined,
+  }),
   component: CashflowPage,
 });
 
@@ -39,7 +43,8 @@ function CashflowPage() {
   const cycleSuffix = t(`cadence.short.${cycle}`);
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
-  const [lens, setLens] = useState<"recurring" | "cycle" | "planned">("recurring");
+  const { lens: lensParam } = Route.useSearch();
+  const [lens, setLens] = useState<"recurring" | "cycle" | "planned">(lensParam ?? "recurring");
 
   // Estimated (monthly-equivalent) recurring inflows and outflows, plus
   // actual money in/out logged so far in the current cycle. Everything is
