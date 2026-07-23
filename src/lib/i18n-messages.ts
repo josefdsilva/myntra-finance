@@ -367,7 +367,7 @@ const en = {
   // Buckets
   "buckets.title": "Projects",
   "buckets.description":
-    "Split what's left (income − how much you need) across projects. % projects currently total {pct}%.",
+    "Split what's left (income − how much you need) across projects. Your projects currently total {pct}.",
   "buckets.add": "Add project",
   "buckets.name": "Name",
   "buckets.color": "Color",
@@ -1774,7 +1774,7 @@ const pt: Record<MessageKey, string> = {
 
   "buckets.title": "Projetos",
   "buckets.description":
-    "Distribua o que sobra (rendimento − quanto precisa) pelos projetos. Os projetos em % somam atualmente {pct}%.",
+    "Distribua o que sobra (rendimento − quanto precisa) pelos projetos. Os projetos somam atualmente {pct}.",
   "buckets.add": "Adicionar projeto",
   "buckets.name": "Nome",
   "buckets.color": "Cor",
@@ -3181,7 +3181,7 @@ const es: Record<MessageKey, string> = {
 
   "buckets.title": "Proyectos",
   "buckets.description":
-    "Reparte lo que queda (ingresos − cuánto necesitas) entre proyectos. Los proyectos en % suman actualmente el {pct}%.",
+    "Reparte lo que queda (ingresos − cuánto necesitas) entre proyectos. Tus proyectos suman actualmente el {pct}.",
   "buckets.add": "Añadir proyecto",
   "buckets.name": "Nombre",
   "buckets.color": "Color",
@@ -4588,7 +4588,7 @@ const de: Record<MessageKey, string> = {
 
   "buckets.title": "Projekte",
   "buckets.description":
-    "Verteile, was übrig bleibt (Einkommen − wie viel du brauchst), auf Projekte. Die %-Projekte ergeben aktuell {pct}%.",
+    "Verteile, was übrig bleibt (Einkommen − wie viel du brauchst), auf Projekte. Deine Projekte ergeben aktuell {pct}.",
   "buckets.add": "Projekt hinzufügen",
   "buckets.name": "Name",
   "buckets.color": "Farbe",
@@ -6002,7 +6002,7 @@ const fr: Record<MessageKey, string> = {
 
   "buckets.title": "Projets",
   "buckets.description":
-    "Répartissez ce qu'il reste (revenu − ce qu'il vous faut) entre vos projets. Les projets en % totalisent actuellement {pct}%.",
+    "Répartissez ce qu'il reste (revenu − ce qu'il vous faut) entre vos projets. Vos projets totalisent actuellement {pct}.",
   "buckets.add": "Ajouter un projet",
   "buckets.name": "Nom",
   "buckets.color": "Couleur",
