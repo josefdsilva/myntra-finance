@@ -256,8 +256,6 @@ function AllocationsPage() {
               icon={PiggyBank}
               title={t("alloc.thisMonth.empty")}
               description={t("alloc.thisMonth.desc")}
-              ctaLabel={t("emptyState.tryCta")}
-              ctaTo="/settings"
             />
           ) : (
             <div className="space-y-4">
