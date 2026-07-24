@@ -17,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { money } from "@/lib/format";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
-import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
+import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/cashflow")({
@@ -50,27 +50,13 @@ function CashflowPage() {
   // normalized to the household's chosen cycle before display.
   const { data: summary } = useQuery({
     enabled: !!householdId,
-    queryKey: [
-      "cashflow-summary",
-      householdId,
-      hh?.household?.cycle_mode,
-      hh?.household?.cycle,
-      hh?.household?.cycle_anchor_date,
-    ],
+    queryKey: ["cashflow-summary", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      const [inc, fx, ve, db, salaries] = await Promise.all([
+      const [inc, fx, ve, db] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
-        supabase
-          .from("expenses")
-          .select("occurred_at")
-          .eq("household_id", householdId!)
-          .eq("kind", "income")
-          .eq("is_salary", true)
-          .order("occurred_at", { ascending: false })
-          .limit(12),
       ]);
       const totalIn = (inc.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const totalFixed = (fx.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
@@ -78,10 +64,7 @@ function CashflowPage() {
       // Debt servicing is real recurring money out — the baseline already counts
       // it, so the cashflow roll-up must too, or "net" reads too rosy.
       const totalDebt = (db.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      const cycleBounds = cycleFor(
-        cycleConfigForSpace(hh?.household),
-        (salaries.data ?? []).map((r) => r.occurred_at as string),
-      );
+      const cycleBounds = await fetchCycleBounds(supabase, householdId!, hh?.household);
       const { data: exps } = await supabase
         .from("expenses")
         .select("amount, kind")

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
+import { fetchCycleBounds } from "@/lib/cycle-bounds";
 
 export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
   server: {
@@ -42,18 +42,7 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
           const baseline = Number(hh?.baseline_budget ?? 0);
           if (baseline <= 0) continue;
 
-          const { data: salaries } = await supabaseAdmin
-            .from("expenses")
-            .select("occurred_at")
-            .eq("household_id", hhId)
-            .eq("kind", "income")
-            .eq("is_salary", true)
-            .order("occurred_at", { ascending: false })
-            .limit(6);
-          const cycle = cycleFor(
-            cycleConfigForSpace(hh),
-            ((salaries as Array<{ occurred_at: string }> | null) ?? []).map((r) => r.occurred_at),
-          );
+          const cycle = await fetchCycleBounds(supabaseAdmin, hhId, hh);
 
           const [{ data: fixed }, { data: debts }] = await Promise.all([
             supabaseAdmin

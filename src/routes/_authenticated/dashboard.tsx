@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
-import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
+import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
 import { leftoverObligation, monthKey, type Plan } from "@/lib/plan";
 import {
   bucketsQuery,
@@ -19,7 +19,7 @@ import {
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { markSalaryReceived, markIncomeReceived } from "@/lib/budget.functions";
+import { markIncomeReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
@@ -52,28 +52,10 @@ function Dashboard() {
     isLoading: dashboardLoading,
   } = useQuery({
     enabled: !!householdId,
-    queryKey: [
-      "dashboard",
-      householdId,
-      hh?.household?.cycle_mode,
-      hh?.household?.cycle,
-      hh?.household?.cycle_anchor_date,
-    ],
+    queryKey: ["dashboard", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      // 1) Resolve the current cycle. Event spaces derive it from salary
-      // receipts (payday-driven); time spaces use a fixed fiscal period.
-      const { data: salaries } = await supabase
-        .from("expenses")
-        .select("occurred_at")
-        .eq("household_id", householdId!)
-        .eq("kind", "income")
-        .eq("is_salary", true)
-        .order("occurred_at", { ascending: false })
-        .limit(6);
-      const cycle = cycleFor(
-        cycleConfigForSpace(hh?.household),
-        (salaries ?? []).map((r) => r.occurred_at as string),
-      );
+      // Resolve the current cycle (event = payday-driven, time = fiscal period).
+      const cycle = await fetchCycleBounds(supabase, householdId!, hh?.household);
 
       // Base reference tables come from the shared cache (fetched once per
       // screen and reused by the tips panel); only the cycle-scoped expenses
@@ -617,7 +599,6 @@ function SalaryReceivedButton({
 }) {
   const t = useT();
   const qc = useQueryClient();
-  const mark = useServerFn(markSalaryReceived);
   const markIncome = useServerFn(markIncomeReceived);
   const [loading, setLoading] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
@@ -645,6 +626,10 @@ function SalaryReceivedButton({
   });
 
   async function onClick() {
+    if (!primaryIncomeId) {
+      toast.error(t("dashboard.salary.needIncome"));
+      return;
+    }
     if (recentlyReceived) {
       const ok = window.confirm(
         t("dashboard.salary.confirmDuplicate", { date: fmtDate(lastSalaryAt!) }),
@@ -653,11 +638,9 @@ function SalaryReceivedButton({
     }
     setLoading(true);
     try {
-      // Prefer the linked per-income path; fall back to the aggregate only when
-      // no income is configured yet (which surfaces the right error).
-      const row = primaryIncomeId
-        ? await markIncome({ data: { household_id: householdId, income_id: primaryIncomeId } })
-        : await mark({ data: { household_id: householdId } });
+      const row = await markIncome({
+        data: { household_id: householdId, income_id: primaryIncomeId },
+      });
       toast.success(t("dashboard.salary.recordedToast"));
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["salaries"] });

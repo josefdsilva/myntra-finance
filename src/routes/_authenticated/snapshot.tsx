@@ -16,7 +16,7 @@ import {
 } from "@/lib/household-queries";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
-import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
+import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
 import { computeHealth, type Badge as BadgeKind } from "@/lib/health-score";
 import { pageShellClass } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
@@ -43,32 +43,15 @@ function SnapshotPage() {
 
   const { data } = useQuery({
     enabled: !!householdId,
-    queryKey: [
-      "snapshot",
-      householdId,
-      hh?.household?.cycle_mode,
-      hh?.household?.cycle,
-      hh?.household?.cycle_anchor_date,
-    ],
+    queryKey: ["snapshot", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      const [incomes, fixed, debts, buckets, { data: salaries }] = await Promise.all([
+      const [incomes, fixed, debts, buckets] = await Promise.all([
         qc.fetchQuery(incomesQuery(householdId!)),
         qc.fetchQuery(fixedExpensesQuery(householdId!)),
         qc.fetchQuery(debtsQuery(householdId!)),
         qc.fetchQuery(bucketsQuery(householdId!)),
-        supabase
-          .from("expenses")
-          .select("occurred_at")
-          .eq("household_id", householdId!)
-          .eq("kind", "income")
-          .eq("is_salary", true)
-          .order("occurred_at", { ascending: false })
-          .limit(6),
       ]);
-      const cycle = cycleFor(
-        cycleConfigForSpace(hh?.household),
-        (salaries ?? []).map((r) => r.occurred_at as string),
-      );
+      const cycle = await fetchCycleBounds(supabase, householdId!, hh?.household);
       const [
         { data: allocs },
         { data: moves },

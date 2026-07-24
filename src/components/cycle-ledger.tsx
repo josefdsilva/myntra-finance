@@ -33,7 +33,7 @@ import {
   type Cycle,
   type Cadence,
 } from "@/lib/cadence";
-import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
+import { fetchCycleBounds } from "@/lib/cycle-bounds";
 import {
   markIncomeReceived,
   markFixedExpensePaid,
@@ -94,7 +94,7 @@ export function CommittedThisCycle({
   const { data, refetch } = useQuery({
     queryKey: ["cycle-committed", householdId],
     queryFn: async () => {
-      const [fx, inc, db, space, salaries] = await Promise.all([
+      const [fx, inc, db, space] = await Promise.all([
         supabase
           .from("fixed_expenses")
           .select("id, label, cadence, native_amount, monthly_amount")
@@ -115,19 +115,8 @@ export function CommittedThisCycle({
           .select("kind, cycle, cycle_mode, cycle_anchor_date")
           .eq("id", householdId)
           .maybeSingle(),
-        supabase
-          .from("expenses")
-          .select("occurred_at")
-          .eq("household_id", householdId)
-          .eq("kind", "income")
-          .eq("is_salary", true)
-          .order("occurred_at", { ascending: false })
-          .limit(12),
       ]);
-      const bounds = cycleFor(
-        cycleConfigForSpace(space.data),
-        (salaries.data ?? []).map((r) => r.occurred_at as string),
-      );
+      const bounds = await fetchCycleBounds(supabase, householdId, space.data);
 
       // Income receipts this cycle, grouped by income (each is one pay run).
       const { data: receipts } = await supabase
