@@ -1093,6 +1093,9 @@ export type Database = {
           credit_cap: number
           currency: string
           cycle: string
+          cycle_anchor_date: string | null
+          cycle_anchor_income_id: string | null
+          cycle_mode: string
           id: string
           kind: string
           margin_pct: number
@@ -1111,6 +1114,9 @@ export type Database = {
           credit_cap?: number
           currency?: string
           cycle?: string
+          cycle_anchor_date?: string | null
+          cycle_anchor_income_id?: string | null
+          cycle_mode?: string
           id?: string
           kind?: string
           margin_pct?: number
@@ -1129,6 +1135,9 @@ export type Database = {
           credit_cap?: number
           currency?: string
           cycle?: string
+          cycle_anchor_date?: string | null
+          cycle_anchor_income_id?: string | null
+          cycle_mode?: string
           id?: string
           kind?: string
           margin_pct?: number
