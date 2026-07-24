@@ -152,6 +152,72 @@ export const markSalaryReceived = createServerFn({ method: "POST" })
     return row;
   });
 
+// Mark a specific recurring income as received for the current cycle. Records a
+// money-in receipt linked back to that income (income_id) so a cycle can show
+// which expected inflows have arrived. Only the cycle-anchor income's receipt
+// is flagged is_salary — i.e. only it rolls an event-mode cycle; other incomes
+// (a partner's pay, rent) are recorded as money-in without starting a new cycle.
+export const markIncomeReceived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        household_id: z.string().uuid(),
+        income_id: z.string().uuid(),
+        amount: z.number().positive().max(10_000_000).optional(),
+        occurred_at: z.string().datetime().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const [{ data: income, error: incErr }, { data: hh }] = await Promise.all([
+      context.supabase
+        .from("incomes")
+        .select("id, label, native_amount, monthly_amount, type")
+        .eq("id", data.income_id)
+        .eq("household_id", data.household_id)
+        .maybeSingle(),
+      context.supabase
+        .from("households")
+        .select("cycle_anchor_income_id")
+        .eq("id", data.household_id)
+        .maybeSingle(),
+    ]);
+    if (incErr) throw incErr;
+    if (!income) throw new Error("Income not found for this household.");
+
+    const amount = data.amount ?? Number(income.native_amount ?? income.monthly_amount);
+    if (!amount || amount <= 0) {
+      throw new Error("This income has no amount set.");
+    }
+
+    // The anchor income rolls the cycle. With no explicit anchor, the primary
+    // salary (type 'salary') plays that role, matching today's default.
+    const anchorId = hh?.cycle_anchor_income_id ?? null;
+    const isAnchor = anchorId ? anchorId === income.id : income.type === "salary";
+
+    const { data: row, error } = await context.supabase
+      .from("expenses")
+      .insert({
+        household_id: data.household_id,
+        added_by_user_id: context.userId,
+        amount,
+        category: "income",
+        merchant: income.label,
+        occurred_at: data.occurred_at ?? new Date().toISOString(),
+        note: null,
+        source: "manual",
+        source_meta: {} as never,
+        kind: "income",
+        is_salary: isAnchor,
+        income_id: income.id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
 // ---- Incomes ----
 export const upsertIncome = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
