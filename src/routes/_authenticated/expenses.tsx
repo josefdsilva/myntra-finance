@@ -13,6 +13,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
+import { InvoiceAttachments } from "@/components/invoice-attachments";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 import {
   Select,
@@ -25,7 +33,7 @@ import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle } from "@/lib/cycle";
 
 import { toast } from "sonner";
-import { FileUp, Loader2, Trash2 } from "lucide-react";
+import { FileUp, Loader2, Trash2, Paperclip } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
@@ -47,6 +55,23 @@ function ExpensesPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
+  const isBusiness = hh?.household?.kind === "business";
+  const [invoiceFor, setInvoiceFor] = useState<string | null>(null);
+
+  // Which expenses already have at least one invoice — so business rows without
+  // one can be flagged. Refreshed by the attachments component after up/deletes.
+  const { data: withInvoice } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["invoice-flags", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("invoices")
+        .select("expense_id")
+        .eq("household_id", householdId!)
+        .not("expense_id", "is", null);
+      return new Set((data ?? []).map((r) => r.expense_id as string));
+    },
+  });
 
   const { names: catNames } = useCategoryNames(householdId);
   const categoryOptions = ["all", ...catNames];
@@ -313,6 +338,21 @@ function ExpensesPage() {
                       {isIncome ? "+" : "−"}
                       {money(e.amount)}
                     </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title={t("inv.attach")}
+                      onClick={() => setInvoiceFor(e.id)}
+                      className={
+                        withInvoice?.has(e.id)
+                          ? "text-primary"
+                          : isBusiness
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                      }
+                    >
+                      <Paperclip className="size-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => remove(e.id)}>
                       <Trash2 className="size-4" />
                     </Button>
@@ -324,6 +364,21 @@ function ExpensesPage() {
         </CardContent>
       </Card>
 
+      <Dialog open={!!invoiceFor} onOpenChange={(v) => !v && setInvoiceFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("inv.title")}</DialogTitle>
+            <DialogDescription>{t("inv.desc")}</DialogDescription>
+          </DialogHeader>
+          {invoiceFor && householdId && (
+            <InvoiceAttachments
+              householdId={householdId}
+              expenseId={invoiceFor}
+              isBusiness={isBusiness}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

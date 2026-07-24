@@ -60,6 +60,7 @@ import {
 import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { EmptyState } from "@/components/empty-state";
+import { InvoiceAttachments } from "@/components/invoice-attachments";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/plan")({
@@ -105,6 +106,7 @@ function PlanPage() {
   });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
+  const isBusiness = hh?.household?.kind === "business";
 
   return (
     <div className={pageShellClass("5xl")}>
@@ -112,7 +114,9 @@ function PlanPage() {
         <h1 className="text-3xl md:text-4xl font-display">{t("plan.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("plan.subtitle")}</p>
       </header>
-      {householdId && <PlanPanel householdId={householdId} baseline={baseline} />}
+      {householdId && (
+        <PlanPanel householdId={householdId} baseline={baseline} isBusiness={isBusiness} />
+      )}
     </div>
   );
 }
@@ -121,7 +125,15 @@ function PlanPage() {
  * The full plan management surface (add, forecast, timeline, resolve, history),
  * reused by the /plan route and by the Payables & Receivables hub's Planned lens.
  */
-export function PlanPanel({ householdId, baseline }: { householdId: string; baseline: number }) {
+export function PlanPanel({
+  householdId,
+  baseline,
+  isBusiness = false,
+}: {
+  householdId: string;
+  baseline: number;
+  isBusiness?: boolean;
+}) {
   const t = useT();
   const qc = useQueryClient();
   const upsertFn = useServerFn(upsertPlan);
@@ -750,6 +762,16 @@ export function PlanPanel({ householdId, baseline }: { householdId: string; base
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+          {resolveRow && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("inv.title")}</Label>
+              <InvoiceAttachments
+                householdId={householdId}
+                planId={resolveRow.id}
+                isBusiness={isBusiness}
+              />
             </div>
           )}
           <DialogFooter className="gap-2 sm:justify-between">
