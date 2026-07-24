@@ -386,16 +386,23 @@ export const parseReceiptPhoto = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(apiKey);
     const now = new Date().toISOString();
 
+    // Images go through as an image part; PDFs (a scanned/exported invoice)
+    // through as a document/file part, which the model reads natively.
+    const dataUrl = `data:${data.mime_type};base64,${data.image_base64}`;
+    const filePart = data.mime_type.includes("pdf")
+      ? ({ type: "file", data: dataUrl, mediaType: data.mime_type } as const)
+      : ({ type: "image", image: dataUrl } as const);
+
     const result = await generateText({
       model: gateway(PARSE_MODEL),
-      system: `You extract expense line items from a photo of a receipt or bill.
+      system: `You extract expense line items from a receipt, bill, or invoice (a photo or a PDF).
 Current time: ${now}. Currency EUR. Always positive amounts.
-Prefer ONE row with the receipt total when the receipt is from a single merchant;
-only split into multiple rows when the receipt clearly covers different categories
+Prefer ONE row with the document total when it is from a single merchant;
+only split into multiple rows when it clearly covers different categories
 (e.g. groceries + fuel on the same ticket).
 Pick the best matching category from: ${CATEGORY_LIST}.
-Use the receipt/bill date in ISO 8601 when visible, otherwise use now.
-Merchant = shop / issuer name on the receipt.
+Use the receipt/invoice date in ISO 8601 when visible, otherwise use now.
+Merchant = shop / issuer name on the document.
 
 Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
 No prose, no markdown fences.`,
@@ -403,11 +410,8 @@ No prose, no markdown fences.`,
         {
           role: "user",
           content: [
-            { type: "text", text: "Extract the expense(s) from this receipt or bill photo." },
-            {
-              type: "image",
-              image: `data:${data.mime_type};base64,${data.image_base64}`,
-            },
+            { type: "text", text: "Extract the expense(s) from this receipt, bill, or invoice." },
+            filePart,
           ],
         },
       ],
