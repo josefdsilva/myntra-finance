@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { adoptCategoryEstimate } from "@/lib/budget.functions";
 import { invalidateHouseholdData } from "@/lib/household-queries";
-import { computeCycle } from "@/lib/cycle";
+import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { money } from "@/lib/format";
@@ -28,7 +28,7 @@ export function SpendingVsEstimate({ householdId }: { householdId: string }) {
     enabled: !!householdId,
     queryKey: ["spending-vs-estimate", householdId],
     queryFn: async () => {
-      const [{ data: salaries }, { data: estimates }] = await Promise.all([
+      const [{ data: salaries }, { data: estimates }, { data: space }] = await Promise.all([
         supabase
           .from("expenses")
           .select("occurred_at")
@@ -41,8 +41,16 @@ export function SpendingVsEstimate({ householdId }: { householdId: string }) {
           .from("variable_estimates")
           .select("category, monthly_amount")
           .eq("household_id", householdId),
+        supabase
+          .from("households")
+          .select("kind, cycle, cycle_mode, cycle_anchor_date")
+          .eq("id", householdId)
+          .maybeSingle(),
       ]);
-      const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
+      const cycle = cycleFor(
+        cycleConfigForSpace(space),
+        (salaries ?? []).map((r) => r.occurred_at as string),
+      );
       const { data: exps } = await supabase
         .from("expenses")
         .select("category, amount, kind")
