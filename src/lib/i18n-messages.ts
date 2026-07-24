@@ -325,6 +325,9 @@ const en = {
   "hh.title": "Household",
   "hh.description":
     "The monthly baseline is calculated from your fixed expenses, variable estimates and safety margin.",
+  "hh.titleBusiness": "Company",
+  "hh.descriptionBusiness":
+    "The monthly baseline is calculated from your fixed operating costs, variable estimates and safety margin.",
   "hh.name": "Household name",
   "hh.nameBiz": "Company name",
   "hh.profile": "Household profile",
@@ -1773,6 +1776,9 @@ const pt: Record<MessageKey, string> = {
   "hh.title": "Agregado familiar",
   "hh.description":
     "A base mensal é calculada a partir das despesas fixas, estimativas variáveis e margem de segurança.",
+  "hh.titleBusiness": "Empresa",
+  "hh.descriptionBusiness":
+    "A base mensal é calculada a partir dos custos operacionais fixos, estimativas variáveis e margem de segurança.",
   "hh.name": "Nome do agregado",
   "hh.nameBiz": "Nome da empresa",
   "hh.profile": "Perfil do agregado",
@@ -3217,6 +3223,9 @@ const es: Record<MessageKey, string> = {
   "hh.title": "Hogar",
   "hh.description":
     "La base mensual se calcula a partir de tus gastos fijos, estimaciones variables y margen de seguridad.",
+  "hh.titleBusiness": "Empresa",
+  "hh.descriptionBusiness":
+    "La base mensual se calcula a partir de tus costes operativos fijos, estimaciones variables y margen de seguridad.",
   "hh.name": "Nombre del hogar",
   "hh.nameBiz": "Nombre de la empresa",
   "hh.profile": "Perfil del hogar",
@@ -4660,6 +4669,9 @@ const de: Record<MessageKey, string> = {
   "hh.title": "Haushalt",
   "hh.description":
     "Die monatliche Basis wird aus deinen Fixkosten, variablen Schätzungen und dem Sicherheitszuschlag berechnet.",
+  "hh.titleBusiness": "Unternehmen",
+  "hh.descriptionBusiness":
+    "Die monatliche Basis wird aus deinen fixen Betriebskosten, variablen Schätzungen und dem Sicherheitszuschlag berechnet.",
   "hh.name": "Haushaltsname",
   "hh.nameBiz": "Firmenname",
   "hh.profile": "Haushaltsprofil",
@@ -6111,6 +6123,9 @@ const fr: Record<MessageKey, string> = {
   "hh.title": "Foyer",
   "hh.description":
     "La base mensuelle est calculée à partir des dépenses fixes, des estimations variables et de la marge de sécurité.",
+  "hh.titleBusiness": "Entreprise",
+  "hh.descriptionBusiness":
+    "La base mensuelle est calculée à partir des charges d'exploitation fixes, des estimations variables et de la marge de sécurité.",
   "hh.name": "Nom du foyer",
   "hh.nameBiz": "Nom de l'entreprise",
   "hh.profile": "Profil du foyer",
