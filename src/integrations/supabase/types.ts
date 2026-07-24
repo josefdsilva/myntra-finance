@@ -977,6 +977,51 @@ export type Database = {
           },
         ]
       }
+      fixed_expense_settlements: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          fixed_expense_id: string
+          household_id: string
+          id: string
+          occurred_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          fixed_expense_id: string
+          household_id: string
+          id?: string
+          occurred_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          fixed_expense_id?: string
+          household_id?: string
+          id?: string
+          occurred_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixed_expense_settlements_fixed_expense_id_fkey"
+            columns: ["fixed_expense_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_expense_settlements_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fixed_expenses: {
         Row: {
           cadence: string
