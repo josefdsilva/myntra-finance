@@ -113,15 +113,19 @@ function CashflowPage() {
   const expectedOutCycle = perCycleFromMonthly(totalOut, cycle);
   const gap = actualOut - expectedOutCycle;
 
-  // Estimated per-cycle breakdown (income, fixed, variable, debt, net). Shown in
-  // both the Recurring lens (the definition view) and the This-cycle lens (as the
-  // "expected" half of the expected-vs-actual reconciliation).
+  // Compact per-cycle roll-up: Money in, Money out (combined), Net. The out
+  // card lists fixed / variable / debt underneath so users still see the
+  // breakdown without a wall of cards.
+  const fixedCycle = perCycleFromMonthly(totalFixed, cycle);
+  const varCycle = perCycleFromMonthly(totalVar, cycle);
+  const debtCycle = perCycleFromMonthly(totalDebt, cycle);
+
   const estimatedSection = (
     <section className="space-y-2">
       <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {t("cashflow.estimatedSection")}
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <SummaryStat
           label={t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
           value={money(perCycleFromMonthly(totalIn, cycle))}
@@ -129,22 +133,14 @@ function CashflowPage() {
           info={t("cashflow.info.in")}
         />
         <SummaryStat
-          label={t("cashflow.fixed")}
-          value={money(perCycleFromMonthly(totalFixed, cycle))}
+          label={t("cashflow.realOut")}
+          value={money(perCycleFromMonthly(totalOut, cycle))}
           suffix=""
-          info={t("cashflow.info.fixed")}
-        />
-        <SummaryStat
-          label={t("cashflow.variable")}
-          value={money(perCycleFromMonthly(totalVar, cycle))}
-          suffix=""
-          info={t("cashflow.info.variable")}
-        />
-        <SummaryStat
-          label={t("cashflow.debt")}
-          value={money(perCycleFromMonthly(totalDebt, cycle))}
-          suffix=""
-          info={t("cashflow.info.debt")}
+          breakdown={[
+            { label: t("cashflow.fixed"), value: money(fixedCycle) },
+            { label: t("cashflow.variable"), value: money(varCycle) },
+            { label: t("cashflow.debt"), value: money(debtCycle) },
+          ]}
         />
         <SummaryStat
           label={t("cashflow.net")}
