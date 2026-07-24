@@ -285,6 +285,9 @@ function HouseholdSection({
     kind?: string | null;
     advisor_email?: string | null;
     cycle?: string | null;
+    cycle_mode?: string | null;
+    cycle_anchor_income_id?: string | null;
+    cycle_anchor_date?: string | null;
   };
   onChange: () => void;
 }) {
@@ -302,7 +305,29 @@ function HouseholdSection({
   const isBusiness = household.kind === "business";
   const [advisorEmail, setAdvisorEmail] = useState(household.advisor_email ?? "");
   const [cycle, setCycle] = useState<Cycle>(cycleForSpace(household));
+  const [cycleMode, setCycleMode] = useState<"event" | "time">(
+    household.cycle_mode === "time" ? "time" : "event",
+  );
+  const [anchorIncomeId, setAnchorIncomeId] = useState<string>(
+    household.cycle_anchor_income_id ?? "",
+  );
+  const [anchorDate, setAnchorDate] = useState<string>(household.cycle_anchor_date ?? "");
   const cadenceMaps = useCadenceMaps();
+
+  // Incomes for the event-mode anchor picker (the salary whose receipt rolls
+  // the cycle). Empty selection = use the primary salary automatically.
+  const { data: incomeRows } = useQuery({
+    queryKey: ["incomes-anchor", household.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("incomes")
+        .select("id,label")
+        .eq("household_id", household.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return rowsOrEmpty(data);
+    },
+  });
 
   const { data: fixedRows } = useQuery({
     queryKey: ["fixed-total", household.id],
@@ -409,6 +434,23 @@ function HouseholdSection({
     }
   }
 
+  async function saveCycleField(patch: {
+    cycle_mode?: "event" | "time";
+    cycle_anchor_income_id?: string | null;
+    cycle_anchor_date?: string | null;
+  }) {
+    try {
+      await update({ data: { household_id: household.id, ...patch } });
+      onChange();
+      qc.invalidateQueries({ queryKey: ["household", household.id] });
+      qc.invalidateQueries({ queryKey: ["household"] });
+      invalidateHouseholdData(qc);
+      toast.success(t("hh.savedToast"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
+    }
+  }
+
   async function saveProfile() {
     try {
       await update({
@@ -506,6 +548,72 @@ function HouseholdSection({
             <p className="text-xs text-muted-foreground mt-1">{t("hh.cycleHint")}</p>
           </div>
         </div>
+
+        <div className="rounded-lg border p-4 space-y-3">
+          <div>
+            <div className="font-medium text-sm">{t("hh.cycleModeTitle")}</div>
+            <div className="text-xs text-muted-foreground">{t("hh.cycleModeHint")}</div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label>{t("hh.cycleModeLabel")}</Label>
+              <Select
+                value={cycleMode}
+                onValueChange={(v) => {
+                  const mode = v as "event" | "time";
+                  setCycleMode(mode);
+                  saveCycleField({ cycle_mode: mode });
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="event">{t("hh.cycleModeEvent")}</SelectItem>
+                  <SelectItem value="time">{t("hh.cycleModeTime")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {cycleMode === "event" ? (
+              <div>
+                <Label>{t("hh.anchorIncome")}</Label>
+                <Select
+                  value={anchorIncomeId || "auto"}
+                  onValueChange={(v) => {
+                    const id = v === "auto" ? "" : v;
+                    setAnchorIncomeId(id);
+                    saveCycleField({ cycle_anchor_income_id: id || null });
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">{t("hh.anchorIncomeAuto")}</SelectItem>
+                    {rowsOrEmpty(incomeRows).map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">{t("hh.anchorIncomeHint")}</p>
+              </div>
+            ) : (
+              <div>
+                <Label>{t("hh.fiscalStart")}</Label>
+                <Input
+                  type="date"
+                  value={anchorDate}
+                  onChange={(e) => setAnchorDate(e.target.value)}
+                  onBlur={() => saveCycleField({ cycle_anchor_date: anchorDate || null })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">{t("hh.fiscalStartHint")}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="rounded-lg border p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>

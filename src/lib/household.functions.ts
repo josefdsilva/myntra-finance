@@ -203,6 +203,9 @@ export const updateHousehold = createServerFn({ method: "POST" })
         kind: z.enum(["personal", "business"]).optional(),
         advisor_email: z.string().max(200).nullable().optional(),
         cycle: z.enum(["weekly", "monthly", "quarterly", "yearly"]).optional(),
+        cycle_mode: z.enum(["event", "time"]).optional(),
+        cycle_anchor_income_id: z.string().uuid().nullable().optional(),
+        cycle_anchor_date: z.string().nullable().optional(),
       })
       .parse(input),
   )
