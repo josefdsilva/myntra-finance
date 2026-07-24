@@ -249,6 +249,7 @@ function SummaryStat({
   highlight,
   tone,
   info,
+  breakdown,
 }: {
   label: string;
   value: string;
@@ -256,6 +257,7 @@ function SummaryStat({
   highlight?: boolean;
   tone?: "good" | "bad";
   info?: string;
+  breakdown?: { label: string; value: string; tone?: "good" | "bad" }[];
 }) {
   const toneCls =
     tone === "good"
@@ -293,6 +295,26 @@ function SummaryStat({
           {value}
           <span className="text-xs font-sans text-muted-foreground">{suffix}</span>
         </p>
+        {breakdown && breakdown.length > 0 && (
+          <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+            {breakdown.map((b) => (
+              <li key={b.label} className="flex justify-between gap-2 tabular-nums">
+                <span className="truncate">{b.label}</span>
+                <span
+                  className={
+                    b.tone === "good"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : b.tone === "bad"
+                        ? "text-destructive"
+                        : ""
+                  }
+                >
+                  {b.value}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
   );
