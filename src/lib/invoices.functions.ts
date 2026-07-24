@@ -13,13 +13,14 @@ export const addInvoice = createServerFn({ method: "POST" })
         household_id: z.string().uuid(),
         expense_id: z.string().uuid().nullable().optional(),
         plan_id: z.string().uuid().nullable().optional(),
+        settlement_id: z.string().uuid().nullable().optional(),
         path: z.string().min(1).max(500),
         file_name: z.string().max(300).nullable().optional(),
         mime_type: z.string().max(100).nullable().optional(),
         size_bytes: z.number().int().min(0).nullable().optional(),
       })
-      .refine((d) => !!d.expense_id || !!d.plan_id, {
-        message: "expense_id or plan_id required",
+      .refine((d) => !!d.expense_id || !!d.plan_id || !!d.settlement_id, {
+        message: "expense_id, plan_id or settlement_id required",
       })
       .parse(input),
   )
@@ -30,6 +31,7 @@ export const addInvoice = createServerFn({ method: "POST" })
         household_id: data.household_id,
         expense_id: data.expense_id ?? null,
         plan_id: data.plan_id ?? null,
+        settlement_id: data.settlement_id ?? null,
         path: data.path,
         file_name: data.file_name ?? null,
         mime_type: data.mime_type ?? null,

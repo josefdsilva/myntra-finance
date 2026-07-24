@@ -438,15 +438,17 @@ function Dashboard() {
             />
           </div>
 
-          <div className="mt-6 pt-6 border-t">
-            {householdId && (
+          {/* Payday-driven (event) spaces only: a time-driven cycle rolls on the
+              calendar, so there's no "salary received" action to start it. */}
+          {householdId && hh?.household?.cycle_mode !== "time" && (
+            <div className="mt-6 pt-6 border-t">
               <SalaryReceivedButton
                 householdId={householdId}
                 lastSalaryAt={cycle?.source === "salary" ? cycle.start : null}
                 onDone={() => refetch()}
               />
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Bucket impact */}
           <div className="mt-6 pt-6 border-t">

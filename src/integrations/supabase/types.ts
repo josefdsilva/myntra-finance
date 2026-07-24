@@ -1271,6 +1271,7 @@ export type Database = {
           mime_type: string | null
           path: string
           plan_id: string | null
+          settlement_id: string | null
           size_bytes: number | null
         }
         Insert: {
@@ -1283,6 +1284,7 @@ export type Database = {
           mime_type?: string | null
           path: string
           plan_id?: string | null
+          settlement_id?: string | null
           size_bytes?: number | null
         }
         Update: {
@@ -1295,6 +1297,7 @@ export type Database = {
           mime_type?: string | null
           path?: string
           plan_id?: string | null
+          settlement_id?: string | null
           size_bytes?: number | null
         }
         Relationships: [
@@ -1317,6 +1320,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_expense_settlements"
             referencedColumns: ["id"]
           },
         ]
