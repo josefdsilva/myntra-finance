@@ -43,7 +43,7 @@ function CashflowPage() {
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
   const { lens: lensParam } = Route.useSearch();
-  const [lens, setLens] = useState<"recurring" | "cycle" | "planned">(lensParam ?? "recurring");
+  const [lens, setLens] = useState<"recurring" | "cycle" | "planned">(lensParam ?? "cycle");
 
   // Estimated (monthly-equivalent) recurring inflows and outflows, plus
   // actual money in/out logged so far in the current cycle. Everything is
