@@ -1096,6 +1096,7 @@ export type Database = {
           cycle_anchor_date: string | null
           cycle_anchor_income_id: string | null
           cycle_mode: string
+          employees: number
           id: string
           kind: string
           margin_pct: number
@@ -1117,6 +1118,7 @@ export type Database = {
           cycle_anchor_date?: string | null
           cycle_anchor_income_id?: string | null
           cycle_mode?: string
+          employees?: number
           id?: string
           kind?: string
           margin_pct?: number
@@ -1138,6 +1140,7 @@ export type Database = {
           cycle_anchor_date?: string | null
           cycle_anchor_income_id?: string | null
           cycle_mode?: string
+          employees?: number
           id?: string
           kind?: string
           margin_pct?: number

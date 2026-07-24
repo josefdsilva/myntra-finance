@@ -281,6 +281,7 @@ function HouseholdSection({
     country?: string | null;
     adults?: number | null;
     children?: number | null;
+    employees?: number | null;
     currency?: string | null;
     kind?: string | null;
     advisor_email?: string | null;
@@ -299,6 +300,7 @@ function HouseholdSection({
   const [country, setCountry] = useState((household.country ?? "PT").toUpperCase());
   const [adults, setAdults] = useState(Number(household.adults ?? 2));
   const [children, setChildren] = useState(Number(household.children ?? 0));
+  const [employees, setEmployees] = useState(Number(household.employees ?? 0));
   const [currency, setCurrency] = useState<"EUR" | "USD" | "GBP">(
     (String(household.currency ?? "EUR").toUpperCase() as "EUR" | "USD" | "GBP") ?? "EUR",
   );
@@ -457,8 +459,12 @@ function HouseholdSection({
         data: {
           household_id: household.id,
           country: country.toUpperCase().slice(0, 2),
-          adults: Math.max(1, Math.round(adults)),
-          children: Math.max(0, Math.round(children)),
+          ...(isBusiness
+            ? { employees: Math.max(0, Math.round(employees)) }
+            : {
+                adults: Math.max(1, Math.round(adults)),
+                children: Math.max(0, Math.round(children)),
+              }),
         },
       });
       toast.success(t("hh.savedToast"));
@@ -498,7 +504,7 @@ function HouseholdSection({
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>{t("hh.name")}</Label>
+            <Label>{t(isBusiness ? "hh.nameBiz" : "hh.name")}</Label>
             <div className="flex gap-2">
               <Input value={name} onChange={(e) => setName(e.target.value)} />
               <Button onClick={saveName} variant="outline">
@@ -617,10 +623,11 @@ function HouseholdSection({
         <div className="rounded-lg border p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-sm">Household profile</div>
+              <div className="font-medium text-sm">
+                {t(isBusiness ? "hh.profileBiz" : "hh.profile")}
+              </div>
               <div className="text-xs text-muted-foreground">
-                Used to compare your finances against national benchmarks (public reference data,
-                never other users&apos; data).
+                {t(isBusiness ? "hh.profileHintBiz" : "hh.profileHint")}
               </div>
             </div>
             <Button onClick={saveProfile} variant="outline" size="sm">
@@ -629,7 +636,7 @@ function HouseholdSection({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <Label>Country (ISO)</Label>
+              <Label>{t("hh.country")}</Label>
               <Input
                 value={country}
                 maxLength={2}
@@ -637,24 +644,38 @@ function HouseholdSection({
                 placeholder="PT"
               />
             </div>
-            <div>
-              <Label>Adults</Label>
-              <Input
-                type="number"
-                min={1}
-                value={adults}
-                onChange={(e) => setAdults(Number(e.target.value))}
-              />
-            </div>
-            <div>
-              <Label>Children (under 14)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={children}
-                onChange={(e) => setChildren(Number(e.target.value))}
-              />
-            </div>
+            {isBusiness ? (
+              <div>
+                <Label>{t("hh.employees")}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={employees}
+                  onChange={(e) => setEmployees(Number(e.target.value))}
+                />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label>{t("hh.adults")}</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={adults}
+                    onChange={(e) => setAdults(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label>{t("hh.children")}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={children}
+                    onChange={(e) => setChildren(Number(e.target.value))}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="rounded-lg border bg-muted/30 p-4 space-y-2">

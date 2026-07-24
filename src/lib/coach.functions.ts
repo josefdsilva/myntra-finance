@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
-import { computeCycle } from "@/lib/cycle";
+import { cycleFor, computeTimeCycle, cycleConfigForSpace } from "@/lib/cycle";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { addMonths } from "date-fns";
@@ -205,7 +205,9 @@ type CoachContext = {
 async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
     .from("households")
-    .select("currency, baseline_budget, margin_pct, country, adults, children")
+    .select(
+      "currency, baseline_budget, margin_pct, country, adults, children, kind, cycle, cycle_mode, cycle_anchor_date",
+    )
     .eq("id", householdId)
     .maybeSingle();
 
@@ -218,12 +220,22 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     .limit(6);
 
   const salaryDatesDesc = rowsOrEmpty<SalaryRow>(salaryRows).map((r) => r.occurred_at);
-  const cycle = computeCycle(salaryDatesDesc);
+  const cycleCfg = cycleConfigForSpace(hh);
+  const cycle = cycleFor(cycleCfg, salaryDatesDesc);
 
   // Previous cycle bounds
   let prevStart: Date | null = null;
   let prevEnd: Date | null = null;
-  if (salaryDatesDesc.length >= 2) {
+  if (cycleCfg.mode === "time") {
+    // The fixed period immediately before the current one.
+    const prev = computeTimeCycle(
+      cycleCfg.length,
+      cycleCfg.anchorDate,
+      new Date(cycle.start.getTime() - 86400000),
+    );
+    prevStart = prev.start;
+    prevEnd = prev.end; // equals the current cycle's start
+  } else if (salaryDatesDesc.length >= 2) {
     prevEnd = new Date(salaryDatesDesc[0]);
     prevStart = new Date(salaryDatesDesc[1]);
   }

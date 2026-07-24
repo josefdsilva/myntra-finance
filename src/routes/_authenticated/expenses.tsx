@@ -30,7 +30,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
-import { computeCycle } from "@/lib/cycle";
+import { computeCycle, computeTimeCycle, cycleFor, cycleConfigForSpace } from "@/lib/cycle";
 
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2, Paperclip } from "lucide-react";
@@ -100,9 +100,24 @@ function ExpensesPage() {
     },
   });
 
+  const cycleConfig = cycleConfigForSpace(hh?.household);
   // Compute cycle bounds for the selected offset (0 = current, -1 previous, +1 next predicted)
   const cycle = useMemo(() => {
     const list = salaries ?? [];
+    // Time-driven spaces step by fixed calendar periods, not salary events.
+    if (cycleConfig.mode === "time") {
+      const base = cycleFor(cycleConfig, list);
+      if (cycleOffset === 0) return base;
+      const probe = new Date(base.start);
+      if (cycleConfig.length === "weekly") {
+        probe.setDate(probe.getDate() + cycleOffset * 7);
+      } else {
+        const pm =
+          cycleConfig.length === "monthly" ? 1 : cycleConfig.length === "quarterly" ? 3 : 12;
+        probe.setMonth(probe.getMonth() + cycleOffset * pm);
+      }
+      return computeTimeCycle(cycleConfig.length, cycleConfig.anchorDate, probe);
+    }
     if (cycleOffset === 0) return computeCycle(list);
     if (cycleOffset < 0) {
       // Historic cycle: between salary[i] (start) and salary[i-1] (end)
@@ -128,7 +143,8 @@ function ExpensesPage() {
     const end = new Date(base.end);
     end.setMonth(end.getMonth() + cycleOffset);
     return { ...base, start, end, predicted: true };
-  }, [salaries, cycleOffset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [salaries, cycleOffset, cycleConfig.mode, cycleConfig.length, cycleConfig.anchorDate]);
 
   const { data: rows, refetch } = useQuery({
     enabled: !!householdId && !!cycle,
