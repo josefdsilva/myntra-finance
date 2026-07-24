@@ -195,7 +195,7 @@ function CashflowPage() {
             <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t("cashflow.actualSection")}
             </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <SummaryStat
                 label={t("cashflow.realIn")}
                 value={money(actualIn)}
@@ -207,13 +207,13 @@ function CashflowPage() {
                 value={money(actualOut)}
                 suffix=""
                 info={t("cashflow.info.realOut")}
-              />
-              <SummaryStat
-                label={t("cashflow.gap")}
-                value={`${gap >= 0 ? "+" : "−"}${money(Math.abs(gap))}`}
-                suffix=""
-                tone={gap > 0 ? "bad" : "good"}
-                info={t("cashflow.info.gap")}
+                breakdown={[
+                  {
+                    label: t("cashflow.gap"),
+                    value: `${gap >= 0 ? "+" : "−"}${money(Math.abs(gap))}`,
+                    tone: gap > 0 ? "bad" : "good",
+                  },
+                ]}
               />
               <SummaryStat
                 label={t("cashflow.netReal")}
