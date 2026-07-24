@@ -58,10 +58,13 @@ type DialogState = {
   dir: Dir;
   lineId: string;
   label: string;
-  occStartISO: string;
+  date: string; // yyyy-mm-dd of the payment (defaults to the occurrence)
   amount: string;
   targetId: string | null; // settlement id (out) or expense id (in) once created
 };
+
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 /**
  * Committed lines expected this cycle: recurring income and fixed costs.
@@ -203,13 +206,13 @@ export function CommittedThisCycle({
       dir,
       lineId: line.id,
       label: line.label,
-      occStartISO: occStart.toISOString(),
+      date: ymd(occStart),
       amount: expected.toFixed(2),
       targetId: null,
     });
   }
   function openAttach(dir: Dir, label: string, targetId: string) {
-    setDialog({ dir, lineId: "", label, occStartISO: "", amount: "", targetId });
+    setDialog({ dir, lineId: "", label, date: "", amount: "", targetId });
   }
 
   async function confirmMark() {
@@ -219,6 +222,9 @@ export function CommittedThisCycle({
       toast.error(dialog.dir === "in" ? t("ledger.recordFailed") : t("ledger.payFailed"));
       return;
     }
+    // Record at local noon of the chosen day so it lands on that calendar date
+    // regardless of timezone.
+    const occurredAt = new Date(`${dialog.date}T12:00:00`).toISOString();
     setSaving(true);
     try {
       let id: string | undefined;
@@ -228,7 +234,7 @@ export function CommittedThisCycle({
             household_id: householdId,
             income_id: dialog.lineId,
             amount,
-            occurred_at: dialog.occStartISO,
+            occurred_at: occurredAt,
           },
         })) as { id: string } | null;
         id = row?.id;
@@ -239,7 +245,7 @@ export function CommittedThisCycle({
             household_id: householdId,
             fixed_expense_id: dialog.lineId,
             amount,
-            occurred_at: dialog.occStartISO,
+            occurred_at: occurredAt,
           },
         })) as { id: string } | null;
         id = row?.id;
@@ -392,6 +398,14 @@ export function CommittedThisCycle({
                   value={dialog.amount}
                   onChange={(e) => setDialog({ ...dialog, amount: e.target.value })}
                   autoFocus
+                />
+              </div>
+              <div>
+                <Label>{t("ledger.dateLabel")}</Label>
+                <Input
+                  type="date"
+                  value={dialog.date}
+                  onChange={(e) => setDialog({ ...dialog, date: e.target.value })}
                 />
               </div>
               <DialogFooter>

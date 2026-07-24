@@ -19,7 +19,7 @@ import {
 import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { markSalaryReceived } from "@/lib/budget.functions";
+import { markSalaryReceived, markIncomeReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { DashboardTips } from "@/components/dashboard-tips";
@@ -618,11 +618,31 @@ function SalaryReceivedButton({
   const t = useT();
   const qc = useQueryClient();
   const mark = useServerFn(markSalaryReceived);
+  const markIncome = useServerFn(markIncomeReceived);
   const [loading, setLoading] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestAmount, setSuggestAmount] = useState(0);
   // Don't re-trigger if a salary was already recorded within the last 5 days
   const recentlyReceived = lastSalaryAt && Date.now() - lastSalaryAt.getTime() < 5 * 86400_000;
+
+  // The income this button reconciles: the cycle anchor, else the first salary,
+  // else the first income. Marking it links the receipt to that income so the
+  // cashflow ledger shows it received (no separate, unlinked salary receipt).
+  const { data: primaryIncomeId } = useQuery({
+    queryKey: ["primary-income", householdId],
+    queryFn: async () => {
+      const [{ data: hh }, { data: incs }] = await Promise.all([
+        supabase.from("households").select("cycle_anchor_income_id").eq("id", householdId).maybeSingle(),
+        supabase.from("incomes").select("id, type").eq("household_id", householdId).order("created_at"),
+      ]);
+      const list = incs ?? [];
+      const anchor = hh?.cycle_anchor_income_id
+        ? list.find((i) => i.id === hh.cycle_anchor_income_id)
+        : null;
+      const salary = list.find((i) => i.type === "salary");
+      return (anchor?.id ?? salary?.id ?? list[0]?.id ?? null) as string | null;
+    },
+  });
 
   async function onClick() {
     if (recentlyReceived) {
@@ -633,11 +653,16 @@ function SalaryReceivedButton({
     }
     setLoading(true);
     try {
-      const row = await mark({ data: { household_id: householdId } });
+      // Prefer the linked per-income path; fall back to the aggregate only when
+      // no income is configured yet (which surfaces the right error).
+      const row = primaryIncomeId
+        ? await markIncome({ data: { household_id: householdId, income_id: primaryIncomeId } })
+        : await mark({ data: { household_id: householdId } });
       toast.success(t("dashboard.salary.recordedToast"));
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["salaries"] });
       qc.invalidateQueries({ queryKey: ["expenses-list"] });
+      qc.invalidateQueries({ queryKey: ["cycle-committed"] });
       onDone();
       const amt = Number(row?.amount ?? 0);
       if (amt > 0) {
