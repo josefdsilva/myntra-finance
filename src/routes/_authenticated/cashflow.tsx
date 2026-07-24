@@ -248,7 +248,7 @@ function CashflowPage() {
 
       {/* Planned lens: dated one-offs and the forward forecast, fully in-hub. */}
       {lens === "planned" && householdId && (
-        <PlanPanel householdId={householdId} baseline={baseline} />
+        <PlanPanel householdId={householdId} baseline={baseline} isBusiness={isBusiness} />
       )}
     </div>
   );

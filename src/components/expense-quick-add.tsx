@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Mic, MicOff, Sparkles, Plus, Loader2, Camera, X } from "lucide-react";
+import { Mic, MicOff, Sparkles, Plus, Loader2, Camera, X, Paperclip } from "lucide-react";
 import { parseMemo, parseVoiceMemo, parseReceiptPhoto } from "@/lib/ai-parse.functions";
 import { addExpense, addExpensesBulk } from "@/lib/budget.functions";
+import { addInvoice } from "@/lib/invoices.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 import { money, fmtDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n";
@@ -122,6 +124,9 @@ export function ExpenseQuickAdd({
 
 function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const add = useServerFn(addExpense);
+  const addInv = useServerFn(addInvoice);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const { names: hhCats } = useCategoryNames(householdId);
   const { data: recentLabels = [] } = useRecentLabels(householdId);
   const categories = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
@@ -151,7 +156,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     try {
       const occurredIso =
         customDate && occurredAt ? new Date(occurredAt).toISOString() : new Date().toISOString();
-      await add({
+      const row = (await add({
         data: {
           household_id: householdId,
           amount: n,
@@ -164,11 +169,38 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           occurred_at: occurredIso,
           labels,
         },
-      });
+      })) as { id: string } | null;
+      // Attach any invoices/receipts picked at record time to the new expense.
+      if (files.length && row?.id) {
+        for (const file of files) {
+          try {
+            const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const path = `${householdId}/${crypto.randomUUID()}/${safe}`;
+            const { error: upErr } = await supabase.storage
+              .from("invoices")
+              .upload(path, file, { contentType: file.type || undefined });
+            if (upErr) throw upErr;
+            await addInv({
+              data: {
+                household_id: householdId,
+                expense_id: row.id,
+                path,
+                file_name: file.name,
+                mime_type: file.type || null,
+                size_bytes: file.size,
+              },
+            });
+          } catch {
+            toast.error(t("inv.failed"));
+          }
+        }
+      }
       setAmount("");
       setMerchant("");
       setNote("");
       setLabels([]);
+      setFiles([]);
+      if (fileRef.current) fileRef.current.value = "";
       setCustomDate(false);
       setOccurredAt(nowLocal());
       toast.success(
@@ -296,6 +328,32 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           <div className="md:col-span-4">
             <Label>{t("expQuick.labelsLabel")}</Label>
             <LabelsInput value={labels} onChange={setLabels} suggestions={recentLabels} />
+          </div>
+          <div className="md:col-span-4">
+            <Label>{t("inv.attachOptional")}</Label>
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/heic,image/webp,application/pdf"
+                multiple
+                className="hidden"
+                onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileRef.current?.click()}
+              >
+                <Paperclip className="size-4" /> {t("inv.attach")}
+              </Button>
+              {files.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {t("inv.selectedCount", { count: files.length })}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </form>

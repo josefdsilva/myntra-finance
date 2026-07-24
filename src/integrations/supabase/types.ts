@@ -1185,6 +1185,67 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expense_id: string | null
+          file_name: string | null
+          household_id: string
+          id: string
+          mime_type: string | null
+          path: string
+          plan_id: string | null
+          size_bytes: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          file_name?: string | null
+          household_id: string
+          id?: string
+          mime_type?: string | null
+          path: string
+          plan_id?: string | null
+          size_bytes?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          file_name?: string | null
+          household_id?: string
+          id?: string
+          mime_type?: string | null
+          path?: string
+          plan_id?: string | null
+          size_bytes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_rules: {
         Row: {
           category: string
