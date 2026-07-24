@@ -1,3 +1,5 @@
+import { ENTRIES } from "./i18n-entries";
+
 export const SUPPORTED_LOCALES = ["en", "pt", "es", "de", "fr"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
@@ -616,7 +618,7 @@ const en = {
   "tips.planFund.detail": "{label} is {amount} in {month} and bigger than one month's leftover. A project would spread it out.",
   "tips.planFund.chat": "Help me set up a project to save for {label}.",
   "tips.cta.addIncome": "Add income",
-  "tips.cta.createBucket": "Create bucket",
+  "tips.cta.createBucket": "Create project",
   "tips.cta.reviewBaseline": "Review baseline",
   "tips.cta.rebalance": "Rebalance",
   "tips.cta.allocate": "Allocate",
@@ -625,7 +627,7 @@ const en = {
   "tips.cta.reviewEstimates": "Review estimates",
   "tips.cta.adjustEstimates": "Adjust estimates",
   "tips.cta.addEstimates": "Add estimates",
-  "tips.cta.manageBuckets": "Manage buckets",
+  "tips.cta.manageBuckets": "Manage projects",
   "tips.cta.review": "Review",
   "tips.cta.adjustGoal": "Adjust goal",
   "tips.noBaseline.title": "Set your monthly baseline budget",
@@ -1486,9 +1488,12 @@ const en = {
 } as const;
 
 
-export type MessageKey = keyof typeof en;
+// Legacy per-locale blocks below are keyed by BaseKey; the public MessageKey
+// also includes the key-first ENTRIES so both sources are fully typed.
+type BaseKey = keyof typeof en;
+export type MessageKey = BaseKey | keyof typeof ENTRIES;
 
-const pt: Record<MessageKey, string> = {
+const pt: Record<BaseKey, string> = {
   "nav.dashboard": "Painel",
   "nav.moneyIn": "Rendimentos",
   "moneyIn.title": "Rendimentos",
@@ -2076,7 +2081,7 @@ const pt: Record<MessageKey, string> = {
   "tips.planFund.detail": "{label} é {amount} em {month} e maior do que a sobra de um mês. Um projeto ajudaria a diluir.",
   "tips.planFund.chat": "Ajuda-me a criar um projeto para poupar para {label}.",
   "tips.cta.addIncome": "Adicionar rendimento",
-  "tips.cta.createBucket": "Criar balde",
+  "tips.cta.createBucket": "Criar projeto",
   "tips.cta.reviewBaseline": "Rever base",
   "tips.cta.rebalance": "Reequilibrar",
   "tips.cta.allocate": "Alocar",
@@ -2085,7 +2090,7 @@ const pt: Record<MessageKey, string> = {
   "tips.cta.reviewEstimates": "Rever estimativas",
   "tips.cta.adjustEstimates": "Ajustar estimativas",
   "tips.cta.addEstimates": "Adicionar estimativas",
-  "tips.cta.manageBuckets": "Gerir baldes",
+  "tips.cta.manageBuckets": "Gerir projetos",
   "tips.cta.review": "Rever",
   "tips.cta.adjustGoal": "Ajustar objetivo",
   "tips.noBaseline.title": "Defina o seu orçamento base mensal",
@@ -2949,7 +2954,7 @@ const pt: Record<MessageKey, string> = {
   "payoff.openButton": "Simular cenários de antecipação",
 };
 
-const es: Record<MessageKey, string> = {
+const es: Record<BaseKey, string> = {
   "nav.dashboard": "Panel",
   "nav.moneyIn": "Ingresos",
   "moneyIn.title": "Ingresos",
@@ -3535,7 +3540,7 @@ const es: Record<MessageKey, string> = {
   "tips.planFund.detail": "{label} son {amount} en {month} y más que el sobrante de un mes. Un proyecto ayudaría a repartirlo.",
   "tips.planFund.chat": "Ayúdame a crear un proyecto para ahorrar para {label}.",
   "tips.cta.addIncome": "Añadir ingreso",
-  "tips.cta.createBucket": "Crear cubo",
+  "tips.cta.createBucket": "Crear proyecto",
   "tips.cta.reviewBaseline": "Revisar base",
   "tips.cta.rebalance": "Reequilibrar",
   "tips.cta.allocate": "Asignar",
@@ -3544,7 +3549,7 @@ const es: Record<MessageKey, string> = {
   "tips.cta.reviewEstimates": "Revisar estimaciones",
   "tips.cta.adjustEstimates": "Ajustar estimaciones",
   "tips.cta.addEstimates": "Añadir estimaciones",
-  "tips.cta.manageBuckets": "Gestionar cubos",
+  "tips.cta.manageBuckets": "Gestionar proyectos",
   "tips.cta.review": "Revisar",
   "tips.cta.adjustGoal": "Ajustar meta",
   "tips.noBaseline.title": "Defina su presupuesto base mensual",
@@ -4409,7 +4414,7 @@ const es: Record<MessageKey, string> = {
   "payoff.openButton": "Simular escenarios de anticipo",
 };
 
-const de: Record<MessageKey, string> = {
+const de: Record<BaseKey, string> = {
   "nav.dashboard": "Übersicht",
   "nav.moneyIn": "Einnahmen",
   "moneyIn.title": "Einnahmen",
@@ -4997,7 +5002,7 @@ const de: Record<MessageKey, string> = {
   "tips.planFund.detail": "{label} sind {amount} im {month} und größer als der Rest eines Monats. Ein Projekt würde es verteilen.",
   "tips.planFund.chat": "Hilf mir, ein Projekt zum Sparen für {label} einzurichten.",
   "tips.cta.addIncome": "Einkommen hinzufügen",
-  "tips.cta.createBucket": "Topf erstellen",
+  "tips.cta.createBucket": "Projekt erstellen",
   "tips.cta.reviewBaseline": "Grundbudget prüfen",
   "tips.cta.rebalance": "Neu ausbalancieren",
   "tips.cta.allocate": "Zuweisen",
@@ -5006,7 +5011,7 @@ const de: Record<MessageKey, string> = {
   "tips.cta.reviewEstimates": "Schätzungen prüfen",
   "tips.cta.adjustEstimates": "Schätzungen anpassen",
   "tips.cta.addEstimates": "Schätzungen hinzufügen",
-  "tips.cta.manageBuckets": "Töpfe verwalten",
+  "tips.cta.manageBuckets": "Projekte verwalten",
   "tips.cta.review": "Prüfen",
   "tips.cta.adjustGoal": "Ziel anpassen",
   "tips.noBaseline.title": "Legen Sie Ihr monatliches Grundbudget fest",
@@ -5877,7 +5882,7 @@ const de: Record<MessageKey, string> = {
   "payoff.openButton": "Sondertilgungs-Szenarien simulieren",
 };
 
-const fr: Record<MessageKey, string> = {
+const fr: Record<BaseKey, string> = {
   "nav.dashboard": "Tableau de bord",
   "nav.moneyIn": "Revenus",
   "moneyIn.title": "Revenus",
@@ -6465,7 +6470,7 @@ const fr: Record<MessageKey, string> = {
   "tips.planFund.detail": "{label} représente {amount} en {month}, plus que le reste d'un mois. Un projet permettrait de l'étaler.",
   "tips.planFund.chat": "Aide-moi à créer un projet pour épargner pour {label}.",
   "tips.cta.addIncome": "Ajouter un revenu",
-  "tips.cta.createBucket": "Créer un panier",
+  "tips.cta.createBucket": "Créer un projet",
   "tips.cta.reviewBaseline": "Revoir la base",
   "tips.cta.rebalance": "Rééquilibrer",
   "tips.cta.allocate": "Répartir",
@@ -7345,4 +7350,16 @@ const fr: Record<MessageKey, string> = {
   "payoff.openButton": "Simuler des scénarios d'anticipation",
 };
 
-export const messages: Record<Locale, Record<MessageKey, string>> = { en, pt, es, de, fr };
+// Merge the legacy per-locale blocks with the key-first ENTRIES. ENTRIES keys
+// win if they ever collide, so a string can be migrated by adding it to ENTRIES.
+const base: Record<Locale, Record<string, string>> = {
+  en: { ...en },
+  pt: { ...pt },
+  es: { ...es },
+  de: { ...de },
+  fr: { ...fr },
+};
+for (const [key, byLocale] of Object.entries(ENTRIES) as [string, Record<Locale, string>][]) {
+  for (const loc of SUPPORTED_LOCALES) base[loc][key] = byLocale[loc];
+}
+export const messages = base as Record<Locale, Record<MessageKey, string>>;

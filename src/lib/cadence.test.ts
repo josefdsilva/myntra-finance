@@ -1,6 +1,43 @@
 // Run with: bun test src/lib/cadence.test.ts
 import { test, expect } from "bun:test";
-import { reconcileOccurrences, stepCadence } from "./cadence";
+import {
+  reconcileOccurrences,
+  stepCadence,
+  monthlyEquivalent,
+  perCycleFromMonthly,
+  cycleForSpace,
+  defaultCycleForKind,
+} from "./cadence";
+
+test("monthlyEquivalent normalises native amounts to a monthly figure", () => {
+  expect(monthlyEquivalent(1000, "monthly")).toBe(1000);
+  expect(monthlyEquivalent(1200, "yearly")).toBe(100);
+  expect(monthlyEquivalent(300, "quarterly")).toBe(100);
+  expect(monthlyEquivalent(100, "weekly")).toBe(433.33); // 100 * 52/12
+  expect(monthlyEquivalent(100, "fortnightly")).toBe(216.67); // 100 * 26/12
+});
+
+test("perCycleFromMonthly expresses a monthly figure in the cycle period", () => {
+  expect(perCycleFromMonthly(100, "monthly")).toBe(100);
+  expect(perCycleFromMonthly(100, "quarterly")).toBe(300);
+  expect(perCycleFromMonthly(100, "yearly")).toBe(1200);
+  expect(perCycleFromMonthly(100, "weekly")).toBe(23.08); // 100 / (52/12)
+});
+
+test("monthlyEquivalent and perCycleFromMonthly round-trip for the same period", () => {
+  // weekly native -> monthly -> weekly should return close to the native amount.
+  const back = perCycleFromMonthly(monthlyEquivalent(100, "weekly"), "weekly");
+  expect(Math.abs(back - 100)).toBeLessThan(0.01);
+});
+
+test("cycle defaults by space kind", () => {
+  expect(defaultCycleForKind("business")).toBe("quarterly");
+  expect(defaultCycleForKind("personal")).toBe("monthly");
+  expect(cycleForSpace({ cycle: "yearly", kind: "business" })).toBe("yearly");
+  expect(cycleForSpace({ kind: "business" })).toBe("quarterly"); // falls back to kind default
+  expect(cycleForSpace({ cycle: "nonsense", kind: "personal" })).toBe("monthly"); // invalid -> default
+  expect(cycleForSpace(null)).toBe("monthly");
+});
 
 const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
