@@ -14,6 +14,7 @@ import {
 import { upsertPlan } from "@/lib/plan.functions";
 import { upsertAsset, ASSET_KINDS } from "@/lib/assets.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
+import { CYCLES, type Cycle } from "@/lib/cadence";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +68,7 @@ const COUNTRIES = [
 const STEPS = [
   "welcome",
   "country",
+  "cycle",
   "household",
   "income",
   "fixed",
@@ -121,10 +123,17 @@ function Wizard({
   const [country, setCountry] = useState(initialCountry);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
+  const [cycleLen, setCycleLen] = useState<Cycle>("quarterly");
+  const [fiscalStart, setFiscalStart] = useState("");
 
   const isBusiness = kind === "business";
-  // A business space skips the household (adults/children) demographics step.
-  const steps = STEPS.filter((s) => s !== "household" || kind !== "business");
+  // A business space skips the household (adults/children) demographics step but
+  // gets a fiscal-cycle step instead; personal spaces are the reverse (their
+  // cycle is payday-driven, so there's nothing to configure).
+  const steps = STEPS.filter(
+    (s) =>
+      (s !== "household" || !isBusiness) && (s !== "cycle" || isBusiness),
+  );
   const key = steps[step];
   const isLast = step === steps.length - 1;
 
@@ -132,6 +141,15 @@ function Wizard({
     setBusy(true);
     try {
       if (key === "country") await updateHh({ data: { household_id: householdId, country } });
+      if (key === "cycle")
+        await updateHh({
+          data: {
+            household_id: householdId,
+            cycle_mode: "time",
+            cycle: cycleLen,
+            cycle_anchor_date: fiscalStart || null,
+          },
+        });
       if (key === "household")
         await updateHh({ data: { household_id: householdId, adults, children } });
       qc.invalidateQueries();
@@ -172,6 +190,14 @@ function Wizard({
           {key === "welcome" && <Welcome isBusiness={isBusiness} />}
           {key === "country" && (
             <CountryStep country={country} setCountry={setCountry} isBusiness={isBusiness} />
+          )}
+          {key === "cycle" && (
+            <CycleStep
+              cycleLen={cycleLen}
+              setCycleLen={setCycleLen}
+              fiscalStart={fiscalStart}
+              setFiscalStart={setFiscalStart}
+            />
           )}
           {key === "household" && (
             <HouseholdStep
@@ -268,6 +294,51 @@ function CountryStep({ country, setCountry, isBusiness }: { country: string; set
           ))}
         </SelectContent>
       </Select>
+    </div>
+  );
+}
+
+function CycleStep({
+  cycleLen,
+  setCycleLen,
+  fiscalStart,
+  setFiscalStart,
+}: {
+  cycleLen: Cycle;
+  setCycleLen: (v: Cycle) => void;
+  fiscalStart: string;
+  setFiscalStart: (v: string) => void;
+}) {
+  const t = useT();
+  return (
+    <div>
+      <StepHead icon={CalendarClock} title={t("ob.cycle.title")} subtitle={t("ob.cycle.subtitle")} />
+      <div className="space-y-4">
+        <div>
+          <Label>{t("ob.cycle.lengthLabel")}</Label>
+          <Select value={cycleLen} onValueChange={(v) => setCycleLen(v as Cycle)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CYCLES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {t(`cadence.${c}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>{t("ob.cycle.fiscalLabel")}</Label>
+          <Input
+            type="date"
+            value={fiscalStart}
+            onChange={(e) => setFiscalStart(e.target.value)}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">{t("ob.cycle.fiscalHint")}</p>
+        </div>
+      </div>
     </div>
   );
 }

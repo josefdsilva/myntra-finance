@@ -299,22 +299,27 @@ export const WIKI_SECTIONS: WikiSection[] = [
       [
         "A pay cycle runs from one payday to the day before the next. It matches how most people actually feel their money — pay-to-pay, not calendar month to calendar month.",
         "Every number in the app resets each cycle. The dashboard always answers 'today, in this cycle', so today's decisions come from today's reality.",
+        "Not everyone lives payday to payday. A business usually thinks in fixed periods — a month, quarter, or fiscal year that starts on a set date. In Settings you can switch a space to a fixed-period cycle and set when its financial year begins (say 1 April), so its quarters line up with the books instead of a paycheque. A payday space starts each cycle when you mark a salary received; a fixed-period space just rolls over on the calendar.",
       ],
       [
         "Um ciclo salarial vai de um pagamento até ao dia anterior ao seguinte. É como a maioria das pessoas sente o dinheiro — de salário em salário, não de mês a mês do calendário.",
         "Todos os números da app são reiniciados a cada ciclo. O painel responde sempre 'hoje, neste ciclo', para que as decisões de hoje partam da realidade de hoje.",
+        "Nem toda a gente vive de salário em salário. Uma empresa costuma pensar em períodos fixos — um mês, trimestre ou ano fiscal que começa numa data definida. Nas Definições podes mudar um espaço para um ciclo de período fixo e definir quando começa o ano financeiro (por exemplo 1 de abril), para que os trimestres coincidam com a contabilidade em vez de um salário. Um espaço por salário inicia cada ciclo quando marcas um salário como recebido; um de período fixo avança sozinho pelo calendário.",
       ],
       [
         "Un ciclo de cobro va de un día de pago al día anterior al siguiente. Coincide con cómo la mayoría vive el dinero — de nómina a nómina, no de mes natural.",
         "Todos los números se reinician cada ciclo. El panel responde siempre 'hoy, en este ciclo' para que las decisiones partan de la realidad de hoy.",
+        "No todo el mundo vive de nómina a nómina. Una empresa suele pensar en períodos fijos — un mes, trimestre o año fiscal que empieza en una fecha concreta. En Ajustes puedes cambiar un espacio a un ciclo de período fijo y fijar cuándo empieza su año financiero (por ejemplo el 1 de abril), para que los trimestres cuadren con la contabilidad y no con una nómina. Un espacio por nómina inicia cada ciclo cuando marcas una nómina como recibida; uno de período fijo avanza solo con el calendario.",
       ],
       [
         "Ein Gehaltszyklus läuft von einem Zahltag bis zum Tag vor dem nächsten. Das passt zum Alltag der meisten Menschen — Gehalt zu Gehalt, nicht Kalendermonat zu Kalendermonat.",
         "Alle Zahlen werden jeden Zyklus zurückgesetzt. Das Dashboard antwortet immer 'heute, in diesem Zyklus', damit heutige Entscheidungen aus der heutigen Realität kommen.",
+        "Nicht alle leben von Gehalt zu Gehalt. Ein Unternehmen denkt meist in festen Perioden — einem Monat, Quartal oder Geschäftsjahr, das an einem festen Datum beginnt. In den Einstellungen kannst du einen Space auf einen Zyklus mit fester Periode umstellen und festlegen, wann sein Geschäftsjahr beginnt (etwa 1. April), damit die Quartale zur Buchhaltung statt zu einem Gehalt passen. Ein Gehalts-Space startet jeden Zyklus, wenn du ein Gehalt als erhalten markierst; ein Space mit fester Periode wechselt einfach über den Kalender.",
       ],
       [
         "Un cycle de paie va d'une paie à la veille de la suivante. C'est ainsi que la plupart des gens ressentent leur argent — de paie à paie, pas de mois calendaire à mois calendaire.",
         "Tous les chiffres sont remis à zéro à chaque cycle. Le tableau de bord répond toujours « aujourd'hui, dans ce cycle », pour partir de la réalité du jour.",
+        "On ne vit pas tous de paie en paie. Une entreprise raisonne souvent en périodes fixes — un mois, un trimestre ou un exercice fiscal qui commence à une date définie. Dans les Réglages, tu peux basculer un espace vers un cycle à période fixe et fixer le début de son exercice (par exemple le 1er avril), pour que les trimestres collent à la comptabilité plutôt qu'à une paie. Un espace « paie » démarre chaque cycle quand tu marques un salaire reçu ; un espace à période fixe avance tout seul avec le calendrier.",
       ],
     ),
     bullets: L(
