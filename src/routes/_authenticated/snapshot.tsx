@@ -16,7 +16,7 @@ import {
 } from "@/lib/household-queries";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
-import { computeCycle } from "@/lib/cycle";
+import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
 import { computeHealth, type Badge as BadgeKind } from "@/lib/health-score";
 import { pageShellClass } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,13 @@ function SnapshotPage() {
 
   const { data } = useQuery({
     enabled: !!householdId,
-    queryKey: ["snapshot", householdId],
+    queryKey: [
+      "snapshot",
+      householdId,
+      hh?.household?.cycle_mode,
+      hh?.household?.cycle,
+      hh?.household?.cycle_anchor_date,
+    ],
     queryFn: async () => {
       const [incomes, fixed, debts, buckets, { data: salaries }] = await Promise.all([
         qc.fetchQuery(incomesQuery(householdId!)),
@@ -59,7 +65,10 @@ function SnapshotPage() {
           .order("occurred_at", { ascending: false })
           .limit(6),
       ]);
-      const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
+      const cycle = cycleFor(
+        cycleConfigForSpace(hh?.household),
+        (salaries ?? []).map((r) => r.occurred_at as string),
+      );
       const [
         { data: allocs },
         { data: moves },

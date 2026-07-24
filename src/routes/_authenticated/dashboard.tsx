@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
-import { computeCycle } from "@/lib/cycle";
+import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
 import { leftoverObligation, monthKey, type Plan } from "@/lib/plan";
 import {
   bucketsQuery,
@@ -52,9 +52,16 @@ function Dashboard() {
     isLoading: dashboardLoading,
   } = useQuery({
     enabled: !!householdId,
-    queryKey: ["dashboard", householdId],
+    queryKey: [
+      "dashboard",
+      householdId,
+      hh?.household?.cycle_mode,
+      hh?.household?.cycle,
+      hh?.household?.cycle_anchor_date,
+    ],
     queryFn: async () => {
-      // 1) Detect cycle from salary income entries
+      // 1) Resolve the current cycle. Event spaces derive it from salary
+      // receipts (payday-driven); time spaces use a fixed fiscal period.
       const { data: salaries } = await supabase
         .from("expenses")
         .select("occurred_at")
@@ -63,7 +70,10 @@ function Dashboard() {
         .eq("is_salary", true)
         .order("occurred_at", { ascending: false })
         .limit(6);
-      const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
+      const cycle = cycleFor(
+        cycleConfigForSpace(hh?.household),
+        (salaries ?? []).map((r) => r.occurred_at as string),
+      );
 
       // Base reference tables come from the shared cache (fetched once per
       // screen and reused by the tips panel); only the cycle-scoped expenses
@@ -281,7 +291,9 @@ function Dashboard() {
     ? cycle.source === "salary"
       ? t("dashboard.cycle.pay", { start: fmtDate(cycle.start), end: fmtDate(cycle.end) }) +
         (cycle.predicted ? t("dashboard.cycle.predicted") : "")
-      : t("dashboard.cycle.calendar", { month: monthName })
+      : cycle.source === "time"
+        ? t("dashboard.cycle.period", { start: fmtDate(cycle.start), end: fmtDate(cycle.end) })
+        : t("dashboard.cycle.calendar", { month: monthName })
     : monthName;
 
   const isLoading = !hh || dashboardLoading || !dashboard;

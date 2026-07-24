@@ -31,7 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { format as fmt } from "date-fns";
-import { computeCycle } from "@/lib/cycle";
+import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
 import { BenchmarksCard } from "@/components/benchmarks-card";
 import { pageShellClass } from "@/components/page-shell";
@@ -267,7 +267,13 @@ function AnalysisPage() {
   // ---- Burndown (current pay cycle) ----
   const { data: cycleData } = useQuery({
     enabled: !!householdId,
-    queryKey: ["burndown-cycle", householdId],
+    queryKey: [
+      "burndown-cycle",
+      householdId,
+      hh?.household?.cycle_mode,
+      hh?.household?.cycle,
+      hh?.household?.cycle_anchor_date,
+    ],
     queryFn: async () => {
       const [{ data: salaries }, { data: buckets }, { data: incomesRows }] = await Promise.all([
         supabase
@@ -280,7 +286,10 @@ function AnalysisPage() {
         supabase.from("buckets").select("*").eq("household_id", householdId!),
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
       ]);
-      const cycle = computeCycle((salaries ?? []).map((r) => r.occurred_at as string));
+      const cycle = cycleFor(
+        cycleConfigForSpace(hh?.household),
+        (salaries ?? []).map((r) => r.occurred_at as string),
+      );
       const { data: cycleTx } = await supabase
         .from("expenses")
         .select("amount, occurred_at, kind, is_salary, category, note, merchant")
@@ -561,7 +570,8 @@ function AnalysisPage() {
           <CardHeader>
             <CardTitle>{t("ana.burndown.title")}</CardTitle>
             <CardDescription>
-              Pay cycle {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
+              {cycleData.cycle.source === "time" ? "Cycle" : "Pay cycle"}{" "}
+              {fmtDate(cycleData.cycle.start)} → {fmtDate(cycleData.cycle.end)}
               {cycleData.cycle.predicted ? " (predicted)" : ""} · starts at 0, jumps with salary,
               then fixed expenses ({money(fixedTotal)}) are reserved
             </CardDescription>

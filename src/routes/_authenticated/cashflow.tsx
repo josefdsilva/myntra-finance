@@ -17,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { money } from "@/lib/format";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
-import { computeCycle } from "@/lib/cycle";
+import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/cashflow")({
@@ -50,7 +50,13 @@ function CashflowPage() {
   // normalized to the household's chosen cycle before display.
   const { data: summary } = useQuery({
     enabled: !!householdId,
-    queryKey: ["cashflow-summary", householdId],
+    queryKey: [
+      "cashflow-summary",
+      householdId,
+      hh?.household?.cycle_mode,
+      hh?.household?.cycle,
+      hh?.household?.cycle_anchor_date,
+    ],
     queryFn: async () => {
       const [inc, fx, ve, db, salaries] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
@@ -72,7 +78,10 @@ function CashflowPage() {
       // Debt servicing is real recurring money out — the baseline already counts
       // it, so the cashflow roll-up must too, or "net" reads too rosy.
       const totalDebt = (db.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      const cycleBounds = computeCycle((salaries.data ?? []).map((r) => r.occurred_at as string));
+      const cycleBounds = cycleFor(
+        cycleConfigForSpace(hh?.household),
+        (salaries.data ?? []).map((r) => r.occurred_at as string),
+      );
       const { data: exps } = await supabase
         .from("expenses")
         .select("amount, kind")
