@@ -125,8 +125,10 @@ export function ExpenseQuickAdd({
 function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: () => void }) {
   const add = useServerFn(addExpense);
   const addInv = useServerFn(addInvoice);
+  const parsePhoto = useServerFn(parseReceiptPhoto);
   const fileRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [reading, setReading] = useState(false);
   const { names: hhCats } = useCategoryNames(householdId);
   const { data: recentLabels = [] } = useRecentLabels(householdId);
   const categories = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
@@ -147,6 +149,46 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestAmount, setSuggestAmount] = useState(0);
   const t = useT();
+
+  function toLocalInput(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return nowLocal();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  }
+
+  // When files are attached, auto-read the first *image* invoice with the same
+  // AI parser the Photo tab uses, and pre-fill the form for the user to review.
+  // PDFs still attach but aren't auto-read.
+  async function onPickFiles(list: FileList | null) {
+    const arr = Array.from(list ?? []);
+    setFiles(arr);
+    const img = arr.find((f) => f.type.startsWith("image/"));
+    if (!img) return;
+    setReading(true);
+    try {
+      const b64 = bufferToBase64(await img.arrayBuffer());
+      const res = await parsePhoto({
+        data: { image_base64: b64, mime_type: img.type, householdId },
+      });
+      const it = res.items?.[0];
+      if (it) {
+        if (it.amount) setAmount(String(it.amount));
+        if (it.category) setCategory(it.category);
+        if (it.merchant) setMerchant(it.merchant);
+        if (it.note) setNote(it.note);
+        if (it.occurred_at) {
+          setCustomDate(true);
+          setOccurredAt(toLocalInput(it.occurred_at));
+        }
+        toast.success(t("inv.autofilled"));
+      }
+    } catch (err) {
+      toast.error(humanError(err, t("inv.autofillFailed")));
+    } finally {
+      setReading(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -338,22 +380,29 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
                 accept="image/jpeg,image/png,image/heic,image/webp,application/pdf"
                 multiple
                 className="hidden"
-                onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                onChange={(e) => onPickFiles(e.target.files)}
               />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                disabled={reading}
                 onClick={() => fileRef.current?.click()}
               >
-                <Paperclip className="size-4" /> {t("inv.attach")}
+                {reading ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}{" "}
+                {t("inv.attach")}
               </Button>
-              {files.length > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {t("inv.selectedCount", { count: files.length })}
-                </span>
+              {reading ? (
+                <span className="text-xs text-muted-foreground">{t("inv.reading")}</span>
+              ) : (
+                files.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {t("inv.selectedCount", { count: files.length })}
+                  </span>
+                )
               )}
             </div>
+            <p className="mt-1 text-xs text-muted-foreground">{t("inv.autofillHint")}</p>
           </div>
         </div>
       </form>
