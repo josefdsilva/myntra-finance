@@ -914,6 +914,7 @@ export type Database = {
           created_at: string
           household_id: string
           id: string
+          income_id: string | null
           is_salary: boolean
           kind: Database["public"]["Enums"]["entry_kind"]
           labels: string[]
@@ -931,6 +932,7 @@ export type Database = {
           created_at?: string
           household_id: string
           id?: string
+          income_id?: string | null
           is_salary?: boolean
           kind?: Database["public"]["Enums"]["entry_kind"]
           labels?: string[]
@@ -948,6 +950,7 @@ export type Database = {
           created_at?: string
           household_id?: string
           id?: string
+          income_id?: string | null
           is_salary?: boolean
           kind?: Database["public"]["Enums"]["entry_kind"]
           labels?: string[]
@@ -963,6 +966,13 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_income_id_fkey"
+            columns: ["income_id"]
+            isOneToOne: false
+            referencedRelation: "incomes"
             referencedColumns: ["id"]
           },
         ]
