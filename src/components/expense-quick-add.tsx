@@ -163,13 +163,16 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   async function onPickFiles(list: FileList | null) {
     const arr = Array.from(list ?? []);
     setFiles(arr);
-    const img = arr.find((f) => f.type.startsWith("image/"));
-    if (!img) return;
+    // Auto-read the first image OR PDF invoice; the parser handles both.
+    const readable = arr.find(
+      (f) => f.type.startsWith("image/") || f.type === "application/pdf",
+    );
+    if (!readable) return;
     setReading(true);
     try {
-      const b64 = bufferToBase64(await img.arrayBuffer());
+      const b64 = bufferToBase64(await readable.arrayBuffer());
       const res = await parsePhoto({
-        data: { image_base64: b64, mime_type: img.type, householdId },
+        data: { image_base64: b64, mime_type: readable.type, householdId },
       });
       const it = res.items?.[0];
       if (it) {
