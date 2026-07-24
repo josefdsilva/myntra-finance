@@ -28,6 +28,35 @@ export async function fetchCycleBounds(
 }
 
 /**
+ * Same as fetchCycleBounds but for callers that don't already hold the household
+ * row: fetches the space config and the salary receipts in parallel, so there's
+ * no extra serial round-trip.
+ */
+export async function fetchCycleBoundsById(
+  sb: SupabaseClient,
+  householdId: string,
+  now?: Date,
+): Promise<CycleBounds> {
+  const [{ data: space }, { data: salaries }] = await Promise.all([
+    sb
+      .from("households")
+      .select("kind, cycle, cycle_mode, cycle_anchor_date")
+      .eq("id", householdId)
+      .maybeSingle(),
+    sb
+      .from("expenses")
+      .select("occurred_at")
+      .eq("household_id", householdId)
+      .eq("kind", "income")
+      .eq("is_salary", true)
+      .order("occurred_at", { ascending: false })
+      .limit(12),
+  ]);
+  const dates = ((salaries ?? []) as Array<{ occurred_at: string }>).map((r) => r.occurred_at);
+  return cycleFor(cycleConfigForSpace(space), dates, now);
+}
+
+/**
  * The cycle-config fields to fold into a React Query key so a query re-runs when
  * the space's cycle setup changes. Spread it: queryKey: ["x", id, ...cycleKeyPart(space)].
  */

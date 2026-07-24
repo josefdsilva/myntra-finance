@@ -45,13 +45,13 @@ function SnapshotPage() {
     enabled: !!householdId,
     queryKey: ["snapshot", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      const [incomes, fixed, debts, buckets] = await Promise.all([
+      const [incomes, fixed, debts, buckets, cycle] = await Promise.all([
         qc.fetchQuery(incomesQuery(householdId!)),
         qc.fetchQuery(fixedExpensesQuery(householdId!)),
         qc.fetchQuery(debtsQuery(householdId!)),
         qc.fetchQuery(bucketsQuery(householdId!)),
+        fetchCycleBounds(supabase, householdId!, hh?.household),
       ]);
-      const cycle = await fetchCycleBounds(supabase, householdId!, hh?.household);
       const [
         { data: allocs },
         { data: moves },

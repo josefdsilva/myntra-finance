@@ -52,11 +52,12 @@ function CashflowPage() {
     enabled: !!householdId,
     queryKey: ["cashflow-summary", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      const [inc, fx, ve, db] = await Promise.all([
+      const [inc, fx, ve, db, cycleBounds] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
+        fetchCycleBounds(supabase, householdId!, hh?.household),
       ]);
       const totalIn = (inc.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const totalFixed = (fx.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
@@ -64,7 +65,6 @@ function CashflowPage() {
       // Debt servicing is real recurring money out — the baseline already counts
       // it, so the cashflow roll-up must too, or "net" reads too rosy.
       const totalDebt = (db.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      const cycleBounds = await fetchCycleBounds(supabase, householdId!, hh?.household);
       const { data: exps } = await supabase
         .from("expenses")
         .select("amount, kind")

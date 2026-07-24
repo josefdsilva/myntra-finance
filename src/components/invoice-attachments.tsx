@@ -135,7 +135,13 @@ export function InvoiceAttachments({
                 <span className="truncate">{inv.file_name ?? t("inv.file")}</span>
               </span>
               <span className="flex shrink-0 items-center gap-1">
-                <Button size="icon" variant="ghost" className="size-7" onClick={() => view(inv.path)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  aria-label={t("inv.view")}
+                  onClick={() => view(inv.path)}
+                >
                   <Eye className="size-3.5" />
                 </Button>
                 <Button
@@ -143,6 +149,7 @@ export function InvoiceAttachments({
                   variant="ghost"
                   className="size-7 text-muted-foreground"
                   disabled={busy}
+                  aria-label={t("common.delete")}
                   onClick={() => remove(inv.id)}
                 >
                   <Trash2 className="size-3.5" />

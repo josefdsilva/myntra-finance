@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { adoptCategoryEstimate } from "@/lib/budget.functions";
 import { invalidateHouseholdData } from "@/lib/household-queries";
-import { fetchCycleBounds } from "@/lib/cycle-bounds";
+import { fetchCycleBoundsById } from "@/lib/cycle-bounds";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { money } from "@/lib/format";
@@ -28,18 +28,13 @@ export function SpendingVsEstimate({ householdId }: { householdId: string }) {
     enabled: !!householdId,
     queryKey: ["spending-vs-estimate", householdId],
     queryFn: async () => {
-      const [{ data: estimates }, { data: space }] = await Promise.all([
+      const [{ data: estimates }, cycle] = await Promise.all([
         supabase
           .from("variable_estimates")
           .select("category, monthly_amount")
           .eq("household_id", householdId),
-        supabase
-          .from("households")
-          .select("kind, cycle, cycle_mode, cycle_anchor_date")
-          .eq("id", householdId)
-          .maybeSingle(),
+        fetchCycleBoundsById(supabase, householdId),
       ]);
-      const cycle = await fetchCycleBounds(supabase, householdId, space);
       const { data: exps } = await supabase
         .from("expenses")
         .select("category, amount, kind")

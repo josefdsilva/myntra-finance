@@ -54,25 +54,22 @@ function Dashboard() {
     enabled: !!householdId,
     queryKey: ["dashboard", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      // Resolve the current cycle (event = payday-driven, time = fiscal period).
-      const cycle = await fetchCycleBounds(supabase, householdId!, hh?.household);
-
-      // Base reference tables come from the shared cache (fetched once per
-      // screen and reused by the tips panel); only the cycle-scoped expenses
-      // are specific to this query.
-      const [fixed, debts, incomes, buckets, { data: expenses }] = await Promise.all([
+      // Cycle bounds and the base reference tables are independent — resolve them
+      // in parallel. Only the cycle-scoped expenses query needs the bounds first.
+      const [cycle, fixed, debts, incomes, buckets] = await Promise.all([
+        fetchCycleBounds(supabase, householdId!, hh?.household),
         dashboardQc.fetchQuery(fixedExpensesQuery(householdId!)),
         dashboardQc.fetchQuery(debtsQuery(householdId!)),
         dashboardQc.fetchQuery(incomesQuery(householdId!)),
         dashboardQc.fetchQuery(bucketsQuery(householdId!)),
-        supabase
-          .from("expenses")
-          .select("id, amount, category, merchant, occurred_at, note, source, kind, is_salary")
-          .eq("household_id", householdId!)
-          .gte("occurred_at", cycle.start.toISOString())
-          .lt("occurred_at", cycle.end.toISOString())
-          .order("occurred_at", { ascending: false }),
       ]);
+      const { data: expenses } = await supabase
+        .from("expenses")
+        .select("id, amount, category, merchant, occurred_at, note, source, kind, is_salary")
+        .eq("household_id", householdId!)
+        .gte("occurred_at", cycle.start.toISOString())
+        .lt("occurred_at", cycle.end.toISOString())
+        .order("occurred_at", { ascending: false });
       const fixedTotal =
         fixed.reduce((s, r) => s + Number(r.monthly_amount), 0) +
         debts.reduce((s, r) => s + Number(r.monthly_amount), 0);

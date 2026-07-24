@@ -33,7 +33,7 @@ import {
   type Cycle,
   type Cadence,
 } from "@/lib/cadence";
-import { fetchCycleBounds } from "@/lib/cycle-bounds";
+import { fetchCycleBoundsById } from "@/lib/cycle-bounds";
 import {
   markIncomeReceived,
   markFixedExpensePaid,
@@ -94,7 +94,7 @@ export function CommittedThisCycle({
   const { data, refetch } = useQuery({
     queryKey: ["cycle-committed", householdId],
     queryFn: async () => {
-      const [fx, inc, db, space] = await Promise.all([
+      const [fx, inc, db, bounds] = await Promise.all([
         supabase
           .from("fixed_expenses")
           .select("id, label, cadence, native_amount, monthly_amount")
@@ -110,23 +110,36 @@ export function CommittedThisCycle({
           .select("id, label, monthly_amount")
           .eq("household_id", householdId)
           .order("created_at"),
-        supabase
-          .from("households")
-          .select("kind, cycle, cycle_mode, cycle_anchor_date")
-          .eq("id", householdId)
-          .maybeSingle(),
+        fetchCycleBoundsById(supabase, householdId),
       ]);
-      const bounds = await fetchCycleBounds(supabase, householdId, space.data);
 
-      // Income receipts this cycle, grouped by income (each is one pay run).
-      const { data: receipts } = await supabase
-        .from("expenses")
-        .select("id, income_id, amount, occurred_at")
-        .eq("household_id", householdId)
-        .eq("kind", "income")
-        .not("income_id", "is", null)
-        .gte("occurred_at", bounds.start.toISOString())
-        .lt("occurred_at", bounds.end.toISOString());
+      // Receipts, settlements and invoices are independent once we know the
+      // cycle bounds — fetch them in parallel.
+      const startISO = bounds.start.toISOString();
+      const endISO = bounds.end.toISOString();
+      const [{ data: receipts }, settlementsRes, { data: invs }] = await Promise.all([
+        supabase
+          .from("expenses")
+          .select("id, income_id, amount, occurred_at")
+          .eq("household_id", householdId)
+          .eq("kind", "income")
+          .not("income_id", "is", null)
+          .gte("occurred_at", startISO)
+          .lt("occurred_at", endISO),
+        isBusiness
+          ? supabase
+              .from("fixed_expense_settlements")
+              .select("id, fixed_expense_id, amount, occurred_at")
+              .eq("household_id", householdId)
+              .gte("occurred_at", startISO)
+              .lt("occurred_at", endISO)
+          : null,
+        supabase
+          .from("invoices")
+          .select("expense_id, settlement_id")
+          .eq("household_id", householdId),
+      ]);
+
       const receiptsByIncome: Record<string, Mark[]> = {};
       for (const r of receipts ?? []) {
         const k = r.income_id as string;
@@ -137,31 +150,15 @@ export function CommittedThisCycle({
         });
       }
 
-      // Fixed-cost settlements this cycle, grouped by cost (businesses only).
       const settlementsByFixed: Record<string, Mark[]> = {};
-      if (isBusiness) {
-        const { data: settlements } = await supabase
-          .from("fixed_expense_settlements")
-          .select("id, fixed_expense_id, amount, occurred_at")
-          .eq("household_id", householdId)
-          .gte("occurred_at", bounds.start.toISOString())
-          .lt("occurred_at", bounds.end.toISOString());
-        for (const s of settlements ?? []) {
-          const k = s.fixed_expense_id as string;
-          (settlementsByFixed[k] ??= []).push({
-            id: s.id as string,
-            amount: Number(s.amount),
-            occurred_at: s.occurred_at as string,
-          });
-        }
+      for (const s of settlementsRes?.data ?? []) {
+        const k = s.fixed_expense_id as string;
+        (settlementsByFixed[k] ??= []).push({
+          id: s.id as string,
+          amount: Number(s.amount),
+          occurred_at: s.occurred_at as string,
+        });
       }
-
-      // Which receipts/settlements already have an invoice (for the "missing
-      // proof" flag businesses care about).
-      const { data: invs } = await supabase
-        .from("invoices")
-        .select("expense_id, settlement_id")
-        .eq("household_id", householdId);
       const invExpenses = new Set<string>();
       const invSettlements = new Set<string>();
       for (const i of invs ?? []) {
@@ -491,11 +488,14 @@ function ReconLine({
           <Check className="size-3.5 text-emerald-600" />
           {sign}
           {money(r.mark.amount)}
-          {missing && <AlertTriangle className="size-3.5 text-destructive" />}
+          {missing && (
+            <AlertTriangle className="size-3.5 text-destructive" aria-label={t("inv.missing")} />
+          )}
           <Button
             size="sm"
             variant="ghost"
             className="h-6 px-1.5"
+            aria-label={t("inv.attach")}
             onClick={() => onAttach(dir, line.label, r.mark!.id)}
           >
             <Paperclip className="size-3.5" />
@@ -534,8 +534,8 @@ function ReconLine({
   // A single occurrence renders as one flat row (no expansion needed).
   if (total === 1) {
     return (
-      <li className="flex items-center justify-between gap-2 py-1.5 text-sm">
-        <span className="min-w-0 truncate">{line.label}</span>
+      <li className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-1.5 text-sm">
+        <span className="min-w-0 flex-1 truncate">{line.label}</span>
         {markCell(rows[0])}
       </li>
     );
@@ -567,7 +567,7 @@ function ReconLine({
       {open && (
         <ul className="mt-1 space-y-1 pl-5">
           {rows.map((r, i) => (
-            <li key={i} className="flex items-center justify-between gap-2">
+            <li key={i} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
               <span className="text-xs text-muted-foreground">{fmtDate(r.start)}</span>
               {markCell(r)}
             </li>
