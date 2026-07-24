@@ -1158,7 +1158,15 @@ export type Database = {
           onboarded_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "households_cycle_anchor_income_id_fkey"
+            columns: ["cycle_anchor_income_id"]
+            isOneToOne: false
+            referencedRelation: "incomes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       incomes: {
         Row: {
