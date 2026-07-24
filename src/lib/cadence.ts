@@ -41,6 +41,66 @@ export function defaultCycleForKind(kind: string | null | undefined): Cycle {
   return kind === "business" ? "quarterly" : "monthly";
 }
 
+// Approximate months per one period, used only to decide whether a line's
+// cadence is more frequent than the reporting cycle (so it should be reconciled
+// per payment rather than once per cycle).
+const CADENCE_MONTHS: Record<Cadence, number> = {
+  weekly: 12 / 52,
+  fortnightly: 12 / 26,
+  monthly: 1,
+  quarterly: 3,
+  yearly: 12,
+};
+const CYCLE_MONTHS: Record<Cycle, number> = { weekly: 12 / 52, monthly: 1, quarterly: 3, yearly: 12 };
+
+/** Advance a date by one period of the given cadence. */
+export function stepCadence(d: Date, cadence: Cadence): Date {
+  const r = new Date(d);
+  if (cadence === "weekly") r.setDate(r.getDate() + 7);
+  else if (cadence === "fortnightly") r.setDate(r.getDate() + 14);
+  else if (cadence === "monthly") r.setMonth(r.getMonth() + 1);
+  else if (cadence === "quarterly") r.setMonth(r.getMonth() + 3);
+  else r.setFullYear(r.getFullYear() + 1); // yearly
+  return r;
+}
+
+export type Occurrence = { start: Date; end: Date; expected: number };
+
+/**
+ * The expected payment occurrences of a recurring line within a cycle, at the
+ * line's own cadence. A monthly salary in a quarterly cycle yields three
+ * occurrences (one per real pay run), each at the native per-payment amount —
+ * so reconciliation and invoices happen per payment, not once per quarter.
+ *
+ * When the cadence is LESS frequent than the cycle (e.g. a yearly fee in a
+ * quarterly cycle) we can't place the single payment in a specific cycle without
+ * a due date, so we fall back to one accrued occurrence at the per-cycle amount.
+ */
+export function reconcileOccurrences(
+  cadence: Cadence,
+  nativeAmount: number,
+  monthlyAmount: number,
+  cycle: Cycle,
+  cycleStart: Date,
+  cycleEnd: Date,
+): Occurrence[] {
+  const per = nativeAmount || monthlyAmount;
+  const expand = CADENCE_MONTHS[cadence] <= CYCLE_MONTHS[cycle] + 1e-6;
+  if (!expand) {
+    return [{ start: cycleStart, end: cycleEnd, expected: perCycleFromMonthly(monthlyAmount, cycle) }];
+  }
+  const out: Occurrence[] = [];
+  let s = new Date(cycleStart);
+  let guard = 0;
+  while (s.getTime() < cycleEnd.getTime() && guard < 60) {
+    const e = stepCadence(s, cadence);
+    out.push({ start: new Date(s), end: e > cycleEnd ? new Date(cycleEnd) : new Date(e), expected: per });
+    s = e;
+    guard++;
+  }
+  return out.length ? out : [{ start: cycleStart, end: cycleEnd, expected: per }];
+}
+
 /** Resolve a household's stored cycle, falling back to the kind default. */
 export function cycleForSpace(space: { cycle?: string | null; kind?: string | null } | null | undefined): Cycle {
   const c = space?.cycle;
