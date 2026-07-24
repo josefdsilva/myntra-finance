@@ -218,6 +218,62 @@ export const markIncomeReceived = createServerFn({ method: "POST" })
     return row;
   });
 
+// Mark a recurring fixed cost as settled this cycle (payables checklist). This
+// is a pure tracking overlay — it does NOT change the baseline or "actual out",
+// which keep treating fixed costs as assumptions, so nothing is double-counted.
+export const markFixedExpensePaid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        household_id: z.string().uuid(),
+        fixed_expense_id: z.string().uuid(),
+        amount: z.number().positive().max(10_000_000).optional(),
+        occurred_at: z.string().datetime().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: fx, error: fxErr } = await context.supabase
+      .from("fixed_expenses")
+      .select("id, native_amount, monthly_amount")
+      .eq("id", data.fixed_expense_id)
+      .eq("household_id", data.household_id)
+      .maybeSingle();
+    if (fxErr) throw fxErr;
+    if (!fx) throw new Error("Fixed cost not found for this household.");
+
+    const amount = data.amount ?? Number(fx.native_amount ?? fx.monthly_amount) || 0;
+    const { data: row, error } = await context.supabase
+      .from("fixed_expense_settlements")
+      .insert({
+        household_id: data.household_id,
+        fixed_expense_id: data.fixed_expense_id,
+        amount,
+        occurred_at: data.occurred_at ?? new Date().toISOString(),
+        created_by: context.userId,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+// Undo a fixed-cost settlement (removes it from the payables checklist).
+export const unmarkFixedExpensePaid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ settlement_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("fixed_expense_settlements")
+      .delete()
+      .eq("id", data.settlement_id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 // ---- Incomes ----
 export const upsertIncome = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

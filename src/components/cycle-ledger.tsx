@@ -10,7 +10,11 @@ import { Button } from "@/components/ui/button";
 import { money, fmtDate } from "@/lib/format";
 import { perCycleFromMonthly, type Cycle } from "@/lib/cadence";
 import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
-import { markIncomeReceived } from "@/lib/budget.functions";
+import {
+  markIncomeReceived,
+  markFixedExpensePaid,
+  unmarkFixedExpensePaid,
+} from "@/lib/budget.functions";
 import { invalidateHouseholdData } from "@/lib/household-queries";
 import { planAppliesToMonth, monthKey, type Plan } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
@@ -34,6 +38,8 @@ export function CommittedThisCycle({
   const t = useT();
   const qc = useQueryClient();
   const mark = useServerFn(markIncomeReceived);
+  const markPaid = useServerFn(markFixedExpensePaid);
+  const unmarkPaid = useServerFn(unmarkFixedExpensePaid);
   const suffix = t(`cadence.short.${cycle}`);
   const { data, refetch } = useQuery({
     queryKey: ["cycle-committed", householdId],
@@ -85,11 +91,29 @@ export function CommittedThisCycle({
       for (const r of receipts ?? []) {
         if (r.income_id) received[r.income_id] = { amount: Number(r.amount), occurred_at: r.occurred_at as string };
       }
+      // Payables checklist (businesses): which fixed costs are settled this cycle.
+      const paid: Record<string, { id: string; amount: number; occurred_at: string }> = {};
+      if (isBusiness) {
+        const { data: settlements } = await supabase
+          .from("fixed_expense_settlements")
+          .select("id, fixed_expense_id, amount, occurred_at")
+          .eq("household_id", householdId)
+          .gte("occurred_at", bounds.start.toISOString())
+          .lt("occurred_at", bounds.end.toISOString());
+        for (const s of settlements ?? []) {
+          paid[s.fixed_expense_id as string] = {
+            id: s.id as string,
+            amount: Number(s.amount),
+            occurred_at: s.occurred_at as string,
+          };
+        }
+      }
       return {
         fixed: (fx.data ?? []) as Array<{ id: string; label: string; monthly_amount: number }>,
         incomes: (inc.data ?? []) as Array<{ id: string; label: string; monthly_amount: number }>,
         debts: (db.data ?? []) as Array<{ id: string; label: string; monthly_amount: number }>,
         received,
+        paid,
       };
     },
   });
@@ -97,6 +121,7 @@ export function CommittedThisCycle({
   const incomes = data?.incomes ?? [];
   const debts = data?.debts ?? [];
   const received = data?.received ?? {};
+  const paid = data?.paid ?? {};
 
   async function onMarkReceived(incomeId: string) {
     try {
@@ -107,6 +132,25 @@ export function CommittedThisCycle({
       invalidateHouseholdData(qc);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("ledger.recordFailed"));
+    }
+  }
+
+  async function onMarkPaid(fixedExpenseId: string) {
+    try {
+      await markPaid({ data: { household_id: householdId, fixed_expense_id: fixedExpenseId } });
+      toast.success(t("ledger.paidToast"));
+      await refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ledger.payFailed"));
+    }
+  }
+
+  async function onUnmarkPaid(settlementId: string) {
+    try {
+      await unmarkPaid({ data: { settlement_id: settlementId } });
+      await refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ledger.payFailed"));
     }
   }
 
@@ -164,15 +208,45 @@ export function CommittedThisCycle({
               {t("cashflow.fixed")}
             </p>
             <ul className="divide-y">
-              {fixed.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-                  <span className="min-w-0 truncate">{r.label}</span>
-                  <span className="shrink-0 tabular-nums">
-                    −{money(perCycleFromMonthly(Number(r.monthly_amount), cycle))}
-                    {suffix}
-                  </span>
-                </li>
-              ))}
+              {fixed.map((r) => {
+                const settled = paid[r.id];
+                return (
+                  <li key={r.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                    <span className="min-w-0 truncate">{r.label}</span>
+                    {isBusiness && settled ? (
+                      <span className="flex shrink-0 items-center gap-1.5 tabular-nums text-muted-foreground">
+                        <Check className="size-3.5 text-emerald-600" />−{money(settled.amount)}
+                        <span className="text-xs">{fmtDate(settled.occurred_at)}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-1.5 text-xs"
+                          onClick={() => onUnmarkPaid(settled.id)}
+                        >
+                          {t("ledger.undo")}
+                        </Button>
+                      </span>
+                    ) : (
+                      <span className="flex shrink-0 items-center gap-2">
+                        <span className="tabular-nums">
+                          −{money(perCycleFromMonthly(Number(r.monthly_amount), cycle))}
+                          {suffix}
+                        </span>
+                        {isBusiness && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => onMarkPaid(r.id)}
+                          >
+                            {t("ledger.markPaid")}
+                          </Button>
+                        )}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
