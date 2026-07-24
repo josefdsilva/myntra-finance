@@ -28,11 +28,13 @@ export function InvoiceAttachments({
   householdId,
   expenseId,
   planId,
+  settlementId,
   isBusiness = false,
 }: {
   householdId: string;
   expenseId?: string;
   planId?: string;
+  settlementId?: string;
   isBusiness?: boolean;
 }) {
   const t = useT();
@@ -42,13 +44,17 @@ export function InvoiceAttachments({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
-  const targetKey = expenseId ? ["invoices", "expense", expenseId] : ["invoices", "plan", planId];
+  const targetKey = expenseId
+    ? ["invoices", "expense", expenseId]
+    : planId
+      ? ["invoices", "plan", planId]
+      : ["invoices", "settlement", settlementId];
   const { data: invoices = [], refetch } = useQuery({
-    enabled: !!(expenseId || planId),
+    enabled: !!(expenseId || planId || settlementId),
     queryKey: targetKey,
     queryFn: async () => {
-      const col = expenseId ? "expense_id" : "plan_id";
-      const val = expenseId ?? planId!;
+      const col = expenseId ? "expense_id" : planId ? "plan_id" : "settlement_id";
+      const val = expenseId ?? planId ?? settlementId!;
       const { data, error } = await supabase
         .from("invoices")
         .select("id, path, file_name, mime_type")

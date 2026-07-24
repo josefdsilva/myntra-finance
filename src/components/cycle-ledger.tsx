@@ -1,12 +1,23 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { TrendingUp, TrendingDown, Check } from "lucide-react";
+import { TrendingUp, TrendingDown, Check, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useState } from "react";
+import { InvoiceAttachments } from "@/components/invoice-attachments";
 import { money, fmtDate } from "@/lib/format";
 import { perCycleFromMonthly, type Cycle } from "@/lib/cadence";
 import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
@@ -135,13 +146,43 @@ export function CommittedThisCycle({
     }
   }
 
-  async function onMarkPaid(fixedExpenseId: string) {
+  // The pay dialog runs in two steps: enter/confirm the amount, then (once a
+  // settlement exists) attach invoices to it. `pay.settlementId` null = amount
+  // step; set = attachment step (either freshly created or an existing one).
+  const [pay, setPay] = useState<
+    | { fixedId: string; label: string; amount: string; settlementId: string | null }
+    | null
+  >(null);
+  const [saving, setSaving] = useState(false);
+
+  function openPay(fixedId: string, label: string, expected: number) {
+    setPay({ fixedId, label, amount: String(expected.toFixed(2)), settlementId: null });
+  }
+  function openAttachments(fixedId: string, label: string, settlementId: string) {
+    setPay({ fixedId, label, amount: "", settlementId });
+  }
+
+  async function confirmPay() {
+    if (!pay) return;
+    const amount = Number(pay.amount);
+    if (!(amount > 0)) {
+      toast.error(t("ledger.payFailed"));
+      return;
+    }
+    setSaving(true);
     try {
-      await markPaid({ data: { household_id: householdId, fixed_expense_id: fixedExpenseId } });
+      const row = (await markPaid({
+        data: { household_id: householdId, fixed_expense_id: pay.fixedId, amount },
+      })) as { id: string } | null;
       toast.success(t("ledger.paidToast"));
       await refetch();
+      // Advance to the attach step so a receipt can be added to the settlement.
+      if (row?.id) setPay({ ...pay, settlementId: row.id });
+      else setPay(null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("ledger.payFailed"));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -157,6 +198,7 @@ export function CommittedThisCycle({
   if (!fixed.length && !incomes.length && !debts.length) return null;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="text-base">{t("ledger.committedTitle")}</CardTitle>
@@ -221,6 +263,14 @@ export function CommittedThisCycle({
                           size="sm"
                           variant="ghost"
                           className="h-6 px-1.5 text-xs"
+                          onClick={() => openAttachments(r.id, r.label, settled.id)}
+                        >
+                          <Paperclip className="size-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-1.5 text-xs"
                           onClick={() => onUnmarkPaid(settled.id)}
                         >
                           {t("ledger.undo")}
@@ -237,7 +287,13 @@ export function CommittedThisCycle({
                             size="sm"
                             variant="outline"
                             className="h-7 px-2 text-xs"
-                            onClick={() => onMarkPaid(r.id)}
+                            onClick={() =>
+                              openPay(
+                                r.id,
+                                r.label,
+                                perCycleFromMonthly(Number(r.monthly_amount), cycle),
+                              )
+                            }
                           >
                             {t("ledger.markPaid")}
                           </Button>
@@ -270,6 +326,52 @@ export function CommittedThisCycle({
         )}
       </CardContent>
     </Card>
+
+      <Dialog open={!!pay} onOpenChange={(o) => !o && setPay(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t("ledger.markPaid")} · {pay?.label}
+            </DialogTitle>
+          </DialogHeader>
+          {pay && !pay.settlementId ? (
+            <div className="space-y-3">
+              <div>
+                <Label>{t("ledger.amountPaid")}</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={pay.amount}
+                  onChange={(e) => setPay({ ...pay, amount: e.target.value })}
+                  autoFocus
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setPay(null)}>
+                  {t("common.cancel")}
+                </Button>
+                <Button onClick={confirmPay} disabled={saving}>
+                  {t("ledger.markPaid")}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : pay ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{t("inv.attachOptional")}</p>
+              <InvoiceAttachments
+                householdId={householdId}
+                settlementId={pay.settlementId!}
+                isBusiness={isBusiness}
+              />
+              <DialogFooter>
+                <Button onClick={() => setPay(null)}>{t("ledger.done")}</Button>
+              </DialogFooter>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
