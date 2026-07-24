@@ -243,7 +243,7 @@ export const markFixedExpensePaid = createServerFn({ method: "POST" })
     if (fxErr) throw fxErr;
     if (!fx) throw new Error("Fixed cost not found for this household.");
 
-    const amount = data.amount ?? Number(fx.native_amount ?? fx.monthly_amount) || 0;
+    const amount = data.amount ?? (Number(fx.native_amount ?? fx.monthly_amount) || 0);
     const { data: row, error } = await context.supabase
       .from("fixed_expense_settlements")
       .insert({
