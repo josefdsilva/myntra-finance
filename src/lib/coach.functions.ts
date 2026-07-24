@@ -199,6 +199,8 @@ type CoachContext = {
   /** Debt labels ordered smallest-balance-first (pay this order for quick wins). */
   snowballOrder: string[];
   cycleStartKey: string; // yyyy-mm-dd for cache
+  /** How this space's budgeting cycle works, so advice matches its rhythm. */
+  cycle: { mode: string; length: string; kind: string };
 };
 
 
@@ -718,6 +720,13 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     avalancheOrder,
     snowballOrder,
     cycleStartKey: cycle.start.toISOString().slice(0, 10),
+    cycle: {
+      // Payday-driven households vs fixed fiscal-period businesses read very
+      // differently, so let the coach frame advice around the right rhythm.
+      mode: cycleCfg.mode,
+      length: cycleCfg.length,
+      kind: hh?.kind === "business" ? "business" : "personal",
+    },
   };
 }
 
@@ -790,6 +799,7 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
 - benchmark — national averages from Eurostat / national statistics, never other users.
 - upcomingPlans[] — known future costs and income changes the household entered (label, month, amount, direction spend|income, recurrence, funded=whether a project is saving for it). planForecast[] projects the next 6 months: income, baseline, plannedSpend, leftover, and shortfall (that month runs short). resolvedPlansRecent[] shows recently paid plans with planned vs actual. Use these for ANY question about the months ahead, saving for something specific, or what to do with money the household did not expect: point to the real upcoming claims on their money, flag any shortfall month, and suggest pre-funding a big unfunded one-off as a project. When advising on a windfall, first cover imminent unfunded plans and any shortfall month, then the emergency-fund gap, then debt and investing.
+- cycle describes the budgeting rhythm: mode "event" is a payday-driven household whose cycle starts when a salary lands (variable length); mode "time" is a space on fixed ${ctx.cycle.length} periods (a business's fiscal quarters/year). Frame timing advice around the right rhythm — talk paydays for "event", and the fiscal period (not paydays) for a "time"/${ctx.cycle.kind === "business" ? "business" : "personal"} space.
 If a needed number is not in the snapshot, say what you'd need instead of guessing. Income is take-home (net), so treat the 28/36 rule as a conservative guide.
 Format money in ${ctx.currency}, use markdown, and cite the figures you used in parentheses, e.g. "(surplus €X, safe €Y)". Be concrete: ranges, not vague advice.
 
