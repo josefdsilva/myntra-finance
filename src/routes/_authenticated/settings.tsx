@@ -479,8 +479,10 @@ function HouseholdSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("hh.title")}</CardTitle>
-        <CardDescription>{t("hh.description")}</CardDescription>
+        <CardTitle>{t(isBusiness ? "hh.titleBusiness" : "hh.title")}</CardTitle>
+        <CardDescription>
+          {t(isBusiness ? "hh.descriptionBusiness" : "hh.description")}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {isBusiness && (
