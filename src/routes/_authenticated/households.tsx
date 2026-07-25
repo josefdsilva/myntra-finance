@@ -190,12 +190,7 @@ function HouseholdsPage() {
         <CardContent>
           <form
             className="flex flex-col sm:flex-row gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const n = newBizName.trim();
-              if (!n) return;
-              createMutation.mutate({ name: n, kind: "business" });
-            }}
+            onSubmit={(e) => e.preventDefault()}
           >
             <div className="flex-1">
               <Input
@@ -203,18 +198,16 @@ function HouseholdsPage() {
                 value={newBizName}
                 onChange={(e) => setNewBizName(e.target.value)}
                 maxLength={100}
-                disabled={ownedBusiness >= BUSINESS_LIMIT}
+                disabled
               />
             </div>
-            <Button
-              type="submit"
-              disabled={
-                !newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT
-              }
-            >
-              {createMutation.isPending ? t("households.creating") : t("businesses.create")}
+            <Button type="submit" disabled>
+              {t("businesses.create")}
             </Button>
           </form>
+          <p className="mt-2 text-xs font-medium text-muted-foreground">
+            Coming soon — creating new businesses is temporarily disabled. Existing businesses remain fully usable.
+          </p>
         </CardContent>
       </Card>
 
