@@ -43,11 +43,11 @@ export const ENTRIES = {
     fr: "Aujourd'hui",
   },
   "dashboard.safe.horizon.week": {
-    en: "This week",
-    pt: "Esta semana",
-    es: "Esta semana",
-    de: "Diese Woche",
-    fr: "Cette semaine",
+    en: "Next 7 days",
+    pt: "Próximos 7 dias",
+    es: "Próximos 7 días",
+    de: "Nächste 7 Tage",
+    fr: "7 prochains jours",
   },
   "dashboard.safe.horizon.cycle": {
     en: "Rest of cycle",
