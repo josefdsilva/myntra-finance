@@ -180,6 +180,12 @@ function Dashboard() {
   const effHorizon = horizon === "week" && !showWeek ? "cycle" : horizon;
   const horizonDays = effHorizon === "today" ? 1 : effHorizon === "week" ? 7 : daysLeft;
   const safeForHorizon = safeToday * horizonDays;
+  const safeLabelKey =
+    effHorizon === "today"
+      ? "dashboard.safe.labelToday"
+      : effHorizon === "week"
+        ? "dashboard.safe.labelWeek"
+        : "dashboard.safe.labelCycle";
   const pctSpent = variablePool > 0 ? Math.min(100, (dailyClaim / variablePool) * 100) : 0;
 
   const overspendAmount = Math.max(0, dailyClaim - variablePool);
@@ -331,20 +337,20 @@ function Dashboard() {
         <CardContent className="pt-8 pb-8">
           <div className="mb-2 flex items-center gap-1.5">
             <p className="text-sm uppercase tracking-wider text-muted-foreground">
-              {t("dashboard.safe.label")}
+              {t(safeLabelKey)}
             </p>
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  aria-label={`${t("dashboard.safe.label")}: ${t("dashboard.safe.infoTitle")}`}
+                  aria-label={t(safeLabelKey)}
                   className="text-muted-foreground/70 transition-colors hover:text-foreground"
                 >
                   <Info className="size-4" />
                 </button>
               </PopoverTrigger>
               <PopoverContent side="bottom" align="start" className="w-72 space-y-2 text-xs leading-relaxed">
-                <p className="text-sm font-medium text-foreground">{t("dashboard.safe.infoTitle")}</p>
+                <p className="text-sm font-medium text-foreground">{t(safeLabelKey)}</p>
                 <p className="text-muted-foreground">{t("dashboard.safe.infoBody")}</p>
                 {variablePool > 0 && (
                   <p className="tabular-nums text-muted-foreground">

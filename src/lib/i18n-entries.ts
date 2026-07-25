@@ -14,12 +14,26 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
-  "dashboard.safe.infoTitle": {
-    en: "What safe to spend means",
-    pt: "O que é o seguro para gastar",
-    es: "Qué es lo seguro para gastar",
-    de: "Was sicher ausgeben bedeutet",
-    fr: "Ce que signifie libre à dépenser",
+  "dashboard.safe.labelToday": {
+    en: "Safe to spend today",
+    pt: "Valor seguro para hoje",
+    es: "Gasto seguro para hoy",
+    de: "Sicherer Betrag für heute",
+    fr: "Montant sûr pour aujourd'hui",
+  },
+  "dashboard.safe.labelWeek": {
+    en: "Safe to spend in the next 7 days",
+    pt: "Valor seguro para os próximos 7 dias",
+    es: "Gasto seguro para los próximos 7 días",
+    de: "Sicherer Betrag für die nächsten 7 Tage",
+    fr: "Montant sûr pour les 7 prochains jours",
+  },
+  "dashboard.safe.labelCycle": {
+    en: "Safe to spend this cycle",
+    pt: "Valor seguro para este ciclo",
+    es: "Gasto seguro para este ciclo",
+    de: "Sicherer Betrag für diesen Zyklus",
+    fr: "Montant sûr pour ce cycle",
   },
   "dashboard.safe.infoBody": {
     en: "It is what is left for everyday spending once your fixed costs, debt payments and project funding are set aside for the cycle. That money is genuinely yours to spend. We take that allowance, subtract what you have already spent, and spread the rest evenly across the days left.",
