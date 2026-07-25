@@ -35,6 +35,27 @@ export const ENTRIES = {
     de: "{remaining} für {days} Tage, etwa {perDay} pro Tag.",
     fr: "{remaining} pour {days} jours, soit environ {perDay} par jour.",
   },
+  "dashboard.safe.horizon.today": {
+    en: "Today",
+    pt: "Hoje",
+    es: "Hoy",
+    de: "Heute",
+    fr: "Aujourd'hui",
+  },
+  "dashboard.safe.horizon.week": {
+    en: "This week",
+    pt: "Esta semana",
+    es: "Esta semana",
+    de: "Diese Woche",
+    fr: "Cette semaine",
+  },
+  "dashboard.safe.horizon.cycle": {
+    en: "Rest of cycle",
+    pt: "Resto do ciclo",
+    es: "Resto del ciclo",
+    de: "Restlicher Zyklus",
+    fr: "Reste du cycle",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

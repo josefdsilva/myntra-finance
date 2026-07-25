@@ -172,6 +172,12 @@ function Dashboard() {
   const cycle = dashboard?.cycle;
   const daysLeft = cycle?.daysLeft ?? 1;
   const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
+  // Show the safe amount over a chosen horizon: today (1 day), the next 7 days,
+  // or the rest of the cycle (= everything remaining).
+  const [horizon, setHorizon] = useState<"today" | "week" | "cycle">("today");
+  const horizonDays =
+    horizon === "today" ? 1 : horizon === "week" ? Math.min(7, daysLeft) : daysLeft;
+  const safeForHorizon = safeToday * horizonDays;
   const pctSpent = variablePool > 0 ? Math.min(100, (dailyClaim / variablePool) * 100) : 0;
 
   const overspendAmount = Math.max(0, dailyClaim - variablePool);
@@ -357,10 +363,10 @@ function Dashboard() {
               {isLoading ? (
                 <span className="inline-block h-12 w-40 rounded-md bg-muted animate-pulse align-middle" />
               ) : (
-                money(safeToday)
+                money(safeForHorizon)
               )}
             </p>
-            {!isLoading && variablePool > 0 && Math.abs(trendDelta) >= 0.01 && (
+            {!isLoading && horizon === "today" && variablePool > 0 && Math.abs(trendDelta) >= 0.01 && (
               <span
                 className={`inline-flex items-center gap-1 text-sm font-medium tabular-nums ${trendDelta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
               >
@@ -376,6 +382,23 @@ function Dashboard() {
                 })}
               </span>
             )}
+          </div>
+          <div className="mt-3 inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
+            {(["today", "week", "cycle"] as const).map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => setHorizon(h)}
+                aria-pressed={horizon === h}
+                className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                  horizon === h
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t(`dashboard.safe.horizon.${h}`)}
+              </button>
+            ))}
           </div>
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
