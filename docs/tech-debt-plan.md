@@ -61,3 +61,52 @@ on a local copy. No drops.
 
 Only once everything reads from the new model and has run cleanly in prod: remove
 deprecated tables/columns, with a fresh export and expand/contract discipline.
+
+## Security review (Lovable linter findings)
+
+Reviewed 2026-07. Three findings; verdicts grounded in the actual definitions.
+
+### 1. `beta_codes` RLS enabled, no policies — WON'T FIX (correct as-is)
+
+Fail-closed is deliberate. The only reader is `public.redeem_beta_code(text)`, a
+`SECURITY DEFINER` function that validates `auth.uid()`, throttles attempts, and
+enforces the seat cap (EXECUTE granted to `authenticated`, revoked from `anon`).
+Beta codes are secrets — adding a client read policy would leak the whole
+whitelist to any signed-in user. Do **not** add a policy.
+
+### 2. `households` UPDATE policy missing `WITH CHECK` — FIXED
+
+`"Owners can update household"` had `USING` but no `WITH CHECK`, so a row wasn't
+re-validated after update. Migration `20260724170000_household_update_with_check.sql`
+adds a `WITH CHECK` mirroring the ownership `USING`.
+
+Same pattern still open on `profiles` `"Users can update own profile"`
+(`USING user_id = auth.uid()`, no `WITH CHECK`). Not linter-flagged but identical
+class; fold the same fix in when convenient.
+
+### 3. SECURITY DEFINER functions callable by `authenticated` (lint 0029) — mostly acceptable
+
+The callable money RPCs are `SECURITY DEFINER` **and authorize the caller**
+explicitly, which is the correct pattern (they need definer rights for atomic
+multi-table writes, then gate access):
+
+- `public.fund_deposit`, `public.fund_withdrawal`, and the other movement RPCs
+  begin with `IF NOT private.is_household_member(p_household, auth.uid()) THEN
+  RAISE EXCEPTION`.
+- `public.redeem_beta_code` checks `auth.uid()` and only touches the caller's own
+  membership/throttle rows.
+- `private.*` helpers (`is_household_member`, `current_user_household`,
+  `bucket_balance`) live in the `private` schema, which is not in the API's
+  exposed schemas, so they are not remotely callable regardless of grants.
+
+So this lint is largely conservative, not a live hole. Optional defense-in-depth,
+not urgent:
+
+1. `REVOKE EXECUTE ... FROM authenticated, anon` on trigger-only functions
+   (`touch_updated_at`, the baseline-recompute trigger fn, the coach-conversation
+   trim, the beta throttle helpers) — they should only fire from triggers.
+2. Confirm in Supabase/Lovable API settings that `private` is not among the
+   exposed schemas.
+3. As part of the future domain work, re-audit any new `SECURITY DEFINER`
+   function: it must either authorize the caller internally or not be reachable
+   from the exposed schema.
