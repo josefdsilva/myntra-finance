@@ -200,7 +200,7 @@ type CoachContext = {
   snowballOrder: string[];
   cycleStartKey: string; // yyyy-mm-dd for cache
   /** How this space's budgeting cycle works, so advice matches its rhythm. */
-  cycle: { mode: string; length: string; kind: string };
+  cycleRhythm: { mode: string; length: string; kind: string };
 };
 
 
