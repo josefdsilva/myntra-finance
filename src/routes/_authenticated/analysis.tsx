@@ -565,7 +565,7 @@ function AnalysisPage() {
         <Stat label={t("ana.stat.net")} value={money(totalIncome - totalSpend)} highlight />
       </div>
 
-      {cycleData && (
+      {cycleData && cycleCount === 1 && (
         <Card>
           <CardHeader>
             <CardTitle>{t("ana.burndown.title")}</CardTitle>
@@ -643,6 +643,15 @@ function AnalysisPage() {
         </Card>
       )}
 
+      {cycleCount > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("ana.burndown.title")}</CardTitle>
+            <CardDescription>{t("ana.burndown.multiNote", { count: cycleCount })}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {householdId && cycleCount > 0 && (
         <BenchmarksCard
           householdId={householdId}
@@ -657,7 +666,11 @@ function AnalysisPage() {
       <Card>
         <CardHeader>
           <CardTitle>By category</CardTitle>
-          <CardDescription>Where your spending went.</CardDescription>
+          <CardDescription>
+            {cycleCount > 1
+              ? t("ana.category.descRange", { count: cycleCount })
+              : t("ana.category.descSingle")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {!byCategory.length ? (

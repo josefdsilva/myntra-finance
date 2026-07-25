@@ -105,6 +105,27 @@ export const ENTRIES = {
     de: "Gib einen Betrag größer als null ein.",
     fr: "Saisissez un montant supérieur à zéro.",
   },
+  "ana.burndown.multiNote": {
+    en: "The burndown tracks one cycle at a time. Pick a single cycle to see it. The breakdown below covers all {count} selected cycles.",
+    pt: "O gráfico de consumo mostra um ciclo de cada vez. Escolha um único ciclo para o ver. A repartição abaixo cobre os {count} ciclos selecionados.",
+    es: "El gráfico de consumo muestra un ciclo a la vez. Elige un único ciclo para verlo. El desglose de abajo cubre los {count} ciclos seleccionados.",
+    de: "Der Verlauf zeigt jeweils einen Zyklus. Wähle einen einzelnen Zyklus, um ihn zu sehen. Die Aufschlüsselung unten umfasst alle {count} ausgewählten Zyklen.",
+    fr: "Le graphique de consommation suit un cycle à la fois. Choisissez un seul cycle pour le voir. La répartition ci-dessous couvre les {count} cycles sélectionnés.",
+  },
+  "ana.category.descSingle": {
+    en: "Where your spending went.",
+    pt: "Para onde foram os seus gastos.",
+    es: "Adónde fue tu gasto.",
+    de: "Wohin deine Ausgaben gingen.",
+    fr: "Où sont passées vos dépenses.",
+  },
+  "ana.category.descRange": {
+    en: "Total across {count} selected cycles.",
+    pt: "Total dos {count} ciclos selecionados.",
+    es: "Total de los {count} ciclos seleccionados.",
+    de: "Summe über {count} ausgewählte Zyklen.",
+    fr: "Total sur {count} cycles sélectionnés.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;
