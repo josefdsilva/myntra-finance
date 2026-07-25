@@ -461,6 +461,42 @@ function AnalysisPage() {
     return out;
   }, [cycleData, fixedTotal, t]);
 
+  // Multi-cycle burndown: the same per-cycle balance line, but concatenated
+  // across every selected cycle — each cycle resets to 0, jumps with income,
+  // reserves fixed costs at the first income, then burns down with spending. A
+  // continuous saw-tooth that shows how each cycle played out side by side.
+  const multiBurnSeries = useMemo(() => {
+    if (cycleCount <= 1) return [];
+    const n = range === "all" ? cycles.length : Math.min(cycles.length, Number(range));
+    const selCycles = cycles.slice(-n);
+    const evAll = (expenses ?? [])
+      .map((e) => ({ time: +new Date(e.occurred_at), kind: e.kind, amount: Number(e.amount) }))
+      .sort((a, b) => a.time - b.time);
+    const points: { label: string; iso: string; balance: number; cycle: string }[] = [];
+    for (const cyc of selCycles) {
+      const startMs = cyc.start.getTime();
+      const endMs = cyc.end.getTime();
+      const cycleLbl = `${fmt(cyc.start, "dd/MM")}`;
+      let bal = 0;
+      let fixedReserved = false;
+      points.push({ label: cycleLbl, iso: cyc.start.toISOString(), balance: 0, cycle: cycleLbl });
+      for (const ev of evAll) {
+        if (ev.time < startMs || ev.time >= endMs) continue;
+        bal += ev.kind === "income" ? ev.amount : -ev.amount;
+        const lbl = fmt(new Date(ev.time), "dd/MM");
+        points.push({ label: lbl, iso: new Date(ev.time).toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
+        if (!fixedReserved && ev.kind === "income" && fixedTotal > 0) {
+          bal -= fixedTotal;
+          points.push({ label: lbl, iso: new Date(ev.time).toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
+          fixedReserved = true;
+        }
+      }
+      const endPt = new Date(Math.min(Date.now(), endMs));
+      points.push({ label: fmt(endPt, "dd/MM"), iso: endPt.toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
+    }
+    return points;
+  }, [cycleCount, range, cycles, expenses, fixedTotal]);
+
   const onlySpend = useMemo(() => (expenses ?? []).filter((e) => e.kind === "expense"), [expenses]);
 
   const byCategory = useMemo(() => {
@@ -649,6 +685,46 @@ function AnalysisPage() {
             <CardTitle>{t("ana.burndown.title")}</CardTitle>
             <CardDescription>{t("ana.burndown.multiNote", { count: cycleCount })}</CardDescription>
           </CardHeader>
+          <CardContent>
+            {!multiBurnSeries.length ? (
+              <p className="text-sm text-muted-foreground py-10 text-center">
+                {t("ana.noActivity")}
+              </p>
+            ) : (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={multiBurnSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11 }}
+                      interval="preserveStartEnd"
+                      minTickGap={24}
+                    />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => money(Number(v))} />
+                    <Tooltip
+                      formatter={(v: number | string) => money(Number(v))}
+                      labelFormatter={(l) => String(l)}
+                    />
+                    <Area
+                      type="stepAfter"
+                      dataKey="balance"
+                      name={t("ana.balanceLegend")}
+                      stroke="var(--primary)"
+                      fill="var(--primary)"
+                      fillOpacity={0.12}
+                      strokeWidth={2}
+                    />
+                    <ReferenceLine
+                      y={0}
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeDasharray="2 2"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
         </Card>
       )}
 
