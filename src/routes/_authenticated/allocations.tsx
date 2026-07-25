@@ -249,9 +249,9 @@ function AllocationsPage() {
           <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-amber-900 dark:text-amber-200">
-              {daysLeftInMonth === 0
+              {daysLeftInCycle === 0
                 ? t("alloc.close.endsToday")
-                : t("alloc.close.endsIn", { days: daysLeftInMonth })}
+                : t("alloc.close.endsIn", { days: daysLeftInCycle })}
               {" · "}
               {t("alloc.close.unconfirmed", { count: unconfirmedBuckets.length })}
             </p>
