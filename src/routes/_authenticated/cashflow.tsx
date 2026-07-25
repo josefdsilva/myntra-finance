@@ -133,7 +133,7 @@ function CashflowPage() {
           info={t("cashflow.info.in")}
         />
         <SummaryStat
-          label={t("cashflow.realOut")}
+          label={t("cashflow.expectedOut")}
           value={money(perCycleFromMonthly(totalOut, cycle))}
           suffix=""
           breakdown={[
