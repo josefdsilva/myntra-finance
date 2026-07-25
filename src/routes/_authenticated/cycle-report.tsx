@@ -181,10 +181,10 @@ function CycleReportPage() {
           <h1 className="font-display text-2xl">{t("cycleReport.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("cycleReport.printSubtitle")}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           {closedCycles.length > 0 && (
             <Select value={selected ?? undefined} onValueChange={setSelected}>
-              <SelectTrigger className="w-56">
+              <SelectTrigger className="w-full sm:w-56">
                 <SelectValue placeholder={t("cycleReport.selectCyclePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
@@ -204,7 +204,23 @@ function CycleReportPage() {
             )}
             {t("cycleReport.regenerate")}
           </Button>
-          <Button size="sm" onClick={() => window.print()}>
+          <Button
+            size="sm"
+            onClick={() => {
+              // Print in light theme regardless of the app theme, so the PDF
+              // isn't a dark page. Drop the `dark` class for the print, restore
+              // it when the print dialog closes.
+              const html = document.documentElement;
+              const wasDark = html.classList.contains("dark");
+              const restore = () => {
+                if (wasDark) html.classList.add("dark");
+                window.removeEventListener("afterprint", restore);
+              };
+              if (wasDark) html.classList.remove("dark");
+              window.addEventListener("afterprint", restore);
+              window.print();
+            }}
+          >
             <Printer className="size-4" /> {t("cycleReport.printSave")}
           </Button>
         </div>

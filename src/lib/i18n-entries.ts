@@ -70,6 +70,41 @@ export const ENTRIES = {
     de: "Restlicher Zyklus",
     fr: "Reste du cycle",
   },
+  "dashboard.salary.confirmTitle": {
+    en: "Salary received",
+    pt: "Salário recebido",
+    es: "Salario recibido",
+    de: "Gehalt erhalten",
+    fr: "Salaire reçu",
+  },
+  "dashboard.salary.amountLabel": {
+    en: "How much did you receive?",
+    pt: "Quanto recebeu?",
+    es: "¿Cuánto recibiste?",
+    de: "Wie viel hast du erhalten?",
+    fr: "Combien avez-vous reçu ?",
+  },
+  "dashboard.salary.amountHint": {
+    en: "We prefilled your usual amount. Change it if this payment was different, for example a bonus, overtime or a lighter month.",
+    pt: "Preenchemos o seu valor habitual. Altere se este pagamento foi diferente, por exemplo um bónus, horas extra ou um mês mais curto.",
+    es: "Rellenamos tu importe habitual. Cámbialo si este pago fue diferente, por ejemplo una bonificación, horas extra o un mes más corto.",
+    de: "Wir haben deinen üblichen Betrag vorausgefüllt. Ändere ihn, wenn diese Zahlung anders war, etwa ein Bonus, Überstunden oder ein kürzerer Monat.",
+    fr: "Nous avons prérempli votre montant habituel. Modifiez-le si ce paiement était différent, par exemple une prime, des heures supplémentaires ou un mois plus court.",
+  },
+  "dashboard.salary.confirmCta": {
+    en: "Record and start cycle",
+    pt: "Registar e iniciar ciclo",
+    es: "Registrar e iniciar ciclo",
+    de: "Erfassen und Zyklus starten",
+    fr: "Enregistrer et démarrer le cycle",
+  },
+  "dashboard.salary.badAmount": {
+    en: "Enter an amount greater than zero.",
+    pt: "Introduza um valor maior que zero.",
+    es: "Introduce un importe mayor que cero.",
+    de: "Gib einen Betrag größer als null ein.",
+    fr: "Saisissez un montant supérieur à zéro.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

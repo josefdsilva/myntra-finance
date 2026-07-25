@@ -23,6 +23,15 @@ import { markIncomeReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
 import { Wallet, Loader2, TrendingUp, TrendingDown, Minus, Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { DashboardTips } from "@/components/dashboard-tips";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
@@ -646,32 +655,43 @@ function SalaryReceivedButton({
   const qc = useQueryClient();
   const markIncome = useServerFn(markIncomeReceived);
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [amountStr, setAmountStr] = useState("");
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestAmount, setSuggestAmount] = useState(0);
   // Don't re-trigger if a salary was already recorded within the last 5 days
   const recentlyReceived = lastSalaryAt && Date.now() - lastSalaryAt.getTime() < 5 * 86400_000;
 
   // The income this button reconciles: the cycle anchor, else the first salary,
-  // else the first income. Marking it links the receipt to that income so the
-  // cashflow ledger shows it received (no separate, unlinked salary receipt).
-  const { data: primaryIncomeId } = useQuery({
+  // else the first income. We keep its expected amount so the confirm dialog can
+  // prefill it while letting the user correct this month's actual figure.
+  const { data: primaryIncome } = useQuery({
     queryKey: ["primary-income", householdId],
     queryFn: async () => {
       const [{ data: hh }, { data: incs }] = await Promise.all([
         supabase.from("households").select("cycle_anchor_income_id").eq("id", householdId).maybeSingle(),
-        supabase.from("incomes").select("id, type").eq("household_id", householdId).order("created_at"),
+        supabase
+          .from("incomes")
+          .select("id, type, native_amount, monthly_amount")
+          .eq("household_id", householdId)
+          .order("created_at"),
       ]);
       const list = incs ?? [];
       const anchor = hh?.cycle_anchor_income_id
         ? list.find((i) => i.id === hh.cycle_anchor_income_id)
         : null;
       const salary = list.find((i) => i.type === "salary");
-      return (anchor?.id ?? salary?.id ?? list[0]?.id ?? null) as string | null;
+      const chosen = anchor ?? salary ?? list[0] ?? null;
+      if (!chosen) return null;
+      return {
+        id: chosen.id as string,
+        amount: Number(chosen.native_amount ?? chosen.monthly_amount) || 0,
+      };
     },
   });
 
-  async function onClick() {
-    if (!primaryIncomeId) {
+  function openDialog() {
+    if (!primaryIncome) {
       toast.error(t("dashboard.salary.needIncome"));
       return;
     }
@@ -681,10 +701,21 @@ function SalaryReceivedButton({
       );
       if (!ok) return;
     }
+    setAmountStr(primaryIncome.amount ? primaryIncome.amount.toFixed(2) : "");
+    setOpen(true);
+  }
+
+  async function confirm() {
+    if (!primaryIncome) return;
+    const amount = Number(amountStr);
+    if (!(amount > 0)) {
+      toast.error(t("dashboard.salary.badAmount"));
+      return;
+    }
     setLoading(true);
     try {
       const row = await markIncome({
-        data: { household_id: householdId, income_id: primaryIncomeId },
+        data: { household_id: householdId, income_id: primaryIncome.id, amount },
       });
       toast.success(t("dashboard.salary.recordedToast"));
       qc.invalidateQueries({ queryKey: ["dashboard"] });
@@ -692,7 +723,8 @@ function SalaryReceivedButton({
       qc.invalidateQueries({ queryKey: ["expenses-list"] });
       qc.invalidateQueries({ queryKey: ["cycle-committed"] });
       onDone();
-      const amt = Number(row?.amount ?? 0);
+      setOpen(false);
+      const amt = Number(row?.amount ?? amount);
       if (amt > 0) {
         setSuggestAmount(amt);
         setSuggestOpen(true);
@@ -717,7 +749,7 @@ function SalaryReceivedButton({
           </p>
         </div>
         <Button
-          onClick={onClick}
+          onClick={openDialog}
           disabled={loading}
           variant={recentlyReceived ? "outline" : "default"}
         >
@@ -725,6 +757,40 @@ function SalaryReceivedButton({
           {t("dashboard.salary.button")}
         </Button>
       </div>
+
+      <Dialog open={open} onOpenChange={(o) => !o && setOpen(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("dashboard.salary.confirmTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>{t("dashboard.salary.amountLabel")}</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min={0}
+                value={amountStr}
+                onChange={(e) => setAmountStr(e.target.value)}
+                autoFocus
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("dashboard.salary.amountHint")}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                {t("common.cancel")}
+              </Button>
+              <Button onClick={confirm} disabled={loading}>
+                {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+                {t("dashboard.salary.confirmCta")}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <IncomeAllocationSuggestion
         householdId={householdId}
         amount={suggestAmount}
