@@ -28,9 +28,9 @@ test("a strong household scores near the top and earns the right badges", () => 
   expect(scoreOf(r, "debt")).toBe(100);
   expect(scoreOf(r, "emergency")).toBe(100);
   expect(r.overall).toBe(100);
-  expect(r.badges).toEqual(
-    expect.arrayContaining(["emergency_ready", "debt_slayer", "consistent_saver"]),
-  );
+  for (const badge of ["emergency_ready", "debt_slayer", "consistent_saver"]) {
+    expect(r.badges).toContain(badge);
+  }
 });
 
 test("high debt-to-income zeroes the debt pillar", () => {
