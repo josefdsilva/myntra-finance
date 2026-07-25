@@ -720,7 +720,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     avalancheOrder,
     snowballOrder,
     cycleStartKey: cycle.start.toISOString().slice(0, 10),
-    cycle: {
+    cycleRhythm: {
       // Payday-driven households vs fixed fiscal-period businesses read very
       // differently, so let the coach frame advice around the right rhythm.
       mode: cycleCfg.mode,
