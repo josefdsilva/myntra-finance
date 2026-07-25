@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
+import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
 import { confirmBucketAllocation, undoBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { MoveFundsCard } from "@/components/move-funds-card";
 import { BucketsSection } from "@/routes/_authenticated/settings";
@@ -90,15 +91,27 @@ function AllocationsPage() {
 
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const { data: confirmations, refetch: refetchConfirmations } = useQuery({
+
+  // "This cycle" is the space's actual cycle, not the calendar month — otherwise a
+  // contribution made last cycle (same month) is wrongly counted as this cycle.
+  const { data: cycleBounds } = useQuery({
     enabled: !!householdId,
-    queryKey: ["bucket-allocations", householdId, period],
+    queryKey: ["alloc-cycle", householdId, ...cycleKeyPart(hh?.household)],
+    queryFn: () => fetchCycleBounds(supabase, householdId!, hh?.household),
+  });
+  const cycleStartIso = cycleBounds?.start.toISOString() ?? null;
+  const cycleEndIso = cycleBounds?.end.toISOString() ?? null;
+
+  const { data: confirmations, refetch: refetchConfirmations } = useQuery({
+    enabled: !!householdId && !!cycleStartIso,
+    queryKey: ["bucket-allocations", householdId, cycleStartIso],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bucket_allocations")
         .select("*")
         .eq("household_id", householdId!)
-        .eq("period", period);
+        .gte("confirmed_at", cycleStartIso!)
+        .lt("confirmed_at", cycleEndIso!);
       if (error) throw error;
       return data ?? [];
     },
@@ -153,17 +166,15 @@ function AllocationsPage() {
   });
 
   const { data: bucketMovementsThisMonth } = useQuery({
-    enabled: !!householdId,
-    queryKey: ["alloc-bucket-movements", householdId, period],
+    enabled: !!householdId && !!cycleStartIso,
+    queryKey: ["alloc-bucket-movements", householdId, cycleStartIso],
     queryFn: async () => {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
       const { data } = await supabase
         .from("account_movements")
         .select("amount, to_type, from_type, reason")
         .eq("household_id", householdId!)
-        .gte("created_at", monthStart)
-        .lt("created_at", nextMonth)
+        .gte("created_at", cycleStartIso!)
+        .lt("created_at", cycleEndIso!)
         .or("to_type.eq.bucket,from_type.eq.bucket");
       return data ?? [];
     },
@@ -184,25 +195,35 @@ function AllocationsPage() {
     return Math.max(1, months);
   }
 
+  // Current saved balance of a project: what it already held (initial) plus every
+  // confirmed contribution since.
+  function savedBalance(b: Bucket): number {
+    return Number(b.initial_balance ?? 0) + (goalTotals?.[b.id] ?? 0);
+  }
+
   function monthly(b: Bucket): number {
     const v = Number(b.target_value);
     if (b.target_type === "pct_surplus") return (surplus * v) / 100;
     if (b.target_type === "fixed_monthly") return v;
     if (b.target_type === "fixed_yearly") return v / 12;
-    return v / monthsUntil(b.target_deadline);
+    // goal_by_date: only the REMAINING gap (target − already saved) spread over the
+    // months left. As the balance grows, the monthly amount to stay on track falls.
+    const remaining = Math.max(0, v - savedBalance(b));
+    return remaining / monthsUntil(b.target_deadline);
   }
 
   const totalAllocated = (data?.buckets ?? []).reduce((s, b) => s + monthly(b), 0);
   const unallocated = surplus - totalAllocated;
 
-  // Cycle-close warning (option 4): once we're past the ~last week of the month,
-  // flag buckets that still have no confirmation for the current period.
-  const daysLeftInMonth =
-    new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  // Cycle-close warning: once we're in the last week of the CYCLE, flag projects
+  // that still have no contribution confirmed this cycle.
+  const daysLeftInCycle = cycleBounds
+    ? Math.max(0, Math.round((cycleBounds.end.getTime() - now.getTime()) / 86400000))
+    : 30;
   const unconfirmedBuckets = (data?.buckets ?? []).filter(
     (b) => !confirmations?.some((c) => c.bucket_id === b.id),
   );
-  const showCloseWarning = daysLeftInMonth <= 7 && unconfirmedBuckets.length > 0;
+  const showCloseWarning = daysLeftInCycle <= 7 && unconfirmedBuckets.length > 0;
   const totalConfirmedThisMonth = (confirmations ?? []).reduce((s, c) => s + Number(c.amount), 0);
   // Real money moved into projects this cycle = confirmed allocations + net account
   // movements (deposits + transfers-in − withdrawals − bucket-sourced debt payments).
@@ -301,11 +322,12 @@ function AllocationsPage() {
                 const goalTarget = Number(b.target_value);
                 const goalPct =
                   isGoal && goalTarget > 0 ? Math.min(100, (saved / goalTarget) * 100) : 0;
-                // On-track check: expected saved by now = monthly * months since bucket started tracking
-                // Approximation: use months elapsed since (deadline - required months).
                 const monthsLeft = isGoal ? monthsUntil(b.target_deadline) : 0;
-                const expectedByNow = isGoal ? Math.max(0, goalTarget - amount * monthsLeft) : 0;
-                const onTrack = isGoal ? saved >= expectedByNow - 0.01 : true;
+                // `amount` is already the remaining gap ÷ months left. The goal is
+                // met once the balance reaches the target, and "on track" while the
+                // required monthly still fits within the surplus.
+                const goalMet = isGoal && saved >= goalTarget - 0.01;
+                const onTrack = !isGoal || goalMet || amount <= surplus + 0.01;
                 return (
                   <div key={b.id} className="space-y-1.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
@@ -332,7 +354,19 @@ function AllocationsPage() {
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:shrink-0 sm:justify-end">
-                        <span className="font-medium tabular-nums">{money(amount)}</span>
+                        <div className="text-right">
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            {t("alloc.currentBalance")}
+                          </div>
+                          <div className="text-lg font-semibold leading-tight tabular-nums">
+                            {money(saved)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {t(isGoal ? "alloc.perMonthToTrack" : "alloc.perMonthPlan", {
+                              amount: money(amount),
+                            })}
+                          </div>
+                        </div>
                         <ConfirmAllocationButton
                           householdId={householdId!}
                           bucketId={b.id}
@@ -350,15 +384,11 @@ function AllocationsPage() {
                       </div>
                     </div>
 
-                    <p className="text-xs text-muted-foreground">
-                      {t("alloc.balance", { value: money(saved) })}
-                      {initialBalance > 0 && (
-                        <span>
-                          {" "}
-                          · {t("alloc.balance.includesInitial", { value: money(initialBalance) })}
-                        </span>
-                      )}
-                    </p>
+                    {initialBalance > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("alloc.balance.includesInitial", { value: money(initialBalance) })}
+                      </p>
+                    )}
 
                     {isGoal && (
                       <div className="mt-2 rounded-md bg-muted/40 px-3 py-2 space-y-1">
@@ -376,12 +406,14 @@ function AllocationsPage() {
                         </div>
                         <Progress value={goalPct} />
                         <p className={`text-xs ${onTrack ? "text-emerald-600" : "text-amber-600"}`}>
-                          {onTrack
-                            ? t("alloc.goalOnTrack", { amount: money(saved - expectedByNow) })
-                            : t("alloc.goalBehind", {
-                                behindAmount: money(expectedByNow - saved),
-                                needed: money((goalTarget - saved) / Math.max(1, monthsLeft)),
-                              })}
+                          {goalMet
+                            ? t("alloc.goalMet")
+                            : onTrack
+                              ? t("alloc.goalPace", { amount: money(amount) })
+                              : t("alloc.goalTight", {
+                                  amount: money(amount),
+                                  surplus: money(surplus),
+                                })}
                         </p>
                       </div>
                     )}

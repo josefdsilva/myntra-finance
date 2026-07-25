@@ -126,6 +126,48 @@ export const ENTRIES = {
     de: "Summe über {count} ausgewählte Zyklen.",
     fr: "Total sur {count} cycles sélectionnés.",
   },
+  "alloc.currentBalance": {
+    en: "Balance",
+    pt: "Saldo",
+    es: "Saldo",
+    de: "Guthaben",
+    fr: "Solde",
+  },
+  "alloc.perMonthToTrack": {
+    en: "{amount}/mo to stay on track",
+    pt: "{amount}/mês para manter o ritmo",
+    es: "{amount}/mes para ir al día",
+    de: "{amount}/Monat, um im Plan zu bleiben",
+    fr: "{amount}/mois pour rester dans les temps",
+  },
+  "alloc.perMonthPlan": {
+    en: "{amount}/mo planned",
+    pt: "{amount}/mês planeado",
+    es: "{amount}/mes planeado",
+    de: "{amount}/Monat geplant",
+    fr: "{amount}/mois prévu",
+  },
+  "alloc.goalMet": {
+    en: "Goal reached.",
+    pt: "Objetivo atingido.",
+    es: "Objetivo alcanzado.",
+    de: "Ziel erreicht.",
+    fr: "Objectif atteint.",
+  },
+  "alloc.goalPace": {
+    en: "{amount} a month keeps this on track.",
+    pt: "{amount} por mês mantém o ritmo.",
+    es: "{amount} al mes lo mantiene al día.",
+    de: "{amount} pro Monat hält es im Plan.",
+    fr: "{amount} par mois maintient le rythme.",
+  },
+  "alloc.goalTight": {
+    en: "Needs {amount} a month, more than your {surplus} surplus.",
+    pt: "Precisa de {amount} por mês, mais do que o seu excedente de {surplus}.",
+    es: "Necesita {amount} al mes, más que tu excedente de {surplus}.",
+    de: "Braucht {amount} pro Monat, mehr als dein Überschuss von {surplus}.",
+    fr: "Nécessite {amount} par mois, plus que votre excédent de {surplus}.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;
