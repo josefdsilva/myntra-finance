@@ -14,7 +14,27 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
-  // Add new keys here.
+  "dashboard.safe.infoTitle": {
+    en: "What safe to spend means",
+    pt: "O que é o seguro para gastar",
+    es: "Qué es lo seguro para gastar",
+    de: "Was sicher ausgeben bedeutet",
+    fr: "Ce que signifie libre à dépenser",
+  },
+  "dashboard.safe.infoBody": {
+    en: "It is what is left for everyday spending once your fixed costs, debt payments and project funding are set aside for the cycle. That money is genuinely yours to spend. We take that allowance, subtract what you have already spent, and spread the rest evenly across the days left.",
+    pt: "É o que sobra para o dia a dia depois de reservar, neste ciclo, os custos fixos, os pagamentos de dívida e o financiamento dos projetos. Esse dinheiro é mesmo seu para gastar. Pegamos nessa margem, subtraímos o que já gastou e distribuímos o resto de forma igual pelos dias que faltam.",
+    es: "Es lo que queda para el día a día una vez reservados, en este ciclo, los costes fijos, los pagos de deudas y la financiación de tus proyectos. Ese dinero es realmente tuyo para gastar. Tomamos ese margen, restamos lo que ya has gastado y repartimos el resto por igual entre los días que quedan.",
+    de: "Es ist das, was für alltägliche Ausgaben übrig bleibt, sobald deine Fixkosten, Schuldenzahlungen und die Projektfinanzierung für den Zyklus zurückgelegt sind. Dieses Geld gehört wirklich dir. Wir nehmen diesen Betrag, ziehen ab, was du bereits ausgegeben hast, und verteilen den Rest gleichmäßig auf die verbleibenden Tage.",
+    fr: "C'est ce qu'il reste pour les dépenses courantes une fois mis de côté, pour ce cycle, vos charges fixes, vos remboursements de dettes et le financement de vos projets. Cet argent est vraiment à vous. On prend cette enveloppe, on retire ce que vous avez déjà dépensé, et on répartit le reste également sur les jours restants.",
+  },
+  "dashboard.safe.infoBreakdown": {
+    en: "{remaining} left across {days} days is about {perDay} a day.",
+    pt: "{remaining} para {days} dias, cerca de {perDay} por dia.",
+    es: "{remaining} para {days} días, unos {perDay} al día.",
+    de: "{remaining} für {days} Tage, etwa {perDay} pro Tag.",
+    fr: "{remaining} pour {days} jours, soit environ {perDay} par jour.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

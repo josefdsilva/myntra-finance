@@ -21,7 +21,8 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { markIncomeReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
-import { Wallet, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Wallet, Loader2, TrendingUp, TrendingDown, Minus, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DashboardTips } from "@/components/dashboard-tips";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
@@ -320,9 +321,35 @@ function Dashboard() {
       {/* Hero: safe to spend today */}
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
-          <p className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            {t("dashboard.safe.label")}
-          </p>
+          <div className="mb-2 flex items-center gap-1.5">
+            <p className="text-sm uppercase tracking-wider text-muted-foreground">
+              {t("dashboard.safe.label")}
+            </p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`${t("dashboard.safe.label")}: ${t("dashboard.safe.infoTitle")}`}
+                  className="text-muted-foreground/70 transition-colors hover:text-foreground"
+                >
+                  <Info className="size-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="start" className="w-72 space-y-2 text-xs leading-relaxed">
+                <p className="text-sm font-medium text-foreground">{t("dashboard.safe.infoTitle")}</p>
+                <p className="text-muted-foreground">{t("dashboard.safe.infoBody")}</p>
+                {variablePool > 0 && (
+                  <p className="tabular-nums text-muted-foreground">
+                    {t("dashboard.safe.infoBreakdown", {
+                      remaining: money(remaining),
+                      days: daysLeft,
+                      perDay: money(safeToday),
+                    })}
+                  </p>
+                )}
+              </PopoverContent>
+            </Popover>
+          </div>
           <div className="flex items-baseline gap-3 flex-wrap">
             <p
               className={`text-5xl md:text-6xl font-display ${overspent ? "text-destructive" : "text-primary"}`}
@@ -350,18 +377,6 @@ function Dashboard() {
               </span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-3 tabular-nums">
-            {isLoading ? (
-              <span className="inline-block h-4 w-64 rounded bg-muted animate-pulse align-middle" />
-            ) : (
-              t(
-                cycle?.source === "salary"
-                  ? "dashboard.safe.remainingSalary"
-                  : "dashboard.safe.remainingMonth",
-                { remaining: money(remaining), days: daysLeft, perDay: money(safeToday) },
-              )
-            )}
-          </p>
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
           )}
