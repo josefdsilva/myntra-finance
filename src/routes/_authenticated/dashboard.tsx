@@ -221,20 +221,37 @@ function Dashboard() {
     variablePool > 0 ? Math.max(0, variablePool - netSpentThroughYesterday) / daysLeftYesterday : 0;
   const trendDelta = safeToday - safeYesterday;
 
-  // 7-day sparkline of daily net spend (spent - non-salary income)
+  // 7-day sparkline of daily net spend (spent - non-salary income). Fetches its
+  // own window independent of the current cycle so early-cycle days still show
+  // the previous cycle's actuals rather than zeros.
+  const { data: spark7Rows } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["dashboard-spark7", householdId],
+    queryFn: async () => {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+      const { data } = await supabase
+        .from("expenses")
+        .select("amount, occurred_at, kind, is_salary")
+        .eq("household_id", householdId!)
+        .gte("occurred_at", start.toISOString());
+      return data ?? [];
+    },
+  });
   const spark = useMemo(() => {
+    const rows = spark7Rows ?? [];
     const days: { key: string; label: string; net: number }[] = [];
     const now = new Date();
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
-      const spent = allExpenses
+      const spent = rows
         .filter(
           (r) =>
             r.kind !== "income" && new Date(r.occurred_at) >= d && new Date(r.occurred_at) < next,
         )
         .reduce((s, r) => s + Number(r.amount), 0);
-      const rc = allExpenses
+      const rc = rows
         .filter(
           (r) =>
             r.kind === "income" &&
@@ -250,7 +267,7 @@ function Dashboard() {
       });
     }
     return days;
-  }, [allExpenses]);
+  }, [spark7Rows]);
   const sparkMax = Math.max(safeToday, ...spark.map((d) => d.net), 1);
   const avgDaily7 = spark.reduce((s, d) => s + d.net, 0) / Math.max(1, spark.length);
   const projectedBalance = remaining - avgDaily7 * daysLeft;
