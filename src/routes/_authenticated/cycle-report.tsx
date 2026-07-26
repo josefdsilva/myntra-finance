@@ -31,7 +31,17 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
-import { Printer, RefreshCw, Loader2, PiggyBank, Wallet, Check } from "lucide-react";
+import {
+  Printer,
+  RefreshCw,
+  Loader2,
+  PiggyBank,
+  Wallet,
+  Check,
+  TrendingUp,
+  TrendingDown,
+  CalendarClock,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/cycle-report")({
@@ -308,6 +318,77 @@ function CycleReportPage() {
             </CardContent>
           </Card>
 
+          {stats.nextCycleOutlook && (
+            <Card className="border-primary/25 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarClock className="size-5 text-primary" />
+                  {t("cycleReport.outlook.title")}
+                </CardTitle>
+                <CardDescription>
+                  {t("cycleReport.outlook.desc", {
+                    month: monthLabel(stats.nextCycleOutlook.month, locale),
+                  })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                  <Stat
+                    label={t("cycleReport.outlook.expectedIncome")}
+                    value={money(stats.nextCycleOutlook.expectedIncome)}
+                  />
+                  <Stat
+                    label={t("cycleReport.outlook.plannedSpend")}
+                    value={money(stats.nextCycleOutlook.plannedSpend)}
+                  />
+                  <Stat
+                    label={t(
+                      stats.nextCycleOutlook.shortfall
+                        ? "cycleReport.outlook.shortfall"
+                        : "cycleReport.outlook.projectedLeftover",
+                    )}
+                    value={money(stats.nextCycleOutlook.leftover)}
+                    warn={stats.nextCycleOutlook.shortfall}
+                  />
+                </div>
+                {stats.nextCycleOutlook.plans.length > 0 ? (
+                  <ul className="divide-y">
+                    {stats.nextCycleOutlook.plans.map((p, i) => (
+                      <li key={i} className="flex items-center justify-between gap-2 py-2 text-sm">
+                        <span className="flex min-w-0 items-center gap-2">
+                          {p.direction === "income" ? (
+                            <TrendingUp className="size-4 shrink-0 text-emerald-600" />
+                          ) : (
+                            <TrendingDown className="size-4 shrink-0 text-muted-foreground" />
+                          )}
+                          <span className="truncate">{p.label}</span>
+                          <Badge
+                            variant="outline"
+                            className={`shrink-0 text-[10px] ${p.funded ? "text-emerald-600" : "text-amber-600"}`}
+                          >
+                            {t(
+                              p.funded
+                                ? "cycleReport.outlook.funded"
+                                : "cycleReport.outlook.unfunded",
+                            )}
+                          </Badge>
+                        </span>
+                        <span
+                          className={`shrink-0 tabular-nums ${p.direction === "income" ? "text-emerald-600" : ""}`}
+                        >
+                          {p.direction === "income" ? "+" : "−"}
+                          {money(p.amount)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t("cycleReport.outlook.clear")}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>{t("cycleReport.varSpendingTitle")}</CardTitle>
@@ -500,6 +581,13 @@ function CycleReportPage() {
       )}
     </div>
   );
+}
+
+/** "2026-08" -> localized "August 2026". Falls back to the raw key on parse failure. */
+function monthLabel(ym: string, locale: string): string {
+  const d = new Date(`${ym}-01T12:00:00`);
+  if (isNaN(d.getTime())) return ym;
+  return d.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
 function Stat({

@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  CalendarClock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -601,9 +602,12 @@ export function PlannedThisCycle({ householdId }: { householdId: string }) {
   if (!items.length) return null;
 
   return (
-    <Card>
+    <Card className="border-primary/25 bg-primary/5">
       <CardHeader>
-        <CardTitle className="text-base">{t("ledger.plannedTitle")}</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <CalendarClock className="size-4 text-primary" />
+          {t("ledger.plannedTitle")}
+        </CardTitle>
         <CardDescription>{t("ledger.plannedDesc")}</CardDescription>
       </CardHeader>
       <CardContent>
