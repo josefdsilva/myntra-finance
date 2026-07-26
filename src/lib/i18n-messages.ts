@@ -6454,7 +6454,9 @@ const fr: Record<BaseKey, string> = {
     "{remaining} restants ÷ {days} jusqu'à la fin du mois = {perDay}/jour",
   "dashboard.safe.calendarTip":
     "Astuce : le jour de paie, appuyez sur Salaire reçu pour démarrer un nouveau cycle.",
-  "dashboard.spark.caption": "7 derniers jours · ligne pointillée = montant sûr du jour",
+  "dashboard.spark.caption.today": "Aujourd'hui vs hier · ligne pointillée = montant sûr du jour",
+  "dashboard.spark.caption.week": "7 derniers jours · ligne pointillée = sûr par jour",
+  "dashboard.spark.caption.cycle": "{days} derniers jours · ligne pointillée = sûr par jour",
   "dashboard.chip.spent": "Dépensé {value}",
   "dashboard.chip.received": "Reçu {value}",
   "dashboard.chip.balance": "Solde {value}",
