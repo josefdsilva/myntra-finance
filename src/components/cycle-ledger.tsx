@@ -42,7 +42,7 @@ import {
   deleteExpense,
 } from "@/lib/budget.functions";
 import { invalidateHouseholdData } from "@/lib/household-queries";
-import { planAppliesToMonth, monthKey, type Plan } from "@/lib/plan";
+import { plansInWindow, type Plan } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 
 type Line = {
@@ -586,19 +586,20 @@ function ReconLine({
  */
 export function PlannedThisCycle({ householdId }: { householdId: string }) {
   const t = useT();
-  const ym = monthKey(new Date());
-  const { data: plans = [] } = useQuery({
-    queryKey: ["cycle-plans", householdId, ym],
+  const { data } = useQuery({
+    queryKey: ["cycle-plans", householdId],
     queryFn: async () => {
-      const { data } = await supabase.from("plans").select("*").eq("household_id", householdId);
-      return (data ?? []) as Plan[];
+      // Plans landing in the actual cycle window, not the calendar month — a
+      // payday cycle like 25 Jul–25 Aug must surface August-dated plans.
+      const [{ data: rows }, bounds] = await Promise.all([
+        supabase.from("plans").select("*").eq("household_id", householdId),
+        fetchCycleBoundsById(supabase, householdId),
+      ]);
+      return { plans: (rows ?? []) as Plan[], start: bounds.start, end: bounds.end };
     },
   });
 
-  const items = plans.filter(
-    (p) =>
-      (!p.done && planAppliesToMonth(p, ym)) || (p.done && String(p.month).slice(0, 7) === ym),
-  );
+  const items = data ? plansInWindow(data.plans, data.start, data.end, true) : [];
   if (!items.length) return null;
 
   return (

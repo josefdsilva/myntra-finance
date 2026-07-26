@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
-import { leftoverObligation, monthKey, planAppliesToMonth, type Plan } from "@/lib/plan";
+import { leftoverObligation, monthKey, plansInWindow, type Plan } from "@/lib/plan";
 import {
   bucketsQuery,
   incomesQuery,
@@ -170,11 +170,13 @@ function Dashboard() {
   // here's what's coming" nudge shown just after a cycle rolls over.
   const { data: upcomingPlans } = useQuery({
     enabled: !!householdId,
-    queryKey: ["dashboard-upcoming-plans", householdId],
+    queryKey: ["dashboard-upcoming-plans", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      const { data } = await supabase.from("plans").select("*").eq("household_id", householdId!);
-      const ym = monthKey(new Date());
-      return ((data ?? []) as Plan[]).filter((p) => !p.done && planAppliesToMonth(p, ym));
+      const [{ data }, bounds] = await Promise.all([
+        supabase.from("plans").select("*").eq("household_id", householdId!),
+        fetchCycleBounds(supabase, householdId!, hh?.household),
+      ]);
+      return plansInWindow((data ?? []) as Plan[], bounds.start, bounds.end);
     },
   });
   const [plansNudgeDismissed, setPlansNudgeDismissed] = useState(false);

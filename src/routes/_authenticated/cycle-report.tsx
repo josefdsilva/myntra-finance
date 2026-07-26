@@ -327,7 +327,7 @@ function CycleReportPage() {
                 </CardTitle>
                 <CardDescription>
                   {t("cycleReport.outlook.desc", {
-                    month: monthLabel(stats.nextCycleOutlook.month, locale),
+                    range: `${fmtDate(stats.nextCycleOutlook.cycleStart)} – ${fmtDate(stats.nextCycleOutlook.cycleEnd)}`,
                   })}
                 </CardDescription>
               </CardHeader>
@@ -581,13 +581,6 @@ function CycleReportPage() {
       )}
     </div>
   );
-}
-
-/** "2026-08" -> localized "August 2026". Falls back to the raw key on parse failure. */
-function monthLabel(ym: string, locale: string): string {
-  const d = new Date(`${ym}-01T12:00:00`);
-  if (isNaN(d.getTime())) return ym;
-  return d.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
 function Stat({

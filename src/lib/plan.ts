@@ -66,6 +66,48 @@ export function plansForMonth(plans: Plan[], ym: string): Plan[] {
 }
 
 /**
+ * Plans that land within an arbitrary [start, end) window — the correct lens for
+ * payday cycles that straddle two calendar months (e.g. 25 Jul – 25 Aug should
+ * include an August-dated plan, not a July one). Each plan's occurrence is taken
+ * on the first of its month (the storage convention), so a plan lands in exactly
+ * one cycle as the windows tile the timeline. Recurring plans contribute the one
+ * occurrence that falls inside the window. Done plans are excluded unless
+ * `includeDone`, in which case they match by their own resolved month.
+ */
+export function plansInWindow(
+  plans: Plan[],
+  start: Date,
+  end: Date,
+  includeDone = false,
+): Plan[] {
+  const months: string[] = [];
+  const cur = new Date(start.getFullYear(), start.getMonth(), 1);
+  const last = new Date(end.getFullYear(), end.getMonth(), 1);
+  while (cur <= last) {
+    months.push(monthKey(cur));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  const occInWindow = (ym: string) => {
+    const occ = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1, 1);
+    return occ >= start && occ < end;
+  };
+  const out: Plan[] = [];
+  for (const p of plans) {
+    if (p.done) {
+      if (includeDone && occInWindow(String(p.month).slice(0, 7))) out.push(p);
+      continue;
+    }
+    for (const ym of months) {
+      if (planAppliesToMonth(p, ym) && occInWindow(ym)) {
+        out.push(p);
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * Unfunded planned spend for a month: spend plans that land in it and are NOT
  * being pre-funded by a project. Funded plans are excluded because their cost is
  * being set aside gradually via the project's allocations, so they shouldn't also

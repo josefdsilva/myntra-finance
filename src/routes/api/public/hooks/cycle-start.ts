@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/hooks/cycle-start")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { enqueueTemplateEmail } = await import("@/lib/email/send.server");
         const { fetchCycleBoundsById } = await import("@/lib/cycle-bounds");
-        const { buildForecast, plansForMonth } = await import("@/lib/plan");
+        const { plansInWindow } = await import("@/lib/plan");
 
         // Reuse the weekly-digest opt-in as the email-notifications gate.
         const { data: prefs } = await supabaseAdmin
@@ -85,27 +85,33 @@ export const Route = createFileRoute("/api/public/hooks/cycle-start")({
           );
           const planList = ((plansData as Plan[] | null) ?? []) as Plan[];
 
-          const forecast = buildForecast({
-            plans: planList,
-            baseline,
-            monthlyIncome,
-            startMonth: cycle.start,
-            months: 1,
-          })[0];
-          if (!forecast) continue;
+          // Plans landing in this cycle's real window (payday cycles straddle
+          // two calendar months). Planned spend = fixed + debt + everyday
+          // baseline + any planned one-off not pre-funded by a project.
+          const winPlans = plansInWindow(planList, cycle.start, cycle.end);
+          const incomePlans = winPlans
+            .filter((pl) => pl.direction === "income")
+            .reduce((s, pl) => s + Math.abs(Number(pl.amount) || 0), 0);
+          const spendUnfunded = winPlans
+            .filter((pl) => pl.direction === "spend" && !pl.bucket_id)
+            .reduce((s, pl) => s + Math.abs(Number(pl.amount) || 0), 0);
+          const expectedIncome = monthlyIncome + incomePlans;
+          const plannedSpend = baseline + spendUnfunded;
+          const leftover = expectedIncome - plannedSpend;
 
-          const ym = forecast.ym;
-          const plans = plansForMonth(planList, ym).map((pl) => ({
+          const plans = winPlans.map((pl) => ({
             label: pl.label,
             amount: Math.abs(Number(pl.amount) || 0),
             direction: pl.direction,
             funded: !!pl.bucket_id,
           }));
 
-          const monthLabelStr = new Date(`${ym}-01T12:00:00`).toLocaleDateString("en-GB", {
-            month: "long",
+          const dfmt = new Intl.DateTimeFormat("en-GB", {
+            day: "2-digit",
+            month: "short",
             year: "numeric",
           });
+          const monthLabelStr = `${dfmt.format(cycle.start)} – ${dfmt.format(cycle.end)}`;
 
           let emailQueued = false;
           try {
@@ -122,10 +128,10 @@ export const Route = createFileRoute("/api/public/hooks/cycle-start")({
                   appUrl: "https://bynku.app",
                   householdName: hh?.name ?? undefined,
                   monthLabel: monthLabelStr,
-                  expectedIncome: Math.round(forecast.income),
-                  plannedSpend: Math.round(forecast.plannedSpend),
-                  leftover: Math.round(forecast.leftover),
-                  shortfall: forecast.shortfall,
+                  expectedIncome: Math.round(expectedIncome),
+                  plannedSpend: Math.round(plannedSpend),
+                  leftover: Math.round(leftover),
+                  shortfall: leftover < 0,
                   plans,
                   currency: hh?.currency ?? "EUR",
                 },

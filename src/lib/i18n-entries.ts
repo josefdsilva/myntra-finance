@@ -183,11 +183,11 @@ export const ENTRIES = {
     fr: "Perspectives : prochain cycle",
   },
   "cycleReport.outlook.desc": {
-    en: "Planned money in and out for {month}, folded into your baseline.",
-    pt: "Dinheiro planeado a entrar e a sair em {month}, integrado no seu orçamento base.",
-    es: "Dinero planificado que entra y sale en {month}, integrado en tu presupuesto base.",
-    de: "Geplante Ein- und Ausgänge für {month}, eingerechnet in dein Budget.",
-    fr: "Argent prévu entrant et sortant pour {month}, intégré à votre budget de base.",
+    en: "Money in and out across {range}: fixed costs, debt, everyday baseline and planned one-offs.",
+    pt: "Dinheiro a entrar e a sair em {range}: custos fixos, dívida, orçamento do dia a dia e planos pontuais.",
+    es: "Dinero que entra y sale en {range}: costes fijos, deuda, presupuesto diario y planes puntuales.",
+    de: "Ein- und Ausgänge über {range}: Fixkosten, Schulden, Alltagsbudget und geplante Einzelposten.",
+    fr: "Argent entrant et sortant sur {range} : charges fixes, dettes, budget courant et plans ponctuels.",
   },
   "cycleReport.outlook.expectedIncome": {
     en: "Expected income",

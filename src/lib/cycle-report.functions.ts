@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { buildCyclesFromSalaries, type CycleSpan } from "@/lib/cycle";
-import { buildForecast, plansForMonth, monthKey, type Plan } from "@/lib/plan";
+import { plansInWindow, type Plan } from "@/lib/plan";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
@@ -75,11 +75,13 @@ export type ClosedCycleStats = {
   trend: Array<{ start: string; end: string; variableSpentMonthly: number }>;
   /** Plans resolved (paid) during this cycle, estimate vs actual. */
   resolvedPlans: Array<{ label: string; planned: number; actual: number; direction: string }>;
-  /** A one-month look ahead at the next cycle, folding in known plans. */
+  /** A look ahead at the next cycle window, folding in known plans. */
   nextCycleOutlook: {
-    month: string;
+    cycleStart: string;
+    cycleEnd: string;
     expectedIncome: number;
     baseline: number;
+    /** Everything going out: fixed + debt + everyday baseline + unfunded plans. */
     plannedSpend: number;
     leftover: number;
     shortfall: boolean;
@@ -134,6 +136,7 @@ export async function buildClosedCycleStats(
   householdId: string,
   cycle: CycleSpan,
   priorCycles: CycleSpan[],
+  nextCycle?: CycleSpan | null,
 ): Promise<ClosedCycleStats> {
   const [
     { data: hh },
@@ -341,32 +344,40 @@ export async function buildClosedCycleStats(
     (s, r) => s + Number(r.monthly_amount),
     0,
   );
-  const outlookMonth = buildForecast({
-    plans: planList,
+  // Look ahead over the NEXT cycle's real window (payday cycles straddle two
+  // calendar months, so a calendar-month lens would miss the plans that land in
+  // the tail month). Fall back to one cycle-length past this cycle's end.
+  const outlookStart = nextCycle?.start ?? cycle.end;
+  const outlookEnd =
+    nextCycle?.end ?? new Date(cycle.end.getTime() + cycleDays * 86400000);
+  const outlookPlans = plansInWindow(planList, outlookStart, outlookEnd);
+  const outlookIncomePlans = outlookPlans
+    .filter((p) => p.direction === "income")
+    .reduce((s, p) => s + Math.abs(Number(p.amount) || 0), 0);
+  const outlookSpendUnfunded = outlookPlans
+    .filter((p) => p.direction === "spend" && !p.bucket_id)
+    .reduce((s, p) => s + Math.abs(Number(p.amount) || 0), 0);
+  const outlookIncome = Math.round((settingsIncome + outlookIncomePlans) * 100) / 100;
+  // Planned spend = the full committed outflow: fixed + debt + everyday baseline
+  // (all captured by `baseline`) plus any planned one-off not pre-funded by a
+  // project. Funded plans are carried by their project, so they don't add here.
+  const outlookPlannedSpend = Math.round((baseline + outlookSpendUnfunded) * 100) / 100;
+  const outlookLeftover = Math.round((outlookIncome - outlookPlannedSpend) * 100) / 100;
+  const nextCycleOutlook = {
+    cycleStart: outlookStart.toISOString(),
+    cycleEnd: outlookEnd.toISOString(),
+    expectedIncome: outlookIncome,
     baseline,
-    monthlyIncome: settingsIncome,
-    startMonth: cycle.end,
-    months: 1,
-  })[0];
-  const outlookYm = outlookMonth?.ym ?? monthKey(cycle.end);
-  const nextCycleOutlook = outlookMonth
-    ? {
-        month: outlookYm,
-        expectedIncome: outlookMonth.income,
-        baseline: outlookMonth.baseline,
-        plannedSpend: outlookMonth.plannedSpend,
-        leftover: outlookMonth.leftover,
-        shortfall: outlookMonth.shortfall,
-        plans: plansForMonth(planList, outlookYm)
-          .filter((p) => !p.done)
-          .map((p) => ({
-            label: p.label,
-            amount: Math.abs(Number(p.amount) || 0),
-            direction: p.direction,
-            funded: !!p.bucket_id,
-          })),
-      }
-    : null;
+    plannedSpend: outlookPlannedSpend,
+    leftover: outlookLeftover,
+    shortfall: outlookLeftover < 0,
+    plans: outlookPlans.map((p) => ({
+      label: p.label,
+      amount: Math.abs(Number(p.amount) || 0),
+      direction: p.direction,
+      funded: !!p.bucket_id,
+    })),
+  };
 
   return {
     cycleStart: cycle.start.toISOString(),
@@ -405,7 +416,7 @@ function langInstruction(locale?: string) {
 
 const SYSTEM = `You are a warm, practical household financial coach writing the narrative section of a closed-pay-cycle report for a family in Portugal. Currency EUR.
 Ground every claim in the JSON snapshot provided — never invent numbers, categories, or bucket names that aren't in it.
-The snapshot includes resolvedPlans[] (planned costs the family settled this cycle, each with planned vs actual — a negotiated-down bill is a win; an overrun is worth flagging) and nextCycleOutlook (the coming month's expectedIncome, baseline, plannedSpend, leftover, whether it runs short, and the specific plans landing, each with funded=whether a project is already saving for it).
+The snapshot includes resolvedPlans[] (planned costs the family settled this cycle, each with planned vs actual — a negotiated-down bill is a win; an overrun is worth flagging) and nextCycleOutlook (the next cycle's expectedIncome; plannedSpend = ALL money going out that cycle, i.e. fixed costs + debt + everyday baseline + any planned one-off not pre-funded; leftover; whether it runs short; and the specific plans landing, each with funded=whether a project is already saving for it).
 Format money as €X,XXX.XX. Output markdown with exactly three sections:
 ### What went well
 2–4 short bullets — specific, grounded in the numbers (e.g. a category under estimate, a bucket funded, a resolved plan that came in under its estimate).
@@ -452,8 +463,17 @@ export const generateCycleReportNarrative = createServerFn({ method: "POST" })
     if (idx === -1) throw new Error("That cycle could not be found for this household.");
     const cycle = cycles[idx];
     const priorCycles = cycles.slice(0, idx);
+    // The cycle immediately after the one being reported — the window we look
+    // ahead into. For the latest closed cycle this is the current, ongoing one.
+    const nextCycle = cycles[idx + 1] ?? null;
 
-    const stats = await buildClosedCycleStats(supabase, data.householdId, cycle, priorCycles);
+    const stats = await buildClosedCycleStats(
+      supabase,
+      data.householdId,
+      cycle,
+      priorCycles,
+      nextCycle,
+    );
 
     const cycleStartKey = cycle.start.toISOString().slice(0, 10);
     const useCache = !data.locale || data.locale === "en";

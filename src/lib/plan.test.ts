@@ -5,6 +5,7 @@ import {
   unfundedPlannedSpend,
   leftoverObligation,
   buildForecast,
+  plansInWindow,
   type Plan,
 } from "./plan";
 
@@ -19,6 +20,40 @@ const p = (o: Partial<Plan>): Plan => ({
   bucket_id: o.bucket_id ?? null,
   done: o.done ?? false,
   actual_amount: o.actual_amount ?? null,
+});
+
+test("plansInWindow: payday cycle 25 Jul–25 Aug picks up August plans, not July", () => {
+  const start = new Date(2026, 6, 25); // 25 Jul 2026
+  const end = new Date(2026, 7, 25); // 25 Aug 2026
+  const julyPlan = p({ id: "jul", month: "2026-07-01" });
+  const augPlan = p({ id: "aug", month: "2026-08-01" });
+  const sepPlan = p({ id: "sep", month: "2026-09-01" });
+  const got = plansInWindow([julyPlan, augPlan, sepPlan], start, end).map((x) => x.id);
+  expect(got).toEqual(["aug"]);
+});
+
+test("plansInWindow: each occurrence lands in exactly one tiling window", () => {
+  const aug = p({ id: "aug", month: "2026-08-01" });
+  const prev = plansInWindow([aug], new Date(2026, 5, 25), new Date(2026, 6, 25)); // 25 Jun–25 Jul
+  const curr = plansInWindow([aug], new Date(2026, 6, 25), new Date(2026, 7, 25)); // 25 Jul–25 Aug
+  const next = plansInWindow([aug], new Date(2026, 7, 25), new Date(2026, 8, 25)); // 25 Aug–25 Sep
+  expect(prev.length).toBe(0);
+  expect(curr.length).toBe(1);
+  expect(next.length).toBe(0);
+});
+
+test("plansInWindow: excludes done unless includeDone; matches done by its month", () => {
+  const doneAug = p({ id: "d", month: "2026-08-01", done: true });
+  const start = new Date(2026, 6, 25);
+  const end = new Date(2026, 7, 25);
+  expect(plansInWindow([doneAug], start, end).length).toBe(0);
+  expect(plansInWindow([doneAug], start, end, true).map((x) => x.id)).toEqual(["d"]);
+});
+
+test("plansInWindow: ongoing plan contributes one occurrence per window", () => {
+  const ongoing = p({ id: "o", month: "2026-01-01", recurrence: "ongoing" });
+  const got = plansInWindow([ongoing], new Date(2026, 6, 25), new Date(2026, 7, 25));
+  expect(got.length).toBe(1); // the Aug 1 occurrence
 });
 
 test("one_off applies only to its month", () => {
