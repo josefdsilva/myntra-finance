@@ -586,7 +586,9 @@ const en = {
   "dashboard.safe.remainingMonth": "{remaining} remaining ÷ {days} until month end = {perDay}/day",
   "dashboard.safe.calendarTip":
     "Tip: press Salary received below on payday to start a new pay cycle.",
-  "dashboard.spark.caption": "Last 7 days · dashed line = today's safe-to-spend",
+  "dashboard.spark.caption.today": "Today vs yesterday · dashed line = today's safe-to-spend",
+  "dashboard.spark.caption.week": "Last 7 days · dashed line = daily safe-to-spend",
+  "dashboard.spark.caption.cycle": "Last {days} days · dashed line = daily safe-to-spend",
   "dashboard.chip.spent": "Spent {value}",
   "dashboard.chip.received": "Received {value}",
   "dashboard.chip.balance": "Balance {value}",
