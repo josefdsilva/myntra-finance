@@ -192,14 +192,29 @@ function AnalysisPage() {
     return out;
   }, [salaryAsc]);
 
-  const { start, end, cycleCount } = useMemo(() => {
+  const { start, end, cycleCount, windowProgress } = useMemo(() => {
     if (!cycles.length) {
       const now = new Date();
-      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now, cycleCount: 0 };
+      return {
+        start: new Date(now.getFullYear(), now.getMonth(), 1),
+        end: now,
+        cycleCount: 0,
+        windowProgress: 1,
+      };
     }
     const n = range === "all" ? cycles.length : Math.min(cycles.length, Number(range));
     const selected = cycles.slice(-n);
-    return { start: selected[0].start, end: selected[selected.length - 1].end, cycleCount: n };
+    const last = selected[selected.length - 1];
+    // How representative is the spending picture? A single, still-running cycle
+    // is only a fraction complete, so its actuals understate the full cycle. For
+    // completed cycles, or a multi-cycle window, treat it as fully representative.
+    let windowProgress = 1;
+    if (n === 1 && last.predicted) {
+      const total = last.end.getTime() - last.start.getTime();
+      const elapsed = Date.now() - last.start.getTime();
+      windowProgress = total > 0 ? Math.min(1, Math.max(0, elapsed / total)) : 1;
+    }
+    return { start: selected[0].start, end: last.end, cycleCount: n, windowProgress };
   }, [cycles, range]);
 
   const { data: expenses } = useQuery({
@@ -736,6 +751,7 @@ function AnalysisPage() {
           spendByCategory={Object.fromEntries(
             byCategory.map((c) => [c.name, c.value / cycleCount]),
           )}
+          progress={windowProgress}
         />
       )}
 

@@ -266,6 +266,27 @@ export const ENTRIES = {
     de: "Schließen",
     fr: "Ignorer",
   },
+  "benchmarks.tooEarlyTitle": {
+    en: "Too early in the cycle to compare",
+    pt: "Cedo demais no ciclo para comparar",
+    es: "Demasiado pronto en el ciclo para comparar",
+    de: "Noch zu früh im Zyklus für einen Vergleich",
+    fr: "Trop tôt dans le cycle pour comparer",
+  },
+  "benchmarks.tooEarlyBody": {
+    en: "Only a small part of this cycle has passed, so spending is barely tracked yet. Comparisons appear once more of the cycle is behind you.",
+    pt: "Só passou uma pequena parte deste ciclo, por isso ainda mal há gastos registados. As comparações aparecem quando o ciclo estiver mais avançado.",
+    es: "Solo ha pasado una pequeña parte de este ciclo, así que apenas hay gasto registrado. Las comparaciones aparecen cuando el ciclo esté más avanzado.",
+    de: "Erst ein kleiner Teil dieses Zyklus ist vorbei, daher sind kaum Ausgaben erfasst. Vergleiche erscheinen, wenn mehr vom Zyklus vergangen ist.",
+    fr: "Seule une petite partie de ce cycle s'est écoulée, les dépenses sont donc à peine suivies. Les comparaisons apparaîtront quand le cycle sera plus avancé.",
+  },
+  "benchmarks.tooEarlyStandouts": {
+    en: "Come back once more of the cycle has passed to see where your spending stands out.",
+    pt: "Volte quando o ciclo estiver mais avançado para ver onde os seus gastos se destacam.",
+    es: "Vuelve cuando el ciclo esté más avanzado para ver dónde destaca tu gasto.",
+    de: "Schau wieder vorbei, wenn mehr vom Zyklus vergangen ist, um zu sehen, wo deine Ausgaben herausstechen.",
+    fr: "Revenez quand le cycle sera plus avancé pour voir où vos dépenses se démarquent.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

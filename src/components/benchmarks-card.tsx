@@ -19,13 +19,24 @@ type Props = {
   monthlySpend: number;
   /** Monthly-averaged spend per app-category key. */
   spendByCategory: Record<string, number>;
+  /**
+   * How complete the spending picture is (0..1). A still-running cycle on day 1
+   * has almost no spend, so comparing it to a full-cycle benchmark is misleading
+   * ("100% below average"). Below a threshold we hold the spend-based comparisons
+   * until enough of the cycle has passed. Defaults to fully representative.
+   */
+  progress?: number;
 };
+
+/** Show spend-based comparisons only once the cycle is at least a third in. */
+const REPRESENTATIVE_THRESHOLD = 1 / 3;
 
 export function BenchmarksCard({
   householdId,
   monthlyIncome,
   monthlySpend,
   spendByCategory,
+  progress = 1,
 }: Props) {
   const t = useT();
   const { data: hh } = useQuery({
@@ -115,6 +126,9 @@ export function BenchmarksCard({
       : null;
   const spendStory = describeSpend(t, comp.monthlySpend, comp.expectedMonthlySpend, bandName);
 
+  // Early in a running cycle there's too little spend for a fair comparison, so
+  // hold the spend/savings stories and the standouts until the cycle fills in.
+  const representative = progress >= REPRESENTATIVE_THRESHOLD;
   const flagged = comp.categories.filter((c) => c.flagged).slice(0, 6);
   const lowCoverage = comp.coveragePct < 70;
   const excludedLabel = comp.excludedCategories
@@ -148,27 +162,42 @@ export function BenchmarksCard({
               headline={incomeStory.headline}
               detail={incomeStory.detail}
             />
-            {savingsStory && (
+
+            {!representative ? (
               <StoryTile
-                tone={savingsStory.tone}
-                headline={savingsStory.headline}
-                detail={savingsStory.detail}
+                tone="neutral"
+                headline={t("benchmarks.tooEarlyTitle")}
+                detail={t("benchmarks.tooEarlyBody")}
               />
+            ) : (
+              <>
+                {savingsStory && (
+                  <StoryTile
+                    tone={savingsStory.tone}
+                    headline={savingsStory.headline}
+                    detail={savingsStory.detail}
+                  />
+                )}
+                {savingsStory && (
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    {t("benchmarks.investNote")}
+                  </p>
+                )}
+                <StoryTile
+                  tone={spendStory.tone}
+                  headline={spendStory.headline}
+                  detail={spendStory.detail}
+                />
+              </>
             )}
-            {savingsStory && (
-              <p className="text-xs text-muted-foreground -mt-2">
-                {t("benchmarks.investNote")}
-              </p>
-            )}
-            <StoryTile
-              tone={spendStory.tone}
-              headline={spendStory.headline}
-              detail={spendStory.detail}
-            />
 
             <div>
               <h4 className="text-sm font-medium mb-2">{t("benchmarks.spendingStandsOut")}</h4>
-              {flagged.length === 0 ? (
+              {!representative ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("benchmarks.tooEarlyStandouts")}
+                </p>
+              ) : flagged.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("benchmarks.typicalMix")}</p>
               ) : (
                 <ul className="space-y-2">
