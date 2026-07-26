@@ -414,7 +414,7 @@ function AllocationsPage() {
                           goalTarget={isGoal ? goalTarget : 0}
                           savedSoFar={isGoal ? saved : 0}
                           monthsLeft={isGoal ? monthsLeft : 0}
-                          unallocatedSurplus={unallocated}
+                          unallocatedSurplus={realSurplus}
                           onChanged={() => refetchConfirmations()}
                         />
                       </div>
