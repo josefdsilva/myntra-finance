@@ -221,15 +221,21 @@ function Dashboard() {
     variablePool > 0 ? Math.max(0, variablePool - netSpentThroughYesterday) / daysLeftYesterday : 0;
   const trendDelta = safeToday - safeYesterday;
 
-  // 7-day sparkline of daily net spend (spent - non-salary income). Fetches its
-  // own window independent of the current cycle so early-cycle days still show
-  // the previous cycle's actuals rather than zeros.
-  const { data: spark7Rows } = useQuery({
+  // Sparkline of daily net spend. The window matches the selected horizon so
+  // the comparison is like-for-like: "today" = today only (vs previous day for
+  // context), "week" = last 7 days, "cycle" = the last `daysLeft` days. We
+  // fetch enough history for the widest view (rest of cycle), then slice below.
+  const sparkWindowDays = Math.min(90, Math.max(7, daysLeft));
+  const { data: sparkRows } = useQuery({
     enabled: !!householdId,
-    queryKey: ["dashboard-spark7", householdId],
+    queryKey: ["dashboard-spark", householdId, sparkWindowDays],
     queryFn: async () => {
       const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - (sparkWindowDays - 1),
+      );
       const { data } = await supabase
         .from("expenses")
         .select("amount, occurred_at, kind, is_salary")
@@ -238,11 +244,11 @@ function Dashboard() {
       return data ?? [];
     },
   });
-  const spark = useMemo(() => {
-    const rows = spark7Rows ?? [];
+  const sparkAll = useMemo(() => {
+    const rows = sparkRows ?? [];
     const days: { key: string; label: string; net: number }[] = [];
     const now = new Date();
-    for (let i = 6; i >= 0; i--) {
+    for (let i = sparkWindowDays - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
       const spent = rows
@@ -267,10 +273,18 @@ function Dashboard() {
       });
     }
     return days;
-  }, [spark7Rows]);
+  }, [sparkRows, sparkWindowDays]);
+  // Slice to the selected horizon. "today" is a single point, which reads as a
+  // dot on the line — pair it with yesterday so the user still sees a trend.
+  const sparkSliceDays = effHorizon === "today" ? 2 : effHorizon === "week" ? 7 : daysLeft;
+  const spark = useMemo(
+    () => sparkAll.slice(Math.max(0, sparkAll.length - sparkSliceDays)),
+    [sparkAll, sparkSliceDays],
+  );
   const sparkMax = Math.max(safeToday, ...spark.map((d) => d.net), 1);
-  const avgDaily7 = spark.reduce((s, d) => s + d.net, 0) / Math.max(1, spark.length);
+  const avgDaily7 = sparkAll.slice(-7).reduce((s, d) => s + d.net, 0) / Math.max(1, Math.min(7, sparkAll.length));
   const projectedBalance = remaining - avgDaily7 * daysLeft;
+
 
   function monthsUntil(dateStr: string | null): number {
     if (!dateStr) return 1;
@@ -440,13 +454,14 @@ function Dashboard() {
             <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
           )}
 
-          {/* 7-day sparkline of net daily spend */}
+          {/* Sparkline of net daily spend, matched to the selected horizon */}
           <div className="mt-5">
             <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-              {t("dashboard.spark.caption")}
+              {t(`dashboard.spark.caption.${effHorizon}`, { days: spark.length })}
             </p>
           </div>
+
 
           <div className="mt-6 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
