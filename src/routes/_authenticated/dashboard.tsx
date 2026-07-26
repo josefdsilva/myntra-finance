@@ -454,13 +454,14 @@ function Dashboard() {
             <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
           )}
 
-          {/* 7-day sparkline of net daily spend */}
+          {/* Sparkline of net daily spend, matched to the selected horizon */}
           <div className="mt-5">
             <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-              {t("dashboard.spark.caption")}
+              {t(`dashboard.spark.caption.${effHorizon}`, { days: spark.length })}
             </p>
           </div>
+
 
           <div className="mt-6 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
