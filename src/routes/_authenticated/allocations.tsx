@@ -147,6 +147,28 @@ function AllocationsPage() {
       return map;
     },
   });
+  // All-time net direct fund movements into each project. Combined with the
+  // confirmed allocations above, this gives the true balance (same as net worth).
+  const { data: netMovementsByBucket } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["alloc-all-movements", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("account_movements")
+        .select("amount, to_type, from_type, to_id, from_id")
+        .eq("household_id", householdId!)
+        .or("to_type.eq.bucket,from_type.eq.bucket");
+      const map: Record<string, number> = {};
+      for (const m of data ?? []) {
+        if (m.to_type === "bucket" && m.to_id)
+          map[m.to_id as string] = (map[m.to_id as string] ?? 0) + Number(m.amount);
+        if (m.from_type === "bucket" && m.from_id)
+          map[m.from_id as string] = (map[m.from_id as string] ?? 0) - Number(m.amount);
+      }
+      return map;
+    },
+  });
+
   // YTD confirmed allocations (this calendar year) grouped by bucket.
   const yearStartIso = `${now.getFullYear()}-01-01`;
   const { data: ytdTotals } = useQuery({
@@ -195,10 +217,15 @@ function AllocationsPage() {
     return Math.max(1, months);
   }
 
-  // Current saved balance of a project: what it already held (initial) plus every
-  // confirmed contribution since.
+  // Current saved balance of a project — the SAME definition net worth uses:
+  // initial funds + confirmed allocations + net direct fund movements. This keeps
+  // the allocations page in sync with the snapshot instead of ignoring transfers.
   function savedBalance(b: Bucket): number {
-    return Number(b.initial_balance ?? 0) + (goalTotals?.[b.id] ?? 0);
+    return (
+      Number(b.initial_balance ?? 0) +
+      (goalTotals?.[b.id] ?? 0) +
+      (netMovementsByBucket?.[b.id] ?? 0)
+    );
   }
 
   function monthly(b: Bucket): number {
@@ -236,6 +263,13 @@ function AllocationsPage() {
   }, 0);
   const realAllocated = totalConfirmedThisMonth + movementsNetIntoBuckets;
   const realSurplus = surplus - realAllocated;
+
+  // Contributions per project (confirmed allocations + net movements), excluding
+  // the initial seed — the compare card adds the initial itself.
+  const contributionsByBucket: Record<string, number> = {};
+  for (const b of data?.buckets ?? []) {
+    contributionsByBucket[b.id] = (goalTotals?.[b.id] ?? 0) + (netMovementsByBucket?.[b.id] ?? 0);
+  }
 
   return (
     <div className={pageShellClass("5xl")}>
@@ -318,7 +352,9 @@ function AllocationsPage() {
                 // Current balance = whatever the household already had saved before we
                 // started tracking this bucket, plus every confirmed contribution since.
                 const initialBalance = Number(b.initial_balance ?? 0);
-                const saved = initialBalance + (goalTotals?.[b.id] ?? 0);
+                // The one true balance: initial funds + confirmed allocations + net
+                // fund movements. Matches savedBalance() used everywhere else.
+                const saved = savedBalance(b);
                 const goalTarget = Number(b.target_value);
                 const goalPct =
                   isGoal && goalTarget > 0 ? Math.min(100, (saved / goalTarget) * 100) : 0;
@@ -462,7 +498,7 @@ function AllocationsPage() {
         monthlyFn={monthly}
         firstSalaryAt={data?.firstSalaryAt ?? null}
         ytdTotals={ytdTotals ?? {}}
-        allTimeTotals={goalTotals ?? {}}
+        allTimeTotals={contributionsByBucket}
       />
     </div>
   );

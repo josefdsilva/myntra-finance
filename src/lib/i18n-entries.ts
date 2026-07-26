@@ -168,6 +168,13 @@ export const ENTRIES = {
     de: "Braucht {amount} pro Monat, mehr als dein Überschuss von {surplus}.",
     fr: "Nécessite {amount} par mois, plus que votre excédent de {surplus}.",
   },
+  "buckets.initialFundsDate": {
+    en: "As of date (optional)",
+    pt: "Data de referência (opcional)",
+    es: "Fecha de referencia (opcional)",
+    de: "Stichtag (optional)",
+    fr: "Date de référence (facultatif)",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

@@ -453,6 +453,7 @@ export const upsertBucket = createServerFn({ method: "POST" })
         color: z.string().max(20).optional().nullable(),
         sort_order: z.number().int().optional(),
         initial_balance: z.number().min(0).optional(),
+        initial_funds_date: z.string().date().nullable().optional(),
         kind: z.enum(["savings", "emergency", "investment"]).optional(),
       })
       .parse(input),

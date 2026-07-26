@@ -516,6 +516,7 @@ export type Database = {
           household_id: string
           id: string
           initial_balance: number
+          initial_funds_date: string | null
           kind: Database["public"]["Enums"]["bucket_kind"]
           name: string
           sort_order: number
@@ -530,6 +531,7 @@ export type Database = {
           household_id: string
           id?: string
           initial_balance?: number
+          initial_funds_date?: string | null
           kind?: Database["public"]["Enums"]["bucket_kind"]
           name: string
           sort_order?: number
@@ -544,6 +546,7 @@ export type Database = {
           household_id?: string
           id?: string
           initial_balance?: number
+          initial_funds_date?: string | null
           kind?: Database["public"]["Enums"]["bucket_kind"]
           name?: string
           sort_order?: number

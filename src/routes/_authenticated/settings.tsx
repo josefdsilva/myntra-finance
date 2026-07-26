@@ -1222,6 +1222,7 @@ export function BucketsSection({ householdId }: { householdId: string }) {
         color: b.color,
         sort_order: b.sort_order,
         initial_balance: Number(b.initial_balance ?? 0),
+        initial_funds_date: b.initial_funds_date ?? null,
         kind: (b.kind as "savings" | "emergency" | "investment") ?? "savings",
       },
     });
@@ -1299,6 +1300,7 @@ type BucketRowShape = {
   target_deadline: string | null;
   priority?: number | null;
   initial_balance?: number | string | null;
+  initial_funds_date?: string | null;
   kind?: "savings" | "emergency" | "investment" | null;
   [key: string]: unknown;
 };
@@ -1402,6 +1404,15 @@ function BucketRow<T extends BucketRowShape>({
             placeholder="0.00"
             value={b.initial_balance ?? 0}
             onChange={(e) => setB({ ...b, initial_balance: parseFloat(e.target.value) || 0 })}
+            className="h-8"
+          />
+        </div>
+        <div>
+          <Label className="text-xs">{t("buckets.initialFundsDate")}</Label>
+          <Input
+            type="date"
+            value={b.initial_funds_date ?? ""}
+            onChange={(e) => setB({ ...b, initial_funds_date: e.target.value || null })}
             className="h-8"
           />
         </div>

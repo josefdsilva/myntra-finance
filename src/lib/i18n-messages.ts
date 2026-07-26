@@ -437,9 +437,9 @@ const en = {
   "buckets.targetAmount": "Target amount (€)",
   "buckets.reachBy": "Reach by",
   "buckets.reachByHint": "Monthly contribution = goal ÷ months remaining.",
-  "buckets.initialBalance": "Already have (optional)",
+  "buckets.initialBalance": "Initial funds (optional)",
   "buckets.initialBalanceHint":
-    "If you already had money saved before tracking this bucket, add it here. You can update it anytime.",
+    "The money this project already held when you started tracking it. This is a one-time starting point, not the current balance, so set the date it was true.",
 
   // Members
   "members.title": "Household members",
@@ -1290,7 +1290,7 @@ const en = {
   "alloc.mark": "Mark as allocated",
   "alloc.moved": "{value} moved",
   "alloc.balance": "Balance: {value}",
-  "alloc.balance.includesInitial": "includes {value} you already had",
+  "alloc.balance.includesInitial": "includes {value} initial funds",
 
   // --- Analysis
   "ana.title": "Analysis",
@@ -1903,9 +1903,9 @@ const pt: Record<BaseKey, string> = {
   "buckets.targetAmount": "Valor alvo (€)",
   "buckets.reachBy": "Atingir até",
   "buckets.reachByHint": "Contribuição mensal = objetivo ÷ meses restantes.",
-  "buckets.initialBalance": "Já tem (opcional)",
+  "buckets.initialBalance": "Fundos iniciais (opcional)",
   "buckets.initialBalanceHint":
-    "Se já tinha dinheiro guardado antes de começar a acompanhar este balde, adicione aqui. Pode atualizar a qualquer momento.",
+    "O dinheiro que este projeto já tinha quando começou a acompanhá-lo. É um ponto de partida único, não o saldo atual, por isso indique a data em que era verdade.",
 
   "members.title": "Membros do agregado",
   "members.description":
@@ -2760,7 +2760,7 @@ const pt: Record<BaseKey, string> = {
   "alloc.mark": "Marcar como alocado",
   "alloc.moved": "{value} transferidos",
   "alloc.balance": "Saldo: {value}",
-  "alloc.balance.includesInitial": "inclui {value} que já tinha",
+  "alloc.balance.includesInitial": "inclui {value} de fundos iniciais",
 
   "ana.title": "Análise",
   "ana.cycleStart": "Início do ciclo",
@@ -3366,9 +3366,9 @@ const es: Record<BaseKey, string> = {
   "buckets.targetAmount": "Importe objetivo (€)",
   "buckets.reachBy": "Alcanzar para",
   "buckets.reachByHint": "Aporte mensual = meta ÷ meses restantes.",
-  "buckets.initialBalance": "Ya tiene (opcional)",
+  "buckets.initialBalance": "Fondos iniciales (opcional)",
   "buckets.initialBalanceHint":
-    "Si ya tenía dinero ahorrado antes de seguir este cubo, añádalo aquí. Puede actualizarlo en cualquier momento.",
+    "El dinero que este proyecto ya tenía cuando empezaste a seguirlo. Es un punto de partida único, no el saldo actual, así que indica la fecha en que era cierto.",
 
   "members.title": "Miembros del hogar",
   "members.description":
@@ -4222,7 +4222,7 @@ const es: Record<BaseKey, string> = {
   "alloc.mark": "Marcar como asignado",
   "alloc.moved": "{value} movidos",
   "alloc.balance": "Saldo: {value}",
-  "alloc.balance.includesInitial": "incluye {value} que ya tenía",
+  "alloc.balance.includesInitial": "incluye {value} de fondos iniciales",
 
   "ana.title": "Análisis",
   "ana.cycleStart": "Inicio del ciclo",
@@ -4829,9 +4829,9 @@ const de: Record<BaseKey, string> = {
   "buckets.targetAmount": "Zielbetrag (€)",
   "buckets.reachBy": "Erreichen bis",
   "buckets.reachByHint": "Monatlicher Beitrag = Ziel ÷ verbleibende Monate.",
-  "buckets.initialBalance": "Bereits vorhanden (optional)",
+  "buckets.initialBalance": "Startguthaben (optional)",
   "buckets.initialBalanceHint":
-    "Wenn Sie vor der Nachverfolgung dieses Buckets bereits Geld gespart hatten, fügen Sie es hier hinzu. Sie können es jederzeit aktualisieren.",
+    "Das Geld, das dieses Projekt bereits hatte, als Sie mit der Nachverfolgung begannen. Es ist ein einmaliger Ausgangspunkt, nicht der aktuelle Stand, geben Sie also das Datum an, zu dem es galt.",
 
   "members.title": "Haushaltsmitglieder",
   "members.description":
@@ -5692,7 +5692,7 @@ const de: Record<BaseKey, string> = {
   "alloc.mark": "Als zugewiesen markieren",
   "alloc.moved": "{value} übertragen",
   "alloc.balance": "Saldo: {value}",
-  "alloc.balance.includesInitial": "enthält {value}, die Sie bereits hatten",
+  "alloc.balance.includesInitial": "enthält {value} Startguthaben",
 
   "ana.title": "Analyse",
   "ana.cycleStart": "Zyklusbeginn",
@@ -6299,9 +6299,9 @@ const fr: Record<BaseKey, string> = {
   "buckets.targetAmount": "Montant cible (€)",
   "buckets.reachBy": "Atteindre pour",
   "buckets.reachByHint": "Contribution mensuelle = objectif ÷ mois restants.",
-  "buckets.initialBalance": "Déjà disponible (facultatif)",
+  "buckets.initialBalance": "Fonds de départ (facultatif)",
   "buckets.initialBalanceHint":
-    "Si vous aviez déjà de l'argent épargné avant de suivre ce panier, ajoutez-le ici. Vous pouvez le mettre à jour à tout moment.",
+    "L'argent que ce projet détenait déjà lorsque vous avez commencé à le suivre. C'est un point de départ ponctuel, pas le solde actuel, indiquez donc la date à laquelle il était exact.",
 
   "members.title": "Membres du foyer",
   "members.description":
@@ -7161,7 +7161,7 @@ const fr: Record<BaseKey, string> = {
   "alloc.mark": "Marquer comme alloué",
   "alloc.moved": "{value} déplacés",
   "alloc.balance": "Solde : {value}",
-  "alloc.balance.includesInitial": "inclut {value} que vous aviez déjà",
+  "alloc.balance.includesInitial": "inclut {value} de fonds de départ",
 
   "ana.title": "Analyse",
   "ana.cycleStart": "Début du cycle",
