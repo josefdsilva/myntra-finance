@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
-import { leftoverObligation, monthKey, type Plan } from "@/lib/plan";
+import { leftoverObligation, monthKey, planAppliesToMonth, type Plan } from "@/lib/plan";
 import {
   bucketsQuery,
   incomesQuery,
@@ -21,7 +21,16 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { markIncomeReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
-import { Wallet, Loader2, TrendingUp, TrendingDown, Minus, Info } from "lucide-react";
+import {
+  Wallet,
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Info,
+  CalendarClock,
+  X,
+} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -157,6 +166,19 @@ function Dashboard() {
     },
   });
 
+  // Plans still open and landing in the current cycle — powers the "new cycle,
+  // here's what's coming" nudge shown just after a cycle rolls over.
+  const { data: upcomingPlans } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["dashboard-upcoming-plans", householdId],
+    queryFn: async () => {
+      const { data } = await supabase.from("plans").select("*").eq("household_id", householdId!);
+      const ym = monthKey(new Date());
+      return ((data ?? []) as Plan[]).filter((p) => !p.done && planAppliesToMonth(p, ym));
+    },
+  });
+  const [plansNudgeDismissed, setPlansNudgeDismissed] = useState(false);
+
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
@@ -180,6 +202,14 @@ function Dashboard() {
   const overspent = dailyClaim > variablePool;
   const cycle = dashboard?.cycle;
   const daysLeft = cycle?.daysLeft ?? 1;
+  // A cycle "just rolled over" in its first few days. Pair that with any open
+  // plans landing this cycle to nudge the user before the money is spent.
+  const daysSinceCycleStart = cycle?.start
+    ? Math.floor((Date.now() - new Date(cycle.start).getTime()) / 86400000)
+    : 999;
+  const upcomingPlanCount = upcomingPlans?.length ?? 0;
+  const showPlansNudge =
+    !plansNudgeDismissed && daysSinceCycleStart <= 3 && upcomingPlanCount > 0;
   const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
   // Show the safe amount over a chosen horizon: today (1 day), the next 7 days,
   // or the rest of the cycle (= everything remaining). "Next 7 days" is only
@@ -375,6 +405,36 @@ function Dashboard() {
           </CardContent>
         </Card>
       ) : null}
+
+      {showPlansNudge && (
+        <Card className="border-primary/25 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <CalendarClock className="mt-0.5 size-5 shrink-0 text-primary" />
+              <div className="space-y-0.5">
+                <p className="font-medium">{t("dashboard.plansNudge.title")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("dashboard.plansNudge.body", { count: upcomingPlanCount })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <Button asChild size="sm">
+                <Link to="/cashflow">{t("dashboard.plansNudge.action")}</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label={t("common.dismiss")}
+                onClick={() => setPlansNudgeDismissed(true)}
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Hero: safe to spend today */}
       <Card className="overflow-hidden">

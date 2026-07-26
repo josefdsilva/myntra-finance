@@ -238,6 +238,34 @@ export const ENTRIES = {
     de: "Projekt zurücklegen",
     fr: "Prévoir un projet",
   },
+  "dashboard.plansNudge.title": {
+    en: "New cycle — plans coming up",
+    pt: "Novo ciclo — planos a caminho",
+    es: "Nuevo ciclo — planes por venir",
+    de: "Neuer Zyklus — anstehende Pläne",
+    fr: "Nouveau cycle — plans à venir",
+  },
+  "dashboard.plansNudge.body": {
+    en: "{count} planned item(s) land this cycle. Review them before the money is spent.",
+    pt: "{count} item(ns) planeado(s) chegam neste ciclo. Reveja-os antes de gastar o dinheiro.",
+    es: "{count} elemento(s) planificado(s) llegan este ciclo. Revísalos antes de gastar el dinero.",
+    de: "{count} geplante(r) Posten in diesem Zyklus. Prüfe sie, bevor das Geld ausgegeben ist.",
+    fr: "{count} élément(s) prévu(s) arrivent ce cycle. Vérifiez-les avant de dépenser.",
+  },
+  "dashboard.plansNudge.action": {
+    en: "Review plans",
+    pt: "Rever planos",
+    es: "Revisar planes",
+    de: "Pläne prüfen",
+    fr: "Voir les plans",
+  },
+  "common.dismiss": {
+    en: "Dismiss",
+    pt: "Dispensar",
+    es: "Descartar",
+    de: "Schließen",
+    fr: "Ignorer",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;
