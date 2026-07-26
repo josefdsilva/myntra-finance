@@ -4983,7 +4983,9 @@ const de: Record<BaseKey, string> = {
   "dashboard.safe.remainingMonth": "{remaining} verbleibend ÷ {days} bis Monatsende = {perDay}/Tag",
   "dashboard.safe.calendarTip":
     "Tipp: Am Zahltag unten „Gehalt erhalten“ drücken, um einen neuen Zyklus zu starten.",
-  "dashboard.spark.caption": "Letzte 7 Tage · gestrichelte Linie = heutiger sicherer Betrag",
+  "dashboard.spark.caption.today": "Heute vs gestern · gestrichelte Linie = heutiger sicherer Betrag",
+  "dashboard.spark.caption.week": "Letzte 7 Tage · gestrichelte Linie = sicher pro Tag",
+  "dashboard.spark.caption.cycle": "Letzte {days} Tage · gestrichelte Linie = sicher pro Tag",
   "dashboard.chip.spent": "Ausgegeben {value}",
   "dashboard.chip.received": "Erhalten {value}",
   "dashboard.chip.balance": "Saldo {value}",
