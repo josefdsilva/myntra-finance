@@ -171,6 +171,8 @@ type CoachContext = {
   essentialsMonthly: number;
   /** liquidReserve / essentialsMonthly, in months (excludes investments). Null if no expenses. */
   emergencyFundMonths: number | null;
+  /** liquidReserve / monthly net income, in months. The safety-net target is set in these units. Null if no income. */
+  reserveMonthsOfIncome: number | null;
   /** Realized savings rate: avg real allocations ÷ avg income per cycle, %. Null if no income history. */
   savingsRatePct: number | null;
   /** Potential savings rate: monthlySurplus ÷ income, % — the capacity, not what was saved. */
@@ -530,6 +532,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const essentialsMonthly = Math.round((fixedMonthly + variableEstimateMonthly) * 100) / 100;
   const emergencyFundMonths =
     essentialsMonthly > 0 ? Math.round((liquidReserve / essentialsMonthly) * 10) / 10 : null;
+  // Safety-net coverage expressed in months of NET INCOME (the target unit the
+  // household chose), distinct from emergencyFundMonths (months of essentials).
+  const reserveMonthsOfIncome =
+    settingsIncome > 0 ? Math.round((liquidReserve / settingsIncome) * 10) / 10 : null;
   // Realized savings rate: what you actually set aside vs. what you actually
   // earned, averaged over recent complete months. Real allocations = confirmed
   // allocations + net bucket movements. Income = actual income events recorded.
@@ -710,6 +716,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     countryName: COUNTRY_NAMES[(hh?.country ?? "PT").toUpperCase()] ?? (hh?.country ?? "PT"),
     essentialsMonthly,
     emergencyFundMonths,
+    reserveMonthsOfIncome,
     savingsRatePct,
     potentialSavingsRatePct,
     avgIncomePerCycle,
@@ -779,7 +786,7 @@ function slimContext(ctx: CoachContext): CoachContext {
 }
 
 /** Country-aware system prompt that points the model at the pre-computed facts. */
-function buildSystem(ctx: CoachContext, locale?: string): string {
+function buildSystem(ctx: CoachContext, locale?: string, brief = false): string {
   const cc = ctx.countryName;
   const isPT = ctx.country === "PT";
   const m = MARKET_RATES[ctx.country] ?? GENERIC_RATES;
@@ -803,6 +810,18 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 If a needed number is not in the snapshot, say what you'd need instead of guessing. Income is take-home (net), so treat the 28/36 rule as a conservative guide.
 Format money in ${ctx.currency}, use markdown, and cite the figures you used in parentheses, e.g. "(surplus €X, safe €Y)". Be concrete: ranges, not vague advice.
 
+Financial principles you always uphold — a PRIORITY order, not a strict finish-one-then-start-the-next sequence (see the parallel note). Briefly say where this household stands on each (cite the figure):
+1) Starter buffer: a small always-reachable cushion (~1 month of essentials) comes before anything discretionary.
+2) First safety-net milestone: 3 months of ESSENTIAL EXPENSES — track with emergencyFundMonths (months of essentials covered; currently ${ctx.emergencyFundMonths == null ? "unknown" : ctx.emergencyFundMonths}). Name this as the first concrete objective: "first, 3 months of expenses."
+3) Kill high-APR debt: clear expensive debt (follow avalancheOrder) — paying it down guaranteed-earns its APR, which usually beats investment returns.
+4) Fuller safety net: from the 3-months-of-expenses milestone, keep building toward ~6 months of NET INCOME — track with reserveMonthsOfIncome (months of net income covered; currently ${ctx.reserveMonthsOfIncome == null ? "unknown" : ctx.reserveMonthsOfIncome}). Always frame the target as "first 3 months of expenses, then onward to ~6 months of income."
+5) Invest the surplus: put idle money to work for long-term growth rather than letting it sit.
+6) Smart buying: for any purchase, compare buy-vs-finance on TOTAL cost (not the monthly), keep new recurring commitments within safeNewMonthlyCommitment and the 28/36 guide, prefer the lowest total cost of ownership, and resist lifestyle inflation as income rises.
+Parallel targets: this priority order is NOT a hard gate. Once the starter buffer and the 3-months-of-expenses milestone are in place, the household can — and usually should — pursue several goals at once, splitting the monthly surplus across topping up the reserve toward the 6-months-of-income target, overpaying high-APR debt, and investing (e.g. "save €X, repay €Y, invest €Z" from the ${ctx.currency}${ctx.monthlySurplus} surplus). Weight the split toward the most urgent rung: the thinner the reserve or the higher a debt's APR, the bigger that slice; when things are comfortable, spread it more evenly. Only a genuinely thin reserve (below the 3-months-of-expenses milestone) or very high-APR debt should crowd everything else out. When you propose a split, give concrete figures that sum to their surplus.
+These are defaults, not dogma: adapt to the specifics and flag clearly when the household is ahead of, or behind on, a given rung.
+
+Hypotheticals and what-ifs: when the user asks you to weigh something they do NOT yet own (a house they might buy, a car they're considering, a job or loan offer), treat the figures THEY give — price, deposit, term, rate, salary — as the scenario inputs. Use the snapshot only for their CAPACITY to absorb it (monthlySurplus, safeNewMonthlyCommitment, liquidReserve, reserveMonthsOfIncome, market rates) and their broader position. Do NOT redirect to, or silently substitute, assets they already own (e.g. their current home in assets[]) unless they explicitly ask you to compare against it. If a decision-critical input is missing (price, deposit, term), ask ONE short clarifying question first, then evaluate: affordability vs safeNewMonthlyCommitment, a comfortable vs a stretch range, and the impact on their reserve.
+
 Guidance by topic:
 - Housing / new recurring commitment: anchor on safeNewMonthlyCommitment and monthlySurplus; give a comfortable and a stretch range; flag thin savings when emergencyFundMonths < 3.
 - Buying vs financing: compare paying from a named savings bucket (show remaining balance and emergency-fund impact) vs a loan (use the market rates below) vs leasing; show monthly and total interest.
@@ -814,7 +833,8 @@ Guidance by topic:
 
 ${market}
 
-Guardrails: you are a budgeting coach, not a licensed financial, tax, or legal advisor. For regulated investments, tax wrappers, or legal specifics, give general context and recommend a qualified professional. Keep answers scannable: short intro, a table when comparing 2+ options, 2-4 bullets, one clear recommendation. 4-8 sentences for simple questions; longer only when a comparison genuinely needs it.${langInstruction(locale)}`;
+Guardrails: you are a budgeting coach, not a licensed financial, tax, or legal advisor. For regulated investments, tax wrappers, or legal specifics, give general context and recommend a qualified professional.
+Length: be concise by DEFAULT. Lead with the answer, then at most 2-3 short bullets or a single comparison table, and end with one clear recommendation. Aim for under ~120 words / 4-6 sentences; skip preamble, don't restate the question, and never pad. Go longer only when a genuine multi-option comparison needs a table — and even then keep prose tight.${brief ? "\nBRIEF MODE (the user asked for short answers): answer in 2-3 sentences (or a tiny table) plus one recommendation. No headers, no bullet lists unless truly essential, under ~60 words. Still cite the key figures." : ""}${langInstruction(locale)}`;
 }
 
 
@@ -947,7 +967,7 @@ export const chatWithCoach = createServerFn({ method: "POST" })
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(slimContext(ctx))}
 
-Answer the user's questions grounded in this snapshot. Use markdown when helpful. For quick questions stay short (2–5 sentences); for life-decision questions (housing, buying vs financing, taking on debt, big savings goals) give a more thorough answer with a range, an assumption line, and a clear recommendation.`,
+Answer the user's questions grounded in this snapshot. Use markdown when helpful. Follow the Length rule above: concise by default. A life-decision question (housing, buying vs financing, taking on debt, big savings goals) may run a little longer — a range, a one-line assumptions note, and a clear recommendation — but stay tight and never pad.`,
       temperature: 0.2,
       messages: [
         ...data.history.map((m) => ({ role: m.role, content: m.content })),
@@ -1065,6 +1085,7 @@ export const chatInConversation = createServerFn({ method: "POST" })
         message: z.string().min(1).max(2000),
         locale: z.string().optional(),
         forceDeep: z.boolean().optional(),
+        brief: z.boolean().optional(),
       })
       .parse(input),
   )
@@ -1126,12 +1147,12 @@ export const chatInConversation = createServerFn({ method: "POST" })
       messages = [{ role: "user" as const, content: data.message }];
     } else {
       const ctx = await buildContext(supabase, data.householdId);
-      systemPrompt = `${buildSystem(ctx, data.locale)}
+      systemPrompt = `${buildSystem(ctx, data.locale, data.brief)}
 
 Current household snapshot (JSON, always fresh):
 ${JSON.stringify(slimContext(ctx))}
 
-You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot. For quick questions stay short (2–5 sentences); for life-decision questions give a thorough answer with a range, assumption line, and clear recommendation.`;
+You are continuing an ongoing chat with this household. Only the last ${COACH_REPLAY_TURNS} turns of the conversation are provided; older turns exist but are not replayed to save tokens — do not claim to remember details from earlier in the chat unless they appear in the replayed history or the snapshot above. Answer grounded in the snapshot, and follow the Length rule above: concise by default. A life-decision question may run a little longer — a range, a one-line assumptions note, and a clear recommendation — but stay tight and never pad.`;
       messages = [
         ...replayed.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: data.message },

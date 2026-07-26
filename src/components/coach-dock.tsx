@@ -62,6 +62,7 @@ export function CoachDock() {
   const [pending, setPending] = useState<Msg[]>([]); // optimistic user + streaming placeholder
   const [input, setInput] = useState("");
   const [deepThink, setDeepThink] = useState(false);
+  const [brief, setBrief] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const autoSentRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -124,7 +125,12 @@ export function CoachDock() {
   }, [open, convId]);
 
   const chatMut = useMutation({
-    mutationFn: (payload: { message: string; conversationId: string | null; forceDeep: boolean }) =>
+    mutationFn: (payload: {
+      message: string;
+      conversationId: string | null;
+      forceDeep: boolean;
+      brief: boolean;
+    }) =>
       chatFn({
         data: {
           householdId: householdId!,
@@ -132,6 +138,7 @@ export function CoachDock() {
           message: payload.message,
           locale,
           forceDeep: payload.forceDeep,
+          brief: payload.brief,
         },
       }),
     onSuccess: async (res) => {
@@ -155,7 +162,7 @@ export function CoachDock() {
       const base = hasUser ? p : [...p, { role: "user" as const, content: message }];
       return [...base, { role: "assistant" as const, content: "…" }];
     });
-    chatMut.mutate({ message, conversationId: currentConvId, forceDeep: deepThink });
+    chatMut.mutate({ message, conversationId: currentConvId, forceDeep: deepThink, brief });
   }
 
   async function send() {
@@ -338,6 +345,17 @@ export function CoachDock() {
             <span>
               <strong className="text-foreground">Deep think</strong> — always use full
               household context (costs more credits)
+            </span>
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground select-none cursor-pointer">
+            <input
+              type="checkbox"
+              checked={brief}
+              onChange={(e) => setBrief(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-input accent-primary"
+            />
+            <span>
+              <strong className="text-foreground">Brief</strong> — short, to-the-point answers
             </span>
           </label>
           <div className="flex gap-2">
