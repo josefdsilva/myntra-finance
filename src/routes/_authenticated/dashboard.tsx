@@ -184,8 +184,12 @@ function Dashboard() {
   // Show the safe amount over a chosen horizon: today (1 day), the next 7 days,
   // or the rest of the cycle (= everything remaining). "Next 7 days" is only
   // offered when more than a week remains, else it duplicates "rest of cycle".
-  const [horizon, setHorizon] = useState<"today" | "week" | "cycle">("today");
   const showWeek = daysLeft > 7;
+  // Default to a forward-looking window rather than just today: "Next 7 days"
+  // when there is more than a week left, otherwise "Rest of cycle". Stays null
+  // until the user taps a tab, so the default follows the cycle data as it loads.
+  const [horizonChoice, setHorizon] = useState<"today" | "week" | "cycle" | null>(null);
+  const horizon = horizonChoice ?? (showWeek ? "week" : "cycle");
   const effHorizon = horizon === "week" && !showWeek ? "cycle" : horizon;
   const horizonDays = effHorizon === "today" ? 1 : effHorizon === "week" ? 7 : daysLeft;
   const safeForHorizon = safeToday * horizonDays;
