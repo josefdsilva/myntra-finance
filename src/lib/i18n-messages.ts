@@ -3516,7 +3516,9 @@ const es: Record<BaseKey, string> = {
   "dashboard.safe.remainingMonth": "{remaining} restantes ÷ {days} hasta fin de mes = {perDay}/día",
   "dashboard.safe.calendarTip":
     "Consejo: al cobrar, pulsa Nómina recibida para iniciar un nuevo ciclo.",
-  "dashboard.spark.caption": "Últimos 7 días · línea discontinua = gasto seguro de hoy",
+  "dashboard.spark.caption.today": "Hoy vs ayer · línea discontinua = gasto seguro de hoy",
+  "dashboard.spark.caption.week": "Últimos 7 días · línea discontinua = seguro por día",
+  "dashboard.spark.caption.cycle": "Últimos {days} días · línea discontinua = seguro por día",
   "dashboard.chip.spent": "Gastado {value}",
   "dashboard.chip.received": "Recibido {value}",
   "dashboard.chip.balance": "Saldo {value}",
