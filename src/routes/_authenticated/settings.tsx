@@ -54,7 +54,14 @@ import { StatementImportButton } from "@/components/statement-import-flow";
 import { LanguageSettings } from "@/components/language-settings";
 import { CategoryManager } from "@/components/category-manager";
 import { useCategoryNames } from "@/hooks/use-categories";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
+import {
+  defaultIntentForCategory,
+  resolveIntent,
+  INTENT_LEVELS,
+  intentLabelKey,
+  type IntentLevel,
+} from "@/lib/intent";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings · bynku" }] }),
@@ -1083,11 +1090,17 @@ export function FixedExpensesSection({
   const { names: catNames } = useCategoryNames(householdId);
   const categoryOptions = catNames.length ? catNames : ["housing", "other"];
   const [category, setCategory] = useState("housing");
+  const [intent, setIntent] = useState<IntentLevel>(() => defaultIntentForCategory("housing"));
+  const applyCategory = (v: string) => {
+    setCategory(v);
+    setIntent(defaultIntentForCategory(v));
+  };
 
   useEffect(() => {
     if (categoryOptions.length && !categoryOptions.includes(category)) {
-      setCategory(categoryOptions[0]);
+      applyCategory(categoryOptions[0]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryOptions, category]);
 
   async function add() {
@@ -1099,6 +1112,7 @@ export function FixedExpensesSection({
         category,
         native_amount: parseFloat(amount) || 0,
         cadence,
+        intent,
       },
     });
     setLabel("");
@@ -1107,6 +1121,27 @@ export function FixedExpensesSection({
     refetch();
     qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
     qc.invalidateQueries({ queryKey: ["household"] });
+    invalidateHouseholdData(qc);
+  }
+
+  // Update just the need-level of an existing fixed cost (re-upsert with its
+  // current values so the amount/cadence are preserved).
+  async function setRowIntent(
+    r: { id: string; label: string; category: string | null; native_amount: number | string | null; monthly_amount: number | string; cadence: string | null },
+    next: IntentLevel,
+  ) {
+    await upsert({
+      data: {
+        id: r.id,
+        household_id: householdId,
+        label: r.label,
+        category: r.category ?? null,
+        native_amount: Number(r.native_amount ?? r.monthly_amount) || 0,
+        cadence: (r.cadence as Cadence) ?? "monthly",
+        intent: next,
+      },
+    });
+    refetch();
     invalidateHouseholdData(qc);
   }
   async function remove(id: string) {
@@ -1142,7 +1177,27 @@ export function FixedExpensesSection({
             <li key={r.id} className="flex items-center justify-between gap-2 py-2">
               <div className="min-w-0">
                 <p className="truncate">{r.label}</p>
-                <p className="text-xs text-muted-foreground">{r.category}</p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <p className="text-xs text-muted-foreground">{r.category}</p>
+                  <Select
+                    value={resolveIntent(r)}
+                    onValueChange={(v) => setRowIntent(r, v as IntentLevel)}
+                  >
+                    <SelectTrigger
+                      className="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                      aria-label={t("intent.label")}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INTENT_LEVELS.map((lvl) => (
+                        <SelectItem key={lvl} value={lvl}>
+                          {t(intentLabelKey(lvl) as MessageKey)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <CadenceLineValue
@@ -1158,13 +1213,13 @@ export function FixedExpensesSection({
             </li>
           ))}
         </ul>
-        <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1fr_auto] gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_auto] gap-2">
           <Input
             placeholder={t("fixed.placeholder")}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
-          <Select value={category} onValueChange={setCategory}>
+          <Select value={category} onValueChange={applyCategory}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -1172,6 +1227,18 @@ export function FixedExpensesSection({
               {categoryOptions.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={intent} onValueChange={(v) => setIntent(v as IntentLevel)}>
+            <SelectTrigger aria-label={t("intent.label")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INTENT_LEVELS.map((lvl) => (
+                <SelectItem key={lvl} value={lvl}>
+                  {t(intentLabelKey(lvl) as MessageKey)}
                 </SelectItem>
               ))}
             </SelectContent>

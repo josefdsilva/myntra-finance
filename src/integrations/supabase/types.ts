@@ -1035,6 +1035,7 @@ export type Database = {
           created_at: string
           household_id: string
           id: string
+          intent: string | null
           label: string
           monthly_amount: number
           native_amount: number | null
@@ -1046,6 +1047,7 @@ export type Database = {
           created_at?: string
           household_id: string
           id?: string
+          intent?: string | null
           label: string
           monthly_amount?: number
           native_amount?: number | null
@@ -1057,6 +1059,7 @@ export type Database = {
           created_at?: string
           household_id?: string
           id?: string
+          intent?: string | null
           label?: string
           monthly_amount?: number
           native_amount?: number | null

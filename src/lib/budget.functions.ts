@@ -24,6 +24,7 @@ const expenseInput = z.object({
   kind: z.enum(["expense", "income"]).default("expense"),
   is_salary: z.boolean().optional().default(false),
   labels: z.array(z.string().min(1).max(40)).max(20).optional().default([]),
+  intent: z.enum(["essential", "important", "nice_to_have", "treat"]).optional().nullable(),
 });
 
 
@@ -62,6 +63,7 @@ export const addExpense = createServerFn({ method: "POST" })
         kind: data.kind,
         is_salary: data.kind === "income" ? !!data.is_salary : false,
         labels: normalizeLabels(data.labels),
+        intent: data.kind === "income" ? null : (data.intent ?? null),
       })
       .select()
       .single();
@@ -338,6 +340,7 @@ export const upsertFixedExpense = createServerFn({ method: "POST" })
         monthly_amount: z.number().min(0).optional(),
         native_amount: z.number().min(0).optional(),
         cadence: z.enum(CADENCES).optional(),
+        intent: z.enum(["essential", "important", "nice_to_have", "treat"]).optional().nullable(),
       })
       .refine((d) => d.monthly_amount != null || d.native_amount != null, {
         message: "amount required",

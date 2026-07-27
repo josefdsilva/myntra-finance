@@ -10,7 +10,7 @@ import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gatew
 import { computeBenchmarkComparison, type BenchmarkComparison } from "./benchmarks";
 import { monthlyRateFromTaeg, monthlyRateFromNominalTan, termMonthsFor } from "./amortization";
 import { buildForecast, monthKey, type Plan } from "./plan";
-import { summariseIntent } from "./intent";
+import { summariseIntent, resolveIntent, isDiscretionary } from "./intent";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
@@ -161,6 +161,8 @@ type CoachContext = {
     treatSpend: number;
     discretionarySpend: number;
     discretionarySharePct: number;
+    /** Monthly total of fixed costs tagged/defaulting to discretionary (nice-to-have + treat). */
+    fixedDiscretionaryMonthly: number;
   };
   previousCycleTotals: {
     spent: number;
@@ -296,7 +298,10 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     { data: plansData },
     { data: assetsData },
   ] = await Promise.all([
-    supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+    supabase
+      .from("fixed_expenses")
+      .select("monthly_amount, category, intent")
+      .eq("household_id", householdId),
     supabase
       .from("debts")
       .select(
@@ -341,6 +346,17 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       0,
     );
   const fixedExpensesMonthly = sumMonthly(fixed);
+  // Monthly total of fixed costs the household tagged (or that default to)
+  // discretionary — nice-to-have + treat, e.g. streaming, a gym. A gentle lever
+  // when money is tight, since it recurs.
+  const fixedDiscretionaryMonthly =
+    Math.round(
+      rowsOrEmpty<{ monthly_amount: number | string; category: string | null; intent: string | null }>(
+        fixed as never,
+      )
+        .filter((r) => isDiscretionary(resolveIntent(r)))
+        .reduce((s, r) => s + Number(r.monthly_amount), 0) * 100,
+    ) / 100;
   const debtMonthly = sumMonthly(debtsData);
   const fixedMonthly = fixedExpensesMonthly + debtMonthly;
   const variableEstimateMonthly = sumMonthly(varEst);
@@ -722,6 +738,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       treatSpend: intentSummary.treat,
       discretionarySpend: intentSummary.discretionary,
       discretionarySharePct: intentSummary.discretionarySharePct,
+      fixedDiscretionaryMonthly,
     },
     previousCycleTotals,
     buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
@@ -853,7 +870,7 @@ Guidance by topic:
 - Savings goals: use each bucket's totalSaved and allocatedThisCycle to project when it is reachable.
 - Saving vs investing vs debt (use whenever the user asks what to do with spare money, a windfall, or how to set up projects): there is no single answer — weigh the household's situation. Rough priority: (1) build the emergency fund toward a healthy cushion — for this household ${ctx.emergencyFundMonths == null ? "coverage is unknown" : `it currently covers ${ctx.emergencyFundMonths} months`}, and a thin reserve (roughly under 3 months of essentials) takes priority over new investing; (2) clear high-APR debt — money guaranteed-earns the debt's APR by paying it down, which usually beats investing when the APR exceeds expected after-tax investment returns (see market savings/loan rates); (3) once the cushion is adequate and expensive debt is gone, invest the surplus for long-term growth. Then judge the specific case: if emergencyFundMonths is comfortable and investmentBalance/allocations look light relative to their surplus and savingsRatePct, they are likely UNDER-investing — encourage putting idle surplus to work. If they are investing while the emergency fund is thin or high-APR debt is outstanding, they may be OVER-investing — gently suggest rebalancing toward the reserve or the debt first. Never recommend pulling money OUT of investments (investmentBalance) unless it is truly necessary — e.g. no other way to cover an emergency or stop punishing high-interest debt; say so explicitly when you do. Frame all of this as trade-offs, cite the figures, and recommend a professional for regulated investment products.
 - Benchmarks: compare to ${cc} averages via benchmark.incomePercentile, benchmark.savingsRatePct vs nationalSavingsRatePct, and benchmark.categories (flagged first). Attribute to ${cc} and note it is a public reference average; if benchmark is null, say so.
-- Treat tolerance (spendIntent): spendIntent splits this cycle's variable spend by need-level. discretionarySharePct is the share that is nice-to-have + treat; treatSpend is the pure-treat portion. Treats are a healthy part of a working budget, NOT a failure — never moralise about them. Calibrate: when the emergency fund is on track (reserve above the 3-months-of-expenses milestone), goals are progressing and there is no shortfall month, actively AFFIRM their treats and discretionary spend as well-earned. Only when money is genuinely tight (thin reserve, a shortfall month in planForecast, or high-APR debt) point to the treat/discretionary share as the gentlest lever to free up cash — always as a choice they own, with a concrete figure (e.g. "trimming treats by €X/cycle would…"), never a scold. Do not raise it at all when things are comfortable.
+- Treat tolerance (spendIntent): spendIntent splits this cycle's variable spend by need-level. discretionarySharePct is the share that is nice-to-have + treat; treatSpend is the pure-treat portion. Treats are a healthy part of a working budget, NOT a failure — never moralise about them. Calibrate: when the emergency fund is on track (reserve above the 3-months-of-expenses milestone), goals are progressing and there is no shortfall month, actively AFFIRM their treats and discretionary spend as well-earned. Only when money is genuinely tight (thin reserve, a shortfall month in planForecast, or high-APR debt) point to the treat/discretionary share as the gentlest lever to free up cash — always as a choice they own, with a concrete figure (e.g. "trimming treats by €X/cycle would…"), never a scold. Do not raise it at all when things are comfortable. spendIntent.fixedDiscretionaryMonthly is the monthly total of recurring FIXED costs that are discretionary (e.g. streaming, a gym) — when tight, flag these too as a recurring, once-decided saving (cancelling frees that amount every cycle), still as a neutral option.
 
 ${market}
 

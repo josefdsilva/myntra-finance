@@ -20,3 +20,20 @@ BEGIN
       CHECK (intent IS NULL OR intent IN ('essential', 'important', 'nice_to_have', 'treat'));
   END IF;
 END $$;
+
+-- Same need-level on recurring fixed costs, so a household can mark, say, a gym
+-- membership as a treat and streaming as nice-to-have. Lets the coach point at
+-- discretionary FIXED costs as an easy lever when money is tight.
+ALTER TABLE public.fixed_expenses
+  ADD COLUMN IF NOT EXISTS intent text;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fixed_expenses_intent_check'
+  ) THEN
+    ALTER TABLE public.fixed_expenses
+      ADD CONSTRAINT fixed_expenses_intent_check
+      CHECK (intent IS NULL OR intent IN ('essential', 'important', 'nice_to_have', 'treat'));
+  END IF;
+END $$;

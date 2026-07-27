@@ -327,8 +327,8 @@ function ExpensesPage() {
               {rows.map((e) => {
                 const isIncome = e.kind === "income";
                 return (
-                  <li key={e.id} className="flex items-center justify-between py-3 gap-3">
-                    <div className="min-w-0 flex-1">
+                  <li key={e.id} className="flex items-start justify-between py-3 gap-3">
+                    <div className="min-w-0 flex-1 space-y-1">
                       <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
                       <p className="text-xs text-muted-foreground">
                         {fmtDateTime(e.occurred_at)} · {e.category}
@@ -336,13 +336,13 @@ function ExpensesPage() {
                         <span className="capitalize">{e.source.replace("_", " ")}</span>
                       </p>
                       {e.note && (e.merchant || e.category) && e.note !== e.merchant && (
-                        <p className="text-xs text-muted-foreground/80 italic truncate mt-0.5">
+                        <p className="text-xs text-muted-foreground/80 italic truncate">
                           {e.note}
                         </p>
                       )}
-                      {Array.isArray(e.labels) && e.labels.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {e.labels.map((l) => (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {Array.isArray(e.labels) &&
+                          e.labels.map((l) => (
                             <button
                               key={l}
                               type="button"
@@ -353,34 +353,39 @@ function ExpensesPage() {
                               {l}
                             </button>
                           ))}
-                        </div>
-                      )}
+                        {!isIncome && (
+                          <IntentSelect
+                            id={e.id}
+                            value={resolveIntent(e)}
+                            onChanged={() => refetch()}
+                          />
+                        )}
+                      </div>
                     </div>
-                    {!isIncome && (
-                      <IntentSelect id={e.id} value={resolveIntent(e)} onChanged={() => refetch()} />
-                    )}
-                    <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
-                      {isIncome ? "+" : "−"}
-                      {money(e.amount)}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={t("inv.attach")}
-                      onClick={() => setInvoiceFor(e.id)}
-                      className={
-                        withInvoice?.has(e.id)
-                          ? "text-primary"
-                          : isBusiness
-                            ? "text-destructive"
-                            : "text-muted-foreground"
-                      }
-                    >
-                      <Paperclip className="size-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => remove(e.id)}>
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
+                        {isIncome ? "+" : "−"}
+                        {money(e.amount)}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t("inv.attach")}
+                        onClick={() => setInvoiceFor(e.id)}
+                        className={
+                          withInvoice?.has(e.id)
+                            ? "text-primary"
+                            : isBusiness
+                              ? "text-destructive"
+                              : "text-muted-foreground"
+                        }
+                      >
+                        <Paperclip className="size-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(e.id)}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </li>
                 );
               })}

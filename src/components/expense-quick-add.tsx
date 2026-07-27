@@ -20,7 +20,13 @@ import { addInvoice } from "@/lib/invoices.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 import { money, fmtDateTime } from "@/lib/format";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
+import {
+  defaultIntentForCategory,
+  INTENT_LEVELS,
+  intentLabelKey,
+  type IntentLevel,
+} from "@/lib/intent";
 
 // Encode a large ArrayBuffer to base64 without blowing the call stack.
 // Spreading a multi-MB Uint8Array into String.fromCharCode hangs the tab.
@@ -135,6 +141,15 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
   const [kind, setKind] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(categories[0] ?? "other");
+  const [intent, setIntent] = useState<IntentLevel>(() =>
+    defaultIntentForCategory(categories[0] ?? "other"),
+  );
+  // Picking a category refreshes the suggested need-level; the user can still
+  // override it after. Keeps tagging effortless without being sticky-wrong.
+  const applyCategory = (v: string) => {
+    setCategory(v);
+    setIntent(defaultIntentForCategory(v));
+  };
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
   const [labels, setLabels] = useState<string[]>([]);
@@ -177,7 +192,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
       const it = res.items?.[0];
       if (it) {
         if (it.amount) setAmount(String(it.amount));
-        if (it.category) setCategory(it.category);
+        if (it.category) applyCategory(it.category);
         if (it.merchant) setMerchant(it.merchant);
         if (it.note) setNote(it.note);
         if (it.occurred_at) {
@@ -213,6 +228,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           is_salary: false,
           occurred_at: occurredIso,
           labels,
+          intent: kind === "expense" ? intent : null,
         },
       })) as { id: string } | null;
       // Attach any invoices/receipts picked at record time to the new expense.
@@ -271,7 +287,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
             type="button"
             onClick={() => {
               setKind("expense");
-              setCategory("groceries");
+              applyCategory("groceries");
             }}
             className={`px-3 py-1.5 text-sm rounded ${kind === "expense" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
           >
@@ -305,7 +321,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           </div>
           <div>
             <Label>{t("expQuick.categoryLabel")}</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={category} onValueChange={applyCategory}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -318,6 +334,23 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
               </SelectContent>
             </Select>
           </div>
+          {kind === "expense" && (
+            <div>
+              <Label>{t("intent.label")}</Label>
+              <Select value={intent} onValueChange={(v) => setIntent(v as IntentLevel)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INTENT_LEVELS.map((lvl) => (
+                    <SelectItem key={lvl} value={lvl}>
+                      {t(intentLabelKey(lvl) as MessageKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label>
               {kind === "income" ? t("expQuick.fromLabel") : t("expQuick.merchantLabel")}
