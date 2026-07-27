@@ -9,57 +9,59 @@ export const confirmBucketAllocation = createServerFn({ method: "POST" })
       .object({
         household_id: z.string().uuid(),
         bucket_id: z.string().uuid(),
-        period: z.string().date(), // YYYY-MM-01
+        period: z.string().date(), // cycle-start date (YYYY-MM-DD) or YYYY-MM-01
         amount: z.number().min(0),
         note: z.string().max(300).optional().nullable(),
-        // "set" replaces the existing period amount, "add" increments it (default: "set")
+        // Kept for compatibility. Funding is ALWAYS additive now: confirming can
+        // never reduce or replace money already set aside for a period — a second
+        // funding that lands on the same period key stacks on top rather than
+        // overwriting it. (Previously "set" did a destructive upsert, so a prior
+        // cycle's contribution sharing a period key was silently wiped.)
         mode: z.enum(["set", "add"]).optional().default("set"),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    if (data.mode === "add") {
-      const { data: existing, error: exErr } = await context.supabase
-        .from("bucket_allocations")
-        .select("id, amount, note")
-        .eq("household_id", data.household_id)
-        .eq("bucket_id", data.bucket_id)
-        .eq("period", data.period)
-        .maybeSingle();
-      if (exErr) throw exErr;
-      if (existing) {
-        const newAmount = Number(existing.amount) + Number(data.amount);
-        const combinedNote = [existing.note, data.note].filter(Boolean).join(" · ") || null;
-        const { data: row, error } = await context.supabase
-          .from("bucket_allocations")
-          .update({
-            amount: newAmount,
-            note: combinedNote,
-            confirmed_by: context.userId,
-            confirmed_at: new Date().toISOString(),
-          })
-          .eq("id", existing.id)
-          .select()
-          .single();
-        if (error) throw error;
-        return row;
-      }
-      // fall through to insert as if it were a normal set
-    }
-    const { data: row, error } = await context.supabase
+    // If a row already exists for this (household, bucket, period), add to it so
+    // no previously-confirmed amount is ever lost; otherwise insert a fresh row.
+    const { data: existing, error: exErr } = await context.supabase
       .from("bucket_allocations")
-      .upsert(
-        {
-          household_id: data.household_id,
-          bucket_id: data.bucket_id,
-          period: data.period,
-          amount: data.amount,
-          note: data.note ?? null,
+      .select("id, amount, note")
+      .eq("household_id", data.household_id)
+      .eq("bucket_id", data.bucket_id)
+      .eq("period", data.period)
+      .maybeSingle();
+    if (exErr) throw exErr;
+
+    if (existing) {
+      const newAmount = Number(existing.amount) + Number(data.amount);
+      const combinedNote = [existing.note, data.note].filter(Boolean).join(" · ") || null;
+      const { data: row, error } = await context.supabase
+        .from("bucket_allocations")
+        .update({
+          amount: newAmount,
+          note: combinedNote,
           confirmed_by: context.userId,
           confirmed_at: new Date().toISOString(),
-        },
-        { onConflict: "household_id,bucket_id,period" },
-      )
+        })
+        .eq("id", existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return row;
+    }
+
+    const { data: row, error } = await context.supabase
+      .from("bucket_allocations")
+      .insert({
+        household_id: data.household_id,
+        bucket_id: data.bucket_id,
+        period: data.period,
+        amount: data.amount,
+        note: data.note ?? null,
+        confirmed_by: context.userId,
+        confirmed_at: new Date().toISOString(),
+      })
       .select()
       .single();
     if (error) throw error;
