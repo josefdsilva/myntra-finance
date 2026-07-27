@@ -105,6 +105,29 @@ export const deleteExpense = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Set (or clear) an expense's need-level tag. null clears it back to the
+// category default. RLS scopes the update to the caller's households.
+export const setExpenseIntent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        intent: z.enum(["essential", "important", "nice_to_have", "treat"]).nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: row, error } = await context.supabase
+      .from("expenses")
+      .update({ intent: data.intent })
+      .eq("id", data.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
 // Mark a specific recurring income as received for the current cycle. Records a
 // money-in receipt linked back to that income (income_id) so a cycle can show
 // which expected inflows have arrived. Only the cycle-anchor income's receipt

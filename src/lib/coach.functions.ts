@@ -10,6 +10,7 @@ import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gatew
 import { computeBenchmarkComparison, type BenchmarkComparison } from "./benchmarks";
 import { monthlyRateFromTaeg, monthlyRateFromNominalTan, termMonthsFor } from "./amortization";
 import { buildForecast, monthKey, type Plan } from "./plan";
+import { summariseIntent } from "./intent";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
@@ -39,6 +40,7 @@ type ExpenseRow = {
   kind: string;
   note: string | null;
   occurred_at: string;
+  intent: string | null;
 };
 type PrevExpenseRow = Pick<ExpenseRow, "amount" | "kind" | "category">;
 type MonthlyRow = { monthly_amount: number | string };
@@ -149,6 +151,17 @@ type CoachContext = {
     net: number;
     byCategory: Record<string, number>;
   };
+  /**
+   * This cycle's variable spend split by need-level (essential/important/
+   * nice_to_have/treat), from each expense's tag or its category default.
+   * discretionarySharePct = share of variable spend that is nice-to-have + treat.
+   * Lets the coach calibrate treat tolerance without moralising.
+   */
+  spendIntent: {
+    treatSpend: number;
+    discretionarySpend: number;
+    discretionarySharePct: number;
+  };
   previousCycleTotals: {
     spent: number;
     received: number;
@@ -249,7 +262,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
 
   const { data: cycleExp } = await supabase
     .from("expenses")
-    .select("amount, category, kind, note, occurred_at")
+    .select("amount, category, kind, note, occurred_at, intent")
     .eq("household_id", householdId)
     .gte("occurred_at", startISO)
     .lt("occurred_at", endISO);
@@ -523,6 +536,11 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   }
   spendsForTop.sort((a, b) => b.amount - a.amount);
 
+  // Need-level split of this cycle's variable spend (tag or category default).
+  const intentSummary = summariseIntent(
+    rowsOrEmpty<ExpenseRow>(cycleExp).filter((e) => e.kind !== "income"),
+  );
+
   // Surplus matches the app: Settings income − baseline (baseline already includes
   // fixed + debt + variable + safety margin).
   const monthlySurplus = Math.max(0, settingsIncome - baseline);
@@ -700,6 +718,11 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     liquidAssetsTotal,
     netWorth,
     cycleTotals: { spent, received, net: spent - received, byCategory },
+    spendIntent: {
+      treatSpend: intentSummary.treat,
+      discretionarySpend: intentSummary.discretionary,
+      discretionarySharePct: intentSummary.discretionarySharePct,
+    },
     previousCycleTotals,
     buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
       name: b.name,
@@ -830,6 +853,7 @@ Guidance by topic:
 - Savings goals: use each bucket's totalSaved and allocatedThisCycle to project when it is reachable.
 - Saving vs investing vs debt (use whenever the user asks what to do with spare money, a windfall, or how to set up projects): there is no single answer — weigh the household's situation. Rough priority: (1) build the emergency fund toward a healthy cushion — for this household ${ctx.emergencyFundMonths == null ? "coverage is unknown" : `it currently covers ${ctx.emergencyFundMonths} months`}, and a thin reserve (roughly under 3 months of essentials) takes priority over new investing; (2) clear high-APR debt — money guaranteed-earns the debt's APR by paying it down, which usually beats investing when the APR exceeds expected after-tax investment returns (see market savings/loan rates); (3) once the cushion is adequate and expensive debt is gone, invest the surplus for long-term growth. Then judge the specific case: if emergencyFundMonths is comfortable and investmentBalance/allocations look light relative to their surplus and savingsRatePct, they are likely UNDER-investing — encourage putting idle surplus to work. If they are investing while the emergency fund is thin or high-APR debt is outstanding, they may be OVER-investing — gently suggest rebalancing toward the reserve or the debt first. Never recommend pulling money OUT of investments (investmentBalance) unless it is truly necessary — e.g. no other way to cover an emergency or stop punishing high-interest debt; say so explicitly when you do. Frame all of this as trade-offs, cite the figures, and recommend a professional for regulated investment products.
 - Benchmarks: compare to ${cc} averages via benchmark.incomePercentile, benchmark.savingsRatePct vs nationalSavingsRatePct, and benchmark.categories (flagged first). Attribute to ${cc} and note it is a public reference average; if benchmark is null, say so.
+- Treat tolerance (spendIntent): spendIntent splits this cycle's variable spend by need-level. discretionarySharePct is the share that is nice-to-have + treat; treatSpend is the pure-treat portion. Treats are a healthy part of a working budget, NOT a failure — never moralise about them. Calibrate: when the emergency fund is on track (reserve above the 3-months-of-expenses milestone), goals are progressing and there is no shortfall month, actively AFFIRM their treats and discretionary spend as well-earned. Only when money is genuinely tight (thin reserve, a shortfall month in planForecast, or high-APR debt) point to the treat/discretionary share as the gentlest lever to free up cash — always as a choice they own, with a concrete figure (e.g. "trimming treats by €X/cycle would…"), never a scold. Do not raise it at all when things are comfortable.
 
 ${market}
 

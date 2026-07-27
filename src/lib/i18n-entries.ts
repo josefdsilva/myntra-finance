@@ -504,6 +504,20 @@ export const ENTRIES = {
     de: "+{count} weitere",
     fr: "+{count} de plus",
   },
+  "intent.label": {
+    en: "Need level",
+    pt: "Nível de necessidade",
+    es: "Nivel de necesidad",
+    de: "Bedarfsstufe",
+    fr: "Niveau de besoin",
+  },
+  "common.error": {
+    en: "Something went wrong",
+    pt: "Algo correu mal",
+    es: "Algo salió mal",
+    de: "Etwas ist schiefgelaufen",
+    fr: "Une erreur s'est produite",
+  },
   "purchaseCheck.promptFinanced": {
     en: "I'm thinking of buying {what} for {price}, {terms}. I'd class it as {level}. Should I go ahead? Give me a quick verdict: can I afford it, buy vs finance total cost, what it costs my goals and safety net, and if it's borderline, how to make it work.",
     pt: "Estou a pensar comprar {what} por {price}, {terms}. Classificaria como {level}. Devo avançar? Dá-me um veredito rápido: posso pagar, custo total à vista vs financiado, o que custa aos meus objetivos e à minha reserva, e se estiver renhido, como fazer resultar.",

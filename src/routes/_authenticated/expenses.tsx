@@ -6,7 +6,13 @@ import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
-import { deleteExpense, addExpensesBulk } from "@/lib/budget.functions";
+import { deleteExpense, addExpensesBulk, setExpenseIntent } from "@/lib/budget.functions";
+import {
+  resolveIntent,
+  INTENT_LEVELS,
+  intentLabelKey,
+  type IntentLevel,
+} from "@/lib/intent";
 import { parseBankStatement } from "@/lib/ai-parse.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -34,7 +40,7 @@ import { computeCycle, computeTimeCycle, cycleFor, cycleConfigForSpace } from "@
 
 import { toast } from "sonner";
 import { FileUp, Loader2, Trash2, Paperclip } from "lucide-react";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses · bynku" }] }),
@@ -350,6 +356,9 @@ function ExpensesPage() {
                         </div>
                       )}
                     </div>
+                    {!isIncome && (
+                      <IntentSelect id={e.id} value={resolveIntent(e)} onChanged={() => refetch()} />
+                    )}
                     <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
                       {isIncome ? "+" : "−"}
                       {money(e.amount)}
@@ -396,6 +405,56 @@ function ExpensesPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/**
+ * Compact, non-judgy need-level selector for one expense. Shows the resolved
+ * level (its own tag, or the category default) and lets the user override it.
+ * A treat is a normal part of a budget, so the control stays neutral and quiet.
+ */
+function IntentSelect({
+  id,
+  value,
+  onChanged,
+}: {
+  id: string;
+  value: IntentLevel;
+  onChanged: () => void;
+}) {
+  const t = useT();
+  const setIntent = useServerFn(setExpenseIntent);
+  const [saving, setSaving] = useState(false);
+  return (
+    <Select
+      value={value}
+      onValueChange={async (v) => {
+        setSaving(true);
+        try {
+          await setIntent({ data: { id, intent: v as IntentLevel } });
+          onChanged();
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : t("common.error"));
+        } finally {
+          setSaving(false);
+        }
+      }}
+    >
+      <SelectTrigger
+        className="h-7 w-auto shrink-0 gap-1 border-none bg-muted/60 px-2 text-xs text-muted-foreground"
+        disabled={saving}
+        aria-label={t("intent.label")}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {INTENT_LEVELS.map((lvl) => (
+          <SelectItem key={lvl} value={lvl}>
+            {t(intentLabelKey(lvl) as MessageKey)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
