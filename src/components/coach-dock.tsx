@@ -323,7 +323,7 @@ export function CoachDock() {
                       <Loader2 className="size-3 animate-spin" /> Thinking…
                     </span>
                   ) : (
-                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                    <Markdown>{m.content}</Markdown>
                   )
                 ) : (
                   m.content
