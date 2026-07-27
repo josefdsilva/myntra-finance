@@ -40,6 +40,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/public/hooks/weekly-digest'
+import { Route as ApiPublicHooksCycleStartRouteImport } from './routes/api/public/hooks/cycle-start'
 import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
 
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -204,6 +205,12 @@ const ApiPublicHooksWeeklyDigestRoute =
     path: '/api/public/hooks/weekly-digest',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCycleStartRoute =
+  ApiPublicHooksCycleStartRouteImport.update({
+    id: '/api/public/hooks/cycle-start',
+    path: '/api/public/hooks/cycle-start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBudgetAlertsRoute =
   ApiPublicHooksBudgetAlertsRouteImport.update({
     id: '/api/public/hooks/budget-alerts',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
+  '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -270,6 +278,7 @@ export interface FileRoutesByTo {
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
+  '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -305,6 +314,7 @@ export interface FileRoutesById {
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
+  '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
+    | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
+    | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
+    | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -425,6 +438,7 @@ export interface RootRouteChildren {
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBudgetAlertsRoute: typeof ApiPublicHooksBudgetAlertsRoute
+  ApiPublicHooksCycleStartRoute: typeof ApiPublicHooksCycleStartRoute
   ApiPublicHooksWeeklyDigestRoute: typeof ApiPublicHooksWeeklyDigestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -652,6 +666,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWeeklyDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/cycle-start': {
+      id: '/api/public/hooks/cycle-start'
+      path: '/api/public/hooks/cycle-start'
+      fullPath: '/api/public/hooks/cycle-start'
+      preLoaderRoute: typeof ApiPublicHooksCycleStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/budget-alerts': {
       id: '/api/public/hooks/budget-alerts'
       path: '/api/public/hooks/budget-alerts'
@@ -715,6 +736,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBudgetAlertsRoute: ApiPublicHooksBudgetAlertsRoute,
+  ApiPublicHooksCycleStartRoute: ApiPublicHooksCycleStartRoute,
   ApiPublicHooksWeeklyDigestRoute: ApiPublicHooksWeeklyDigestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
