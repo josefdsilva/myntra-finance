@@ -167,6 +167,12 @@ type CoachContext = {
     treatCount: number;
     /** Monthly total of fixed costs tagged/defaulting to discretionary (nice-to-have + treat). */
     fixedDiscretionaryMonthly: number;
+    /** Avg discretionary spend per prior complete month over the trailing window — a personal baseline. */
+    priorAvgDiscretionaryPerCycle: number;
+    /** Avg treat spend per prior complete month over the trailing window. */
+    priorAvgTreatPerCycle: number;
+    /** How many prior complete months the trailing averages are based on. */
+    priorMonthsCounted: number;
   };
   previousCycleTotals: {
     spent: number;
@@ -585,21 +591,56 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const windowStartPeriod = `${windowStart.getFullYear()}-${pad(windowStart.getMonth() + 1)}-01`;
   const curPeriod = `${curMonthStart.getFullYear()}-${pad(curMonthStart.getMonth() + 1)}-01`;
 
-  const [{ data: histAllocRows }, { data: histIncomeRows }] = await Promise.all([
-    supabase
-      .from("bucket_allocations")
-      .select("amount, period")
-      .eq("household_id", householdId)
-      .gte("period", windowStartPeriod)
-      .lt("period", curPeriod),
-    supabase
-      .from("expenses")
-      .select("amount, occurred_at")
-      .eq("household_id", householdId)
-      .eq("kind", "income")
-      .gte("occurred_at", windowStart.toISOString())
-      .lt("occurred_at", curMonthStart.toISOString()),
-  ]);
+  const [{ data: histAllocRows }, { data: histIncomeRows }, { data: histSpendRows }] =
+    await Promise.all([
+      supabase
+        .from("bucket_allocations")
+        .select("amount, period")
+        .eq("household_id", householdId)
+        .gte("period", windowStartPeriod)
+        .lt("period", curPeriod),
+      supabase
+        .from("expenses")
+        .select("amount, occurred_at")
+        .eq("household_id", householdId)
+        .eq("kind", "income")
+        .gte("occurred_at", windowStart.toISOString())
+        .lt("occurred_at", curMonthStart.toISOString()),
+      // Prior complete months of variable spend with need-level, to build a
+      // personal baseline for discretionary/treat spend and spot a rising trend.
+      supabase
+        .from("expenses")
+        .select("amount, category, intent, occurred_at")
+        .eq("household_id", householdId)
+        .neq("kind", "income")
+        .gte("occurred_at", windowStart.toISOString())
+        .lt("occurred_at", curMonthStart.toISOString()),
+    ]);
+
+  // Discretionary/treat spend per prior complete month (personal baseline).
+  const priorByMonth: Record<string, { disc: number; treat: number }> = {};
+  for (const e of rowsOrEmpty<{
+    amount: number | string;
+    category: string | null;
+    intent: string | null;
+    occurred_at: string;
+  }>(histSpendRows)) {
+    const amt = Number(e.amount) || 0;
+    if (amt <= 0) continue;
+    const d = new Date(e.occurred_at);
+    const ym = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+    const level = resolveIntent(e);
+    (priorByMonth[ym] ??= { disc: 0, treat: 0 });
+    if (isDiscretionary(level)) priorByMonth[ym].disc += amt;
+    if (level === "treat") priorByMonth[ym].treat += amt;
+  }
+  const priorMonthsCounted = Object.keys(priorByMonth).length;
+  const priorDiscTotal = Object.values(priorByMonth).reduce((s, m) => s + m.disc, 0);
+  const priorTreatTotal = Object.values(priorByMonth).reduce((s, m) => s + m.treat, 0);
+  const priorAvgDiscretionaryPerCycle =
+    priorMonthsCounted > 0 ? Math.round((priorDiscTotal / priorMonthsCounted) * 100) / 100 : 0;
+  const priorAvgTreatPerCycle =
+    priorMonthsCounted > 0 ? Math.round((priorTreatTotal / priorMonthsCounted) * 100) / 100 : 0;
 
   let realAllocWindow = 0;
   for (const a of rowsOrEmpty<{ amount: number | string }>(histAllocRows)) {
@@ -745,6 +786,9 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       discretionaryCount: intentSummary.discretionaryCount,
       treatCount: intentSummary.treatCount,
       fixedDiscretionaryMonthly,
+      priorAvgDiscretionaryPerCycle,
+      priorAvgTreatPerCycle,
+      priorMonthsCounted,
     },
     previousCycleTotals,
     buckets: rowsOrEmpty<BucketRow>(buckets).map((b) => ({
@@ -868,7 +912,7 @@ These are defaults, not dogma: adapt to the specifics and flag clearly when the 
 
 Hypotheticals and what-ifs: when the user asks you to weigh something they do NOT yet own (a house they might buy, a car they're considering, a job or loan offer), treat the figures THEY give — price, deposit, term, rate, salary — as the scenario inputs. Use the snapshot only for their CAPACITY to absorb it (monthlySurplus, safeNewMonthlyCommitment, liquidReserve, reserveMonthsOfIncome, market rates) and their broader position. Do NOT redirect to, or silently substitute, assets they already own (e.g. their current home in assets[]) unless they explicitly ask you to compare against it. If a decision-critical input is missing (price, deposit, term), ask ONE short clarifying question first, then evaluate: affordability vs safeNewMonthlyCommitment, a comfortable vs a stretch range, and the impact on their reserve.
 
-Buying decisions on nice-to-have / treat items ("should I buy this?"): keep the affordability read as the backbone — when there is ample surplus and a healthy reserve, they CAN enjoy more extras, so say so warmly and never guilt-trip. But ALSO weigh what they have already spent on extras THIS cycle using spendIntent: discretionarySpend and treatSpend (euros), discretionarySharePct (share of variable spend), and discretionaryCount / treatCount (how MANY separate discretionary/treat buys — a high count signals impulse buying more than one big purchase does). If, for a nice-to-have or treat, the discretionary picture is already heavy this cycle — a large share, a big running total, or many small treat purchases — gently suggest a pause rather than a flat yes: sleeping on it and revisiting in a few days, or passing this time. Make restraint feel rewarding, not restrictive: tie the money not spent to something concrete they care about (progress on a named goal/project, a fuller safety net, more invested), and frame it as "you can absolutely afford this — the question is whether it's still worth it to you in a few days; a want that survives the wait is a stronger yes." Never shame, forbid, or imply they've failed. And do the opposite when extras are light this cycle and surplus is comfortable: reassure them it's well within reach and encourage enjoying it. This cooling-off nudge applies only to nice-to-have / treat items, never to essentials or important needs.
+Buying decisions on nice-to-have / treat items ("should I buy this?"): keep the affordability read as the backbone — when there is ample surplus and a healthy reserve, they CAN enjoy more extras, so say so warmly and never guilt-trip. But ALSO weigh what they have already spent on extras THIS cycle using spendIntent: discretionarySpend and treatSpend (euros), discretionarySharePct (share of variable spend), and discretionaryCount / treatCount (how MANY separate discretionary/treat buys — a high count signals impulse buying more than one big purchase does). Also compare to their PERSONAL baseline: spendIntent.priorAvgDiscretionaryPerCycle and priorAvgTreatPerCycle are their average discretionary/treat spend per prior complete month (over priorMonthsCounted months). If this cycle's discretionarySpend/treatSpend is already running well above that personal average — or has been climbing — treat it as a rising pattern worth naming gently, not just a one-off heavy cycle. If, for a nice-to-have or treat, the discretionary picture is already heavy — a large share, a big running total, many small treat purchases, or clearly above their own recent norm — gently suggest a pause rather than a flat yes: sleeping on it and revisiting in a few days, or passing this time. Make restraint feel rewarding, not restrictive: tie the money not spent to something concrete they care about (progress on a named goal/project, a fuller safety net, more invested), and frame it as "you can absolutely afford this — the question is whether it's still worth it to you in a few days; a want that survives the wait is a stronger yes." Never shame, forbid, or imply they've failed. And do the opposite when extras are light this cycle and surplus is comfortable: reassure them it's well within reach and encourage enjoying it. This cooling-off nudge applies only to nice-to-have / treat items, never to essentials or important needs.
 
 Guidance by topic:
 - Housing / new recurring commitment: anchor on safeNewMonthlyCommitment and monthlySurplus; give a comfortable and a stretch range; flag thin savings when emergencyFundMonths < 3.
@@ -883,6 +927,7 @@ Guidance by topic:
 ${market}
 
 Guardrails: you are a budgeting coach, not a licensed financial, tax, or legal advisor. For regulated investments, tax wrappers, or legal specifics, give general context and recommend a qualified professional.
+Do NOT recommend specific brands, retailers, shops, supermarkets, apps, or named products or providers (e.g. never say "shop at [store]" or "switch to [brand]"). Keep money-saving advice category-level and behavioural instead — e.g. "a lower-cost supermarket", "own-brand staples", "compare unit prices", "shop your usual list", "review that subscription" — so it stays neutral and non-promotional. The one exception is naming the household's OWN entries back to them (their projects, debts, income sources, plans, categories), which is fine.
 Length: be concise by DEFAULT. Lead with the answer, then at most 2-3 short bullets or a single comparison table, and end with one clear recommendation. Aim for under ~120 words / 4-6 sentences; skip preamble, don't restate the question, and never pad. Go longer only when a genuine multi-option comparison needs a table — and even then keep prose tight.${brief ? "\nBRIEF MODE (the user asked for short answers): answer in 2-3 sentences (or a tiny table) plus one recommendation. No headers, no bullet lists unless truly essential, under ~60 words. Still cite the key figures." : ""}${langInstruction(locale)}`;
 }
 
