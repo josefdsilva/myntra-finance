@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import ReactMarkdown from "react-markdown";
+import { Markdown } from "@/components/markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { pageShellClass } from "@/components/page-shell";
 import { getOrCreateHousehold } from "@/lib/household.functions";
@@ -306,7 +306,7 @@ function CycleReportPage() {
             </CardHeader>
             <CardContent>
               <div className="text-sm [&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:font-semibold [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_p]:my-1">
-                <ReactMarkdown>{reportQ.data!.narrative}</ReactMarkdown>
+                <Markdown>{reportQ.data!.narrative}</Markdown>
               </div>
               <p className="text-xs text-muted-foreground mt-3 print:hidden">
                 {reportQ.data!.cached
