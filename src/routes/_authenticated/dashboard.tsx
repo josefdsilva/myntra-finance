@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { DashboardTips } from "@/components/dashboard-tips";
 import { PurchaseCheckButton } from "@/components/purchase-check";
+import { GoalsCard } from "@/components/goals-card";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
@@ -633,6 +634,8 @@ function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {householdId && <GoalsCard householdId={householdId} />}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label={t("dashboard.stat.beforeLimit")} value={money(remaining)} highlight />
