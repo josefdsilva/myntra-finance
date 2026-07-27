@@ -919,11 +919,17 @@ function StatCard({
         ? "text-destructive"
         : "";
   return (
-    <Card className={highlight ? "border-primary/40 bg-primary/5" : ""}>
-      <CardContent className="pt-6">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
-        <p className={`text-2xl font-display mt-1 ${toneCls}`}>{value}</p>
-        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
+    <Card className={`h-full ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+      <CardContent className="pt-6 h-full flex flex-col">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground min-h-[2rem] leading-tight">
+          {label}
+        </p>
+        <p
+          className={`text-2xl font-display mt-1 tabular-nums whitespace-nowrap ${toneCls}`}
+        >
+          {value}
+        </p>
+        {hint && <p className="text-xs text-muted-foreground mt-auto pt-2">{hint}</p>}
       </CardContent>
     </Card>
   );
