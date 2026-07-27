@@ -90,7 +90,7 @@ function AllocationsPage() {
   });
 
   const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const calendarPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
   // "This cycle" is the space's actual cycle, not the calendar month — otherwise a
   // contribution made last cycle (same month) is wrongly counted as this cycle.
@@ -101,6 +101,12 @@ function AllocationsPage() {
   });
   const cycleStartIso = cycleBounds?.start.toISOString() ?? null;
   const cycleEndIso = cycleBounds?.end.toISOString() ?? null;
+  // Key allocations by the cycle start date so custom (event-based) cycles that
+  // span or share a calendar month don't collide on the (household, bucket, period)
+  // unique key and silently overwrite each other's "Mark as allocated" entries.
+  const period = cycleBounds
+    ? `${cycleBounds.start.getFullYear()}-${String(cycleBounds.start.getMonth() + 1).padStart(2, "0")}-${String(cycleBounds.start.getDate()).padStart(2, "0")}`
+    : calendarPeriod;
 
   const { data: confirmations, refetch: refetchConfirmations } = useQuery({
     enabled: !!householdId && !!cycleStartIso,
