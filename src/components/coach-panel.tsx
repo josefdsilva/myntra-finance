@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import ReactMarkdown from "react-markdown";
+import { Markdown } from "@/components/markdown";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -124,7 +124,7 @@ export function CoachPanel({
         {overview ? (
           <div>
             <div className="prose prose-sm dark:prose-invert max-w-none [&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:my-1 [&_p]:my-1">
-              <ReactMarkdown>{overview.content}</ReactMarkdown>
+              <Markdown>{overview.content}</Markdown>
             </div>
             <div className="text-xs text-muted-foreground mt-2">
               {overview.cached ? t("coach.cachedLabel") : t("coach.freshLabel")} ·{" "}
@@ -179,7 +179,7 @@ export function CoachPanel({
                     }
                   >
                     {m.role === "assistant" ? (
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                      <Markdown>{m.content}</Markdown>
                     ) : (
                       m.content
                     )}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import ReactMarkdown from "react-markdown";
+import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -323,7 +323,7 @@ export function CoachDock() {
                       <Loader2 className="size-3 animate-spin" /> Thinking…
                     </span>
                   ) : (
-                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                    <Markdown>{m.content}</Markdown>
                   )
                 ) : (
                   m.content
