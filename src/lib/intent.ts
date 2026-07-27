@@ -101,6 +101,10 @@ export function summariseIntent(
   discretionary: number;
   treat: number;
   discretionarySharePct: number;
+  /** Count of discretionary (nice-to-have + treat) purchases — a frequency signal. */
+  discretionaryCount: number;
+  /** Count of pure-treat purchases. */
+  treatCount: number;
 } {
   const byLevel: Record<IntentLevel, number> = {
     essential: 0,
@@ -109,11 +113,16 @@ export function summariseIntent(
     treat: 0,
   };
   let total = 0;
+  let discretionaryCount = 0;
+  let treatCount = 0;
   for (const e of expenses) {
     const amt = Number(e.amount) || 0;
     if (amt <= 0) continue;
     total += amt;
-    byLevel[resolveIntent(e)] += amt;
+    const level = resolveIntent(e);
+    byLevel[level] += amt;
+    if (isDiscretionary(level)) discretionaryCount += 1;
+    if (level === "treat") treatCount += 1;
   }
   const discretionary = byLevel.nice_to_have + byLevel.treat;
   const round = (n: number) => Math.round(n * 100) / 100;
@@ -128,5 +137,7 @@ export function summariseIntent(
     discretionary: round(discretionary),
     treat: round(byLevel.treat),
     discretionarySharePct: total > 0 ? Math.round((discretionary / total) * 1000) / 10 : 0,
+    discretionaryCount,
+    treatCount,
   };
 }

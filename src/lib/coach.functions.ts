@@ -161,6 +161,10 @@ type CoachContext = {
     treatSpend: number;
     discretionarySpend: number;
     discretionarySharePct: number;
+    /** Count of discretionary purchases this cycle — a frequency/impulse signal. */
+    discretionaryCount: number;
+    /** Count of pure-treat purchases this cycle. */
+    treatCount: number;
     /** Monthly total of fixed costs tagged/defaulting to discretionary (nice-to-have + treat). */
     fixedDiscretionaryMonthly: number;
   };
@@ -738,6 +742,8 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       treatSpend: intentSummary.treat,
       discretionarySpend: intentSummary.discretionary,
       discretionarySharePct: intentSummary.discretionarySharePct,
+      discretionaryCount: intentSummary.discretionaryCount,
+      treatCount: intentSummary.treatCount,
       fixedDiscretionaryMonthly,
     },
     previousCycleTotals,
@@ -861,6 +867,8 @@ Parallel targets: this priority order is NOT a hard gate. Once the starter buffe
 These are defaults, not dogma: adapt to the specifics and flag clearly when the household is ahead of, or behind on, a given rung.
 
 Hypotheticals and what-ifs: when the user asks you to weigh something they do NOT yet own (a house they might buy, a car they're considering, a job or loan offer), treat the figures THEY give — price, deposit, term, rate, salary — as the scenario inputs. Use the snapshot only for their CAPACITY to absorb it (monthlySurplus, safeNewMonthlyCommitment, liquidReserve, reserveMonthsOfIncome, market rates) and their broader position. Do NOT redirect to, or silently substitute, assets they already own (e.g. their current home in assets[]) unless they explicitly ask you to compare against it. If a decision-critical input is missing (price, deposit, term), ask ONE short clarifying question first, then evaluate: affordability vs safeNewMonthlyCommitment, a comfortable vs a stretch range, and the impact on their reserve.
+
+Buying decisions on nice-to-have / treat items ("should I buy this?"): keep the affordability read as the backbone — when there is ample surplus and a healthy reserve, they CAN enjoy more extras, so say so warmly and never guilt-trip. But ALSO weigh what they have already spent on extras THIS cycle using spendIntent: discretionarySpend and treatSpend (euros), discretionarySharePct (share of variable spend), and discretionaryCount / treatCount (how MANY separate discretionary/treat buys — a high count signals impulse buying more than one big purchase does). If, for a nice-to-have or treat, the discretionary picture is already heavy this cycle — a large share, a big running total, or many small treat purchases — gently suggest a pause rather than a flat yes: sleeping on it and revisiting in a few days, or passing this time. Make restraint feel rewarding, not restrictive: tie the money not spent to something concrete they care about (progress on a named goal/project, a fuller safety net, more invested), and frame it as "you can absolutely afford this — the question is whether it's still worth it to you in a few days; a want that survives the wait is a stronger yes." Never shame, forbid, or imply they've failed. And do the opposite when extras are light this cycle and surplus is comfortable: reassure them it's well within reach and encourage enjoying it. This cooling-off nudge applies only to nice-to-have / treat items, never to essentials or important needs.
 
 Guidance by topic:
 - Housing / new recurring commitment: anchor on safeNewMonthlyCommitment and monthlySurplus; give a comfortable and a stretch range; flag thin savings when emergencyFundMonths < 3.
