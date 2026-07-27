@@ -90,7 +90,7 @@ function AllocationsPage() {
   });
 
   const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const calendarPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
   // "This cycle" is the space's actual cycle, not the calendar month — otherwise a
   // contribution made last cycle (same month) is wrongly counted as this cycle.
