@@ -42,6 +42,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { DashboardTips } from "@/components/dashboard-tips";
+import { PurchaseCheckButton } from "@/components/purchase-check";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
@@ -379,9 +380,12 @@ function Dashboard() {
 
   return (
     <div className={pageShellClass("5xl")}>
-      <header>
-        <p className="text-sm text-muted-foreground">{cycleLabel}</p>
-        <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm text-muted-foreground">{cycleLabel}</p>
+          <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
+        </div>
+        {householdId && <PurchaseCheckButton />}
       </header>
 
       {!isLoading && onboardingIncomplete ? (
