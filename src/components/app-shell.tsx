@@ -29,6 +29,7 @@ import {
   User,
   Send,
   ArrowLeftRight,
+  FastForward,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -69,6 +70,7 @@ const NAV_SECTIONS = [
     titleKey: "navSection.data",
     items: [
       { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
+      { to: "/fast-forward", labelKey: "nav.fastForward", icon: FastForward },
       { to: "/cycle-report", labelKey: "nav.cycleReport", icon: FileText },
       { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
     ],
