@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
 import { buildForecast, monthKey, type Plan } from "@/lib/plan";
+import { liquidityForKind } from "@/lib/assets.functions";
+import { resolveIntent, summariseIntent } from "@/lib/intent";
 import { useT } from "@/lib/i18n";
 import {
   AlertTriangle,
