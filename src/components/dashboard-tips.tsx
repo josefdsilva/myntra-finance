@@ -111,6 +111,7 @@ export function DashboardTips({
     queryFn: async () => {
       // Base tables come from the shared cache (already fetched by the Dashboard
       // on this screen); only the allocation/expense counts are tips-specific.
+      const since = new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString();
       const [
         buckets,
         incomes,
@@ -121,6 +122,8 @@ export function DashboardTips({
         { data: allTimeAllocations },
         { count: expenseCount },
         { data: plans },
+        { data: assets },
+        { data: recentExpenses },
       ] = await Promise.all([
         qc.fetchQuery(bucketsQuery(householdId)),
         qc.fetchQuery(incomesQuery(householdId)),
@@ -147,6 +150,16 @@ export function DashboardTips({
           .from("plans")
           .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
           .eq("household_id", householdId),
+        supabase
+          .from("assets")
+          .select("id, name, kind, current_value, updated_at")
+          .eq("household_id", householdId),
+        supabase
+          .from("expenses")
+          .select("amount, category, intent")
+          .eq("household_id", householdId)
+          .eq("kind", "expense")
+          .gte("occurred_at", since),
       ]);
       const allTimeTotals: Record<string, number> = {};
       for (const r of allTimeAllocations ?? []) {
@@ -161,6 +174,18 @@ export function DashboardTips({
         allTimeTotals,
         expenseCount: expenseCount ?? 0,
         plans: (plans ?? []) as unknown as Plan[],
+        assets: (assets ?? []) as Array<{
+          id: string;
+          name: string;
+          kind: string;
+          current_value: number | string;
+          updated_at: string;
+        }>,
+        recentExpenses: (recentExpenses ?? []) as Array<{
+          amount: number | string;
+          category: string | null;
+          intent: string | null;
+        }>,
       };
     },
   });
