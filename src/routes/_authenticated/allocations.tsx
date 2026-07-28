@@ -175,20 +175,37 @@ function AllocationsPage() {
     },
   });
 
-  // YTD confirmed allocations (this calendar year) grouped by bucket.
+  // Money funded into each project THIS calendar year — both confirmed
+  // allocations AND direct fund movements (Move Funds deposits/withdrawals), so
+  // the "funded this year" figure matches how the balance is actually built and
+  // never undercounts money added via "add funds".
   const yearStartIso = `${now.getFullYear()}-01-01`;
   const { data: ytdTotals } = useQuery({
     enabled: !!householdId,
     queryKey: ["bucket-allocations-ytd", householdId, now.getFullYear()],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("bucket_allocations")
-        .select("bucket_id, amount")
-        .eq("household_id", householdId!)
-        .gte("period", yearStartIso);
+      const [{ data: confs, error }, { data: moves }] = await Promise.all([
+        supabase
+          .from("bucket_allocations")
+          .select("bucket_id, amount")
+          .eq("household_id", householdId!)
+          .gte("period", yearStartIso),
+        supabase
+          .from("account_movements")
+          .select("amount, to_type, from_type, to_id, from_id")
+          .eq("household_id", householdId!)
+          .gte("created_at", yearStartIso)
+          .or("to_type.eq.bucket,from_type.eq.bucket"),
+      ]);
       if (error) throw error;
       const map: Record<string, number> = {};
-      for (const r of data ?? []) map[r.bucket_id] = (map[r.bucket_id] ?? 0) + Number(r.amount);
+      for (const r of confs ?? []) map[r.bucket_id] = (map[r.bucket_id] ?? 0) + Number(r.amount);
+      for (const m of moves ?? []) {
+        if (m.to_type === "bucket" && m.to_id)
+          map[m.to_id as string] = (map[m.to_id as string] ?? 0) + Number(m.amount);
+        if (m.from_type === "bucket" && m.from_id)
+          map[m.from_id as string] = (map[m.from_id as string] ?? 0) - Number(m.amount);
+      }
       return map;
     },
   });
@@ -550,11 +567,17 @@ function YearToDate({
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {buckets.map((b) => {
-                const confirmed = ytdTotals[b.id] ?? 0;
-                // Current balance = pre-existing initial funds + every confirmed contribution
-                // ever made (not just this year) — the real amount sitting in the bucket today.
+                const fundedThisYear = ytdTotals[b.id] ?? 0;
+                // Current balance = pre-existing initial funds + every confirmed
+                // contribution AND fund movement ever made — the real amount in
+                // the project today.
                 const currentBalance = Number(b.initial_balance ?? 0) + (allTimeTotals[b.id] ?? 0);
-                const projected = currentBalance + monthlyFn(b) * monthsRemaining;
+                // Project forward at the ACTUAL funding pace this year (not the
+                // target), so "on pace" reflects what's really happening. Fall
+                // back to the target rate only before a month has elapsed.
+                const paceMonthly =
+                  monthsElapsed >= 1 ? fundedThisYear / monthsElapsed : monthlyFn(b);
+                const projected = currentBalance + Math.max(0, paceMonthly) * monthsRemaining;
                 return (
                   <div key={b.id} className="rounded-lg border p-3">
                     <div className="flex items-center gap-2 mb-1">
@@ -566,7 +589,7 @@ function YearToDate({
                     </div>
                     <p className="text-2xl font-display tabular-nums">{money(currentBalance)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t("alloc.ytd.confirmedThisYear", { amount: money(confirmed) })}
+                      {t("alloc.ytd.confirmedThisYear", { amount: money(fundedThisYear) })}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {t("alloc.ytd.pace", { value: money(projected) })}
