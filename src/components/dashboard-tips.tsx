@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
 import { buildForecast, monthKey, type Plan } from "@/lib/plan";
+import { liquidityForKind } from "@/lib/assets.functions";
+import { resolveIntent, summariseIntent } from "@/lib/intent";
 import { useT } from "@/lib/i18n";
 import {
   AlertTriangle,
@@ -109,6 +111,7 @@ export function DashboardTips({
     queryFn: async () => {
       // Base tables come from the shared cache (already fetched by the Dashboard
       // on this screen); only the allocation/expense counts are tips-specific.
+      const since = new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString();
       const [
         buckets,
         incomes,
@@ -119,6 +122,8 @@ export function DashboardTips({
         { data: allTimeAllocations },
         { count: expenseCount },
         { data: plans },
+        { data: assets },
+        { data: recentExpenses },
       ] = await Promise.all([
         qc.fetchQuery(bucketsQuery(householdId)),
         qc.fetchQuery(incomesQuery(householdId)),
@@ -145,6 +150,16 @@ export function DashboardTips({
           .from("plans")
           .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
           .eq("household_id", householdId),
+        supabase
+          .from("assets")
+          .select("id, name, kind, current_value, updated_at")
+          .eq("household_id", householdId),
+        supabase
+          .from("expenses")
+          .select("amount, category, intent")
+          .eq("household_id", householdId)
+          .eq("kind", "expense")
+          .gte("occurred_at", since),
       ]);
       const allTimeTotals: Record<string, number> = {};
       for (const r of allTimeAllocations ?? []) {
@@ -159,6 +174,18 @@ export function DashboardTips({
         allTimeTotals,
         expenseCount: expenseCount ?? 0,
         plans: (plans ?? []) as unknown as Plan[],
+        assets: (assets ?? []) as Array<{
+          id: string;
+          name: string;
+          kind: string;
+          current_value: number | string;
+          updated_at: string;
+        }>,
+        recentExpenses: (recentExpenses ?? []) as Array<{
+          amount: number | string;
+          category: string | null;
+          intent: string | null;
+        }>,
       };
     },
   });
@@ -593,6 +620,129 @@ export function DashboardTips({
       });
     }
   }
+
+  // ---- Overdue plans (past-month, unresolved) ----
+  const nowYm = monthKey(now);
+  const overduePlans = planList.filter(
+    (p) => !p.done && String(p.month).slice(0, 7) < nowYm,
+  );
+  if (overduePlans.length) {
+    const first = overduePlans[0];
+    tips.push({
+      id: "plans-overdue",
+      severity: "warning",
+      title: t("tips.overduePlans.title", { count: overduePlans.length }),
+      detail: t("tips.overduePlans.detail", {
+        label: first.label,
+        month: monthLabel(String(first.month).slice(0, 7)),
+      }),
+      cta: { label: t("tips.cta.openPlan"), to: "/plan" },
+      chatPrompt: t("tips.overduePlans.chat", { count: overduePlans.length }),
+    });
+  }
+
+  // ---- Assets: none tracked, but the household has real reserves ----
+  const assets = data.assets;
+  const assetsTotal = assets.reduce((s, a) => s + Number(a.current_value || 0), 0);
+  if (!assets.length && (reserveMonths >= 3 || liquidReserve >= baseline * 3)) {
+    tips.push({
+      id: "no-assets",
+      severity: "info",
+      title: t("tips.noAssets.title"),
+      detail: t("tips.noAssets.detail"),
+      cta: { label: t("tips.cta.addAsset"), to: "/assets" },
+      chatPrompt: t("tips.noAssets.chat"),
+    });
+  }
+
+  // ---- Stale asset values (>12 months since last update) ----
+  const staleCutoff = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+  const staleAssets = assets.filter((a) => new Date(a.updated_at) < staleCutoff);
+  if (staleAssets.length) {
+    tips.push({
+      id: "stale-assets",
+      severity: "info",
+      title: t("tips.staleAssets.title", { count: staleAssets.length }),
+      detail: t("tips.staleAssets.detail", { name: staleAssets[0].name }),
+      cta: { label: t("tips.cta.reviewAssets"), to: "/assets" },
+      chatPrompt: t("tips.staleAssets.chat"),
+    });
+  }
+
+  // ---- Illiquid-heavy net worth with a thin liquid reserve ----
+  if (assets.length && assetsTotal > 0 && baseline > 0) {
+    const illiquidTotal = assets.reduce(
+      (s, a) =>
+        liquidityForKind(a.kind) === "illiquid" ? s + Number(a.current_value || 0) : s,
+      0,
+    );
+    const illiquidShare = illiquidTotal / assetsTotal;
+    if (illiquidShare >= 0.8 && reserveMonths < 3) {
+      tips.push({
+        id: "illiquid-heavy",
+        severity: "warning",
+        title: t("tips.illiquidHeavy.title"),
+        detail: t("tips.illiquidHeavy.detail", {
+          pct: Math.round(illiquidShare * 100),
+          months: reserveMonths.toFixed(1),
+          target: money(baseline * 3),
+        }),
+        cta: { label: t("tips.cta.manageBuckets"), to: "/settings" },
+        chatPrompt: t("tips.illiquidHeavy.chat"),
+      });
+    }
+  }
+
+  // ---- Intent scale: treat share and tagging habits ----
+  const recent = data.recentExpenses;
+  if (recent.length >= 10) {
+    const intent = summariseIntent(recent);
+    const tagged = recent.filter((e) => !!e.intent).length;
+    if (
+      intent.total > 0 &&
+      intent.discretionarySharePct >= 40 &&
+      income > 0 &&
+      surplus / income < 0.1
+    ) {
+      tips.push({
+        id: "high-treat-share",
+        severity: "warning",
+        title: t("tips.highTreatShare.title", { pct: Math.round(intent.discretionarySharePct) }),
+        detail: t("tips.highTreatShare.detail", {
+          discretionary: money(intent.discretionary),
+          treat: money(intent.treat),
+        }),
+        chatPrompt: t("tips.highTreatShare.chat", {
+          pct: Math.round(intent.discretionarySharePct),
+        }),
+      });
+    }
+    if (tagged === 0 && recent.length >= 15) {
+      tips.push({
+        id: "untagged-intent",
+        severity: "info",
+        title: t("tips.untaggedIntent.title"),
+        detail: t("tips.untaggedIntent.detail"),
+        cta: { label: t("tips.cta.openExpenses"), to: "/expenses" },
+        chatPrompt: t("tips.untaggedIntent.chat"),
+      });
+    }
+    // Consistent "treat" behaviour on essentials-labelled categories tends to be
+    // upgrades disguised as needs — surface it gently when the reserve is thin.
+    if (reserveMonths < 3 && intent.byLevel.treat > intent.byLevel.essential * 0.5) {
+      tips.push({
+        id: "treats-vs-reserve",
+        severity: "info",
+        title: t("tips.treatsVsReserve.title"),
+        detail: t("tips.treatsVsReserve.detail", {
+          treat: money(intent.byLevel.treat),
+          months: reserveMonths.toFixed(1),
+        }),
+        chatPrompt: t("tips.treatsVsReserve.chat"),
+      });
+    }
+  }
+
 
   const rank: Record<Severity, number> = { critical: 0, warning: 1, info: 2, success: 3 };
   tips.sort((a, b) => rank[a.severity] - rank[b.severity]);
