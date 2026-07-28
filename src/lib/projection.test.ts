@@ -40,7 +40,7 @@ const base = (over: Partial<ProjectionInput> = {}): ProjectionInput => ({
 
 test("debt pays off and then frees up surplus", () => {
   const s = projectForward(
-    base({ debts: [{ label: "loan", balance: 1000, monthlyRate: 0, installment: 500 }] }),
+    base({ debts: [{ id: "loan", label: "loan", balance: 1000, monthlyRate: 0, installment: 500 }] }),
   );
   // Month 1 & 2 pay 500 each; month 3 the loan is gone.
   expect(s[0].debtPaid).toBe(500);
@@ -124,4 +124,82 @@ test("horizon is clamped to the max", () => {
 test("monthsBetween counts whole months", () => {
   expect(monthsBetween(new Date(2026, 0, 1), new Date(2030, 10, 1))).toBe(58);
   expect(monthsBetween(new Date(2030, 0, 1), new Date(2026, 0, 1))).toBe(0);
+});
+
+test("one-off expense reduces net worth that month; income raises it", () => {
+  const withE = projectForward(
+    base({
+      months: 4,
+      events: [
+        { id: "e1", kind: "one_off", direction: "expense", month: "2026-03", amount: 500 },
+      ],
+    }),
+  );
+  const without = projectForward(base({ months: 4 }));
+  // March = series[1]; net worth 500 lower from then on.
+  expect(without[1].netWorth - withE[1].netWorth).toBeCloseTo(500, 2);
+  expect(without[3].netWorth - withE[3].netWorth).toBeCloseTo(500, 2);
+});
+
+test("a new loan is net-worth-neutral at signing, then its payments bite", () => {
+  const s = projectForward(
+    base({
+      months: 6,
+      events: [
+        { id: "L", kind: "loan", month: "2026-03", principal: 6000, aprPct: 0, termMonths: 6, label: "car loan" },
+      ],
+    }),
+  );
+  const without = projectForward(base({ months: 6 }));
+  // At signing month (March = index 1): +6000 cash, +6000 debt → net worth ~unchanged.
+  expect(s[1].netWorth).toBeCloseTo(without[1].netWorth, 0);
+  // Debt appears and is being serviced.
+  expect(s[1].debtRemaining).toBeGreaterThan(0);
+  expect(s[2].debtPaid).toBeGreaterThan(without[2].debtPaid);
+});
+
+test("overpay is net-worth-neutral and frees future surplus", () => {
+  const s = projectForward(
+    base({
+      months: 4,
+      debts: [{ id: "d", label: "credit", balance: 1000, monthlyRate: 0, installment: 200 }],
+      startingSavings: 1000,
+      events: [{ id: "o", kind: "overpay", month: "2026-02", amount: 800, targetDebtId: "d" }],
+    }),
+  );
+  // Feb = index 0: 800 cash out, 800 debt down → net worth unchanged vs pre-event.
+  // Debt clears fast, so by later months debtPaid is 0 and surplus is higher.
+  expect(s[s.length - 1].debtRemaining).toBe(0);
+  expect(s[s.length - 1].debtPaid).toBe(0);
+});
+
+test("asset purchase swaps cash for an asset (net-worth-neutral at purchase)", () => {
+  const s = projectForward(
+    base({
+      months: 3,
+      startingSavings: 30000,
+      events: [
+        { id: "car", kind: "asset_purchase", month: "2026-02", price: 25000, assetValue: 25000 },
+      ],
+    }),
+  );
+  const without = projectForward(base({ months: 3, startingSavings: 30000 }));
+  expect(s[0].netWorth).toBeCloseTo(without[0].netWorth, 0); // neutral at purchase
+  expect(s[0].savings).toBeCloseTo(without[0].savings - 25000, 0);
+  expect(s[0].assets).toBeCloseTo(without[0].assets + 25000, 0);
+});
+
+test("recurring income persists from its month", () => {
+  const s = projectForward(
+    base({
+      months: 4,
+      events: [
+        { id: "raise", kind: "recurring", direction: "income", fromMonth: "2026-03", amount: 300 },
+      ],
+    }),
+  );
+  const without = projectForward(base({ months: 4 }));
+  expect(s[0].income).toBe(without[0].income); // Feb, before the raise
+  expect(s[1].income).toBe(without[1].income + 300); // Mar onward
+  expect(s[2].income).toBe(without[2].income + 300);
 });

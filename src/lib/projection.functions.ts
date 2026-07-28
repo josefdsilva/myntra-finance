@@ -7,6 +7,7 @@ import { debtMonthlyRate, type Debt } from "@/lib/debt-schedule";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import type { Plan } from "@/lib/plan";
 import {
+  projectForward,
   projectScenarios,
   projectProjects,
   monthsBetween,
@@ -15,7 +16,53 @@ import {
   type ProjectionDebt,
   type ProjectionProject,
   type ScenarioKey,
+  type ScenarioEvent,
 } from "@/lib/projection";
+
+const ym = z.string().regex(/^\d{4}-\d{2}$/);
+const eventSchema = z.discriminatedUnion("kind", [
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal("one_off"),
+    direction: z.enum(["income", "expense"]),
+    month: ym,
+    amount: z.number().min(0).max(100_000_000),
+    label: z.string().max(80).optional(),
+  }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal("recurring"),
+    direction: z.enum(["income", "expense"]),
+    fromMonth: ym,
+    amount: z.number().min(0).max(10_000_000),
+    label: z.string().max(80).optional(),
+  }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal("loan"),
+    month: ym,
+    principal: z.number().min(0).max(100_000_000),
+    aprPct: z.number().min(0).max(100),
+    termMonths: z.number().int().min(1).max(600),
+    label: z.string().max(80).optional(),
+  }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal("overpay"),
+    month: ym,
+    amount: z.number().min(0).max(100_000_000),
+    targetDebtId: z.string().min(1),
+    label: z.string().max(80).optional(),
+  }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal("asset_purchase"),
+    month: ym,
+    price: z.number().min(0).max(100_000_000),
+    assetValue: z.number().min(0).max(100_000_000).optional(),
+    label: z.string().max(80).optional(),
+  }),
+]);
 
 /** Months from now until the first of `targetYm` (YYYY-MM), clamped to the cap. */
 function monthsToTarget(targetYm: string): number {
@@ -38,6 +85,7 @@ export const fastForward = createServerFn({ method: "POST" })
         householdId: z.string().uuid(),
         // Target month as YYYY-MM.
         targetMonth: z.string().regex(/^\d{4}-\d{2}$/),
+        events: z.array(eventSchema).max(50).optional().default([]),
       })
       .parse(input),
   )
@@ -93,6 +141,7 @@ export const fastForward = createServerFn({ method: "POST" })
     const debtMonthly = debtRows.reduce((s, d) => s + Number(d.monthly_amount || 0), 0);
     const debts: ProjectionDebt[] = debtRows
       .map((d) => ({
+        id: d.id,
         label: d.label,
         balance: Number(d.principal_remaining ?? d.starting_principal ?? 0),
         monthlyRate: debtMonthlyRate(d),
@@ -162,6 +211,7 @@ export const fastForward = createServerFn({ method: "POST" })
       return { id: b.id, name: b.name, balance, monthlyContribution: contribution, goalTarget, monthsToGoal };
     });
 
+    const events = (data.events ?? []) as ScenarioEvent[];
     const baseInput: ProjectionInput = {
       startMonth: now,
       months,
@@ -172,6 +222,7 @@ export const fastForward = createServerFn({ method: "POST" })
       plans: rowsOrEmpty<Plan>(plansData as Plan[] | null),
       startingSavings,
       assetsTotal,
+      events,
     };
 
     const scenarioSeries = projectScenarios(baseInput);
@@ -181,16 +232,24 @@ export const fastForward = createServerFn({ method: "POST" })
       return { key, series, at: series[series.length - 1] };
     });
 
+    // Baseline = the expected path with NO what-if events, so the UI can show
+    // the difference the scenario makes.
+    const baselineSeries = projectForward({ ...baseInput, events: [] });
+    const baseline = { series: baselineSeries, at: baselineSeries[baselineSeries.length - 1] };
+
     const projects = projectProjects(projectsInput, months);
 
-    const [ty, tm] = data.targetMonth.split("-").map(Number);
     const startYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    // The month the projection actually reaches (start + clamped horizon), so the
+    // UI's headline date always matches the numbers even if a far date was asked.
+    const effTarget = new Date(now.getFullYear(), now.getMonth() + months, 1);
+    const targetYm = `${effTarget.getFullYear()}-${String(effTarget.getMonth() + 1).padStart(2, "0")}`;
 
     return {
       currency: hh?.currency ?? "EUR",
       isBusiness: hh?.kind === "business",
       startYm,
-      targetYm: `${ty}-${String(tm).padStart(2, "0")}`,
+      targetYm,
       months,
       current: {
         netWorth: Math.round((assetsTotal + startingSavings - debts.reduce((s, d) => s + d.balance, 0)) * 100) / 100,
@@ -200,6 +259,10 @@ export const fastForward = createServerFn({ method: "POST" })
         monthlySurplus: Math.round((monthlyIncome - fixedNonDebtMonthly - variableMonthly - debtMonthly) * 100) / 100,
       },
       scenarios,
+      baseline,
+      hasEvents: events.length > 0,
       projects,
+      // Existing debts an overpayment can target.
+      debts: debts.map((d) => ({ id: d.id, label: d.label })),
     };
   });

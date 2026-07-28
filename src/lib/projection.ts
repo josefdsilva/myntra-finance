@@ -1,91 +1,107 @@
 /**
- * Forward projection — "fast forward to a date". Pure and deterministic.
+ * Forward projection — "fast forward to a date" and the scenario simulator.
+ * Pure and deterministic.
  *
- * Given today's position (income, everyday + fixed costs, debts with their
- * amortization, known plans, savings and assets), roll it forward month by month
- * to estimate the household's (or business's) financial position at a future
- * date, assuming things unfold normally.
- *
- * What a naive "surplus × months" misses, and this models:
- *  - Debts amortize; when a loan is paid off its payment STOPS, so surplus rises.
- *  - Plans (one-off or recurring, income or spend) land on their own month.
- *  - Surplus accumulates into liquid savings and hence net worth.
- *  - Nominal knobs (asset growth, income growth, expense inflation, a spend
- *    buffer) drive an expected / cautious / optimistic range.
- *
- * It emits several lenses per month (surplus, savings, debt remaining, assets,
- * net worth) plus, separately, how each project fills if funding continues. This
- * is the backbone for the scenario simulator: a scenario is just a modified input.
+ * Rolls today's position forward month by month, applying any number of dated
+ * "what-if" events (a purchase, a new loan, an overpayment, a raise, a bonus…).
+ * Everything is double-entry so net worth stays honest:
+ *  - Debts amortize; when a loan is paid off its payment STOPS → surplus rises.
+ *  - A new loan adds cash AND a liability (neutral at signing), then its
+ *    installments reduce surplus.
+ *  - An overpayment moves cash → debt (neutral now, frees future interest).
+ *  - A purchase spends cash; if it's an asset it also adds to assets (neutral).
+ *  - Plans and events land on their own month; recurring changes persist.
+ *  - Nominal knobs (asset growth, income growth, inflation, spend buffer) drive
+ *    an expected / cautious / optimistic range.
  */
 
 import { addMonths } from "date-fns";
 import { monthKey, plansForMonth, type Plan } from "./plan";
+import { monthlyRateFromTaeg, installmentFor } from "./amortization";
 
-/** Cap the horizon — beyond ~2-3 years the assumptions swamp the signal. */
-export const MAX_PROJECTION_MONTHS = 36;
+/** Cap the horizon — beyond ~5 years the assumptions swamp the signal. */
+export const MAX_PROJECTION_MONTHS = 60;
 
-/** A debt reduced to the three numbers amortization needs. */
+/** A debt reduced to what amortization needs. `id` lets events target it. */
 export type ProjectionDebt = {
+  id: string;
   label: string;
-  /** Balance owed today. */
   balance: number;
   /** Monthly interest rate as a fraction (e.g. 0.004 ≈ 5% APR). */
   monthlyRate: number;
-  /** The regular monthly installment. */
   installment: number;
 };
 
+/** A dated what-if. Month keys are "YYYY-MM". */
+export type ScenarioEvent =
+  | {
+      id: string;
+      kind: "one_off";
+      direction: "income" | "expense";
+      month: string;
+      amount: number;
+      label?: string;
+    }
+  | {
+      id: string;
+      kind: "recurring";
+      direction: "income" | "expense";
+      fromMonth: string;
+      amount: number;
+      label?: string;
+    }
+  | {
+      id: string;
+      kind: "loan";
+      month: string;
+      principal: number;
+      aprPct: number;
+      termMonths: number;
+      label?: string;
+    }
+  | { id: string; kind: "overpay"; month: string; amount: number; targetDebtId: string; label?: string }
+  | {
+      id: string;
+      kind: "asset_purchase";
+      month: string;
+      price: number;
+      /** Value it adds to assets (defaults to price). */
+      assetValue?: number;
+      label?: string;
+    };
+
 export type ProjectionInput = {
-  /** First projected month (usually today). */
   startMonth: Date;
-  /** How many months to project (clamped to MAX_PROJECTION_MONTHS). */
   months: number;
-  /** Recurring net income per month. */
   monthlyIncome: number;
-  /** Fixed monthly costs EXCLUDING debt (debts are amortized separately). */
   fixedNonDebtMonthly: number;
-  /** Everyday variable spending estimate per month. */
   variableMonthly: number;
   debts: ProjectionDebt[];
-  /** Future costs/income the household already knows about. */
   plans: Plan[];
-  /** Liquid money already set aside today (project/savings balances). */
   startingSavings: number;
-  /** Current value of non-cash assets (property, vehicles, investments…). */
   assetsTotal: number;
-  /** Nominal annual assumptions; all default to 0 (flat). */
+  events?: ScenarioEvent[];
   assetGrowthAnnualPct?: number;
   incomeGrowthAnnualPct?: number;
   expenseInflationAnnualPct?: number;
-  /** Flat % added to everyday spend as a cushion (e.g. 10 = spend 10% more). */
   spendBufferPct?: number;
 };
 
 export type ProjectionMonth = {
   ym: string;
-  /** Recurring income + any income plans landing this month. */
   income: number;
-  /** Everyday + fixed costs + planned one-off spend this month (excludes debt). */
   expenses: number;
-  /** Total debt payments made this month (falls as loans pay off). */
   debtPaid: number;
-  /** income − expenses − debtPaid (negative = drawing down). */
   surplus: number;
-  /** Cumulative liquid savings / cash after this month. */
   savings: number;
-  /** Total debt principal still owed after this month. */
   debtRemaining: number;
-  /** Value of assets this month (grown if a growth rate is set). */
   assets: number;
-  /** assets + savings − debtRemaining. */
   netWorth: number;
-  /** True once every debt is paid off. */
   debtFree: boolean;
 };
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-/** Annual percent → per-month growth fraction. */
 function monthlyGrowth(annualPct: number): number {
   if (!annualPct) return 0;
   return Math.pow(1 + annualPct / 100, 1 / 12) - 1;
@@ -93,10 +109,6 @@ function monthlyGrowth(annualPct: number): number {
 
 const clampMonths = (m: number) => Math.max(1, Math.min(MAX_PROJECTION_MONTHS, Math.round(m)));
 
-/**
- * Roll the pooled position forward. Returns one row per month (the first row is
- * the state after the first projected month).
- */
 export function projectForward(input: ProjectionInput): ProjectionMonth[] {
   const {
     startMonth,
@@ -108,40 +120,90 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
     assetsTotal,
   } = input;
   const months = clampMonths(input.months);
+  const events = input.events ?? [];
 
   const gIncome = monthlyGrowth(input.incomeGrowthAnnualPct ?? 0);
   const gExpense = monthlyGrowth(input.expenseInflationAnnualPct ?? 0);
   const gAsset = monthlyGrowth(input.assetGrowthAnnualPct ?? 0);
   const spendMult = 1 + (input.spendBufferPct ?? 0) / 100;
 
-  // Mutable debt balances we amortize as we go.
-  const debts = input.debts.map((d) => ({ ...d, balance: Math.max(0, Number(d.balance) || 0) }));
+  // Active debts we amortize; loans add to this map on their month.
+  const debts = new Map<string, { balance: number; monthlyRate: number; installment: number }>();
+  for (const d of input.debts) {
+    debts.set(d.id, {
+      balance: Math.max(0, Number(d.balance) || 0),
+      monthlyRate: d.monthlyRate,
+      installment: d.installment,
+    });
+  }
 
   let savings = Number(startingSavings) || 0;
+  let assetsAdded = 0; // from asset-purchase events (held flat)
   const out: ProjectionMonth[] = [];
 
   for (let i = 0; i < months; i += 1) {
     const date = addMonths(startMonth, i + 1);
     const ym = monthKey(date);
-    const factorIncome = Math.pow(1 + gIncome, i + 1);
-    const factorExpense = Math.pow(1 + gExpense, i + 1);
-    const factorAsset = Math.pow(1 + gAsset, i + 1);
+    const fI = Math.pow(1 + gIncome, i + 1);
+    const fE = Math.pow(1 + gExpense, i + 1);
+    const fA = Math.pow(1 + gAsset, i + 1);
 
-    const monthPlans = plansForMonth(plans, ym);
+    // Real plans landing this month.
     let planIncome = 0;
     let planSpend = 0;
-    for (const p of monthPlans) {
+    for (const p of plansForMonth(plans, ym)) {
       const amt = Math.abs(Number(p.amount) || 0);
       if (p.direction === "income") planIncome += amt;
       else planSpend += amt;
     }
 
-    const income = monthlyIncome * factorIncome + planIncome;
-    const everyday = (fixedNonDebtMonthly + variableMonthly) * factorExpense * spendMult;
+    // Scenario operating deltas: recurring (persist from their month) + one-offs.
+    let recIncome = 0;
+    let recExpense = 0;
+    let oneIncome = 0;
+    let oneExpense = 0;
+    for (const e of events) {
+      if (e.kind === "recurring" && e.fromMonth <= ym) {
+        if (e.direction === "income") recIncome += e.amount;
+        else recExpense += e.amount;
+      } else if (e.kind === "one_off" && e.month === ym) {
+        if (e.direction === "income") oneIncome += e.amount;
+        else oneExpense += e.amount;
+      }
+    }
 
-    // Amortize each debt one step: interest first, then principal.
+    const income = monthlyIncome * fI + planIncome + recIncome + oneIncome;
+    const everyday = (fixedNonDebtMonthly + variableMonthly) * fE * spendMult + recExpense;
+    const expenses = everyday + planSpend + oneExpense;
+
+    // Capital events this month: loans (cash in + new debt), asset purchases
+    // (cash out + asset in), overpayments (cash out + debt down).
+    let capitalIn = 0;
+    let capitalOut = 0;
+    for (const e of events) {
+      if (e.kind === "loan" && e.month === ym) {
+        const rate = monthlyRateFromTaeg(e.aprPct);
+        const inst =
+          installmentFor(e.principal, rate, e.termMonths) ||
+          e.principal / Math.max(1, e.termMonths);
+        debts.set(e.id, { balance: Math.max(0, e.principal), monthlyRate: rate, installment: inst });
+        capitalIn += e.principal;
+      } else if (e.kind === "asset_purchase" && e.month === ym) {
+        capitalOut += e.price;
+        assetsAdded += e.assetValue ?? e.price;
+      } else if (e.kind === "overpay" && e.month === ym) {
+        const d = debts.get(e.targetDebtId);
+        if (d) {
+          const applied = Math.min(e.amount, d.balance);
+          d.balance -= applied;
+          capitalOut += applied;
+        }
+      }
+    }
+
+    // Amortize every active debt one step.
     let debtPaid = 0;
-    for (const d of debts) {
+    for (const d of debts.values()) {
       if (d.balance <= 0) continue;
       const interest = d.balance * d.monthlyRate;
       const pay = Math.min(d.installment, d.balance + interest);
@@ -149,12 +211,11 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
       debtPaid += pay;
     }
 
-    const expenses = everyday + planSpend;
     const surplus = income - expenses - debtPaid;
-    savings += surplus;
+    savings += surplus + capitalIn - capitalOut;
 
-    const debtRemaining = debts.reduce((s, d) => s + d.balance, 0);
-    const assets = assetsTotal * factorAsset;
+    const debtRemaining = [...debts.values()].reduce((s, d) => s + d.balance, 0);
+    const assets = assetsTotal * fA + assetsAdded;
     const netWorth = assets + savings - debtRemaining;
 
     out.push({
@@ -205,10 +266,6 @@ type ScenarioAssumptions = Pick<
   "assetGrowthAnnualPct" | "incomeGrowthAnnualPct" | "expenseInflationAnnualPct" | "spendBufferPct"
 >;
 
-/**
- * Deterministic assumption sets. "expected" is flat (today carried forward);
- * cautious and optimistic bracket it. Not statistical CIs — an honest range.
- */
 export const DEFAULT_SCENARIOS: Record<ScenarioKey, ScenarioAssumptions> = {
   expected: {
     incomeGrowthAnnualPct: 0,
@@ -230,7 +287,6 @@ export const DEFAULT_SCENARIOS: Record<ScenarioKey, ScenarioAssumptions> = {
   },
 };
 
-/** Run the projection under all three scenarios; returns each labelled series. */
 export function projectScenarios(
   base: ProjectionInput,
   scenarios: Record<ScenarioKey, ScenarioAssumptions> = DEFAULT_SCENARIOS,
@@ -248,13 +304,9 @@ export function projectScenarios(
 export type ProjectionProject = {
   id: string;
   name: string;
-  /** Balance today. */
   balance: number;
-  /** Monthly contribution the project receives at its current target/pace. */
   monthlyContribution: number;
-  /** For finish-line goals: the target balance (else null for ongoing). */
   goalTarget?: number | null;
-  /** For finish-line goals: months until the deadline (else null). */
   monthsToGoal?: number | null;
 };
 
@@ -263,16 +315,9 @@ export type ProjectedProject = {
   name: string;
   startBalance: number;
   projectedBalance: number;
-  /** True when a finish-line goal is reached within the horizon. */
   reachedGoal: boolean;
 };
 
-/**
- * "How your projects look if you keep funding them." Each project fills at its
- * current contribution; a finish-line goal stops at its target (and no later
- * than its deadline). This is a breakdown of the same saved money, so it never
- * contradicts net worth — it just shows where it's earmarked.
- */
 export function projectProjects(
   projects: ProjectionProject[],
   months: number,
