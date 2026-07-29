@@ -16,22 +16,28 @@ export function LogoLoader({
 }) {
   // Stagger delays so the bars ripple instead of moving in unison.
   const delays = [0, 90, 180, 270, 120, 210, 300];
+  // Bar width and gap scale with size (in px) so the bounce reads crisply at any
+  // size — a small pill loader looks as lively as the big boot splash, instead
+  // of cramping to a static blur.
+  const bar = Math.max(2, Math.round(size * 0.12));
+  const gap = Math.max(2, Math.round(size * 0.06));
   return (
     <span
       role="status"
       aria-label={label}
-      className={cn("inline-flex items-end gap-[3px]", className)}
-      style={{ height: size, width: size }}
+      className={cn("inline-flex items-end", className)}
+      style={{ height: size, gap }}
     >
       {delays.map((d, i) => (
         <span
           key={i}
-          className={cn(
-            "logo-loader-bar inline-block w-[8%] rounded-full bg-primary",
-            // small visual gap between the group of 4 and the group of 3
-            i === 4 && "ml-[6%]",
-          )}
-          style={{ animationDelay: `${d}ms` }}
+          className="logo-loader-bar inline-block rounded-full bg-primary"
+          style={{
+            width: bar,
+            // extra gap between the group of 4 and the group of 3
+            marginLeft: i === 4 ? gap : undefined,
+            animationDelay: `${d}ms`,
+          }}
         />
       ))}
     </span>

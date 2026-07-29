@@ -34,7 +34,7 @@ export function GlobalLoader() {
       }
       setShowPill(true);
     } else if (showPill) {
-      hideTimer.current = setTimeout(() => setShowPill(false), 350);
+      hideTimer.current = setTimeout(() => setShowPill(false), 550);
     }
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -58,7 +58,7 @@ export function GlobalLoader() {
           aria-live="polite"
         >
           <div className="pointer-events-auto flex items-center gap-2 rounded-full border bg-card/95 px-3 py-1.5 shadow-sm backdrop-blur">
-            <LogoLoader size={18} />
+            <LogoLoader size={22} />
             <span className="text-xs text-muted-foreground">Loading…</span>
           </div>
         </div>
