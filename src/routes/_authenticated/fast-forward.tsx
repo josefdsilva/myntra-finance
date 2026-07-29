@@ -37,7 +37,9 @@ export const Route = createFileRoute("/_authenticated/fast-forward")({
   component: FastForwardPage,
 });
 
-const MAX_MONTHS = 60;
+// The date picker allows up to 40 years out so retirement (decades away) can be
+// modelled; the default target stays near-term (see `target` initial state).
+const MAX_MONTHS = 480;
 
 function ymStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -379,15 +381,19 @@ type UiType =
   | "oneOffIncome"
   | "raise"
   | "recurringCost"
+  | "salaryChange"
+  | "retirement"
   | "loan"
   | "overpay";
 
 const UI_TYPES: UiType[] = [
-  "purchaseAsset",
-  "oneOffExpense",
-  "oneOffIncome",
+  "salaryChange",
+  "retirement",
   "raise",
   "recurringCost",
+  "oneOffIncome",
+  "oneOffExpense",
+  "purchaseAsset",
   "loan",
   "overpay",
 ];
@@ -429,12 +435,18 @@ function ScenarioBuilder({
   const clampMonth = (v: string) => (v < minMonth ? minMonth : v > maxMonth ? maxMonth : v);
 
   const isRecurring = type === "raise" || type === "recurringCost";
+  // Events that apply "from a month onward" rather than on a single month.
+  const usesFromMonth = isRecurring || type === "retirement" || type === "salaryChange";
   const amountKey =
     type === "loan"
       ? "ff.evt.principal"
       : type === "purchaseAsset"
         ? "ff.evt.price"
-        : "ff.evt.amount";
+        : type === "retirement"
+          ? "ff.evt.pension"
+          : type === "salaryChange"
+            ? "ff.evt.newSalary"
+            : "ff.evt.amount";
 
   function add() {
     const amt = num(amount);
@@ -479,6 +491,12 @@ function ScenarioBuilder({
         break;
       case "overpay":
         ev = { id, kind: "overpay", month, amount: amt, targetDebtId, label };
+        break;
+      case "salaryChange":
+        ev = { id, kind: "salary_change", month, newMonthlySalary: amt, label };
+        break;
+      case "retirement":
+        ev = { id, kind: "retirement", month, monthlyPension: amt, label };
         break;
     }
     onChange([...events, ev]);
@@ -556,7 +574,7 @@ function ScenarioBuilder({
             </Select>
           </div>
           <div>
-            <Label className="text-xs">{t(isRecurring ? "ff.evt.from" : "ff.evt.month")}</Label>
+            <Label className="text-xs">{t(usesFromMonth ? "ff.evt.from" : "ff.evt.month")}</Label>
             <Input
               type="month"
               value={month}
@@ -645,8 +663,9 @@ function uiTypeOf(e: ScenarioEvent): UiType {
       return e.direction === "income" ? "raise" : "recurringCost";
     case "one_off":
       return e.direction === "income" ? "oneOffIncome" : "oneOffExpense";
-    default:
-      // retirement / salary_change aren't creatable in Fast Forward.
-      return "oneOffExpense";
+    case "salary_change":
+      return "salaryChange";
+    case "retirement":
+      return "retirement";
   }
 }

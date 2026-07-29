@@ -92,6 +92,20 @@ test("salary change swaps the salary from its month", () => {
   expect(s[3].income).toBe(1500);
 });
 
+test("pooled savings earn a return and compound", () => {
+  const s = projectForward(
+    base({
+      months: 2,
+      monthlyIncome: 300, // equals costs (200 + 100) -> surplus 0
+      startingSavings: 1000,
+      savingsReturnAnnualPct: 12, // ~0.949%/month
+    }),
+  );
+  expect(s[0].savings).toBeGreaterThan(1009);
+  expect(s[0].savings).toBeLessThan(1010);
+  expect(s[1].savings).toBeGreaterThan(s[0].savings); // compounds
+});
+
 test("plans land on their own month", () => {
   const s = projectForward(
     base({

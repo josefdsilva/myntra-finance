@@ -11,11 +11,13 @@ import {
   projectScenarios,
   projectProjects,
   monthsBetween,
-  MAX_PROJECTION_MONTHS,
+  ABSOLUTE_MAX_MONTHS,
+  DEFAULT_SCENARIOS,
   type ProjectionInput,
   type ProjectionDebt,
   type ProjectionProject,
   type ScenarioKey,
+  type ScenarioAssumptions,
   type ScenarioEvent,
 } from "@/lib/projection";
 
@@ -62,14 +64,44 @@ const eventSchema = z.discriminatedUnion("kind", [
     assetValue: z.number().min(0).max(100_000_000).optional(),
     label: z.string().max(80).optional(),
   }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal("retirement"),
+    month: ym,
+    monthlyPension: z.number().min(0).max(10_000_000),
+    label: z.string().max(80).optional(),
+  }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal("salary_change"),
+    month: ym,
+    newMonthlySalary: z.number().min(0).max(10_000_000),
+    label: z.string().max(80).optional(),
+  }),
 ]);
+
+/**
+ * Scenario assumption set with the savings return centred on `r` (expected),
+ * bracketed by cautious (r-2, floored at 0) and optimistic (r+2).
+ * NOTE: retirement/job-change now live as Fast Forward events; the two
+ * dedicated server fns below are unused and slated for removal.
+ */
+function scenarioSetForReturn(r?: number): Record<ScenarioKey, ScenarioAssumptions> {
+  const base = r ?? DEFAULT_SCENARIOS.expected.savingsReturnAnnualPct ?? 3;
+  return {
+    expected: { ...DEFAULT_SCENARIOS.expected, savingsReturnAnnualPct: base },
+    cautious: { ...DEFAULT_SCENARIOS.cautious, savingsReturnAnnualPct: Math.max(0, base - 2) },
+    optimistic: { ...DEFAULT_SCENARIOS.optimistic, savingsReturnAnnualPct: base + 2 },
+  };
+}
 
 /** Months from now until the first of `targetYm` (YYYY-MM), clamped to the cap. */
 function monthsToTarget(targetYm: string): number {
   const [y, m] = targetYm.split("-").map(Number);
   const target = new Date(y, (m || 1) - 1, 1);
   const now = new Date();
-  return Math.max(1, Math.min(MAX_PROJECTION_MONTHS, monthsBetween(now, target)));
+  // Allow long horizons (retirement is decades out); the engine caps at 40y.
+  return Math.max(1, Math.min(ABSOLUTE_MAX_MONTHS, monthsBetween(now, target)));
 }
 
 /**
@@ -107,7 +139,7 @@ export const fastForward = createServerFn({ method: "POST" })
       { data: assetsData },
     ] = await Promise.all([
       supabase.from("households").select("currency, baseline_budget, kind").eq("id", hid).maybeSingle(),
-      supabase.from("incomes").select("monthly_amount").eq("household_id", hid),
+      supabase.from("incomes").select("monthly_amount, type").eq("household_id", hid),
       supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       supabase.from("variable_estimates").select("monthly_amount").eq("household_id", hid),
       supabase.from("debts").select("*").eq("household_id", hid),
@@ -134,6 +166,9 @@ export const fastForward = createServerFn({ method: "POST" })
         0,
       );
     const monthlyIncome = sum(incomes);
+    const salaryMonthly = rowsOrEmpty<{ monthly_amount: number | string; type: string | null }>(incomes)
+      .filter((r) => (r.type ?? "") === "salary")
+      .reduce((s, r) => s + Number(r.monthly_amount || 0), 0);
     const fixedNonDebtMonthly = sum(fixed);
     const variableMonthly = sum(variable);
 
@@ -215,7 +250,9 @@ export const fastForward = createServerFn({ method: "POST" })
     const baseInput: ProjectionInput = {
       startMonth: now,
       months,
+      maxMonths: ABSOLUTE_MAX_MONTHS,
       monthlyIncome,
+      salaryMonthly,
       fixedNonDebtMonthly,
       variableMonthly,
       debts,
@@ -233,8 +270,14 @@ export const fastForward = createServerFn({ method: "POST" })
     });
 
     // Baseline = the expected path with NO what-if events, so the UI can show
-    // the difference the scenario makes.
-    const baselineSeries = projectForward({ ...baseInput, events: [] });
+    // the difference the scenario makes. It must use the same expected
+    // assumptions (incl. savings return) as the expected scenario, or the two
+    // would diverge even when there are no events.
+    const baselineSeries = projectForward({
+      ...baseInput,
+      ...DEFAULT_SCENARIOS.expected,
+      events: [],
+    });
     const baseline = { series: baselineSeries, at: baselineSeries[baselineSeries.length - 1] };
 
     const projects = projectProjects(projectsInput, months);
@@ -288,6 +331,7 @@ export const retirementCompare = createServerFn({ method: "POST" })
       .object({
         householdId: z.string().uuid(),
         horizonMonths: z.number().int().min(12).max(480).optional().default(360),
+        savingsReturnAnnualPct: z.number().min(0).max(15).optional(),
         scenarios: z.array(retireScenario).min(1).max(3),
       })
       .parse(input),
@@ -388,12 +432,13 @@ export const retirementCompare = createServerFn({ method: "POST" })
 
     const monthlyCosts = fixedNonDebtMonthly + variableMonthly + debtMonthly;
     const otherIncomeMonthly = Math.max(0, monthlyIncome - salaryMonthly);
+    const scenarioSet = scenarioSetForReturn(data.savingsReturnAnnualPct);
 
     const scenarios = data.scenarios.map((sc) => {
       const events: ScenarioEvent[] = [
         { id: sc.id, kind: "retirement", month: sc.retireMonth, monthlyPension: sc.monthlyPension, label: sc.label },
       ];
-      const range = projectScenarios({ ...baseInput, events });
+      const range = projectScenarios({ ...baseInput, events }, scenarioSet);
       const expected = range.expected;
       const firstRetired = expected.find((m) => m.ym >= sc.retireMonth);
       const runout = expected.find((m) => m.ym >= sc.retireMonth && m.savings < 0)?.ym ?? null;
@@ -461,6 +506,7 @@ export const jobChangeCompare = createServerFn({ method: "POST" })
       .object({
         householdId: z.string().uuid(),
         horizonMonths: z.number().int().min(12).max(480).optional().default(120),
+        savingsReturnAnnualPct: z.number().min(0).max(15).optional(),
         scenarios: z.array(jobScenario).min(1).max(3),
       })
       .parse(input),
@@ -561,6 +607,7 @@ export const jobChangeCompare = createServerFn({ method: "POST" })
     const monthlyCosts = fixedNonDebtMonthly + variableMonthly + debtMonthly;
 
     const startYmVal = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    const scenarioSet = scenarioSetForReturn(data.savingsReturnAnnualPct);
     const scenarios = data.scenarios.map((sc) => {
       const hasChange = sc.newMonthlySalary != null && !!sc.changeMonth;
       const events: ScenarioEvent[] =
@@ -568,7 +615,7 @@ export const jobChangeCompare = createServerFn({ method: "POST" })
           ? [{ id: sc.id, kind: "salary_change", month: sc.changeMonth!, newMonthlySalary: sc.newMonthlySalary!, label: sc.label }]
           : [];
       const fromYm = sc.changeMonth ?? startYmVal;
-      const range = projectScenarios({ ...baseInput, events });
+      const range = projectScenarios({ ...baseInput, events }, scenarioSet);
       const expected = range.expected;
       const afterChange = expected.find((m) => m.ym >= fromYm) ?? expected[0];
       const runout = expected.find((m) => m.ym >= fromYm && m.savings < 0)?.ym ?? null;

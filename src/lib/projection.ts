@@ -116,6 +116,8 @@ export type ProjectionInput = {
   incomeGrowthAnnualPct?: number;
   expenseInflationAnnualPct?: number;
   spendBufferPct?: number;
+  /** Annual return earned on pooled savings (cash + project balances). */
+  savingsReturnAnnualPct?: number;
 };
 
 export type ProjectionMonth = {
@@ -163,6 +165,7 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
   const gIncome = monthlyGrowth(input.incomeGrowthAnnualPct ?? 0);
   const gExpense = monthlyGrowth(input.expenseInflationAnnualPct ?? 0);
   const gAsset = monthlyGrowth(input.assetGrowthAnnualPct ?? 0);
+  const gSavings = monthlyGrowth(input.savingsReturnAnnualPct ?? 0);
   const spendMult = 1 + (input.spendBufferPct ?? 0) / 100;
 
   // Active debts we amortize; loans add to this map on their month.
@@ -281,7 +284,10 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
     }
 
     const surplus = income - expenses - debtPaid;
-    savings += surplus + capitalIn - capitalOut;
+    // Pooled savings earn a return on the prior balance, then this month's flows
+    // land. Only a positive balance compounds — a drawn-down (negative) balance
+    // shouldn't "earn" anything.
+    savings = (savings > 0 ? savings * (1 + gSavings) : savings) + surplus + capitalIn - capitalOut;
 
     const debtRemaining = [...debts.values()].reduce((s, d) => s + d.balance, 0);
     const assets = assetsTotal * fA + assetsAdded;
@@ -330,9 +336,13 @@ export function runwayMonths(series: ProjectionMonth[]): number | null {
 
 export type ScenarioKey = "expected" | "cautious" | "optimistic";
 
-type ScenarioAssumptions = Pick<
+export type ScenarioAssumptions = Pick<
   ProjectionInput,
-  "assetGrowthAnnualPct" | "incomeGrowthAnnualPct" | "expenseInflationAnnualPct" | "spendBufferPct"
+  | "assetGrowthAnnualPct"
+  | "incomeGrowthAnnualPct"
+  | "expenseInflationAnnualPct"
+  | "spendBufferPct"
+  | "savingsReturnAnnualPct"
 >;
 
 export const DEFAULT_SCENARIOS: Record<ScenarioKey, ScenarioAssumptions> = {
@@ -340,18 +350,21 @@ export const DEFAULT_SCENARIOS: Record<ScenarioKey, ScenarioAssumptions> = {
     incomeGrowthAnnualPct: 0,
     expenseInflationAnnualPct: 0,
     assetGrowthAnnualPct: 0,
+    savingsReturnAnnualPct: 3,
     spendBufferPct: 0,
   },
   cautious: {
     incomeGrowthAnnualPct: 0,
     expenseInflationAnnualPct: 4,
     assetGrowthAnnualPct: -2,
+    savingsReturnAnnualPct: 1,
     spendBufferPct: 8,
   },
   optimistic: {
     incomeGrowthAnnualPct: 2,
     expenseInflationAnnualPct: 1,
     assetGrowthAnnualPct: 3,
+    savingsReturnAnnualPct: 5,
     spendBufferPct: -5,
   },
 };
