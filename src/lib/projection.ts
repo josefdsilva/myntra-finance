@@ -80,6 +80,13 @@ export type ScenarioEvent =
       kind: "retirement";
       month: string;
       monthlyPension: number;
+      /**
+       * The current monthly amount of the salary being replaced. Defaults to the
+       * whole salary total when omitted (single-earner). `replacesIncomeId` names
+       * which income it targets so a second earner is left untouched.
+       */
+      replacesMonthly?: number;
+      replacesIncomeId?: string;
       label?: string;
     }
   | {
@@ -91,6 +98,9 @@ export type ScenarioEvent =
       kind: "salary_change";
       month: string;
       newMonthlySalary: number;
+      /** Which salary this replaces (see retirement notes). */
+      replacesMonthly?: number;
+      replacesIncomeId?: string;
       label?: string;
     };
 
@@ -213,19 +223,27 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
       }
     }
 
-    // Salary regime this month. A job change (salary_change) swaps the salary
-    // amount; retirement stops salary for a pension and takes precedence once
-    // reached. For each kind the most recent event on/before this month wins.
-    let activeRetire: { month: string; pension: number } | null = null;
-    let activeJob: { month: string; salary: number } | null = null;
+    // Salary regime this month. Retirement stops a salary and starts a pension;
+    // a salary change swaps a salary for a new amount. Each event targets one
+    // salary income (replacesMonthly / replacesIncomeId) so a second earner is
+    // untouched; an untargeted event replaces the whole salary total. Per target,
+    // the most recent active event wins.
+    const byTarget = new Map<
+      string,
+      { month: string; kind: "retirement" | "salary_change"; replaces: number; pension: number; newSalary: number }
+    >();
     for (const e of events) {
-      if (e.kind === "retirement" && e.month <= ym) {
-        if (!activeRetire || e.month > activeRetire.month) {
-          activeRetire = { month: e.month, pension: e.monthlyPension };
-        }
-      } else if (e.kind === "salary_change" && e.month <= ym) {
-        if (!activeJob || e.month > activeJob.month) {
-          activeJob = { month: e.month, salary: e.newMonthlySalary };
+      if ((e.kind === "retirement" || e.kind === "salary_change") && e.month <= ym) {
+        const key = e.replacesIncomeId ?? "__all__";
+        const cur = byTarget.get(key);
+        if (!cur || e.month > cur.month) {
+          byTarget.set(key, {
+            month: e.month,
+            kind: e.kind,
+            replaces: e.replacesMonthly ?? salaryMonthly,
+            pension: e.kind === "retirement" ? e.monthlyPension : 0,
+            newSalary: e.kind === "salary_change" ? e.newMonthlySalary : 0,
+          });
         }
       }
     }
@@ -237,12 +255,12 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
     };
     let employmentIncome = salaryMonthly * fI;
     let pensionIncome = 0;
-    if (activeRetire) {
-      employmentIncome = 0;
-      pensionIncome = grownFrom(activeRetire.month, activeRetire.pension);
-    } else if (activeJob) {
-      employmentIncome = grownFrom(activeJob.month, activeJob.salary);
+    for (const r of byTarget.values()) {
+      employmentIncome -= r.replaces * fI; // remove the specific salary (grown)
+      if (r.kind === "retirement") pensionIncome += grownFrom(r.month, r.pension);
+      else employmentIncome += grownFrom(r.month, r.newSalary);
     }
+    employmentIncome = Math.max(0, employmentIncome);
     const income =
       nonSalaryMonthly * fI + employmentIncome + pensionIncome + planIncome + recIncome + oneIncome;
     const everyday = (fixedNonDebtMonthly + variableMonthly) * fE * spendMult + recExpense;

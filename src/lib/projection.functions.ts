@@ -68,6 +68,9 @@ const eventSchema = z.discriminatedUnion("kind", [
     kind: z.literal("retirement"),
     month: ym,
     monthlyPension: z.number().min(0).max(10_000_000),
+    // Which salary income this retires (server resolves the amount). Omit to
+    // retire the whole salary total (single earner).
+    replacesIncomeId: z.string().max(64).optional(),
     label: z.string().max(80).optional(),
   }),
   z.object({
@@ -75,6 +78,7 @@ const eventSchema = z.discriminatedUnion("kind", [
     kind: z.literal("salary_change"),
     month: ym,
     newMonthlySalary: z.number().min(0).max(10_000_000),
+    replacesIncomeId: z.string().max(64).optional(),
     label: z.string().max(80).optional(),
   }),
 ]);
@@ -124,7 +128,7 @@ export const fastForward = createServerFn({ method: "POST" })
       { data: assetsData },
     ] = await Promise.all([
       supabase.from("households").select("currency, baseline_budget, kind").eq("id", hid).maybeSingle(),
-      supabase.from("incomes").select("monthly_amount, type").eq("household_id", hid),
+      supabase.from("incomes").select("id, label, monthly_amount, type").eq("household_id", hid),
       supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       supabase.from("variable_estimates").select("monthly_amount").eq("household_id", hid),
       supabase.from("debts").select("*").eq("household_id", hid),
@@ -150,10 +154,21 @@ export const fastForward = createServerFn({ method: "POST" })
         (s, r) => s + Number(r.monthly_amount || 0),
         0,
       );
-    const monthlyIncome = sum(incomes);
-    const salaryMonthly = rowsOrEmpty<{ monthly_amount: number | string; type: string | null }>(incomes)
-      .filter((r) => (r.type ?? "") === "salary")
-      .reduce((s, r) => s + Number(r.monthly_amount || 0), 0);
+    const incomeRows = rowsOrEmpty<{
+      id: string;
+      label: string | null;
+      monthly_amount: number | string;
+      type: string | null;
+    }>(incomes);
+    const monthlyIncome = incomeRows.reduce((s, r) => s + Number(r.monthly_amount || 0), 0);
+    const salaryRows = incomeRows.filter((r) => (r.type ?? "") === "salary");
+    const salaryMonthly = salaryRows.reduce((s, r) => s + Number(r.monthly_amount || 0), 0);
+    // Salary incomes the UI can target with a retirement / salary-change event.
+    const salaryIncomes = salaryRows.map((r) => ({
+      id: r.id,
+      label: r.label ?? "Salary",
+      monthly: Math.round(Number(r.monthly_amount || 0) * 100) / 100,
+    }));
     const fixedNonDebtMonthly = sum(fixed);
     const variableMonthly = sum(variable);
 
@@ -231,7 +246,18 @@ export const fastForward = createServerFn({ method: "POST" })
       return { id: b.id, name: b.name, balance, monthlyContribution: contribution, goalTarget, monthsToGoal };
     });
 
-    const events = (data.events ?? []) as ScenarioEvent[];
+    // Resolve which salary each retirement / salary-change event replaces. A
+    // targeted event replaces just that income; an untargeted one replaces the
+    // whole salary total (single earner).
+    const events = (data.events ?? []).map((e) => {
+      if (e.kind === "retirement" || e.kind === "salary_change") {
+        const replacesMonthly = e.replacesIncomeId
+          ? Number(salaryIncomes.find((s) => s.id === e.replacesIncomeId)?.monthly ?? 0)
+          : salaryMonthly;
+        return { ...e, replacesMonthly };
+      }
+      return e;
+    }) as ScenarioEvent[];
     const baseInput: ProjectionInput = {
       startMonth: now,
       months,
@@ -292,5 +318,7 @@ export const fastForward = createServerFn({ method: "POST" })
       projects,
       // Existing debts an overpayment can target.
       debts: debts.map((d) => ({ id: d.id, label: d.label })),
+      // Salary incomes a retirement / salary-change event can replace.
+      salaryIncomes,
     };
   });

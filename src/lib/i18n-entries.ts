@@ -1217,6 +1217,34 @@ export const ENTRIES = {
     de: "Neues Monatsgehalt (netto)",
     fr: "Nouveau salaire mensuel (net)",
   },
+  "ff.evt.replaces": {
+    en: "Replaces which salary?",
+    pt: "Substitui que salário?",
+    es: "¿Qué salario reemplaza?",
+    de: "Welches Gehalt ersetzt es?",
+    fr: "Remplace quel salaire ?",
+  },
+  "ff.evt.replacesAll": {
+    en: "All salary ({amount}/mo)",
+    pt: "Todo o salário ({amount}/mês)",
+    es: "Todo el salario ({amount}/mes)",
+    de: "Gesamtes Gehalt ({amount}/Monat)",
+    fr: "Tout le salaire ({amount}/mois)",
+  },
+  "ff.evt.replacesOne": {
+    en: "Replaces {label} ({amount}/mo).",
+    pt: "Substitui {label} ({amount}/mês).",
+    es: "Reemplaza {label} ({amount}/mes).",
+    de: "Ersetzt {label} ({amount}/Monat).",
+    fr: "Remplace {label} ({amount}/mois).",
+  },
+  "ff.evt.replacesNone": {
+    en: "No income is tagged as salary — tag one in Money In so this replaces it.",
+    pt: "Nenhum rendimento está marcado como salário — marque um em Entradas para que isto o substitua.",
+    es: "Ningún ingreso está marcado como salario — marca uno en Ingresos para que esto lo reemplace.",
+    de: "Kein Einkommen ist als Gehalt markiert — markiere eines unter Einnahmen, damit dies es ersetzt.",
+    fr: "Aucun revenu n'est marqué comme salaire — marquez-en un dans Revenus pour que cela le remplace.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

@@ -210,6 +210,7 @@ function FastForwardPage() {
             events={events}
             onChange={setEvents}
             debts={data.debts}
+            salaryIncomes={data.salaryIncomes ?? []}
             minMonth={minMonth}
             maxMonth={maxMonth}
             defaultMonth={target}
@@ -402,6 +403,7 @@ function ScenarioBuilder({
   events,
   onChange,
   debts,
+  salaryIncomes,
   minMonth,
   maxMonth,
   defaultMonth,
@@ -409,6 +411,7 @@ function ScenarioBuilder({
   events: ScenarioEvent[];
   onChange: (e: ScenarioEvent[]) => void;
   debts: Array<{ id: string; label: string }>;
+  salaryIncomes: Array<{ id: string; label: string; monthly: number }>;
   minMonth: string;
   maxMonth: string;
   defaultMonth: string;
@@ -419,6 +422,8 @@ function ScenarioBuilder({
   const [month, setMonth] = useState(defaultMonth);
   const [amount, setAmount] = useState("");
   const [name, setName] = useState("");
+  // "__all__" targets the whole salary; otherwise a specific salary income id.
+  const [replacesId, setReplacesId] = useState("__all__");
   const [apr, setApr] = useState("");
   const [term, setTerm] = useState("");
   const [assetValue, setAssetValue] = useState("");
@@ -493,10 +498,24 @@ function ScenarioBuilder({
         ev = { id, kind: "overpay", month, amount: amt, targetDebtId, label };
         break;
       case "salaryChange":
-        ev = { id, kind: "salary_change", month, newMonthlySalary: amt, label };
+        ev = {
+          id,
+          kind: "salary_change",
+          month,
+          newMonthlySalary: amt,
+          replacesIncomeId: replacesId === "__all__" ? undefined : replacesId,
+          label,
+        };
         break;
       case "retirement":
-        ev = { id, kind: "retirement", month, monthlyPension: amt, label };
+        ev = {
+          id,
+          kind: "retirement",
+          month,
+          monthlyPension: amt,
+          replacesIncomeId: replacesId === "__all__" ? undefined : replacesId,
+          label,
+        };
         break;
     }
     onChange([...events, ev]);
@@ -635,6 +654,39 @@ function ScenarioBuilder({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+          {(type === "retirement" || type === "salaryChange") && (
+            <div className="sm:col-span-2">
+              <Label className="text-xs">{t("ff.evt.replaces")}</Label>
+              {salaryIncomes.length > 1 ? (
+                <Select value={replacesId} onValueChange={setReplacesId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">
+                      {t("ff.evt.replacesAll", {
+                        amount: money(salaryIncomes.reduce((s, i) => s + i.monthly, 0)),
+                      })}
+                    </SelectItem>
+                    {salaryIncomes.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {`${s.label} (${money(s.monthly)}/mo)`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : salaryIncomes.length === 1 ? (
+                <p className="text-xs text-muted-foreground">
+                  {t("ff.evt.replacesOne", {
+                    label: salaryIncomes[0].label,
+                    amount: money(salaryIncomes[0].monthly),
+                  })}
+                </p>
+              ) : (
+                <p className="text-xs text-amber-600">{t("ff.evt.replacesNone")}</p>
+              )}
             </div>
           )}
         </div>

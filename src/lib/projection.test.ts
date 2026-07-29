@@ -78,6 +78,28 @@ test("retirement keeps non-salary income flowing", () => {
   expect(s[1].income).toBe(600); // Mar: retired -> 200 rent + 400 pension
 });
 
+test("retirement replaces only the targeted salary (two earners)", () => {
+  const s = projectForward(
+    base({
+      months: 3,
+      monthlyIncome: 3000, // 2000 (me) + 1000 (partner), both salary
+      salaryMonthly: 3000,
+      events: [
+        {
+          id: "r",
+          kind: "retirement",
+          month: "2026-03",
+          monthlyPension: 1200,
+          replacesMonthly: 2000,
+          replacesIncomeId: "me",
+        },
+      ],
+    }),
+  );
+  expect(s[0].income).toBe(3000); // Feb: both working
+  expect(s[1].income).toBe(2200); // Mar: partner 1000 + pension 1200
+});
+
 test("salary change swaps the salary from its month", () => {
   const s = projectForward(
     base({
