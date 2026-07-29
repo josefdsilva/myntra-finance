@@ -39,7 +39,19 @@ export type WikiSection = {
   callout?: Loc<string>;
   faq?: boolean;
   formula?: string; // rendered as a <pre> block, locale-agnostic
+  /**
+   * Who this section is for. Omitted = shown in every space. "personal" hides it
+   * in company spaces and vice versa, so the manual matches the space you're in.
+   */
+  audience?: "personal" | "business";
+  /** An extra note shown only when the current space is a company. */
+  businessNote?: Loc<string>;
 };
+
+/** The sections that apply to a given space kind (undefined audience = both). */
+export function wikiSectionsFor(kind: "personal" | "business"): WikiSection[] {
+  return WIKI_SECTIONS.filter((s) => !s.audience || s.audience === kind);
+}
 
 // ---------------------------------------------------------------------------
 // Page chrome (header, search, TOC label) + diagram labels per locale.
@@ -286,6 +298,109 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Toda la app se apoya en una idea: un plan que entiendes vale más que un plan perfecto que no entiendes.",
       "Die ganze App basiert auf einer Idee: Ein Plan, den du verstehst, schlägt einen perfekten Plan, den du nicht verstehst.",
       "Toute l'app repose sur une idée : un plan que tu comprends vaut mieux qu'un plan parfait que tu ne comprends pas.",
+    ),
+    businessNote: L(
+      "You're in a company space, so this manual uses business language: money in is revenue and receivables, money out is fixed costs and payables, and the same engine projects cash flow and runway instead of household net worth. The Handoff page hands a space to an accountant.",
+      "Estás num espaço de empresa, por isso este manual usa linguagem de negócio: as entradas são receita e valores a receber, as saídas são custos fixos e valores a pagar, e o mesmo motor projeta fluxo de caixa e autonomia em vez do património familiar. A página de Transferência entrega o espaço a um contabilista.",
+      "Estás en un espacio de empresa, así que este manual usa lenguaje de negocio: los ingresos son facturación y cobros pendientes, los gastos son costes fijos y pagos pendientes, y el mismo motor proyecta el flujo de caja y la autonomía en vez del patrimonio familiar. La página de Traspaso entrega el espacio a un contable.",
+      "Du bist in einem Firmenraum, daher nutzt dieses Handbuch Geschäftssprache: Einnahmen sind Umsatz und Forderungen, Ausgaben sind Fixkosten und Verbindlichkeiten, und dieselbe Engine projiziert Cashflow und Runway statt Haushalts-Nettovermögen. Die Übergabeseite übergibt einen Raum an eine Buchhalterin.",
+      "Vous êtes dans un espace entreprise : ce manuel emploie donc un vocabulaire pro : les entrées sont le chiffre d'affaires et les créances, les sorties les charges fixes et les dettes fournisseurs, et le même moteur projette la trésorerie et l'autonomie plutôt que le patrimoine du foyer. La page de Transfert confie un espace à un comptable.",
+    ),
+  },
+
+  // ------------------------------------------------------------ position
+  {
+    id: "position",
+    icon: "Wallet",
+    title: L(
+      "Your financial position, simplified",
+      "A tua posição financeira, simplificada",
+      "Tu posición financiera, en simple",
+      "Deine Finanzlage, einfach erklärt",
+      "Votre situation financière, en clair",
+    ),
+    paragraphs: L(
+      [
+        "Your financial position is a handful of moving parts: what comes in (income), what goes out (costs — fixed, estimated, real and planned), what you owe (debt and loans), what you own (assets), and what you set aside (saving and investment projects). bynku holds all of them in one place, so you see the whole picture, not just this month's bank balance.",
+        "They only make sense together. Income pays your costs and funds your projects; what's left after costs and debt is your surplus, the raw material for everything else. Debt quietly drains it through interest. Assets are what you've built. Projects turn surplus into a safety net and goals. Move one and the others move: clear a loan and surplus jumps; buy a car and cash becomes an asset. bynku does that arithmetic for you.",
+        "Not deciding is itself a decision. Money you don't direct doesn't wait politely: it gets spent, sits idle losing value to inflation, or a debt keeps charging interest month after month. bynku's job is to make the easy default a good one, showing what's safe to spend, what's coming, and nudging the small choices so you don't carry it all in your head.",
+        "You don't need to be an expert, just a clear picture and a sensible order to build in. The layers below are the order the coach follows; the rest of this guide shows the tool for each step.",
+      ],
+      [
+        "A tua posição financeira são algumas peças em movimento: o que entra (rendimento), o que sai (custos — fixos, estimados, reais e planeados), o que deves (dívidas e créditos), o que tens (ativos) e o que pões de lado (projetos de poupança e investimento). O bynku junta tudo num só sítio, para veres o quadro completo e não só o saldo deste mês.",
+        "Só fazem sentido em conjunto. O rendimento paga os custos e financia os projetos; o que sobra depois de custos e dívida é o teu excedente, a matéria-prima de tudo o resto. A dívida vai-o drenando através de juros. Os ativos são o que construíste. Os projetos transformam o excedente em rede de segurança e objetivos. Mexe numa peça e as outras mexem: paga um crédito e o excedente sobe; compra um carro e o dinheiro vira ativo. O bynku faz essa conta por ti.",
+        "Não decidir é, em si, uma decisão. O dinheiro que não diriges não espera educadamente: é gasto, fica parado a perder valor com a inflação, ou uma dívida continua a cobrar juros mês após mês. O papel do bynku é tornar boa a opção fácil, mostrando o que é seguro gastar, o que aí vem, e sugerindo as pequenas escolhas para não teres de guardar tudo na cabeça.",
+        "Não precisas de ser especialista, só de um quadro claro e de uma ordem sensata para construir. As camadas abaixo são a ordem que o coach segue; o resto deste guia mostra a ferramenta de cada passo.",
+      ],
+      [
+        "Tu posición financiera son unas cuantas piezas en movimiento: lo que entra (ingresos), lo que sale (costes — fijos, estimados, reales y planificados), lo que debes (deudas y préstamos), lo que tienes (activos) y lo que apartas (proyectos de ahorro e inversión). bynku lo reúne todo en un sitio, para que veas el cuadro completo y no solo el saldo de este mes.",
+        "Solo tienen sentido juntas. Los ingresos pagan tus costes y financian tus proyectos; lo que queda tras costes y deuda es tu excedente, la materia prima de todo lo demás. La deuda lo drena en silencio con los intereses. Los activos son lo que has construido. Los proyectos convierten el excedente en colchón y objetivos. Mueve una pieza y las demás se mueven: salda un préstamo y el excedente sube; compra un coche y el dinero se vuelve activo. bynku hace esa cuenta por ti.",
+        "No decidir es, en sí, una decisión. El dinero que no diriges no espera con paciencia: se gasta, se queda parado perdiendo valor por la inflación, o una deuda sigue cobrando intereses mes tras mes. La función de bynku es hacer buena la opción fácil, mostrando lo seguro para gastar, lo que viene, y sugiriendo las pequeñas decisiones para que no lo lleves todo en la cabeza.",
+        "No necesitas ser experto, solo un cuadro claro y un orden sensato para construir. Las capas de abajo son el orden que sigue el asistente; el resto de esta guía muestra la herramienta de cada paso.",
+      ],
+      [
+        "Deine Finanzlage besteht aus wenigen beweglichen Teilen: was reinkommt (Einkommen), was rausgeht (Kosten — fix, geschätzt, real und geplant), was du schuldest (Schulden und Kredite), was du besitzt (Vermögen) und was du zurücklegst (Spar- und Investitionsprojekte). bynku bündelt alles an einem Ort, damit du das ganze Bild siehst, nicht nur den Kontostand dieses Monats.",
+        "Sie ergeben nur zusammen Sinn. Einkommen zahlt Kosten und finanziert Projekte; was nach Kosten und Schulden bleibt, ist dein Überschuss, der Rohstoff für alles Weitere. Schulden zehren ihn still über Zinsen. Vermögen ist, was du aufgebaut hast. Projekte machen aus Überschuss einen Notgroschen und Ziele. Bewegt sich eins, bewegen sich die anderen: tilgst du einen Kredit, springt der Überschuss; kaufst du ein Auto, wird Geld zu Vermögen. bynku rechnet das für dich.",
+        "Nicht zu entscheiden ist selbst eine Entscheidung. Geld, das du nicht lenkst, wartet nicht höflich: es wird ausgegeben, liegt brach und verliert durch Inflation an Wert, oder eine Schuld kostet Monat für Monat Zinsen. bynkus Aufgabe ist, die bequeme Standardwahl zu einer guten zu machen, indem es zeigt, was sicher ausgegeben werden kann, was kommt, und die kleinen Entscheidungen anstößt, damit du nicht alles im Kopf behalten musst.",
+        "Du musst kein Experte sein, nur ein klares Bild und eine sinnvolle Reihenfolge zum Aufbauen. Die Stufen unten sind die Reihenfolge, der der Coach folgt; der Rest dieses Leitfadens zeigt das Werkzeug für jeden Schritt.",
+      ],
+      [
+        "Votre situation financière tient en quelques pièces mobiles : ce qui entre (revenus), ce qui sort (coûts — fixes, estimés, réels et prévus), ce que vous devez (dettes et prêts), ce que vous possédez (actifs) et ce que vous mettez de côté (projets d'épargne et d'investissement). bynku réunit tout au même endroit, pour voir l'ensemble et pas seulement le solde du mois.",
+        "Elles n'ont de sens qu'ensemble. Les revenus paient vos coûts et financent vos projets ; ce qui reste après coûts et dette est votre excédent, la matière première du reste. La dette le grignote en silence via les intérêts. Les actifs sont ce que vous avez bâti. Les projets transforment l'excédent en matelas et en objectifs. Bougez une pièce et les autres bougent : soldez un prêt et l'excédent grimpe ; achetez une voiture et l'argent devient un actif. bynku fait ce calcul pour vous.",
+        "Ne pas décider est en soi une décision. L'argent que vous ne dirigez pas n'attend pas poliment : il se dépense, dort en perdant de la valeur avec l'inflation, ou une dette continue de facturer des intérêts mois après mois. Le rôle de bynku est de rendre le choix facile bon par défaut, en montrant ce qu'il est prudent de dépenser, ce qui arrive, et en suggérant les petites décisions pour ne pas tout garder en tête.",
+        "Pas besoin d'être expert, juste une image claire et un ordre sensé pour construire. Les couches ci-dessous sont l'ordre que suit le coach ; le reste de ce guide montre l'outil de chaque étape.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "1. Emergency fund — about 3 cycles of essentials", body: "Your first cushion: roughly three cycles' worth of the money you truly need (rent, food, bills). It turns an emergency from a crisis into an inconvenience. Tag a project as your Emergency fund and the coach protects it and counts it first." },
+        { label: "2. Safety net — 6 to 9 months of take-home income", body: "Beyond the emergency fund, aim for a fuller reserve of roughly six to nine times your monthly household take-home. It's what lets you weather a job loss or a big shock without touching investments or borrowing." },
+        { label: "3. Tackle debt actively — anticipate and negotiate", body: "Don't just service debt; assess it every cycle. Paying early is often a risk-free, high-return move: overpaying a 12% loan is a guaranteed 12% return, better than almost any savings account. Example: €5,000 off a 12% loan saves about €600 of interest a year, every year until it's gone. A quick call to renegotiate a rate can be worth thousands. bynku shows each debt's rate, payoff date and the effect of overpaying." },
+        { label: "4. Invest what's left over", body: "Once the reserves are built and expensive debt is gone, idle surplus should work for you. bynku is not a broker and won't tell you which securities to buy — but by giving you the safety, the tools and the know-how, it helps you invest from a position of strength instead of fear." },
+        { label: "5. Assets, liquidity and net worth", body: "Assets are the real value you hold — a home, a car, investments, a business. Net worth (what you own minus what you owe) is the truest scoreboard. Liquidity matters too: how fast an asset becomes cash. And it interconnects — an asset can produce income (rent), a project can become an asset (a house deposit), and income funds both. bynku tracks assets and net worth so the big picture stays visible." },
+      ],
+      [
+        { label: "1. Fundo de emergência — cerca de 3 ciclos de essenciais", body: "A tua primeira almofada: cerca de três ciclos do dinheiro de que precisas mesmo (renda, comida, contas). Transforma uma emergência de crise em incómodo. Marca um projeto como Fundo de emergência e o coach protege-o e conta-o primeiro." },
+        { label: "2. Rede de segurança — 6 a 9 meses do rendimento líquido", body: "Além do fundo de emergência, procura uma reserva mais completa de cerca de seis a nove vezes o rendimento líquido mensal do agregado. É o que te permite aguentar a perda de emprego ou um grande choque sem tocar em investimentos nem pedir crédito." },
+        { label: "3. Gere a dívida ativamente — antecipa e negoceia", body: "Não te limites a pagar a dívida; avalia-a a cada ciclo. Antecipar é muitas vezes risco zero e alto retorno: amortizar um crédito a 12% é um retorno garantido de 12%, melhor que quase qualquer conta poupança. Exemplo: 5.000€ a menos num crédito a 12% poupam cerca de 600€ de juros por ano, todos os anos até acabar. Um telefonema para renegociar a taxa pode valer milhares. O bynku mostra a taxa, a data de fim e o efeito de amortizar de cada dívida." },
+        { label: "4. Investe o que sobra", body: "Feitas as reservas e paga a dívida cara, o excedente parado deve trabalhar por ti. O bynku não é corretora e não te diz que títulos comprar — mas, dando-te a segurança, as ferramentas e o conhecimento, ajuda-te a investir a partir de uma posição de força, não de medo." },
+        { label: "5. Ativos, liquidez e património", body: "Os ativos são o valor real que tens — casa, carro, investimentos, um negócio. O património líquido (o que tens menos o que deves) é o placar mais verdadeiro. A liquidez também conta: a rapidez com que um ativo vira dinheiro. E tudo se interliga — um ativo pode gerar rendimento (renda), um projeto pode virar ativo (entrada de uma casa) e o rendimento financia ambos. O bynku acompanha ativos e património para o quadro geral estar sempre à vista." },
+      ],
+      [
+        { label: "1. Fondo de emergencia — unos 3 ciclos de esenciales", body: "Tu primer colchón: unos tres ciclos del dinero que de verdad necesitas (alquiler, comida, facturas). Convierte una emergencia de crisis en molestia. Marca un proyecto como Fondo de emergencia y el asistente lo protege y lo cuenta primero." },
+        { label: "2. Red de seguridad — 6 a 9 meses de ingreso neto", body: "Más allá del fondo de emergencia, busca una reserva más amplia de unas seis a nueve veces el ingreso neto mensual del hogar. Es lo que te permite aguantar un despido o un gran golpe sin tocar inversiones ni endeudarte." },
+        { label: "3. Gestiona la deuda activamente — anticipa y negocia", body: "No te limites a pagar la deuda; evalúala cada ciclo. Anticipar suele ser riesgo cero y alto retorno: amortizar un préstamo al 12% es un retorno garantizado del 12%, mejor que casi cualquier cuenta de ahorro. Ejemplo: 5.000€ menos en un préstamo al 12% ahorran unos 600€ de intereses al año, cada año hasta saldarlo. Una llamada para renegociar el tipo puede valer miles. bynku muestra el tipo, la fecha de fin y el efecto de amortizar de cada deuda." },
+        { label: "4. Invierte lo que sobra", body: "Hechas las reservas y fuera la deuda cara, el excedente parado debe trabajar para ti. bynku no es un bróker y no te dice qué valores comprar — pero, al darte la seguridad, las herramientas y el conocimiento, te ayuda a invertir desde una posición de fuerza, no de miedo." },
+        { label: "5. Activos, liquidez y patrimonio", body: "Los activos son el valor real que tienes — casa, coche, inversiones, un negocio. El patrimonio neto (lo que tienes menos lo que debes) es el marcador más veraz. La liquidez también importa: la rapidez con que un activo se vuelve dinero. Y todo se interconecta — un activo puede generar ingresos (alquiler), un proyecto puede volverse activo (la entrada de una casa) y el ingreso financia ambos. bynku sigue activos y patrimonio para que el cuadro general esté siempre a la vista." },
+      ],
+      [
+        { label: "1. Notgroschen — etwa 3 Zyklen an Essenzausgaben", body: "Dein erstes Polster: rund drei Zyklen des Geldes, das du wirklich brauchst (Miete, Essen, Rechnungen). Es macht aus einem Notfall statt einer Krise eine Unannehmlichkeit. Markiere ein Projekt als Notgroschen, und der Coach schützt und zählt es zuerst." },
+        { label: "2. Sicherheitsnetz — 6 bis 9 Monate Nettoeinkommen", body: "Über den Notgroschen hinaus ziele auf eine vollere Reserve von etwa sechs bis neun Mal dem monatlichen Haushalts-Nettoeinkommen. Sie lässt dich einen Jobverlust oder großen Schock überstehen, ohne Investitionen anzutasten oder Kredite aufzunehmen." },
+        { label: "3. Schulden aktiv angehen — vorziehen und verhandeln", body: "Bediene Schulden nicht nur, bewerte sie jeden Zyklus. Vorzeitig zu tilgen ist oft risikofrei und ertragreich: einen 12%-Kredit sonderzutilgen bringt garantiert 12%, besser als fast jedes Sparkonto. Beispiel: 5.000€ weniger bei 12% sparen rund 600€ Zinsen pro Jahr, jedes Jahr bis zum Ende. Ein Anruf zum Neuverhandeln des Zinses kann Tausende wert sein. bynku zeigt Zinssatz, Enddatum und die Wirkung von Sondertilgungen je Schuld." },
+        { label: "4. Investiere, was übrig bleibt", body: "Sind die Reserven aufgebaut und teure Schuld getilgt, sollte brachliegender Überschuss für dich arbeiten. bynku ist keine Bank und sagt dir nicht, welche Wertpapiere du kaufen sollst — aber indem es dir Sicherheit, Werkzeuge und Wissen gibt, hilft es dir, aus einer Position der Stärke statt der Angst zu investieren." },
+        { label: "5. Vermögen, Liquidität und Nettovermögen", body: "Vermögen ist der echte Wert, den du hältst — ein Zuhause, ein Auto, Anlagen, ein Unternehmen. Das Nettovermögen (Besitz minus Schulden) ist die ehrlichste Anzeigetafel. Liquidität zählt auch: wie schnell ein Vermögenswert zu Bargeld wird. Und alles hängt zusammen — ein Wert kann Einkommen bringen (Miete), ein Projekt kann zum Wert werden (Anzahlung fürs Haus), und Einkommen finanziert beides. bynku verfolgt Vermögen und Nettovermögen, damit das Gesamtbild sichtbar bleibt." },
+      ],
+      [
+        { label: "1. Fonds d'urgence — environ 3 cycles d'essentiels", body: "Votre premier coussin : environ trois cycles de l'argent dont vous avez vraiment besoin (loyer, nourriture, factures). Il transforme une urgence de crise en désagrément. Marquez un projet comme Fonds d'urgence et le coach le protège et le compte en premier." },
+        { label: "2. Matelas de sécurité — 6 à 9 mois de revenu net", body: "Au-delà du fonds d'urgence, visez une réserve plus complète d'environ six à neuf fois le revenu net mensuel du foyer. C'est ce qui permet d'encaisser une perte d'emploi ou un gros choc sans toucher aux placements ni emprunter." },
+        { label: "3. Gérer la dette activement — anticiper et négocier", body: "Ne vous contentez pas de rembourser ; évaluez la dette à chaque cycle. Anticiper est souvent un placement à risque nul et fort rendement : rembourser d'avance un prêt à 12% rapporte 12% garantis, mieux que presque tout compte d'épargne. Exemple : 5 000€ de moins sur un prêt à 12% économisent environ 600€ d'intérêts par an, chaque année jusqu'au bout. Un appel pour renégocier le taux peut valoir des milliers. bynku montre le taux, la date de fin et l'effet d'un remboursement anticipé pour chaque dette." },
+        { label: "4. Investir ce qui reste", body: "Une fois les réserves constituées et la dette chère soldée, l'excédent dormant doit travailler pour vous. bynku n'est pas un courtier et ne vous dit pas quels titres acheter — mais en vous donnant la sécurité, les outils et le savoir, il vous aide à investir en position de force, non de peur." },
+        { label: "5. Actifs, liquidité et patrimoine", body: "Les actifs sont la valeur réelle que vous détenez — un logement, une voiture, des placements, une entreprise. Le patrimoine net (ce que vous avez moins ce que vous devez) est le tableau de bord le plus juste. La liquidité compte aussi : la vitesse à laquelle un actif devient liquide. Et tout s'interconnecte — un actif peut produire un revenu (loyer), un projet peut devenir un actif (l'apport d'un logement), et le revenu finance les deux. bynku suit actifs et patrimoine pour garder l'ensemble en vue." },
+      ],
+    ),
+    callout: L(
+      "The layers aren't a race. Do the first two, then you can build several at once — a little to the net, a little off the debt, a little invested — weighted to what's most urgent. bynku shows where you stand on each.",
+      "As camadas não são uma corrida. Faz as duas primeiras e depois podes construir várias ao mesmo tempo — um pouco para a rede, um pouco à dívida, um pouco investido — dando mais peso ao mais urgente. O bynku mostra onde estás em cada uma.",
+      "Las capas no son una carrera. Haz las dos primeras y luego puedes construir varias a la vez — algo al colchón, algo a la deuda, algo invertido — con más peso en lo más urgente. bynku muestra dónde estás en cada una.",
+      "Die Stufen sind kein Wettlauf. Mach die ersten beiden, dann kannst du mehrere zugleich aufbauen — etwas ins Netz, etwas gegen die Schuld, etwas investiert — gewichtet nach dem Dringendsten. bynku zeigt, wo du auf jeder stehst.",
+      "Les couches ne sont pas une course. Faites les deux premières, puis construisez-en plusieurs à la fois — un peu au matelas, un peu à la dette, un peu investi — en pondérant vers le plus urgent. bynku montre où vous en êtes sur chacune.",
+    ),
+    businessNote: L(
+      "In a company space these layers map to working capital and runway: the emergency fund is a cash reserve for lean months, the safety net is several months of operating costs, debt still deserves active management, and 'assets' include equipment and receivables. The same net-worth and cash-flow maths applies to the business.",
+      "Num espaço de empresa, estas camadas correspondem a fundo de maneio e autonomia: o fundo de emergência é uma reserva de tesouraria para meses fracos, a rede de segurança são vários meses de custos operacionais, a dívida continua a merecer gestão ativa e os 'ativos' incluem equipamento e valores a receber. A mesma matemática de património e fluxo de caixa aplica-se ao negócio.",
+      "En un espacio de empresa, estas capas equivalen a capital de trabajo y autonomía: el fondo de emergencia es una reserva de caja para meses flojos, la red de seguridad son varios meses de costes operativos, la deuda sigue mereciendo gestión activa y los 'activos' incluyen equipo y cobros pendientes. La misma matemática de patrimonio y flujo de caja se aplica al negocio.",
+      "In einem Firmenraum entsprechen diese Stufen Betriebskapital und Runway: der Notgroschen ist eine Bar-Reserve für schwache Monate, das Sicherheitsnetz mehrere Monate Betriebskosten, Schulden verdienen weiter aktives Management, und 'Vermögen' umfasst Ausrüstung und Forderungen. Dieselbe Nettovermögens- und Cashflow-Mathematik gilt fürs Unternehmen.",
+      "Dans un espace entreprise, ces couches correspondent au fonds de roulement et à l'autonomie : le fonds d'urgence est une réserve de trésorerie pour les mois creux, le matelas plusieurs mois de charges d'exploitation, la dette mérite toujours une gestion active, et les « actifs » incluent équipements et créances. La même arithmétique de patrimoine et de trésorerie s'applique à l'entreprise.",
     ),
   },
 
@@ -946,6 +1061,91 @@ export const WIKI_SECTIONS: WikiSection[] = [
     ),
   },
 
+  // ------------------------------------------------------------ principles
+  {
+    id: "principles",
+    icon: "PiggyBank",
+    diagram: "ladder",
+    title: L(
+      "Money principles: the order that works",
+      "Princípios do dinheiro: a ordem que funciona",
+      "Principios del dinero: el orden que funciona",
+      "Geldprinzipien: die Reihenfolge, die funktioniert",
+      "Principes de l'argent : l'ordre qui marche",
+    ),
+    paragraphs: L(
+      [
+        "Good money decisions usually follow an order, not a mood. bynku's coach applies the same ladder to your numbers, so its advice stays consistent. Here's the thinking behind it, so you can use it yourself.",
+        "The order matters because of interest. Money you owe grows against you at the debt's rate; money you save or invest grows for you. Paying off a debt at 15% is a guaranteed 15% return, usually better than any investment, so expensive debt comes before investing. And a small cash buffer comes before everything, because without it a single surprise forces you back into borrowing.",
+        "Once the essentials are in place you don't have to do one thing at a time. Beyond the starter buffer you can split your surplus, a little to the safety net, a little to debt, a little invested, weighting toward whatever is most urgent.",
+      ],
+      [
+        "As boas decisões financeiras seguem uma ordem, não um estado de espírito. O coach do bynku aplica a mesma escada aos teus números, para o conselho ser coerente. Aqui está o raciocínio, para o usares também.",
+        "A ordem importa por causa dos juros. O que deves cresce contra ti à taxa da dívida; o que poupas ou investes cresce a teu favor. Pagar uma dívida a 15% é um retorno garantido de 15%, normalmente melhor que qualquer investimento, por isso a dívida cara vem antes de investir. E uma pequena almofada vem antes de tudo, porque sem ela uma surpresa obriga-te a voltar ao crédito.",
+        "Com o essencial no lugar, não tens de fazer uma coisa de cada vez. Depois da almofada inicial podes dividir o excedente, um pouco para a reserva, um pouco para a dívida, um pouco investido, dando mais peso ao que for mais urgente.",
+      ],
+      [
+        "Las buenas decisiones de dinero siguen un orden, no un ánimo. El asistente de bynku aplica la misma escalera a tus números, para que el consejo sea coherente. Aquí está la lógica, para que la uses tú.",
+        "El orden importa por los intereses. Lo que debes crece en tu contra al tipo de la deuda; lo que ahorras o inviertes crece a tu favor. Pagar una deuda al 15% es un retorno garantizado del 15%, normalmente mejor que cualquier inversión, así que la deuda cara va antes de invertir. Y un pequeño colchón va antes de todo, porque sin él un imprevisto te obliga a volver a endeudarte.",
+        "Con lo esencial en su sitio, no tienes que ir de una en una. Tras el colchón inicial puedes repartir tu excedente, algo al colchón, algo a la deuda, algo invertido, dando más peso a lo más urgente.",
+      ],
+      [
+        "Gute Geldentscheidungen folgen einer Reihenfolge, keiner Stimmung. Der bynku-Coach legt dieselbe Leiter an deine Zahlen an, damit der Rat konsistent bleibt. Hier ist der Gedanke dahinter, damit du ihn selbst nutzen kannst.",
+        "Die Reihenfolge zählt wegen der Zinsen. Schulden wachsen zum Schuldzins gegen dich; Erspartes oder Investiertes wächst für dich. Eine Schuld zu 15% zu tilgen ist eine garantierte Rendite von 15%, meist besser als jede Anlage, deshalb kommt teure Schuld vor dem Investieren. Und ein kleiner Puffer kommt vor allem anderen, weil dich sonst eine einzige Überraschung zurück in die Verschuldung zwingt.",
+        "Ist das Wesentliche geregelt, musst du nicht eins nach dem anderen tun. Nach dem Startpuffer kannst du deinen Überschuss aufteilen, etwas in den Notgroschen, etwas in Schulden, etwas investiert, mit mehr Gewicht auf dem Dringendsten.",
+      ],
+      [
+        "Les bonnes décisions financières suivent un ordre, pas une humeur. Le coach de bynku applique la même échelle à vos chiffres pour que le conseil reste cohérent. Voici le raisonnement, pour que vous l'utilisiez vous-même.",
+        "L'ordre compte à cause des intérêts. Ce que vous devez croît contre vous au taux de la dette ; ce que vous épargnez ou investissez croît pour vous. Rembourser une dette à 15% est un rendement garanti de 15%, souvent meilleur que tout placement, donc la dette chère passe avant d'investir. Et un petit coussin passe avant tout, car sans lui un imprévu vous renvoie à l'emprunt.",
+        "Une fois l'essentiel en place, inutile de faire une chose à la fois. Après le coussin de départ, répartissez votre excédent, un peu au matelas, un peu à la dette, un peu investi, en pondérant vers le plus urgent.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "1. Starter buffer", body: "Keep about one month of essentials always reachable, so a surprise doesn't become a loan." },
+        { label: "2. Kill high-APR debt", body: "Clear expensive debt first (credit cards, overdrafts). Paying it off earns its interest rate, risk-free." },
+        { label: "3. Full safety net", body: "Build the reserve toward roughly six months of net income. First milestone: three months of expenses. bynku tracks both." },
+        { label: "4. Invest the surplus", body: "Once the net is funded and dear debt is gone, put idle money to work for long-term growth rather than letting it sit." },
+        { label: "5. Smart buying", body: "Compare total cost, not the monthly. Keep new commitments within your safe amount, and let a want sit a few days before saying yes." },
+      ],
+      [
+        { label: "1. Almofada inicial", body: "Mantém cerca de um mês de essenciais sempre acessível, para uma surpresa não virar empréstimo." },
+        { label: "2. Elimina dívida cara", body: "Liquida primeiro a dívida cara (cartões, descobertos). Pagá-la rende a sua taxa de juro, sem risco." },
+        { label: "3. Rede de segurança completa", body: "Constrói a reserva até cerca de seis meses de rendimento líquido. Primeira meta: três meses de despesas. O bynku acompanha ambos." },
+        { label: "4. Investe o excedente", body: "Com a rede feita e a dívida cara paga, põe o dinheiro parado a trabalhar para crescer a longo prazo." },
+        { label: "5. Compra com cabeça", body: "Compara o custo total, não a mensalidade. Mantém novos compromissos dentro do valor seguro e deixa um desejo repousar uns dias antes de dizer sim." },
+      ],
+      [
+        { label: "1. Colchón inicial", body: "Ten siempre a mano cerca de un mes de gastos esenciales, para que un imprevisto no acabe en préstamo." },
+        { label: "2. Elimina la deuda cara", body: "Salda primero la deuda cara (tarjetas, descubiertos). Pagarla rinde su tipo de interés, sin riesgo." },
+        { label: "3. Red de seguridad completa", body: "Lleva la reserva hacia unos seis meses de ingreso neto. Primer hito: tres meses de gastos. bynku sigue ambos." },
+        { label: "4. Invierte el excedente", body: "Con la red hecha y la deuda cara fuera, pon el dinero parado a trabajar para crecer a largo plazo." },
+        { label: "5. Compra con cabeza", body: "Compara el coste total, no la cuota. Mantén los nuevos compromisos dentro de tu importe seguro y deja reposar un capricho unos días antes de decir sí." },
+      ],
+      [
+        { label: "1. Startpuffer", body: "Halte etwa einen Monat an Essenzausgaben immer griffbereit, damit eine Überraschung kein Kredit wird." },
+        { label: "2. Teure Schuld tilgen", body: "Zuerst teure Schulden abbauen (Kreditkarten, Dispo). Die Tilgung bringt den Schuldzins, risikofrei." },
+        { label: "3. Voller Notgroschen", body: "Baue die Reserve auf etwa sechs Monate Nettoeinkommen. Erster Meilenstein: drei Monate Ausgaben. bynku verfolgt beides." },
+        { label: "4. Überschuss investieren", body: "Ist der Notgroschen voll und teure Schuld weg, lass ruhendes Geld für langfristiges Wachstum arbeiten." },
+        { label: "5. Klug kaufen", body: "Vergleiche die Gesamtkosten, nicht die Rate. Halte neue Verpflichtungen im sicheren Rahmen und lass einen Wunsch ein paar Tage ruhen, bevor du zusagst." },
+      ],
+      [
+        { label: "1. Coussin de départ", body: "Gardez environ un mois de dépenses essentielles toujours accessible, pour qu'un imprévu ne devienne pas un prêt." },
+        { label: "2. Éliminer la dette chère", body: "Soldez d'abord la dette chère (cartes, découverts). La rembourser rapporte son taux d'intérêt, sans risque." },
+        { label: "3. Matelas de sécurité complet", body: "Constituez la réserve vers environ six mois de revenu net. Premier palier : trois mois de dépenses. bynku suit les deux." },
+        { label: "4. Investir l'excédent", body: "Une fois le matelas constitué et la dette chère soldée, faites travailler l'argent dormant pour le long terme." },
+        { label: "5. Acheter malin", body: "Comparez le coût total, pas la mensualité. Gardez les nouveaux engagements dans votre montant sûr et laissez une envie reposer quelques jours avant de dire oui." },
+      ],
+    ),
+    callout: L(
+      "These are defaults, not dogma. bynku shows where you stand on each rung and adapts to your situation; the point is a clear order to fall back on, not a rigid script.",
+      "São predefinições, não dogma. O bynku mostra em que degrau estás e adapta-se à tua situação; o objetivo é uma ordem clara para seguir, não um guião rígido.",
+      "Son valores por defecto, no dogma. bynku muestra en qué peldaño estás y se adapta a tu situación; la idea es tener un orden claro al que volver, no un guion rígido.",
+      "Das sind Voreinstellungen, kein Dogma. bynku zeigt, auf welcher Stufe du stehst, und passt sich deiner Lage an; es geht um eine klare Reihenfolge als Rückhalt, kein starres Skript.",
+      "Ce sont des repères, pas un dogme. bynku montre où vous en êtes sur chaque échelon et s'adapte à votre situation ; le but est un ordre clair sur lequel s'appuyer, pas un script rigide.",
+    ),
+  },
+
   // ------------------------------------------------------------ coach
   {
     id: "coach",
@@ -999,6 +1199,63 @@ export const WIKI_SECTIONS: WikiSection[] = [
         { label: "Confidentialité", body: "Tes données restent dans le foyer. L'IA voit des chiffres et catégories, pas de tickets ni de noms d'enseignes." },
         { label: "Coût", body: "Chaque message consomme un peu de ton crédit mensuel — voir Crédits et utilisation IA." },
       ],
+    ),
+  },
+
+  // ------------------------------------------------------------ smartHelp
+  {
+    id: "smartHelp",
+    icon: "Sparkles",
+    title: L(
+      "Smart help: tips, comparisons and the coach",
+      "Ajuda inteligente: dicas, comparações e o coach",
+      "Ayuda inteligente: consejos, comparativas y el asistente",
+      "Kluge Hilfe: Tipps, Vergleiche und der Coach",
+      "Aide intelligente : conseils, comparaisons et le coach",
+    ),
+    paragraphs: L(
+      [
+        "bynku does more than record numbers — it reads your situation and helps you act. Four features do most of that work, and all of them are grounded in your real figures, never generic.",
+        "Tips and issues are small, contextual nudges on your dashboard, generated from what's actually happening this cycle. They flag things worth a glance and link straight to the screen where you can act. Typical ones: a category running over its estimate, a project falling behind its goal, a shortfall month coming up in your plans, a big one-off you haven't started saving for, or high-interest debt that's cheaper to attack than to sit on.",
+        "How you compare places your spending and saving next to national averages for your country, income band and household size — drawn from public statistics (Eurostat and national institutes), never from other users. Its value is perspective: it shows where you genuinely stand out, high or low, so you know which habits are worth changing. It's a reference, not a rule, and it waits until enough of the cycle has passed before judging, so day one doesn't crown you a saint.",
+        "The coach is a chat that already knows your numbers — income, surplus, debts, goals, plans, assets — so its advice is specific, not boilerplate. Ask it real questions: can I afford this house, should I overpay this loan or invest, what do I do with a bonus, am I on track. It follows sound principles (safety net, then expensive debt, then invest) and cites the figures it used. Toggle Brief for short answers or Deep think for a full, numbers-grounded reply. It's a coach, not a licensed advisor — for regulated products it points you to a professional.",
+        "Should I buy this? is the coach at the moment of temptation. Tell it what you're eyeing, the price, and how much you want it on the Essential → Treat scale, and it answers honestly: can you afford it now, what it costs your goals and safety net, buy-vs-finance if relevant, and how to make it work if it's borderline. It also weighs how much you've already spent on treats this cycle — if you've been indulging, it gently suggests sleeping on it, rewarding restraint rather than scolding. The same Essential / Important / Nice-to-have / Treat scale you can tag expenses with feeds this, so the more you classify, the sharper the calls.",
+      ],
+      [
+        "O bynku faz mais do que registar números — lê a tua situação e ajuda-te a agir. Quatro funções fazem a maior parte desse trabalho, todas assentes nos teus números reais, nunca genéricas.",
+        "As dicas e alertas são pequenos avisos com contexto no painel, gerados a partir do que está mesmo a acontecer neste ciclo. Sinalizam o que vale a pena ver e ligam diretamente ao ecrã onde podes agir. Típicos: uma categoria acima da estimativa, um projeto atrasado face ao objetivo, um mês em défice nos teus planos, um gasto grande pontual que ainda não começaste a poupar, ou dívida cara que sai mais barato atacar do que manter.",
+        "O como comparo coloca os teus gastos e poupança ao lado das médias nacionais para o teu país, escalão de rendimento e dimensão do agregado — a partir de estatísticas públicas (Eurostat e institutos nacionais), nunca de outros utilizadores. O valor é a perspetiva: mostra onde te destacas mesmo, para cima ou para baixo, para saberes que hábitos vale a pena mudar. É uma referência, não uma regra, e espera até o ciclo estar mais avançado antes de julgar, para o dia um não te fazer santo.",
+        "O coach é um chat que já conhece os teus números — rendimento, excedente, dívidas, objetivos, planos, ativos — por isso o conselho é específico, não genérico. Faz-lhe perguntas reais: consigo comprar esta casa, amortizo este crédito ou invisto, o que faço com um bónus, estou no bom caminho. Segue princípios sólidos (rede de segurança, depois dívida cara, depois investir) e cita os números que usou. Ativa Breve para respostas curtas ou Análise profunda para uma resposta completa e ancorada em números. É um coach, não um consultor licenciado — para produtos regulados encaminha-te para um profissional.",
+        "O devo comprar isto? é o coach no momento da tentação. Diz-lhe o que namoras, o preço e quanto o queres na escala Essencial → Miminho, e ele responde com honestidade: podes pagar já, o que custa aos teus objetivos e à reserva, à vista vs financiado se fizer sentido, e como fazer resultar se estiver renhido. Também pesa quanto já gastaste em miminhos neste ciclo — se andas a exagerar, sugere com jeito dormir sobre o assunto, premiando a contenção em vez de repreender. A mesma escala Essencial / Importante / Bom ter / Miminho com que podes marcar despesas alimenta isto, por isso quanto mais classificas, melhores as decisões.",
+      ],
+      [
+        "bynku hace más que registrar números — lee tu situación y te ayuda a actuar. Cuatro funciones hacen casi todo ese trabajo, todas basadas en tus cifras reales, nunca genéricas.",
+        "Los consejos y avisos son pequeñas señales con contexto en tu panel, generadas por lo que de verdad pasa este ciclo. Marcan lo que merece un vistazo y enlazan directo a la pantalla donde actuar. Típicos: una categoría por encima de su estimación, un proyecto atrasado respecto a su objetivo, un mes en déficit en tus planes, un gasto grande puntual que aún no empiezas a ahorrar, o deuda cara que sale más barato atacar que mantener.",
+        "El cómo comparo coloca tu gasto y ahorro junto a las medias nacionales de tu país, tramo de ingresos y tamaño del hogar — a partir de estadísticas públicas (Eurostat e institutos nacionales), nunca de otros usuarios. Su valor es la perspectiva: muestra dónde destacas de verdad, arriba o abajo, para saber qué hábitos conviene cambiar. Es una referencia, no una regla, y espera a que el ciclo avance antes de juzgar, para que el día uno no te haga un santo.",
+        "El asistente es un chat que ya conoce tus números — ingresos, excedente, deudas, objetivos, planes, activos — así que su consejo es específico, no de manual. Hazle preguntas reales: puedo permitirme esta casa, amortizo este préstamo o invierto, qué hago con un bonus, voy bien. Sigue principios sólidos (colchón, luego deuda cara, luego invertir) y cita las cifras que usó. Activa Breve para respuestas cortas o Pensar a fondo para una respuesta completa y basada en números. Es un asistente, no un asesor con licencia — para productos regulados te remite a un profesional.",
+        "El ¿debería comprar esto? es el asistente en el momento de la tentación. Dile qué te tienta, el precio y cuánto lo quieres en la escala Esencial → Capricho, y responde con honestidad: puedes permitírtelo ahora, qué le cuesta a tus objetivos y colchón, al contado vs financiado si aplica, y cómo lograrlo si está justo. También pesa cuánto has gastado ya en caprichos este ciclo — si te estás dando muchos, sugiere con tacto consultarlo con la almohada, premiando la contención en vez de reñir. La misma escala Esencial / Importante / Estaría bien / Capricho con la que puedes etiquetar gastos lo alimenta, así que cuanto más clasificas, más afinadas las decisiones.",
+      ],
+      [
+        "bynku erfasst nicht nur Zahlen — es liest deine Lage und hilft dir zu handeln. Vier Funktionen leisten das meiste davon, alle in deinen echten Zahlen verankert, nie generisch.",
+        "Tipps und Hinweise sind kleine, kontextbezogene Anstöße auf deinem Dashboard, erzeugt aus dem, was in diesem Zyklus tatsächlich passiert. Sie markieren, was einen Blick wert ist, und verlinken direkt zum Bildschirm zum Handeln. Typisch: eine Kategorie über ihrer Schätzung, ein Projekt hinter dem Ziel, ein Defizitmonat in deinen Plänen, ein großer Einmalposten, für den du noch nicht sparst, oder teure Schuld, die billiger anzugehen als auszusitzen ist.",
+        "Der Vergleich stellt deine Ausgaben und Ersparnisse neben nationale Durchschnitte für Land, Einkommensklasse und Haushaltsgröße — aus öffentlichen Statistiken (Eurostat und nationale Institute), nie von anderen Nutzern. Sein Wert ist die Perspektive: er zeigt, wo du wirklich heraussticht, hoch oder niedrig, damit du weißt, welche Gewohnheiten sich zu ändern lohnen. Eine Referenz, keine Regel, und er wartet, bis genug vom Zyklus vorbei ist, bevor er urteilt, damit Tag eins dich nicht heiligspricht.",
+        "Der Coach ist ein Chat, der deine Zahlen bereits kennt — Einkommen, Überschuss, Schulden, Ziele, Pläne, Vermögen — also ist der Rat konkret, nicht Schema F. Stell echte Fragen: kann ich mir dieses Haus leisten, tilge ich diesen Kredit sonder oder investiere ich, was mache ich mit einem Bonus, bin ich auf Kurs. Er folgt soliden Prinzipien (Sicherheitsnetz, dann teure Schuld, dann investieren) und nennt die verwendeten Zahlen. Schalte Kurz für knappe Antworten oder Tiefes Nachdenken für eine volle, zahlengestützte Antwort. Ein Coach, kein zugelassener Berater — für regulierte Produkte verweist er auf eine Fachperson.",
+        "Soll ich das kaufen? ist der Coach im Moment der Versuchung. Sag ihm, was dir vorschwebt, den Preis und wie sehr du es willst auf der Skala Notwendig → Vergnügen, und er antwortet ehrlich: kannst du es dir jetzt leisten, was es deine Ziele und dein Netz kostet, bar vs. finanziert falls relevant, und wie es klappt, wenn es knapp ist. Er wägt auch ab, wie viel du diesen Zyklus schon für Vergnügen ausgegeben hast — wenn du geschlemmt hast, schlägt er sanft vor, eine Nacht darüber zu schlafen, und belohnt Zurückhaltung statt zu tadeln. Dieselbe Skala Notwendig / Wichtig / Schön zu haben / Vergnügen, mit der du Ausgaben markieren kannst, speist das — je mehr du einordnest, desto treffsicherer die Urteile.",
+      ],
+      [
+        "bynku ne fait pas qu'enregistrer des chiffres — il lit votre situation et vous aide à agir. Quatre fonctions font l'essentiel de ce travail, toutes ancrées dans vos vrais chiffres, jamais génériques.",
+        "Les conseils et alertes sont de petits rappels contextuels sur votre tableau de bord, générés d'après ce qui se passe vraiment ce cycle. Ils signalent ce qui mérite un coup d'œil et mènent directement à l'écran où agir. Typiques : une catégorie au-dessus de son estimation, un projet en retard sur son objectif, un mois déficitaire dans vos plans, une grosse dépense ponctuelle non encore épargnée, ou une dette chère qu'il vaut mieux attaquer que subir.",
+        "Le comment je me situe place vos dépenses et votre épargne à côté des moyennes nationales pour votre pays, tranche de revenu et taille du foyer — à partir de statistiques publiques (Eurostat et instituts nationaux), jamais d'autres utilisateurs. Sa valeur est la perspective : il montre où vous vous démarquez vraiment, en haut ou en bas, pour savoir quelles habitudes changer. Une référence, pas une règle, et il attend qu'assez du cycle soit passé avant de juger, pour que le jour un ne vous sacre pas saint.",
+        "Le coach est une conversation qui connaît déjà vos chiffres — revenus, excédent, dettes, objectifs, plans, actifs — donc son conseil est précis, pas passe-partout. Posez de vraies questions : puis-je m'offrir cette maison, dois-je rembourser ce prêt ou investir, que faire d'une prime, suis-je sur la bonne voie. Il suit des principes sains (matelas, puis dette chère, puis investir) et cite les chiffres utilisés. Activez Bref pour des réponses courtes ou Réflexion approfondie pour une réponse complète et chiffrée. Un coach, pas un conseiller agréé — pour les produits réglementés, il vous renvoie à un professionnel.",
+        "Le devrais-je acheter ceci ? est le coach au moment de la tentation. Dites-lui ce qui vous tente, le prix et à quel point vous le voulez sur l'échelle Essentiel → Petit plaisir, et il répond honnêtement : pouvez-vous vous le permettre maintenant, ce que cela coûte à vos objectifs et à votre matelas, comptant vs crédit le cas échéant, et comment y arriver si c'est juste. Il pèse aussi combien vous avez déjà dépensé en plaisirs ce cycle — si vous avez fait des écarts, il suggère avec tact d'y dormir, récompensant la retenue plutôt que de gronder. La même échelle Essentiel / Important / Agréable à avoir / Petit plaisir avec laquelle vous étiquetez les dépenses l'alimente : plus vous classez, plus les avis sont fins.",
+      ],
+    ),
+    callout: L(
+      "None of this replaces your judgement — it sharpens it. The numbers are yours; bynku just makes them easy to reason about.",
+      "Nada disto substitui o teu discernimento — afia-o. Os números são teus; o bynku só os torna fáceis de pensar.",
+      "Nada de esto sustituye tu criterio — lo afina. Los números son tuyos; bynku solo te los hace fáciles de razonar.",
+      "Nichts davon ersetzt dein Urteil — es schärft es. Die Zahlen sind deine; bynku macht sie nur leicht durchdenkbar.",
+      "Rien de tout cela ne remplace votre jugement — cela l'affine. Les chiffres sont les vôtres ; bynku les rend juste faciles à raisonner.",
     ),
   },
 

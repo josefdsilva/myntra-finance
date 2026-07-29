@@ -28,8 +28,12 @@ import {
   HelpCircle,
   type LucideIcon,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getOrCreateHousehold } from "@/lib/household.functions";
+import { useActiveHouseholdId } from "@/lib/active-household";
 import { useLocale } from "@/lib/i18n";
-import { WIKI_META, WIKI_SECTIONS, type WikiIcon } from "@/lib/wiki-content";
+import { WIKI_META, wikiSectionsFor, type WikiIcon } from "@/lib/wiki-content";
 import { pageShellClass } from "@/components/page-shell";
 import {
   BaselineDiagram,
@@ -101,13 +105,25 @@ function WikiPage() {
   const meta = WIKI_META[locale] ?? WIKI_META.en;
   const diag = meta.diagrams;
 
+  // Show the manual for the space you're in: a company space hides household-only
+  // sections (and vice versa) and surfaces the business notes.
+  const activeHouseholdId = useActiveHouseholdId();
+  const fetchHh = useServerFn(getOrCreateHousehold);
+  const { data: hh } = useQuery({
+    queryKey: ["household", activeHouseholdId],
+    queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
+  });
+  const isBusiness = hh?.household?.kind === "business";
+  const kind: "personal" | "business" = isBusiness ? "business" : "personal";
+  const sections = useMemo(() => wikiSectionsFor(kind), [kind]);
+
   const [query, setQuery] = useState("");
   const [noResults, setNoResults] = useState(false);
 
   // Per-section text index (title + paragraphs + bullets + callout) for search.
   const searchIndex = useMemo(() => {
     const idx: Record<string, string> = {};
-    for (const s of WIKI_SECTIONS) {
+    for (const s of sections) {
       const title = s.title[locale] ?? s.title.en;
       const paras = (s.paragraphs[locale] ?? s.paragraphs.en).join(" ");
       const bullets = (s.bullets?.[locale] ?? s.bullets?.en ?? [])
@@ -117,7 +133,7 @@ function WikiPage() {
       idx[s.id] = `${title} ${paras} ${bullets} ${callout}`.toLowerCase();
     }
     return idx;
-  }, [locale]);
+  }, [locale, sections]);
 
   useEffect(() => {
     const q = query.trim().toLowerCase();
@@ -169,7 +185,7 @@ function WikiPage() {
         </CardHeader>
         <CardContent>
           <ul className="grid gap-1 sm:grid-cols-2 text-sm">
-            {WIKI_SECTIONS.map((s) => (
+            {sections.map((s) => (
               <li key={s.id} data-wiki-toc={s.id}>
                 <a href={`#${s.id}`} className="text-primary hover:underline">
                   {s.title[locale] ?? s.title.en}
@@ -180,12 +196,13 @@ function WikiPage() {
         </CardContent>
       </Card>
 
-      {WIKI_SECTIONS.map((s) => {
+      {sections.map((s) => {
         const Icon = ICONS[s.icon];
         const title = s.title[locale] ?? s.title.en;
         const paras = s.paragraphs[locale] ?? s.paragraphs.en;
         const bullets = s.bullets?.[locale] ?? s.bullets?.en ?? [];
         const callout = s.callout?.[locale] ?? s.callout?.en;
+        const businessNote = isBusiness ? (s.businessNote?.[locale] ?? s.businessNote?.en) : null;
 
         return (
           <SectionCard key={s.id} id={s.id} icon={Icon} title={title}>
@@ -264,6 +281,12 @@ function WikiPage() {
 
             {callout && (
               <p className="rounded-lg border bg-muted/40 p-3 text-foreground">{callout}</p>
+            )}
+
+            {businessNote && (
+              <p className="rounded-lg border border-primary/25 bg-primary/5 p-3 text-foreground">
+                {businessNote}
+              </p>
             )}
           </SectionCard>
         );
