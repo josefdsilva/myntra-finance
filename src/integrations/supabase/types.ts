@@ -156,6 +156,8 @@ export type Database = {
           created_by: string | null
           current_value: number
           debt_id: string | null
+          depreciation_method: string
+          depreciation_start: string | null
           household_id: string
           id: string
           income_id: string | null
@@ -163,7 +165,9 @@ export type Database = {
           liquidity: string
           name: string
           note: string | null
+          salvage_value: number
           updated_at: string
+          useful_life_months: number | null
         }
         Insert: {
           acquired_on?: string | null
@@ -173,6 +177,8 @@ export type Database = {
           created_by?: string | null
           current_value?: number
           debt_id?: string | null
+          depreciation_method?: string
+          depreciation_start?: string | null
           household_id: string
           id?: string
           income_id?: string | null
@@ -180,7 +186,9 @@ export type Database = {
           liquidity?: string
           name: string
           note?: string | null
+          salvage_value?: number
           updated_at?: string
+          useful_life_months?: number | null
         }
         Update: {
           acquired_on?: string | null
@@ -190,6 +198,8 @@ export type Database = {
           created_by?: string | null
           current_value?: number
           debt_id?: string | null
+          depreciation_method?: string
+          depreciation_start?: string | null
           household_id?: string
           id?: string
           income_id?: string | null
@@ -197,7 +207,9 @@ export type Database = {
           liquidity?: string
           name?: string
           note?: string | null
+          salvage_value?: number
           updated_at?: string
+          useful_life_months?: number | null
         }
         Relationships: [
           {

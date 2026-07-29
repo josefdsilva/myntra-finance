@@ -14,7 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Plus, Trash2, Gem, Sparkles, Pencil } from "lucide-react";
+import { Plus, Trash2, Gem, Sparkles, Pencil, TrendingDown } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import {
@@ -25,6 +25,11 @@ import {
   ASSET_KINDS,
   liquidityForKind,
 } from "@/lib/assets.functions";
+import {
+  computeDepreciation,
+  deriveUsefulLifeMonths,
+  type DepreciationMethod,
+} from "@/lib/depreciation";
 
 type AssetRow = {
   id: string;
@@ -36,6 +41,10 @@ type AssetRow = {
   liquidity: string;
   income_id: string | null;
   bucket_id: string | null;
+  depreciation_method: string;
+  useful_life_months: number | null;
+  salvage_value: number | null;
+  depreciation_start: string | null;
 };
 
 const LIQ_TONE: Record<string, string> = {
@@ -48,7 +57,54 @@ const LIQ_TONE: Record<string, string> = {
 // these even before a rent income exists, so the connection is discoverable.
 const RENTAL_KINDS = new Set(["property", "land", "business"]);
 
-export function AssetsSection({ householdId }: { householdId: string }) {
+// Depreciation form state. Useful life is captured in years (friendlier than
+// months) and converted on save.
+type DeprState = {
+  method: DepreciationMethod;
+  years: string;
+  salvage: string;
+  start: string;
+};
+const emptyDepr: DeprState = { method: "none", years: "", salvage: "", start: "" };
+
+/** Convert the depreciation form state into the server fn's fields. */
+function deprFields(d: DeprState) {
+  if (d.method !== "straight_line") {
+    return {
+      depreciation_method: "none" as const,
+      useful_life_months: null,
+      salvage_value: null,
+      depreciation_start: null,
+    };
+  }
+  const years = parseFloat(d.years.replace(",", "."));
+  const months = isFinite(years) && years > 0 ? Math.round(years * 12) : null;
+  const salvage = d.salvage ? parseFloat(d.salvage.replace(",", ".")) || 0 : 0;
+  return {
+    depreciation_method: "straight_line" as const,
+    useful_life_months: months,
+    salvage_value: salvage,
+    depreciation_start: d.start || null,
+  };
+}
+
+/** Build a DeprState from a saved asset row (for the edit form). */
+function deprFromRow(r: AssetRow): DeprState {
+  return {
+    method: r.depreciation_method === "straight_line" ? "straight_line" : "none",
+    years: r.useful_life_months ? String(Math.round((r.useful_life_months / 12) * 10) / 10) : "",
+    salvage: r.salvage_value != null && Number(r.salvage_value) > 0 ? String(r.salvage_value) : "",
+    start: r.depreciation_start ? r.depreciation_start.slice(0, 10) : "",
+  };
+}
+
+export function AssetsSection({
+  householdId,
+  isBusiness = false,
+}: {
+  householdId: string;
+  isBusiness?: boolean;
+}) {
   const t = useT();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -62,7 +118,7 @@ export function AssetsSection({ householdId }: { householdId: string }) {
       const { data, error } = await supabase
         .from("assets")
         .select(
-          "id, name, kind, acquired_value, acquired_on, current_value, liquidity, income_id, bucket_id",
+          "id, name, kind, acquired_value, acquired_on, current_value, liquidity, income_id, bucket_id, depreciation_method, useful_life_months, salvage_value, depreciation_start",
         )
         .eq("household_id", householdId)
         .order("current_value", { ascending: false });
@@ -115,6 +171,7 @@ export function AssetsSection({ householdId }: { householdId: string }) {
   const [current, setCurrent] = useState("");
   const [acquired, setAcquired] = useState("");
   const [acquiredOn, setAcquiredOn] = useState("");
+  const [depr, setDepr] = useState<DeprState>(emptyDepr);
 
   // Inline edit of an existing asset (one row at a time).
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -123,6 +180,7 @@ export function AssetsSection({ householdId }: { householdId: string }) {
   const [eCurrent, setECurrent] = useState("");
   const [eAcquired, setEAcquired] = useState("");
   const [eAcquiredOn, setEAcquiredOn] = useState("");
+  const [eDepr, setEDepr] = useState<DeprState>(emptyDepr);
 
   const KIND_LABEL: Record<string, string> = {
     property: t("assets.kindProperty"),
@@ -162,12 +220,14 @@ export function AssetsSection({ householdId }: { householdId: string }) {
         current_value: parseFloat(current.replace(",", ".")) || 0,
         acquired_value: acquired ? parseFloat(acquired.replace(",", ".")) || 0 : null,
         acquired_on: acquiredOn || null,
+        ...deprFields(depr),
       },
     });
     setName("");
     setCurrent("");
     setAcquired("");
     setAcquiredOn("");
+    setDepr(emptyDepr);
     refetch();
     qc.invalidateQueries({ queryKey: ["net-worth", householdId] });
   }
@@ -189,6 +249,7 @@ export function AssetsSection({ householdId }: { householdId: string }) {
     setECurrent(String(r.current_value));
     setEAcquired(r.acquired_value != null ? String(r.acquired_value) : "");
     setEAcquiredOn(r.acquired_on ? r.acquired_on.slice(0, 10) : "");
+    setEDepr(deprFromRow(r));
   }
 
   function cancelEdit() {
@@ -206,6 +267,7 @@ export function AssetsSection({ householdId }: { householdId: string }) {
         current_value: parseFloat(eCurrent.replace(",", ".")) || 0,
         acquired_value: eAcquired ? parseFloat(eAcquired.replace(",", ".")) || 0 : null,
         acquired_on: eAcquiredOn || null,
+        ...deprFields(eDepr),
       },
     });
     setEditingId(null);
@@ -288,6 +350,15 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                           />
                         </div>
                       </div>
+                      {isBusiness && (
+                        <DepreciationEditor
+                          value={eDepr}
+                          onChange={setEDepr}
+                          acquired={eAcquired}
+                          acquiredOn={eAcquiredOn}
+                          current={eCurrent}
+                        />
+                      )}
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={cancelEdit}>
                           {t("common.cancel")}
@@ -329,6 +400,29 @@ export function AssetsSection({ householdId }: { householdId: string }) {
                         })}
                       </p>
                     )}
+                    {(() => {
+                      if (!isBusiness || r.depreciation_method !== "straight_line") return null;
+                      const dep = computeDepreciation({
+                        method: "straight_line",
+                        acquiredValue: r.acquired_value,
+                        salvageValue: Number(r.salvage_value ?? 0),
+                        usefulLifeMonths: r.useful_life_months,
+                        start: r.depreciation_start ?? r.acquired_on,
+                      });
+                      if (!dep) return null;
+                      return (
+                        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
+                          <TrendingDown className="size-3 shrink-0" />
+                          {dep.fullyDepreciated
+                            ? t("assets.deprFully", { book: money(dep.bookValue) })
+                            : t("assets.deprLine", {
+                                annual: money(dep.annual),
+                                pct: dep.pctDepreciated,
+                                years: Math.round((dep.remainingMonths / 12) * 10) / 10,
+                              })}
+                        </p>
+                      );
+                    })()}
                     {(rentIncomes.length > 0 || r.income_id || RENTAL_KINDS.has(r.kind)) && (
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {rentIncomes.length > 0 || r.income_id ? (
@@ -497,6 +591,15 @@ export function AssetsSection({ householdId }: { householdId: string }) {
               </Button>
             </div>
           </div>
+          {isBusiness && (
+            <DepreciationEditor
+              value={depr}
+              onChange={setDepr}
+              acquired={acquired}
+              acquiredOn={acquiredOn}
+              current={current}
+            />
+          )}
           <button
             type="button"
             disabled={!name}
@@ -515,5 +618,141 @@ export function AssetsSection({ householdId }: { householdId: string }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Straight-line depreciation controls for a business asset. Captures useful life
+ * (years), salvage value and the start date, shows a live preview of the annual
+ * charge and current book value, and can back-calculate the useful life from the
+ * acquired and current values ("calculate it from initial and current value").
+ */
+function DepreciationEditor({
+  value,
+  onChange,
+  acquired,
+  acquiredOn,
+  current,
+}: {
+  value: DeprState;
+  onChange: (d: DeprState) => void;
+  acquired: string;
+  acquiredOn: string;
+  current: string;
+}) {
+  const t = useT();
+  const set = (patch: Partial<DeprState>) => onChange({ ...value, ...patch });
+  const acquiredNum = parseFloat(acquired.replace(",", "."));
+  const currentNum = parseFloat(current.replace(",", "."));
+  // Depreciation start falls back to the acquisition date when left blank.
+  const start = value.start || acquiredOn || null;
+  const salvageNum = value.salvage ? parseFloat(value.salvage.replace(",", ".")) || 0 : 0;
+
+  const preview =
+    value.method === "straight_line"
+      ? (() => {
+          const years = parseFloat(value.years.replace(",", "."));
+          const months = isFinite(years) && years > 0 ? Math.round(years * 12) : null;
+          return computeDepreciation({
+            method: "straight_line",
+            acquiredValue: isFinite(acquiredNum) ? acquiredNum : null,
+            salvageValue: salvageNum,
+            usefulLifeMonths: months,
+            start,
+          });
+        })()
+      : null;
+
+  const canDerive =
+    isFinite(acquiredNum) && isFinite(currentNum) && currentNum < acquiredNum && !!start;
+
+  function derive() {
+    if (!canDerive) return;
+    const months = deriveUsefulLifeMonths({
+      acquiredValue: acquiredNum,
+      currentValue: currentNum,
+      salvageValue: salvageNum,
+      start,
+    });
+    if (months) set({ years: String(Math.round((months / 12) * 10) / 10) });
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border bg-muted/30 p-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="flex items-center gap-1.5 text-xs font-medium">
+          <TrendingDown className="size-3.5" /> {t("assets.depreciation")}
+        </Label>
+        <Select
+          value={value.method}
+          onValueChange={(v) => set({ method: v as DepreciationMethod })}
+        >
+          <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("assets.deprNone")}</SelectItem>
+            <SelectItem value="straight_line">{t("assets.deprStraight")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {value.method === "straight_line" && (
+        <>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="grid gap-1">
+              <Label className="text-[11px] text-muted-foreground">{t("assets.usefulLife")}</Label>
+              <Input
+                inputMode="decimal"
+                placeholder="5"
+                value={value.years}
+                onChange={(e) => set({ years: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-[11px] text-muted-foreground">
+                {t("assets.salvageValue")}
+              </Label>
+              <Input
+                inputMode="decimal"
+                placeholder="0.00"
+                value={value.salvage}
+                onChange={(e) => set({ salvage: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-[11px] text-muted-foreground">{t("assets.deprStart")}</Label>
+              <Input
+                type="date"
+                value={value.start}
+                onChange={(e) => set({ start: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={derive}
+              disabled={!canDerive}
+              className="text-[11px] text-primary hover:underline disabled:opacity-40 disabled:no-underline"
+            >
+              {t("assets.deriveLife")}
+            </button>
+            {preview ? (
+              <span className="text-right text-[11px] text-muted-foreground">
+                {t("assets.deprPreview", {
+                  annual: money(preview.annual),
+                  book: money(preview.bookValue),
+                  pct: preview.pctDepreciated,
+                })}
+              </span>
+            ) : (
+              <span className="text-[11px] text-muted-foreground">
+                {start ? t("assets.deprNeedInputs") : t("assets.deprNeedStart")}
+              </span>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from "./benchmarks";
 import { monthlyRateFromTaeg, monthlyRateFromNominalTan, termMonthsFor } from "./amortization";
 import { debtLiveSchedule, type Debt } from "./debt-schedule";
+import { computeDepreciation } from "./depreciation";
 import { buildForecast, monthKey, type Plan } from "./plan";
 import { summariseIntent, resolveIntent, isDiscretionary } from "./intent";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
@@ -147,11 +148,20 @@ type CoachContext = {
   /** True if the household has at least one project tagged as its emergency fund. */
   hasEmergencyBucket: boolean;
   /** Significant things owned (property, vehicles, investments), current value each. */
-  assets: Array<{ name: string; kind: string; currentValue: number }>;
+  assets: Array<{
+    name: string;
+    kind: string;
+    currentValue: number;
+    /** Business straight-line depreciation, when configured. */
+    annualDepreciation?: number;
+    pctDepreciated?: number;
+  }>;
   /** Sum of current values of all assets. */
   assetsTotal: number;
   /** Quickly-sellable assets (stocks, bonds, funds) — a secondary emergency backstop. */
   liquidAssetsTotal: number;
+  /** Total yearly straight-line depreciation across business assets (non-cash). */
+  annualDepreciationTotal: number;
   /** assetsTotal + totalSavings − debtPrincipalOutstanding. Bank cash is not tracked, so excluded. */
   netWorth: number;
   cycleTotals: {
@@ -357,7 +367,9 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       .eq("household_id", householdId),
     supabase
       .from("assets")
-      .select("name, kind, current_value, bucket_id")
+      .select(
+        "name, kind, current_value, bucket_id, depreciation_method, acquired_value, useful_life_months, salvage_value, depreciation_start, acquired_on",
+      )
       .eq("household_id", householdId),
   ]);
 
@@ -530,13 +542,39 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     kind: string;
     current_value: number | string;
     bucket_id: string | null;
+    depreciation_method: string | null;
+    acquired_value: number | string | null;
+    useful_life_months: number | null;
+    salvage_value: number | string | null;
+    depreciation_start: string | null;
+    acquired_on: string | null;
   }>(assetsData);
-  const assets = assetRows.map((a) => ({
-    name: a.name,
-    kind: a.kind,
-    currentValue: Number(a.current_value) || 0,
-  }));
+  const assets = assetRows.map((a) => {
+    const dep =
+      a.depreciation_method === "straight_line"
+        ? computeDepreciation({
+            method: "straight_line",
+            acquiredValue: a.acquired_value != null ? Number(a.acquired_value) : null,
+            salvageValue: Number(a.salvage_value ?? 0),
+            usefulLifeMonths: a.useful_life_months,
+            start: a.depreciation_start ?? a.acquired_on,
+          })
+        : null;
+    return {
+      name: a.name,
+      kind: a.kind,
+      currentValue: Number(a.current_value) || 0,
+      ...(dep ? { annualDepreciation: dep.annual, pctDepreciated: dep.pctDepreciated } : {}),
+    };
+  });
   const assetsTotal = Math.round(assets.reduce((s, a) => s + a.currentValue, 0) * 100) / 100;
+  // Total yearly depreciation across the business's assets — a real non-cash
+  // expense the coach should factor into profitability, not cashflow.
+  const annualDepreciationTotal =
+    Math.round(
+      assets.reduce((s, a) => s + ((a as { annualDepreciation?: number }).annualDepreciation ?? 0), 0) *
+        100,
+    ) / 100;
   const liquidAssetsTotal =
     Math.round(
       assets.filter((a) => LIQUID_ASSET_KINDS.has(a.kind)).reduce((s, a) => s + a.currentValue, 0) *
@@ -813,6 +851,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     assets,
     assetsTotal,
     liquidAssetsTotal,
+    annualDepreciationTotal,
     netWorth,
     cycleTotals: { spent, received, net: spent - received, byCategory },
     spendIntent: {
@@ -933,6 +972,7 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - potentialSavingsRatePct is the household's CAPACITY to save (monthlySurplus ÷ income). Use it to contrast with the realized rate: when potential exceeds realized, encourage saving/investing more of the headroom; when they are close, acknowledge they're already converting most of their surplus. emergencyFundMonths already counts pre-funded project balances, so trust it.
 - Projects are typed: each buckets[] item has kind ∈ savings | emergency | investment. Balances are split into emergencyBalance, savingsBalance and investmentBalance; liquidReserve is the safety cushion (emergency projects if hasEmergencyBucket, else all non-investment savings) and is what emergencyFundMonths measures — investments are excluded on purpose because they shouldn't be raided.
 - assets[] are significant things the household owns (property, vehicles, stocks, bonds, funds, a business) with currentValue; assetsTotal is their sum and liquidAssetsTotal is the quickly-sellable part (stocks/bonds/funds). netWorth = assetsTotal + totalSavings − debtPrincipalOutstanding (bank cash is not tracked, so it is excluded). Use netWorth for the big-picture "how am I really doing" and solvency questions, and treat liquidAssetsTotal as a secondary emergency backstop BEHIND liquidReserve.
+- For a business, some assets depreciate: an asset may carry annualDepreciation and pctDepreciated, and annualDepreciationTotal is the sum. Its currentValue is already the written-down (book) value, so net worth reflects depreciation. Depreciation is a non-cash expense: it lowers reported profit but does NOT consume cash this cycle — keep it out of cashflow/runway math while counting it in profitability. If annualDepreciationTotal is 0 there is nothing to depreciate.
 - Liquidity levers: when cash is genuinely tight (thin liquidReserve, a shortfall month in planForecast, or high-APR debt) and the household holds sizeable illiquid assets, selling one — or borrowing against it — is a legitimate option to raise liquidity; surface it WITH its trade-offs (transaction costs, weeks/months to sell, losing future growth or rent), never as a default and never lightly. The opposite lever applies too: if there is idle cash or a reserve well beyond a healthy emergency cushion, converting some into productive assets or investments puts it to work. Frame both as trade-offs and cite the figures.
 - wealthComparison — how netWorth compares to similar households from the ECB HFCS survey: peerMedian is the median for the same country, income band and (if ageBand is set) age band; ratio is user/peer. Use it for "how does my net worth compare" questions. If ageBand is null, note the comparison is against all ages and suggest setting an age band in Settings for a fairer read. It is a public survey median, never other users; may be null.
 - debtServiceComparison — userPct is the share of monthly income going to debt payments; medianPct is the country median for indebted households (HFCS). Use it to judge whether the debt load is heavy relative to peers; may be null.

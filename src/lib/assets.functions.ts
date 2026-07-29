@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assetBookValue, type DepreciationMethod } from "@/lib/depreciation";
 
 export const ASSET_KINDS = [
   "property",
@@ -51,13 +52,50 @@ export const upsertAsset = createServerFn({ method: "POST" })
         acquired_on: z.string().date().nullable().optional(),
         current_value: z.number().min(0).max(1_000_000_000),
         note: z.string().max(500).nullable().optional(),
+        // Depreciation (mainly business): straight-line write-down of the asset.
+        depreciation_method: z.enum(["none", "straight_line"]).optional(),
+        useful_life_months: z.number().int().min(1).max(1200).nullable().optional(),
+        salvage_value: z.number().min(0).max(1_000_000_000).nullable().optional(),
+        depreciation_start: z.string().date().nullable().optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     const { id, ...rest } = data;
     // Liquidity is always derived from the type — never trusted from the client.
-    const payload = { ...rest, liquidity: liquidityForKind(rest.kind) };
+    const method: DepreciationMethod =
+      rest.depreciation_method === "straight_line" ? "straight_line" : "none";
+    // Depreciation start defaults to the acquisition date when not given.
+    const depreciationStart =
+      method === "straight_line"
+        ? (rest.depreciation_start ?? rest.acquired_on ?? null)
+        : null;
+    const salvageValue = method === "straight_line" ? (rest.salvage_value ?? 0) : 0;
+    const usefulLifeMonths = method === "straight_line" ? (rest.useful_life_months ?? null) : null;
+
+    // For a straight-line asset the current (book) value is derived, not trusted
+    // from the client, so net worth reflects the written-down value as of today.
+    // Falls back to the supplied current_value if the inputs are incomplete.
+    const derivedBook =
+      method === "straight_line"
+        ? assetBookValue({
+            method,
+            acquiredValue: rest.acquired_value ?? null,
+            salvageValue,
+            usefulLifeMonths,
+            start: depreciationStart,
+          })
+        : null;
+
+    const payload = {
+      ...rest,
+      current_value: derivedBook ?? rest.current_value,
+      depreciation_method: method,
+      useful_life_months: usefulLifeMonths,
+      salvage_value: salvageValue,
+      depreciation_start: depreciationStart,
+      liquidity: liquidityForKind(rest.kind),
+    };
     if (id) {
       const { data: row, error } = await context.supabase
         .from("assets")
