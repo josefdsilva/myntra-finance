@@ -8,6 +8,7 @@ import {
   computeBenchmarkComparison,
   hasBenchmark,
   supportedBenchmarkCountries,
+  type BenchmarkComparison,
 } from "@/lib/benchmarks";
 import { useT, type MessageKey } from "@/lib/i18n";
 
@@ -39,24 +40,34 @@ export function BenchmarksCard({
   progress = 1,
 }: Props) {
   const t = useT();
-  const { data: hh } = useQuery({
+  const { data: hh, isLoading: hhLoading } = useQuery({
     enabled: !!householdId,
     queryKey: ["household-demographics", householdId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("households")
-        .select("country, adults, children")
+        .select("country, adults, children, kind")
         .eq("id", householdId)
         .maybeSingle();
       if (error) throw error;
-      return data as { country: string; adults: number; children: number } | null;
+      return data as {
+        country: string;
+        adults: number;
+        children: number;
+        kind: string | null;
+      } | null;
     },
   });
 
-  const country = hh?.country ?? "PT";
+  // Never assume a country. If the household has none, or one we don't curate,
+  // we show a clear "not available" state instead of silently comparing them to
+  // some other country's data. Company spaces have no household benchmark yet,
+  // so we hide the comparison there rather than compare a business to families.
+  const country = hh?.country ?? null;
   const adults = hh?.adults ?? 2;
   const children = hh?.children ?? 0;
-  const supported = hasBenchmark(country);
+  const isBusiness = hh?.kind === "business";
+  const supported = hasBenchmark(country) && !isBusiness;
 
   const { data: latestVersions } = useQuery({
     enabled: supported,
@@ -73,7 +84,7 @@ export function BenchmarksCard({
     () =>
       supported
         ? computeBenchmarkComparison({
-            country,
+            country: country ?? "",
             adults,
             children,
             monthlyIncome,
@@ -84,13 +95,22 @@ export function BenchmarksCard({
     [supported, country, adults, children, monthlyIncome, monthlySpend, spendByCategory],
   );
 
+  // While demographics are loading, render nothing rather than flashing the
+  // "not available" state.
+  if (hhLoading) return null;
+
+  // Company spaces don't get a household comparison at all yet.
+  if (isBusiness) return null;
+
   if (!supported || !comp) {
     const supportedList = supportedBenchmarkCountries();
     return (
       <Card>
         <CardHeader>
           <CardTitle>{t("benchmarks.title")}</CardTitle>
-          <CardDescription>{t("benchmarks.notSupported", { country })}</CardDescription>
+          <CardDescription>
+            {country ? t("benchmarks.notSupported", { country }) : t("benchmarks.noCountry")}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>{t("benchmarks.notSupportedBody")}</p>
@@ -153,6 +173,8 @@ export function BenchmarksCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <MarketSnapshot t={t} macro={comp.macro} countryName={comp.countryName} />
+
         {monthlyIncome <= 0 ? (
           <p className="text-sm text-muted-foreground">{t("benchmarks.needSalary")}</p>
         ) : (
@@ -257,6 +279,10 @@ export function BenchmarksCard({
               </p>
             )}
 
+            <p className="text-xs text-muted-foreground">
+              {t("benchmarks.upliftNote", { year: comp.expenditureSurveyYear })}
+            </p>
+
             <div className="flex items-start gap-2 text-xs text-muted-foreground border-t pt-3">
               <Info className="size-3.5 mt-0.5 shrink-0" />
               <p>{t("benchmarks.methodologyNote")}</p>
@@ -265,6 +291,70 @@ export function BenchmarksCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/** Render a "YYYY-MM" reference period as a short "Mon YYYY" label. */
+function formatMonth(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  if (!y || !m) return ym;
+  try {
+    return new Date(y, m - 1, 1).toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return ym;
+  }
+}
+
+function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-lg border p-2.5">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold tabular-nums">{value}</div>
+      {sub && <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+/**
+ * Market-wide indicators for the household's country (inflation, unemployment)
+ * plus the eurozone Euribor rates. Independent of the user's own numbers, so it
+ * shows even before there's enough spend for the personal comparison.
+ */
+function MarketSnapshot({
+  t,
+  macro,
+  countryName,
+}: {
+  t: T;
+  macro: BenchmarkComparison["macro"];
+  countryName: string;
+}) {
+  return (
+    <div>
+      <h4 className="text-sm font-medium mb-2">
+        {t("benchmarks.marketSnapshot", { country: countryName })}
+      </h4>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <StatTile
+          label={t("benchmarks.inflation")}
+          value={`${macro.inflationRatePct.toFixed(1)}%`}
+          sub={t("benchmarks.euroAreaValue", { pct: macro.euroAreaInflationPct.toFixed(1) })}
+        />
+        <StatTile
+          label={t("benchmarks.unemployment")}
+          value={`${macro.unemploymentRatePct.toFixed(1)}%`}
+          sub={t("benchmarks.euroAreaValue", { pct: macro.euroAreaUnemploymentPct.toFixed(1) })}
+        />
+        <StatTile label={t("benchmarks.euribor3m")} value={`${macro.euribor3mPct.toFixed(2)}%`} />
+        <StatTile label={t("benchmarks.euribor12m")} value={`${macro.euribor12mPct.toFixed(2)}%`} />
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        {t("benchmarks.marketAsOf", { date: formatMonth(macro.asOf) })}
+      </p>
+    </div>
   );
 }
 

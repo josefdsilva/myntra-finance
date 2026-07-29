@@ -23,6 +23,16 @@
   },
   "avgMonthlyHouseholdExpenditure": 3300,
   "avgHouseholdEquivFactor": 1.75,
+  "expenditureSurveyYear": 2020,
+  "priceUpliftSinceSurvey": 1.2,
+  "pricesAsOf": "2026-07",
+  "macro": {
+    "asOf": "2026-07",
+    "inflationRatePct": 3.2,
+    "inflationRefMonth": "2026-06",
+    "unemploymentRatePct": 4.2,
+    "unemploymentRefMonth": "2026-05"
+  },
   "quintileExpenditureMultipliers": {
     "q1": 0.63,
     "q2": 0.83,

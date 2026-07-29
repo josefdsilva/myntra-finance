@@ -693,7 +693,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const benchmark =
     settingsIncome > 0
       ? computeBenchmarkComparison({
-          country: hh?.country ?? "PT",
+          country: hh?.country ?? "",
           adults: Number(hh?.adults ?? 2),
           children: Number(hh?.children ?? 0),
           monthlyIncome: settingsIncome,
@@ -802,8 +802,12 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     })),
     topSpends: spendsForTop.slice(0, 8),
     benchmark,
-    country: (hh?.country ?? "PT").toUpperCase(),
-    countryName: COUNTRY_NAMES[(hh?.country ?? "PT").toUpperCase()] ?? (hh?.country ?? "PT"),
+    // Never fabricate Portugal for an unknown country: leave the code blank (so
+    // no benchmark is invented) and use a neutral country name in the prompt.
+    country: (hh?.country ?? "").toUpperCase(),
+    countryName: hh?.country
+      ? (COUNTRY_NAMES[hh.country.toUpperCase()] ?? hh.country)
+      : "your country",
     essentialsMonthly,
     emergencyFundMonths,
     reserveMonthsOfIncome,

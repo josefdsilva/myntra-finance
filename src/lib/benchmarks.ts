@@ -77,6 +77,27 @@ const CATEGORY_INCOME_GRADIENT: Record<string, [number, number, number, number, 
   other: [0.9, 0.96, 1.0, 1.05, 1.12],
 };
 
+/**
+ * Eurozone-wide market indicators (curated snapshot; refreshed manually until
+ * the auto-fetch pipeline lands). Euribor is a single euro-area rate, so it is
+ * NOT country-specific; euro-area inflation and unemployment are the aggregate
+ * reference we show next to each country's own figure.
+ *
+ * Sources: ECB/EMMI Euribor fixings; Eurostat prc_hicp_manr (inflation) and
+ * une_rt_m (unemployment). `asOf` is the reference period of the freshest input.
+ */
+export const EUROZONE_MACRO = {
+  asOf: "2026-07",
+  euribor3mPct: 2.32,
+  euribor12mPct: 2.69,
+  euroAreaInflationPct: 2.8,
+  euroAreaUnemploymentPct: 6.2,
+} as const;
+
+export function getEurozoneMacro() {
+  return EUROZONE_MACRO;
+}
+
 export function hasBenchmark(country: string | null | undefined): boolean {
   const code = (country ?? "").toUpperCase();
   return !!BENCHMARKS[code];
@@ -221,6 +242,26 @@ export type BenchmarkComparison = {
   excludedCategories: Array<{ category: string; userMonthly: number }>;
   /** Per-category comparison in absolute EUR, sorted by absolute deviation. */
   categories: BenchmarkCategory[];
+  /** HICP factor applied to survey-year expenditure to reach today's money. */
+  priceUplift: number;
+  /** Reference year of the underlying expenditure survey (before uprating). */
+  expenditureSurveyYear: number;
+  /**
+   * Market-wide indicators shown alongside the household comparison: the
+   * household's own country inflation & unemployment, plus eurozone Euribor and
+   * euro-area aggregates for context.
+   */
+  macro: {
+    inflationRatePct: number;
+    inflationRefMonth: string;
+    unemploymentRatePct: number;
+    unemploymentRefMonth: string;
+    asOf: string;
+    euribor3mPct: number;
+    euribor12mPct: number;
+    euroAreaInflationPct: number;
+    euroAreaUnemploymentPct: number;
+  };
 };
 
 /**
@@ -250,7 +291,12 @@ export function computeBenchmarkComparison(params: {
   // Expected spend for a household in this income band, adjusted to THIS
   // household's size. Both figures are per-adult-equivalent internally, then
   // scaled by the household's own equivalence factor.
-  const meanPerAE = bench.avgMonthlyHouseholdExpenditure / bench.avgHouseholdEquivFactor;
+  // Uprate the survey-year expenditure to today's money using cumulative HICP,
+  // so the euro amounts we compare against reflect current prices even though
+  // the household budget survey structure is only refreshed every few years.
+  const uplift = bench.priceUpliftSinceSurvey ?? 1;
+  const meanPerAE =
+    (bench.avgMonthlyHouseholdExpenditure / bench.avgHouseholdEquivFactor) * uplift;
   const qMult =
     (bench.quintileExpenditureMultipliers as Record<string, number>)[`q${quintile}`] ?? 1;
   const expectedMonthlySpend = Math.round(meanPerAE * qMult * factor);
@@ -329,5 +375,18 @@ export function computeBenchmarkComparison(params: {
     matchedMonthlySpend: Math.round(matchedMonthlySpend * 100) / 100,
     excludedCategories,
     categories,
+    priceUplift: uplift,
+    expenditureSurveyYear: bench.expenditureSurveyYear ?? bench.sourceYear,
+    macro: {
+      inflationRatePct: bench.macro.inflationRatePct,
+      inflationRefMonth: bench.macro.inflationRefMonth,
+      unemploymentRatePct: bench.macro.unemploymentRatePct,
+      unemploymentRefMonth: bench.macro.unemploymentRefMonth,
+      asOf: bench.macro.asOf,
+      euribor3mPct: EUROZONE_MACRO.euribor3mPct,
+      euribor12mPct: EUROZONE_MACRO.euribor12mPct,
+      euroAreaInflationPct: EUROZONE_MACRO.euroAreaInflationPct,
+      euroAreaUnemploymentPct: EUROZONE_MACRO.euroAreaUnemploymentPct,
+    },
   };
 }
