@@ -278,11 +278,22 @@ export const fastForward = createServerFn({ method: "POST" })
       events,
     };
 
+    // Long horizons (retirement can be 40y = 480 monthly points × 4 series) make
+    // the payload heavy. Downsample to ~monthly-for-short, ~yearly-for-long while
+    // always keeping the final point exact. Short horizons pass through unchanged.
+    const downsample = <T,>(arr: T[]): T[] => {
+      if (arr.length <= 121) return arr;
+      const step = Math.ceil(arr.length / 120);
+      const out = arr.filter((_, i) => i % step === 0);
+      if (out[out.length - 1] !== arr[arr.length - 1]) out.push(arr[arr.length - 1]);
+      return out;
+    };
+
     const scenarioSeries = projectScenarios(baseInput);
     const keys: ScenarioKey[] = ["expected", "cautious", "optimistic"];
     const scenarios = keys.map((key) => {
-      const series = scenarioSeries[key];
-      return { key, series, at: series[series.length - 1] };
+      const full = scenarioSeries[key];
+      return { key, series: downsample(full), at: full[full.length - 1] };
     });
 
     // Baseline = the expected path with NO what-if events, so the UI can show
@@ -294,7 +305,10 @@ export const fastForward = createServerFn({ method: "POST" })
       ...DEFAULT_SCENARIOS.expected,
       events: [],
     });
-    const baseline = { series: baselineSeries, at: baselineSeries[baselineSeries.length - 1] };
+    const baseline = {
+      series: downsample(baselineSeries),
+      at: baselineSeries[baselineSeries.length - 1],
+    };
 
     const projects = projectProjects(projectsInput, months);
 

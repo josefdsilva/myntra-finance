@@ -1217,6 +1217,13 @@ export const ENTRIES = {
     de: "Neues Monatsgehalt (netto)",
     fr: "Nouveau salaire mensuel (net)",
   },
+  "income.tagSalaryHint": {
+    en: "Tip: mark your main pay as \"Salary\" (edit its type) so payday cycles roll over correctly and retirement/job planning knows which income to replace.",
+    pt: "Dica: marque o seu rendimento principal como \"Salário\" (edite o tipo) para que os ciclos de pagamento avancem corretamente e o planeamento de reforma/emprego saiba que rendimento substituir.",
+    es: "Consejo: marca tu ingreso principal como \"Salario\" (edita su tipo) para que los ciclos de pago avancen bien y la planificación de jubilación/empleo sepa qué ingreso reemplazar.",
+    de: "Tipp: Markiere dein Haupteinkommen als \"Gehalt\" (Typ bearbeiten), damit Zahltags-Zyklen korrekt umschalten und die Ruhestands-/Jobplanung weiß, welches Einkommen zu ersetzen ist.",
+    fr: "Astuce : marquez votre revenu principal comme « Salaire » (modifiez son type) pour que les cycles de paie basculent correctement et que la planification retraite/emploi sache quel revenu remplacer.",
+  },
   "ff.evt.replaces": {
     en: "Replaces which salary?",
     pt: "Substitui que salário?",

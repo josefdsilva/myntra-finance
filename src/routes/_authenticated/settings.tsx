@@ -47,7 +47,7 @@ import {
 import { impliedAnnualRate, scheduleSummary, monthlyRateFromTaeg } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
-import { Plus, Trash2, Mail, Copy, Check, Zap } from "lucide-react";
+import { Plus, Trash2, Mail, Copy, Check, Zap, AlertTriangle } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
 import { StatementImportButton } from "@/components/statement-import-flow";
@@ -807,6 +807,14 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {!isBusiness &&
+          (rows?.length ?? 0) > 0 &&
+          !(rows ?? []).some((r) => r.type === "salary") && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-2.5 text-xs">
+              <AlertTriangle className="size-3.5 mt-0.5 shrink-0 text-amber-600" />
+              <p>{t("income.tagSalaryHint")}</p>
+            </div>
+          )}
         <ul className="divide-y">
           {(rows ?? []).map((r) => (
             <li key={r.id} className="flex items-center justify-between py-2">
