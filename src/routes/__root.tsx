@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import appIcon from "@/assets/app-icon.svg.asset.json";
+import { GlobalLoader } from "@/components/global-loader";
 
 function NotFoundComponent() {
   return (
@@ -192,6 +193,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
+        <GlobalLoader />
         <Outlet />
         <Toaster richColors position="top-right" />
       </I18nProvider>
