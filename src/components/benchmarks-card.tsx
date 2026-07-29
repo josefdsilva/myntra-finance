@@ -6,10 +6,17 @@ import { Info, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { money } from "@/lib/format";
 import {
   computeBenchmarkComparison,
+  computeWealthComparison,
+  computeDebtServiceComparison,
   hasBenchmark,
   supportedBenchmarkCountries,
   type BenchmarkComparison,
+  type WealthComparison,
+  type DebtServiceComparison,
+  type AgeBand,
 } from "@/lib/benchmarks";
+import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
+import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import { useT, type MessageKey } from "@/lib/i18n";
 
 type T = ReturnType<typeof useT>;
@@ -46,7 +53,7 @@ export function BenchmarksCard({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("households")
-        .select("country, adults, children, kind")
+        .select("country, adults, children, kind, age_band")
         .eq("id", householdId)
         .maybeSingle();
       if (error) throw error;
@@ -55,7 +62,42 @@ export function BenchmarksCard({
         adults: number;
         children: number;
         kind: string | null;
+        age_band: string | null;
       } | null;
+    },
+  });
+
+  // Net worth (own definition matches NetWorthCard: assets + project balances -
+  // live debt) and the monthly debt-service load, for the HFCS comparisons.
+  const { data: position } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["benchmark-position", householdId],
+    queryFn: async () => {
+      const [{ data: assets }, { data: buckets }, { data: allocs }, { data: moves }, { data: debts }] =
+        await Promise.all([
+          supabase.from("assets").select("current_value, bucket_id").eq("household_id", householdId),
+          supabase.from("buckets").select("id, initial_balance").eq("household_id", householdId),
+          supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId),
+          supabase.from("account_movements").select("*").eq("household_id", householdId),
+          supabase.from("debts").select("*").eq("household_id", householdId),
+        ]);
+      const assetsTotal = (assets ?? []).reduce((s, a) => s + Number(a.current_value), 0);
+      const balances = bucketBalancesFor(buckets ?? [], allocs ?? [], (moves ?? []) as AccountMovement[]);
+      const linkedBucketIds = new Set(
+        (assets ?? []).map((a) => a.bucket_id).filter((x): x is string => !!x),
+      );
+      const savings = Object.entries(balances).reduce(
+        (s, [id, v]) => (linkedBucketIds.has(id) ? s : s + v),
+        0,
+      );
+      const debtList = ((debts ?? []) as Debt[]).map((d) => debtLiveSchedule(d));
+      const debtTotal = debtList.reduce((s, d) => s + d.remaining, 0);
+      const monthlyDebtService = debtList.reduce((s, d) => s + d.installment, 0);
+      return {
+        netWorth: assetsTotal + savings - debtTotal,
+        monthlyDebtService,
+        hasParts: assetsTotal !== 0 || savings !== 0 || debtTotal !== 0,
+      };
     },
   });
 
@@ -93,6 +135,33 @@ export function BenchmarksCard({
           })
         : null,
     [supported, country, adults, children, monthlyIncome, monthlySpend, spendByCategory],
+  );
+
+  const ageBand = (hh?.age_band ?? null) as AgeBand | null;
+
+  const wealthComp = useMemo(
+    () =>
+      supported && position?.hasParts
+        ? computeWealthComparison({
+            country: country ?? "",
+            userNetWorth: position.netWorth,
+            incomeQuintile: comp?.incomeQuintile ?? null,
+            ageBand,
+          })
+        : null,
+    [supported, position?.hasParts, position?.netWorth, country, comp?.incomeQuintile, ageBand],
+  );
+
+  const debtComp = useMemo(
+    () =>
+      supported && position && position.monthlyDebtService > 0
+        ? computeDebtServiceComparison({
+            country: country ?? "",
+            monthlyDebtService: position.monthlyDebtService,
+            monthlyIncome,
+          })
+        : null,
+    [supported, position, country, monthlyIncome],
   );
 
   // While demographics are loading, render nothing rather than flashing the
@@ -145,6 +214,8 @@ export function BenchmarksCard({
       ? describeSavings(t, comp.savingsRatePct, comp.nationalSavingsRatePct, comp.countryName)
       : null;
   const spendStory = describeSpend(t, comp.monthlySpend, comp.expectedMonthlySpend, bandName);
+  const wealthStory = wealthComp ? describeWealth(t, wealthComp, comp.countryName) : null;
+  const debtStory = debtComp ? describeDebt(t, debtComp) : null;
 
   // Early in a running cycle there's too little spend for a fair comparison, so
   // hold the spend/savings stories and the standouts until the cycle fills in.
@@ -184,6 +255,26 @@ export function BenchmarksCard({
               headline={incomeStory.headline}
               detail={incomeStory.detail}
             />
+
+            {wealthStory && (
+              <StoryTile
+                tone={wealthStory.tone}
+                headline={wealthStory.headline}
+                detail={wealthStory.detail}
+              />
+            )}
+            {wealthComp && wealthComp.ageBand == null && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                {t("benchmarks.wealthAgeHint")}
+              </p>
+            )}
+            {debtStory && (
+              <StoryTile
+                tone={debtStory.tone}
+                headline={debtStory.headline}
+                detail={debtStory.detail}
+              />
+            )}
 
             {!representative ? (
               <StoryTile
@@ -453,6 +544,50 @@ function describeSavings(t: T, userPct: number, nationalPct: number, countryName
  * Spend is compared against the expected total for a household in the same
  * income band AND the same size (both size-adjusted), not a flat national mean.
  */
+function describeWealth(t: T, w: WealthComparison, countryName: string) {
+  const ratio = w.peerMedian > 0 ? w.userNetWorth / w.peerMedian : 0;
+  let headline: string;
+  let tone: Tone;
+  if (w.userNetWorth < 0) {
+    headline = t("benchmarks.wealthNegative");
+    tone = "down";
+  } else if (ratio >= 1.1) {
+    headline = t("benchmarks.wealthAbove", { pct: Math.round((ratio - 1) * 100) });
+    tone = "up";
+  } else if (ratio >= 0.9) {
+    headline = t("benchmarks.wealthAbout");
+    tone = "neutral";
+  } else {
+    headline = t("benchmarks.wealthBelow", { pct: Math.round((1 - ratio) * 100) });
+    tone = "down";
+  }
+  const detail = t("benchmarks.wealthDetail", {
+    user: money(w.userNetWorth),
+    peer: money(w.peerMedian),
+    country: countryName,
+    year: w.sourceYear,
+  });
+  return { tone, headline, detail };
+}
+
+function describeDebt(t: T, d: DebtServiceComparison) {
+  const userPct = Math.round(d.userPct);
+  let tone: Tone;
+  if (d.userPct <= d.medianPct) tone = "up";
+  else if (d.userPct <= d.medianPct + 6) tone = "neutral";
+  else tone = "down";
+  const headline =
+    d.userPct <= d.medianPct
+      ? t("benchmarks.debtBelow", { user: userPct, median: d.medianPct })
+      : t("benchmarks.debtAbove", { user: userPct, median: d.medianPct });
+  const detail = t("benchmarks.debtDetail", {
+    service: money(d.monthlyDebtService),
+    median: d.medianPct,
+    year: d.sourceYear,
+  });
+  return { tone, headline, detail };
+}
+
 function describeSpend(t: T, userSpend: number, expectedSpend: number, bandName: string) {
   const ratio = expectedSpend > 0 ? userSpend / expectedSpend : 1;
   const diff = userSpend - expectedSpend;

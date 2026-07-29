@@ -966,6 +966,152 @@ export const ENTRIES = {
     de: "Lege dein Land in den Einstellungen fest, um deinen Vergleich zu sehen.",
     fr: "Renseignez votre pays dans les Paramètres pour voir votre comparaison.",
   },
+  // Overrides the legacy strings: the old copy hard-coded "INE Portugal" for
+  // every country, and coverage now measures everyday (consumption) spending.
+  "benchmarks.methodologyNote": {
+    en: "Based on public statistics from Eurostat and national statistics institutes. Adjust your country and household size in Settings for a more accurate comparison.",
+    pt: "Baseado em estatísticas públicas do Eurostat e dos institutos nacionais de estatística. Ajuste o seu país e o tamanho do agregado nas Definições para uma comparação mais precisa.",
+    es: "Basado en estadísticas públicas de Eurostat y los institutos nacionales de estadística. Ajusta tu país y el tamaño del hogar en Ajustes para una comparación más precisa.",
+    de: "Basierend auf öffentlichen Statistiken von Eurostat und den nationalen Statistikämtern. Passe dein Land und deine Haushaltsgröße in den Einstellungen an für einen genaueren Vergleich.",
+    fr: "Basé sur des statistiques publiques d'Eurostat et des instituts nationaux de statistique. Ajustez votre pays et la taille de votre foyer dans les Paramètres pour une comparaison plus précise.",
+  },
+  "benchmarks.coverageNote": {
+    en: "Matched {pct}% of your everyday spending to national benchmark categories.",
+    pt: "Foram associados {pct}% das suas despesas do dia a dia às categorias de referência nacionais.",
+    es: "Se asoció el {pct}% de tu gasto cotidiano con las categorías de referencia nacionales.",
+    de: "{pct}% deiner Alltagsausgaben wurden nationalen Vergleichskategorien zugeordnet.",
+    fr: "{pct}% de vos dépenses courantes ont été associées aux catégories de référence nationales.",
+  },
+
+  // Net worth vs similar households (ECB HFCS).
+  "benchmarks.wealthAbove": {
+    en: "Your net worth is about {pct}% above similar households",
+    pt: "O seu património líquido está cerca de {pct}% acima de agregados semelhantes",
+    es: "Tu patrimonio neto está cerca de un {pct}% por encima de hogares similares",
+    de: "Dein Nettovermögen liegt etwa {pct}% über vergleichbaren Haushalten",
+    fr: "Votre patrimoine net est environ {pct}% au-dessus des ménages similaires",
+  },
+  "benchmarks.wealthAbout": {
+    en: "Your net worth is about typical for similar households",
+    pt: "O seu património líquido é próximo do típico de agregados semelhantes",
+    es: "Tu patrimonio neto es parecido al típico de hogares similares",
+    de: "Dein Nettovermögen ist etwa typisch für vergleichbare Haushalte",
+    fr: "Votre patrimoine net est proche de la normale pour des ménages similaires",
+  },
+  "benchmarks.wealthBelow": {
+    en: "Your net worth is about {pct}% below similar households",
+    pt: "O seu património líquido está cerca de {pct}% abaixo de agregados semelhantes",
+    es: "Tu patrimonio neto está cerca de un {pct}% por debajo de hogares similares",
+    de: "Dein Nettovermögen liegt etwa {pct}% unter vergleichbaren Haushalten",
+    fr: "Votre patrimoine net est environ {pct}% en dessous des ménages similaires",
+  },
+  "benchmarks.wealthNegative": {
+    en: "Your net worth is currently negative",
+    pt: "O seu património líquido está atualmente negativo",
+    es: "Tu patrimonio neto es actualmente negativo",
+    de: "Dein Nettovermögen ist derzeit negativ",
+    fr: "Votre patrimoine net est actuellement négatif",
+  },
+  "benchmarks.wealthDetail": {
+    en: "You: {user}. Typical for a similar household in {country}: {peer} (HFCS {year}).",
+    pt: "Você: {user}. Típico de um agregado semelhante em {country}: {peer} (HFCS {year}).",
+    es: "Tú: {user}. Típico de un hogar similar en {country}: {peer} (HFCS {year}).",
+    de: "Du: {user}. Typisch für einen vergleichbaren Haushalt in {country}: {peer} (HFCS {year}).",
+    fr: "Vous : {user}. Typique d'un ménage similaire en {country} : {peer} (HFCS {year}).",
+  },
+  "benchmarks.wealthAgeHint": {
+    en: "Add your age band in Settings to compare against your generation.",
+    pt: "Indique a sua faixa etária nas Definições para comparar com a sua geração.",
+    es: "Añade tu franja de edad en Ajustes para compararte con tu generación.",
+    de: "Gib deine Altersgruppe in den Einstellungen an, um dich mit deiner Generation zu vergleichen.",
+    fr: "Renseignez votre tranche d'âge dans les Paramètres pour vous comparer à votre génération.",
+  },
+  // Debt-service vs peers (ECB HFCS).
+  "benchmarks.debtBelow": {
+    en: "You spend {user}% of income on debt, below the {median}% median",
+    pt: "Gasta {user}% do rendimento em dívida, abaixo da mediana de {median}%",
+    es: "Destinas el {user}% de tus ingresos a deuda, por debajo de la mediana del {median}%",
+    de: "Du gibst {user}% deines Einkommens für Schulden aus, unter dem Median von {median}%",
+    fr: "Vous consacrez {user}% de vos revenus à la dette, sous la médiane de {median}%",
+  },
+  "benchmarks.debtAbove": {
+    en: "You spend {user}% of income on debt, above the {median}% median",
+    pt: "Gasta {user}% do rendimento em dívida, acima da mediana de {median}%",
+    es: "Destinas el {user}% de tus ingresos a deuda, por encima de la mediana del {median}%",
+    de: "Du gibst {user}% deines Einkommens für Schulden aus, über dem Median von {median}%",
+    fr: "Vous consacrez {user}% de vos revenus à la dette, au-dessus de la médiane de {median}%",
+  },
+  "benchmarks.debtDetail": {
+    en: "You put {service}/mo toward debt. The median indebted household here spends about {median}% of income (HFCS {year}).",
+    pt: "Coloca {service}/mês em dívida. O agregado endividado mediano aqui gasta cerca de {median}% do rendimento (HFCS {year}).",
+    es: "Destinas {service}/mes a deuda. El hogar endeudado mediano aquí gasta cerca del {median}% de sus ingresos (HFCS {year}).",
+    de: "Du zahlst {service}/Monat für Schulden. Der mittlere verschuldete Haushalt hier gibt etwa {median}% des Einkommens aus (HFCS {year}).",
+    fr: "Vous consacrez {service}/mois à la dette. Le ménage endetté médian ici y consacre environ {median}% de ses revenus (HFCS {year}).",
+  },
+  // Age band (Settings + onboarding).
+  "hh.ageBand": {
+    en: "Age of main earner",
+    pt: "Idade do principal rendimento",
+    es: "Edad del sustentador principal",
+    de: "Alter des Hauptverdieners",
+    fr: "Âge du principal apporteur de revenu",
+  },
+  "hh.ageBandNone": {
+    en: "Prefer not to say",
+    pt: "Prefiro não dizer",
+    es: "Prefiero no decirlo",
+    de: "Keine Angabe",
+    fr: "Je préfère ne pas répondre",
+  },
+  "hh.ageBandHint": {
+    en: "Optional. Used only to compare your net worth and debt fairly by age.",
+    pt: "Opcional. Usado apenas para comparar de forma justa o seu património e dívida por idade.",
+    es: "Opcional. Solo se usa para comparar de forma justa tu patrimonio y deuda por edad.",
+    de: "Optional. Wird nur genutzt, um Vermögen und Schulden fair nach Alter zu vergleichen.",
+    fr: "Facultatif. Utilisé uniquement pour comparer équitablement votre patrimoine et votre dette selon l'âge.",
+  },
+  "hh.ageBand.under35": {
+    en: "Under 35",
+    pt: "Menos de 35",
+    es: "Menos de 35",
+    de: "Unter 35",
+    fr: "Moins de 35 ans",
+  },
+  "hh.ageBand.35_44": {
+    en: "35 to 44",
+    pt: "35 a 44",
+    es: "35 a 44",
+    de: "35 bis 44",
+    fr: "35 à 44 ans",
+  },
+  "hh.ageBand.45_54": {
+    en: "45 to 54",
+    pt: "45 a 54",
+    es: "45 a 54",
+    de: "45 bis 54",
+    fr: "45 à 54 ans",
+  },
+  "hh.ageBand.55_64": {
+    en: "55 to 64",
+    pt: "55 a 64",
+    es: "55 a 64",
+    de: "55 bis 64",
+    fr: "55 à 64 ans",
+  },
+  "hh.ageBand.65_74": {
+    en: "65 to 74",
+    pt: "65 a 74",
+    es: "65 a 74",
+    de: "65 bis 74",
+    fr: "65 à 74 ans",
+  },
+  "hh.ageBand.75plus": {
+    en: "75 or over",
+    pt: "75 ou mais",
+    es: "75 o más",
+    de: "75 oder älter",
+    fr: "75 ans ou plus",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

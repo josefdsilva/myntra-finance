@@ -33,6 +33,9 @@
     "unemploymentRatePct": 8.2,
     "unemploymentRefMonth": "2026-05"
   },
+  "hfcsYear": 2021,
+  "medianNetWorth": 124000,
+  "medianDebtServicePct": 14,
   "quintileExpenditureMultipliers": {
     "q1": 0.64,
     "q2": 0.84,

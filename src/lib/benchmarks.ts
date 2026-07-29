@@ -313,17 +313,21 @@ export function computeBenchmarkComparison(params: {
   );
 
   // Split the user's spend into benchmarkable vs excluded (non-consumption).
+  // Coverage measures how much of CONSUMPTION spending we could match, so debt,
+  // savings and other non-consumption outflows are kept out of the denominator
+  // entirely — otherwise a big loan payment would make coverage look terrible
+  // even when every everyday category is perfectly categorised.
   const excludedCategories: Array<{ category: string; userMonthly: number }> = [];
-  let totalUserSpend = 0;
+  let consumptionSpend = 0;
   let matchedMonthlySpend = 0;
   for (const [cat, amt] of Object.entries(params.spendByCategory)) {
     const v = Number(amt || 0);
     if (v <= 0) continue;
-    totalUserSpend += v;
     if (NON_CONSUMPTION_CATEGORIES.has(cat)) {
       excludedCategories.push({ category: cat, userMonthly: Math.round(v * 100) / 100 });
       continue;
     }
+    consumptionSpend += v;
     if (shares[cat] != null) matchedMonthlySpend += v;
   }
 
@@ -354,7 +358,7 @@ export function computeBenchmarkComparison(params: {
     .sort((a, b) => Math.abs(b.diffEur) - Math.abs(a.diffEur));
 
   const coveragePct =
-    totalUserSpend > 0 ? Math.round((matchedMonthlySpend / totalUserSpend) * 100) : 0;
+    consumptionSpend > 0 ? Math.round((matchedMonthlySpend / consumptionSpend) * 100) : 0;
 
   return {
     country: bench.country,
@@ -388,5 +392,116 @@ export function computeBenchmarkComparison(params: {
       euroAreaInflationPct: EUROZONE_MACRO.euroAreaInflationPct,
       euroAreaUnemploymentPct: EUROZONE_MACRO.euroAreaUnemploymentPct,
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Net worth & debt comparisons (ECB Household Finance and Consumption Survey)
+// ---------------------------------------------------------------------------
+
+export type AgeBand = "under35" | "35_44" | "45_54" | "55_64" | "65_74" | "75plus";
+
+export const AGE_BANDS: AgeBand[] = ["under35", "35_44", "45_54", "55_64", "65_74", "75plus"];
+
+/**
+ * Median net worth by age of the main earner, expressed relative to the
+ * country's overall median. Wealth is built over a lifetime and peaks around
+ * 55-74, so a fair comparison must age-adjust. Grounded in the HFCS 2021
+ * euro-area net-wealth-by-age profile (median ~€37.5k under 35 rising to
+ * ~€185k at 65-74 against a ~€123.5k overall median), applied to each country.
+ */
+const AGE_WEALTH_GRADIENT: Record<AgeBand, number> = {
+  under35: 0.3,
+  "35_44": 0.67,
+  "45_54": 0.95,
+  "55_64": 1.42,
+  "65_74": 1.5,
+  "75plus": 1.17,
+};
+
+/**
+ * Median net worth by income quintile, relative to the country overall median.
+ * Wealth rises far faster than income (top-quintile households hold several
+ * times the median), per HFCS 2021 net-wealth-by-income-quintile.
+ */
+const INCOME_WEALTH_GRADIENT: [number, number, number, number, number] = [
+  0.1, 0.55, 0.97, 1.55, 3.0,
+];
+
+export type WealthComparison = {
+  /** Country overall median net worth (EUR). */
+  countryMedian: number;
+  /** Median for a same-country, same-income-band, same-age-band household. */
+  peerMedian: number;
+  userNetWorth: number;
+  /** user / peerMedian. */
+  ratio: number;
+  incomeQuintile: 1 | 2 | 3 | 4 | 5 | null;
+  ageBand: AgeBand | null;
+  /** Survey wave year the median comes from. */
+  sourceYear: number;
+};
+
+/**
+ * Compare a household's net worth to the country median, adjusted for income
+ * band and (optionally) the age band of the main earner. When income band or
+ * age are unknown we simply don't apply that adjustment.
+ */
+export function computeWealthComparison(params: {
+  country: string;
+  userNetWorth: number;
+  incomeQuintile?: 1 | 2 | 3 | 4 | 5 | null;
+  ageBand?: AgeBand | null;
+}): WealthComparison | null {
+  const bench = getCountryBenchmark(params.country);
+  if (!bench) return null;
+  const base = bench.medianNetWorth;
+  const iMult = params.incomeQuintile ? INCOME_WEALTH_GRADIENT[params.incomeQuintile - 1] : 1;
+  const aMult = params.ageBand ? AGE_WEALTH_GRADIENT[params.ageBand] : 1;
+  const peerMedian = Math.round(base * iMult * aMult);
+  return {
+    countryMedian: base,
+    peerMedian,
+    userNetWorth: Math.round(params.userNetWorth),
+    ratio: peerMedian > 0 ? params.userNetWorth / peerMedian : 0,
+    incomeQuintile: params.incomeQuintile ?? null,
+    ageBand: params.ageBand ?? null,
+    sourceYear: bench.hfcsYear,
+  };
+}
+
+export type DebtServiceComparison = {
+  /** User's monthly debt payments as a share of monthly income (%). */
+  userPct: number;
+  /** Country median debt-service ratio for indebted households (%). */
+  medianPct: number;
+  monthlyDebtService: number;
+  monthlyIncome: number;
+  sourceYear: number;
+};
+
+/**
+ * Compare the share of income a household spends servicing debt to the country
+ * median for indebted households. Debt-service (payments ÷ income) is more
+ * comparable and actionable than absolute debt-to-income, and matches what the
+ * app already knows (monthly installments vs income). Returns null when there
+ * is no income to divide by.
+ */
+export function computeDebtServiceComparison(params: {
+  country: string;
+  monthlyDebtService: number;
+  monthlyIncome: number;
+}): DebtServiceComparison | null {
+  const bench = getCountryBenchmark(params.country);
+  if (!bench) return null;
+  if (params.monthlyIncome <= 0) return null;
+  const userPct =
+    Math.round((params.monthlyDebtService / params.monthlyIncome) * 1000) / 10;
+  return {
+    userPct,
+    medianPct: bench.medianDebtServicePct,
+    monthlyDebtService: Math.round(params.monthlyDebtService * 100) / 100,
+    monthlyIncome: params.monthlyIncome,
+    sourceYear: bench.hfcsYear,
   };
 }

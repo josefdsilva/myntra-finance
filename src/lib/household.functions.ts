@@ -200,6 +200,10 @@ export const updateHousehold = createServerFn({ method: "POST" })
         currency: z.enum(["EUR", "USD", "GBP"]).optional(),
         adults: z.number().int().min(1).max(20).optional(),
         children: z.number().int().min(0).max(20).optional(),
+        age_band: z
+          .enum(["under35", "35_44", "45_54", "55_64", "65_74", "75plus"])
+          .nullable()
+          .optional(),
         employees: z.number().int().min(0).max(100000).optional(),
         kind: z.enum(["personal", "business"]).optional(),
         advisor_email: z.string().max(200).nullable().optional(),

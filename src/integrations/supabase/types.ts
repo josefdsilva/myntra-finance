@@ -1149,6 +1149,7 @@ export type Database = {
         Row: {
           adults: number
           advisor_email: string | null
+          age_band: string | null
           baseline_budget: number
           children: number
           country: string
@@ -1171,6 +1172,7 @@ export type Database = {
         Insert: {
           adults?: number
           advisor_email?: string | null
+          age_band?: string | null
           baseline_budget?: number
           children?: number
           country?: string
@@ -1193,6 +1195,7 @@ export type Database = {
         Update: {
           adults?: number
           advisor_email?: string | null
+          age_band?: string | null
           baseline_budget?: number
           children?: number
           country?: string

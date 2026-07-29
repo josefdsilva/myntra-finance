@@ -55,6 +55,7 @@ import { LanguageSettings } from "@/components/language-settings";
 import { CategoryManager } from "@/components/category-manager";
 import { useCategoryNames } from "@/hooks/use-categories";
 import { useT, type MessageKey } from "@/lib/i18n";
+import { AGE_BANDS } from "@/lib/benchmarks";
 import {
   defaultIntentForCategory,
   resolveIntent,
@@ -288,6 +289,7 @@ function HouseholdSection({
     country?: string | null;
     adults?: number | null;
     children?: number | null;
+    age_band?: string | null;
     employees?: number | null;
     currency?: string | null;
     kind?: string | null;
@@ -307,6 +309,7 @@ function HouseholdSection({
   const [country, setCountry] = useState((household.country ?? "PT").toUpperCase());
   const [adults, setAdults] = useState(Number(household.adults ?? 2));
   const [children, setChildren] = useState(Number(household.children ?? 0));
+  const [ageBand, setAgeBand] = useState<string>(household.age_band ?? "");
   const [employees, setEmployees] = useState(Number(household.employees ?? 0));
   const [currency, setCurrency] = useState<"EUR" | "USD" | "GBP">(
     (String(household.currency ?? "EUR").toUpperCase() as "EUR" | "USD" | "GBP") ?? "EUR",
@@ -471,6 +474,14 @@ function HouseholdSection({
             : {
                 adults: Math.max(1, Math.round(adults)),
                 children: Math.max(0, Math.round(children)),
+                age_band: (ageBand || null) as
+                  | "under35"
+                  | "35_44"
+                  | "45_54"
+                  | "55_64"
+                  | "65_74"
+                  | "75plus"
+                  | null,
               }),
         },
       });
@@ -682,6 +693,22 @@ function HouseholdSection({
                     value={children}
                     onChange={(e) => setChildren(Number(e.target.value))}
                   />
+                </div>
+                <div>
+                  <Label>{t("hh.ageBand")}</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={ageBand}
+                    onChange={(e) => setAgeBand(e.target.value)}
+                  >
+                    <option value="">{t("hh.ageBandNone")}</option>
+                    {AGE_BANDS.map((b) => (
+                      <option key={b} value={b}>
+                        {t(`hh.ageBand.${b}` as MessageKey)}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">{t("hh.ageBandHint")}</p>
                 </div>
               </>
             )}
