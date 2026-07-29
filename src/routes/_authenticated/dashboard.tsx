@@ -386,7 +386,7 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">{cycleLabel}</p>
           <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
         </div>
-        {householdId && <PurchaseCheckButton />}
+        {householdId && <PurchaseCheckButton isBusiness={hh?.household?.kind === "business"} />}
       </header>
 
       {!isLoading && onboardingIncomplete ? (
@@ -667,6 +667,7 @@ function Dashboard() {
       {householdId && (
         <DashboardTips
           householdId={householdId}
+          isBusiness={hh?.household?.kind === "business"}
           baseline={baseline}
           income={income}
           surplus={surplus}

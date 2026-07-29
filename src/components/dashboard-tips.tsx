@@ -16,7 +16,7 @@ import { money } from "@/lib/format";
 import { buildForecast, monthKey, type Plan } from "@/lib/plan";
 import { liquidityForKind } from "@/lib/assets.functions";
 import { resolveIntent, summariseIntent } from "@/lib/intent";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
 import {
   AlertTriangle,
   Info,
@@ -42,6 +42,7 @@ type Tip = {
 
 type Props = {
   householdId: string;
+  isBusiness?: boolean;
   baseline: number;
   income: number;
   surplus: number;
@@ -58,6 +59,7 @@ const monthLabel = (ym: string) =>
 
 export function DashboardTips({
   householdId,
+  isBusiness = false,
   baseline,
   income,
   surplus,
@@ -67,6 +69,11 @@ export function DashboardTips({
   avgDaily7,
 }: Props) {
   const t = useT();
+  // For business spaces, household-framed tips (surplus, savings rate, income
+  // concentration, emergency fund, plan shortfall) swap to a `.biz` copy variant
+  // that speaks in cashflow/runway/revenue terms instead.
+  const bt = (key: string, vars?: Record<string, string | number>) =>
+    t((isBusiness ? `${key}.biz` : key) as MessageKey, vars);
   const qc = useQueryClient();
   const now = new Date();
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -235,12 +242,12 @@ export function DashboardTips({
     tips.push({
       id: "single-income-source",
       severity: stable ? "info" : "warning",
-      title: t("tips.singleIncome.title"),
-      detail: t("tips.singleIncome.detail", {
-        label: only.label ?? t("tips.singleIncome.fallbackLabel"),
+      title: bt("tips.singleIncome.title"),
+      detail: bt("tips.singleIncome.detail", {
+        label: only.label ?? bt("tips.singleIncome.fallbackLabel"),
         income: money(income),
       }),
-      chatPrompt: t("tips.singleIncome.chat"),
+      chatPrompt: bt("tips.singleIncome.chat"),
     });
   } else if (data.incomes.length > 1 && income > 0) {
     const sorted = [...data.incomes].sort(
@@ -251,13 +258,13 @@ export function DashboardTips({
       tips.push({
         id: "income-concentration",
         severity: "info",
-        title: t("tips.incomeConcentration.title"),
-        detail: t("tips.incomeConcentration.detail", {
-          label: sorted[0].label ?? t("tips.incomeConcentration.fallbackLabel"),
+        title: bt("tips.incomeConcentration.title"),
+        detail: bt("tips.incomeConcentration.detail", {
+          label: sorted[0].label ?? bt("tips.incomeConcentration.fallbackLabel"),
           pct: Math.round((top / income) * 100),
           remaining: money(income - top),
         }),
-        chatPrompt: t("tips.incomeConcentration.chat"),
+        chatPrompt: bt("tips.incomeConcentration.chat"),
       });
     }
   }
@@ -269,22 +276,22 @@ export function DashboardTips({
       tips.push({
         id: "low-savings-rate",
         severity: "warning",
-        title: t("tips.lowSavingsRate.title", { pct: Math.round(rate * 100) }),
-        detail: t("tips.lowSavingsRate.detail", { surplus: money(surplus), income: money(income) }),
-        chatPrompt: t("tips.lowSavingsRate.chat", { pct: Math.round(rate * 100) }),
+        title: bt("tips.lowSavingsRate.title", { pct: Math.round(rate * 100) }),
+        detail: bt("tips.lowSavingsRate.detail", { surplus: money(surplus), income: money(income) }),
+        chatPrompt: bt("tips.lowSavingsRate.chat", { pct: Math.round(rate * 100) }),
       });
     }
   } else if (income > 0 && surplus <= 0) {
     tips.push({
       id: "negative-surplus",
       severity: "critical",
-      title: t("tips.negativeSurplus.title"),
-      detail: t("tips.negativeSurplus.detail", {
+      title: bt("tips.negativeSurplus.title"),
+      detail: bt("tips.negativeSurplus.detail", {
         baseline: money(baseline),
         income: money(income),
       }),
       cta: { label: t("tips.cta.reviewBaseline"), to: "/settings" },
-      chatPrompt: t("tips.negativeSurplus.chat"),
+      chatPrompt: bt("tips.negativeSurplus.chat"),
     });
   }
 
@@ -464,13 +471,13 @@ export function DashboardTips({
       tips.push({
         id: "no-emergency-bucket",
         severity: "info",
-        title: t("tips.noEmergency.title"),
-        detail: t("tips.noEmergency.detail", {
+        title: bt("tips.noEmergency.title"),
+        detail: bt("tips.noEmergency.detail", {
           low: money(baseline * 3),
           high: money(baseline * 6),
         }),
         cta: { label: t("tips.cta.manageBuckets"), to: "/settings" },
-        chatPrompt: t("tips.noEmergency.chat"),
+        chatPrompt: bt("tips.noEmergency.chat"),
       });
     }
   }
@@ -589,10 +596,10 @@ export function DashboardTips({
       tips.push({
         id: `plan-shortfall-${firstShort.ym}`,
         severity: "warning",
-        title: t("tips.planShortfall.title", { month: monthLabel(firstShort.ym) }),
-        detail: t("tips.planShortfall.detail", { amount: money(-firstShort.leftover) }),
+        title: bt("tips.planShortfall.title", { month: monthLabel(firstShort.ym) }),
+        detail: bt("tips.planShortfall.detail", { amount: money(-firstShort.leftover) }),
         cta: { label: t("tips.cta.openPlan"), to: "/plan" },
-        chatPrompt: t("tips.planShortfall.chat", { month: monthLabel(firstShort.ym) }),
+        chatPrompt: bt("tips.planShortfall.chat", { month: monthLabel(firstShort.ym) }),
       });
     }
     // A big unfunded one-off within 3 months that one month's leftover can't absorb.

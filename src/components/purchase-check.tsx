@@ -20,7 +20,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { money } from "@/lib/format";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
 
 type PurchaseLevel = "essential" | "important" | "niceToHave" | "treat";
 type PayType = "oneOff" | "financed";
@@ -35,11 +35,17 @@ type PayType = "oneOff" | "financed";
 export function PurchaseCheckButton({
   variant = "outline",
   className,
+  isBusiness = false,
 }: {
   variant?: "outline" | "default" | "secondary" | "ghost";
   className?: string;
+  isBusiness?: boolean;
 }) {
   const t = useT();
+  // Business spaces reason about cash impact and runway, not goals/safety net,
+  // so the copy and the coach prompt swap to a `.biz` variant when present.
+  const tb = (key: string, vars?: Record<string, string | number>) =>
+    t((isBusiness ? `${key}.biz` : key) as MessageKey, vars);
   const [open, setOpen] = useState(false);
   const [what, setWhat] = useState("");
   const [price, setPrice] = useState("");
@@ -62,7 +68,7 @@ export function PurchaseCheckButton({
 
   function ask() {
     if (!valid) return;
-    const levelLabel = t(`purchaseCheck.level.${level}`);
+    const levelLabel = tb(`purchaseCheck.level.${level}`);
     const monthlyNum = parseFloat(monthly.replace(",", "."));
     const termNum = parseInt(term, 10);
     const financed =
@@ -79,13 +85,13 @@ export function PurchaseCheckButton({
 
     const prompt =
       pay === "financed"
-        ? t("purchaseCheck.promptFinanced", {
+        ? tb("purchaseCheck.promptFinanced", {
             what: what.trim(),
             price: money(priceNum),
             terms: financed ?? "",
             level: levelLabel,
           })
-        : t("purchaseCheck.promptOneOff", {
+        : tb("purchaseCheck.promptOneOff", {
             what: what.trim(),
             price: money(priceNum),
             level: levelLabel,
@@ -106,8 +112,8 @@ export function PurchaseCheckButton({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("purchaseCheck.title")}</DialogTitle>
-          <DialogDescription>{t("purchaseCheck.subtitle")}</DialogDescription>
+          <DialogTitle>{tb("purchaseCheck.title")}</DialogTitle>
+          <DialogDescription>{tb("purchaseCheck.subtitle")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -118,7 +124,7 @@ export function PurchaseCheckButton({
               autoFocus
               value={what}
               onChange={(e) => setWhat(e.target.value)}
-              placeholder={t("purchaseCheck.whatPlaceholder")}
+              placeholder={tb("purchaseCheck.whatPlaceholder")}
             />
           </div>
 
@@ -134,16 +140,16 @@ export function PurchaseCheckButton({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>{t("purchaseCheck.levelLabel")}</Label>
+              <Label>{tb("purchaseCheck.levelLabel")}</Label>
               <Select value={level} onValueChange={(v) => setLevel(v as PurchaseLevel)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="essential">{t("purchaseCheck.level.essential")}</SelectItem>
-                  <SelectItem value="important">{t("purchaseCheck.level.important")}</SelectItem>
-                  <SelectItem value="niceToHave">{t("purchaseCheck.level.niceToHave")}</SelectItem>
-                  <SelectItem value="treat">{t("purchaseCheck.level.treat")}</SelectItem>
+                  <SelectItem value="essential">{tb("purchaseCheck.level.essential")}</SelectItem>
+                  <SelectItem value="important">{tb("purchaseCheck.level.important")}</SelectItem>
+                  <SelectItem value="niceToHave">{tb("purchaseCheck.level.niceToHave")}</SelectItem>
+                  <SelectItem value="treat">{tb("purchaseCheck.level.treat")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
