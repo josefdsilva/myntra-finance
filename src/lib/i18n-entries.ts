@@ -735,6 +735,27 @@ export const ENTRIES = {
     de: "Meine Prognose zeigt, dass die Liquidität im {month} knapp wird. Wie bereite ich mich vor — welche Abflüsse verschieben oder welche Forderungen eintreiben?",
     fr: "Ma prévision montre une trésorerie insuffisante en {month}. Comment m'y préparer — quelles sorties déplacer ou quels encaissements relancer ?",
   },
+  "exp.subtitle.salary": {
+    en: "Grouped by pay cycle — from one payday to the next.",
+    pt: "Agrupado por ciclo de pagamento — de um dia de pagamento ao seguinte.",
+    es: "Agrupado por ciclo de cobro — de un día de pago al siguiente.",
+    de: "Gruppiert nach Zahlungszyklus — von einem Zahltag zum nächsten.",
+    fr: "Regroupé par cycle de paie — d'une paie à la suivante.",
+  },
+  "exp.subtitle.time": {
+    en: "Grouped by your budgeting cycle — from the start day you chose, not the calendar month.",
+    pt: "Agrupado pelo seu ciclo de orçamento — a partir do dia que escolheu, não o mês de calendário.",
+    es: "Agrupado por tu ciclo de presupuesto — desde el día que elegiste, no el mes natural.",
+    de: "Gruppiert nach deinem Budgetzyklus — ab dem von dir gewählten Starttag, nicht dem Kalendermonat.",
+    fr: "Regroupé selon votre cycle budgétaire — à partir du jour choisi, pas le mois civil.",
+  },
+  "exp.subtitle.calendar": {
+    en: "Grouped by calendar month.",
+    pt: "Agrupado por mês de calendário.",
+    es: "Agrupado por mes natural.",
+    de: "Gruppiert nach Kalendermonat.",
+    fr: "Regroupé par mois civil.",
+  },
   "assets.depreciation": {
     en: "Depreciation",
     pt: "Depreciação",

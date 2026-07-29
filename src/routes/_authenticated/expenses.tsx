@@ -219,7 +219,15 @@ function ExpensesPage() {
     <div className={pageShellClass("5xl")}>
       <header>
         <h1 className="text-3xl font-display">{t("exp.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("exp.subtitle")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t(
+            cycle?.source === "time"
+              ? "exp.subtitle.time"
+              : cycle?.source === "calendar"
+                ? "exp.subtitle.calendar"
+                : "exp.subtitle.salary",
+          )}
+        </p>
       </header>
 
       {householdId && (
