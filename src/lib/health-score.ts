@@ -37,7 +37,18 @@ export type ScoreInputs = {
 };
 
 export type SubScore = {
-  key: "savings" | "emergency" | "debt" | "budget" | "networth";
+  key:
+    | "savings"
+    | "emergency"
+    | "debt"
+    | "budget"
+    | "networth"
+    // Business pillars
+    | "cashflow"
+    | "runway"
+    | "diversification"
+    | "productivity"
+    | "equity";
   value: number;
 };
 
@@ -48,7 +59,15 @@ export type Badge =
   | "budget_hero"
   | "investing"
   | "net_worth_positive"
-  | "getting_started";
+  | "getting_started"
+  // Business badges
+  | "fcf_positive"
+  | "strong_runway"
+  | "diversified"
+  | "productive"
+  | "low_leverage"
+  | "equity_positive"
+  | "active";
 
 export type HealthResult = {
   overall: number;
@@ -170,6 +189,144 @@ export function computeHealth(input: ScoreInputs): HealthResult {
     badges,
     monthsOfEmergency: Math.round(monthsOfEmergency * 10) / 10,
     savingsRate: Math.round(savedRate * 100) / 100,
+    debtRatio: Math.round(debtRatio * 100) / 100,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Business health — a different scorecard for company spaces
+// ---------------------------------------------------------------------------
+// Companies are judged on the things that make a business durable rather than a
+// household's savings discipline: does it throw off free cash flow, does it hold
+// a runway, is its revenue diversified (many sources / many clients), is it
+// productive per head, is it lightly leveraged, and does it hold positive equity.
+// Everything stays ratio-based so the snapshot is still safe to share.
+
+export type BusinessScoreInputs = {
+  /** Monthly revenue (recurring income). */
+  revenueMonthly: number;
+  /** Monthly operating cash flow = revenue − running costs (fixed + variable + debt). */
+  operatingCashFlow: number;
+  /** Accessible cash reserve (project balances + quickly-sellable assets). */
+  reserve: number;
+  /** Total monthly outgoings the reserve has to cover. */
+  monthlyOutgoings: number;
+  /** Monthly debt servicing. */
+  debtMonthly: number;
+  /** Equity = assets + reserves − debt owed. */
+  netWorth: number;
+  hasNetWorthData: boolean;
+  /** Monthly amounts of each income source (to gauge concentration). */
+  incomeSources: number[];
+  /** Distinct payers/clients seen in receipts this cycle. */
+  distinctClients: number;
+  /** Number of employees (0 = solo/owner-run). */
+  employees: number;
+  /** Whether the business tracks any projects/reserves. */
+  hasProjects: boolean;
+  /** Transactions logged this cycle — a liveliness signal. */
+  activityCount: number;
+};
+
+/** Effective number of income streams via the inverse Herfindahl index. */
+function effectiveSources(amounts: number[]): number {
+  const pos = amounts.filter((a) => a > 0);
+  const total = pos.reduce((s, a) => s + a, 0);
+  if (total <= 0) return 0;
+  const hhi = pos.reduce((s, a) => s + (a / total) ** 2, 0);
+  return hhi > 0 ? 1 / hhi : 0;
+}
+
+export function computeBusinessHealth(input: BusinessScoreInputs): HealthResult {
+  const {
+    revenueMonthly,
+    operatingCashFlow,
+    reserve,
+    monthlyOutgoings,
+    debtMonthly,
+    netWorth,
+    hasNetWorthData,
+    incomeSources,
+    distinctClients,
+    employees,
+    hasProjects,
+    activityCount,
+  } = input;
+
+  // --- Free cash flow margin. 25% margin = 100; negative = 0 (burning cash). ---
+  const fcfMargin = revenueMonthly > 0 ? operatingCashFlow / revenueMonthly : 0;
+  const cashflow = clamp(100 * Math.sqrt(Math.min(1, Math.max(0, fcfMargin) / 0.25)));
+
+  // --- Runway: months of outgoings the reserve covers. 6 months = 100. --------
+  const outgoings = Math.max(1, monthlyOutgoings);
+  const runwayMonths = reserve / outgoings;
+  const runway = clamp(100 * Math.sqrt(Math.min(1, runwayMonths / 6)));
+
+  // --- Debt burden: debt service vs revenue. 0% = 100, 40% = 0. ---------------
+  const debtRatio = revenueMonthly > 0 ? debtMonthly / revenueMonthly : 0;
+  const debt = clamp(100 - debtRatio * 250);
+
+  // --- Diversification: balanced income streams + a spread of clients. --------
+  // Concentrated revenue (one client / one stream) is the classic small-business
+  // risk, so this pillar rewards spreading it out.
+  const effN = effectiveSources(incomeSources);
+  const sourcesScore = 100 * Math.sqrt(Math.min(1, Math.max(0, effN - 1) / 3)); // 1→0, 4+→100
+  const clientsScore = 100 * Math.sqrt(Math.min(1, distinctClients / 5)); // 5+ clients → 100
+  const diversification = clamp(0.6 * sourcesScore + 0.4 * clientsScore);
+
+  // --- Productivity: annual revenue per head. ~€100k/employee ≈ strong. --------
+  // Sector-dependent, so it's a gentle encouraging curve, not a hard benchmark.
+  const heads = Math.max(1, employees || 0);
+  const revenuePerEmployeeAnnual = (revenueMonthly * 12) / heads;
+  const productivity = clamp(100 * Math.sqrt(Math.min(1, revenuePerEmployeeAnnual / 100_000)));
+
+  // --- Equity: net worth as a multiple of annual revenue (same shape as HH). --
+  const annualRevenue = Math.max(1, revenueMonthly * 12);
+  const nwMult = netWorth / annualRevenue;
+  let equityScore: number;
+  if (nwMult >= 6) equityScore = 100;
+  else if (nwMult >= 3) equityScore = 85 + 5 * (nwMult - 3);
+  else if (nwMult >= 1) equityScore = 60 + 12.5 * (nwMult - 1);
+  else if (nwMult >= 0) equityScore = 30 + 30 * nwMult;
+  else if (nwMult > -1) equityScore = 30 * (1 + nwMult);
+  else equityScore = 0;
+  equityScore = clamp(equityScore);
+  const equityScored = hasNetWorthData;
+
+  const scores: SubScore[] = [
+    { key: "cashflow", value: Math.round(cashflow) },
+    { key: "runway", value: Math.round(runway) },
+    { key: "diversification", value: Math.round(diversification) },
+    { key: "productivity", value: Math.round(productivity) },
+    { key: "debt", value: Math.round(debt) },
+  ];
+  if (equityScored) scores.push({ key: "equity", value: Math.round(equityScore) });
+
+  // Free cash flow is the heart of a business, so it carries the most weight;
+  // the overall still leans on the weakest pillar so one soft spot shows.
+  const agg = [cashflow, runway, diversification, productivity, debt, ...(equityScored ? [equityScore] : [])];
+  const mean = agg.reduce((s, v) => s + v, 0) / agg.length;
+  const weakest = Math.min(...agg);
+  // Extra weight on cash flow — a profitable, cash-generative company scores well
+  // even if a secondary pillar lags.
+  const overall = clamp(Math.round(0.5 * mean + 0.3 * cashflow + 0.2 * weakest));
+
+  const badges: Badge[] = [];
+  if (fcfMargin > 0) badges.push("fcf_positive");
+  if (runwayMonths >= 3) badges.push("strong_runway");
+  if (diversification >= 60) badges.push("diversified");
+  if (productivity >= 60) badges.push("productive");
+  if (debtRatio < 0.2) badges.push("low_leverage");
+  if (netWorth > 0) badges.push("equity_positive");
+  if (hasProjects && activityCount > 0) badges.push("active");
+  if (badges.length === 0) badges.push("getting_started");
+
+  return {
+    overall,
+    scores,
+    badges,
+    monthsOfEmergency: Math.round(runwayMonths * 10) / 10,
+    savingsRate: Math.round(Math.max(0, fcfMargin) * 100) / 100,
     debtRatio: Math.round(debtRatio * 100) / 100,
   };
 }

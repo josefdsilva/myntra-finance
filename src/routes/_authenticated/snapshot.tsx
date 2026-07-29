@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import { Download, Share2, Sparkles, ShieldCheck, TrendingUp, Landmark, PiggyBank, Target, Gem } from "lucide-react";
+import { Download, Share2, Sparkles, ShieldCheck, TrendingUp, Landmark, PiggyBank, Target, Gem, Users, Gauge, Layers, Activity } from "lucide-react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,7 @@ import {
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
-import { computeHealth, type Badge as BadgeKind } from "@/lib/health-score";
+import { computeHealth, computeBusinessHealth, type Badge as BadgeKind } from "@/lib/health-score";
 import { pageShellClass } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -66,7 +66,7 @@ function SnapshotPage() {
         supabase.from("account_movements").select("*").eq("household_id", householdId!),
         supabase
           .from("expenses")
-          .select("amount, kind, is_salary")
+          .select("amount, kind, is_salary, merchant")
           .eq("household_id", householdId!)
           .gte("occurred_at", cycle.start.toISOString())
           .lt("occurred_at", cycle.end.toISOString()),
@@ -152,6 +152,24 @@ function SnapshotPage() {
       const netWorth = assetsTotal + bucketsTotal - debtRemaining;
       const hasNetWorthData = assetsTotal > 0 || bucketsTotal > 0 || debtRemaining > 0;
 
+      // --- Business indicators ------------------------------------------------
+      // Revenue diversification: the monthly amount of each income stream, plus
+      // the distinct payers/clients seen in this cycle's receipts.
+      const incomeSources = incomes.map((r) => Number(r.monthly_amount)).filter((n) => n > 0);
+      const distinctClients = new Set(
+        (expenses ?? [])
+          .filter((r) => r.kind === "income")
+          .map((r) => (r.merchant ?? "").trim().toLowerCase())
+          .filter((m) => m.length > 0),
+      ).size;
+      const employees = Number(hh?.household?.employees ?? 0);
+      const hasProjects = buckets.length > 0;
+      const activityCount = (expenses ?? []).length;
+      const monthlyOutgoings = fixedTotal + variablePool;
+      // Operating cash flow ≈ revenue − all running costs (fixed + debt + everyday).
+      const operatingCashFlow = income - monthlyOutgoings;
+      const reserve = bucketsTotal + Math.max(0, liquidAssets);
+
       return {
         income,
         savedThisCycle,
@@ -166,11 +184,40 @@ function SnapshotPage() {
         variablePool,
         variableSpent,
         cycleProgress,
+        // Business
+        incomeSources,
+        distinctClients,
+        employees,
+        hasProjects,
+        activityCount,
+        monthlyOutgoings,
+        operatingCashFlow,
+        reserve,
       };
     },
   });
 
-  const health = useMemo(() => (data ? computeHealth(data) : null), [data]);
+  const isBusiness = hh?.household?.kind === "business";
+  const health = useMemo(() => {
+    if (!data) return null;
+    if (isBusiness) {
+      return computeBusinessHealth({
+        revenueMonthly: data.income,
+        operatingCashFlow: data.operatingCashFlow,
+        reserve: data.reserve,
+        monthlyOutgoings: data.monthlyOutgoings,
+        debtMonthly: data.debtMonthly,
+        netWorth: data.netWorth,
+        hasNetWorthData: data.hasNetWorthData,
+        incomeSources: data.incomeSources,
+        distinctClients: data.distinctClients,
+        employees: data.employees,
+        hasProjects: data.hasProjects,
+        activityCount: data.activityCount,
+      });
+    }
+    return computeHealth(data);
+  }, [data, isBusiness]);
   const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const setupIncomplete = !data || data.income === 0;
@@ -187,7 +234,7 @@ function SnapshotPage() {
       const dataUrl = await toPng(cardRef.current, {
         pixelRatio: 2,
         cacheBust: true,
-        backgroundColor: "#0f172a",
+        backgroundColor: isBusiness ? "#0a0a0a" : "#0f172a",
       });
       const res = await fetch(dataUrl);
       return await res.blob();
@@ -269,6 +316,7 @@ function SnapshotPage() {
                   scores={health.scores}
                   badges={health.badges}
                   monthLabel={monthLabel}
+                  isBusiness={isBusiness}
                   t={t as unknown as (key: string, vars?: Record<string, string | number>) => string}
                 />
               )}
@@ -282,6 +330,10 @@ function SnapshotPage() {
   );
 }
 
+// Premium (gold/emerald) tone used for the business snapshot's badges so the
+// whole card reads more refined than the household rainbow.
+const PREMIUM_TONE = "bg-amber-300/10 text-amber-50 ring-amber-300/30";
+
 const BADGE_META: Record<
   BadgeKind,
   { icon: typeof Sparkles; tone: string }
@@ -293,6 +345,14 @@ const BADGE_META: Record<
   investing: { icon: TrendingUp, tone: "bg-violet-500/20 text-violet-100 ring-violet-400/40" },
   net_worth_positive: { icon: Gem, tone: "bg-teal-500/20 text-teal-100 ring-teal-400/40" },
   getting_started: { icon: Sparkles, tone: "bg-slate-500/20 text-slate-100 ring-slate-400/40" },
+  // Business badges — premium tone.
+  fcf_positive: { icon: TrendingUp, tone: PREMIUM_TONE },
+  strong_runway: { icon: ShieldCheck, tone: PREMIUM_TONE },
+  diversified: { icon: Layers, tone: PREMIUM_TONE },
+  productive: { icon: Gauge, tone: PREMIUM_TONE },
+  low_leverage: { icon: Landmark, tone: PREMIUM_TONE },
+  equity_positive: { icon: Gem, tone: PREMIUM_TONE },
+  active: { icon: Activity, tone: PREMIUM_TONE },
 };
 
 const SCORE_LABELS: Record<string, string> = {
@@ -301,6 +361,12 @@ const SCORE_LABELS: Record<string, string> = {
   debt: "snapshot.score.debt",
   networth: "snapshot.score.networth",
   budget: "snapshot.score.budget",
+  // Business pillars
+  cashflow: "snapshot.score.cashflow",
+  runway: "snapshot.score.runway",
+  diversification: "snapshot.score.diversification",
+  productivity: "snapshot.score.productivity",
+  equity: "snapshot.score.equity",
 };
 
 type CardProps = {
@@ -308,8 +374,18 @@ type CardProps = {
   scores: { key: string; value: number }[];
   badges: BadgeKind[];
   monthLabel: string;
+  isBusiness?: boolean;
   t: (key: string, vars?: Record<string, string | number>) => string;
 };
+
+// Score → colour. Households use a plain traffic-light scale; businesses get a
+// metallic gold/bronze scale so the whole card reads premium.
+function scoreColor(v: number, isBusiness: boolean): string {
+  if (isBusiness) {
+    return v >= 80 ? "#e8c874" : v >= 60 ? "#cdae6b" : v >= 40 ? "#b08d57" : "#c77b6b";
+  }
+  return v >= 80 ? "#34d399" : v >= 60 ? "#facc15" : v >= 40 ? "#fb923c" : "#f87171";
+}
 
 const SnapshotCard = ({
   ref,
@@ -317,27 +393,35 @@ const SnapshotCard = ({
   scores,
   badges,
   monthLabel,
+  isBusiness = false,
   t,
 }: CardProps & { ref: React.Ref<HTMLDivElement> }) => {
-  const ringColor =
-    overall >= 80 ? "#34d399" : overall >= 60 ? "#facc15" : overall >= 40 ? "#fb923c" : "#f87171";
-
+  const ringColor = scoreColor(overall, isBusiness);
+  // Premium: deep charcoal with champagne-gold and emerald light sources.
+  const background = isBusiness
+    ? "radial-gradient(circle at 14% -8%, rgba(212,175,90,0.22) 0%, transparent 55%), radial-gradient(circle at 100% 108%, rgba(20,120,96,0.24) 0%, transparent 55%), linear-gradient(135deg, #0b0b0e 0%, #17140d 55%, #0a0a0a 100%)"
+    : "radial-gradient(circle at 15% -10%, #6d28d9 0%, transparent 55%), radial-gradient(circle at 100% 110%, #0891b2 0%, transparent 55%), linear-gradient(135deg, #0b1024 0%, #1e1b4b 55%, #0f172a 100%)";
 
   return (
     <div
       ref={ref}
       className="rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(circle at 15% -10%, #6d28d9 0%, transparent 55%), radial-gradient(circle at 100% 110%, #0891b2 0%, transparent 55%), linear-gradient(135deg, #0b1024 0%, #1e1b4b 55%, #0f172a 100%)",
-        width: 600,
-      }}
+      style={{ background, width: 600 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <img src={appIcon.url} alt="" className="size-9 rounded-xl ring-1 ring-white/20" />
+          <img
+            src={appIcon.url}
+            alt=""
+            className={`size-9 rounded-xl ring-1 ${isBusiness ? "ring-amber-300/30" : "ring-white/20"}`}
+          />
           <span className="font-display text-2xl tracking-tight">bynku</span>
+          {isBusiness && (
+            <span className="ml-1 inline-flex items-center rounded-full bg-amber-300/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-amber-200 ring-1 ring-amber-300/40">
+              {t("snapshot.businessLabel")}
+            </span>
+          )}
         </div>
         <span className="text-[11px] uppercase tracking-[0.2em] text-white/60">{monthLabel}</span>
       </div>
@@ -372,9 +456,11 @@ const SnapshotCard = ({
         </div>
         <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">
-            {t("snapshot.tagline")}
+            {t(isBusiness ? "snapshot.taglineBiz" : "snapshot.tagline")}
           </p>
-          <h2 className="text-3xl font-display leading-tight mt-1.5">{t("snapshot.overall")}</h2>
+          <h2 className="text-3xl font-display leading-tight mt-1.5">
+            {t(isBusiness ? "snapshot.overallBiz" : "snapshot.overall")}
+          </h2>
         </div>
       </div>
 
@@ -389,17 +475,7 @@ const SnapshotCard = ({
             <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div
                 className="h-full rounded-full"
-                style={{
-                  width: `${s.value}%`,
-                  background:
-                    s.value >= 80
-                      ? "#34d399"
-                      : s.value >= 60
-                        ? "#facc15"
-                        : s.value >= 40
-                          ? "#fb923c"
-                          : "#f87171",
-                }}
+                style={{ width: `${s.value}%`, background: scoreColor(s.value, isBusiness) }}
               />
             </div>
           </div>
