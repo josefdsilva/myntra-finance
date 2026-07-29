@@ -144,3 +144,14 @@ html.privacy-on .sensitive:hover {
   filter: blur(0);
 }
 
+/* Bynku loader: seven bars bouncing like the favicon groups (4 + 3). */
+@keyframes bynku-bar-bounce {
+  0%, 100% { height: 35%; opacity: 0.55; }
+  50%      { height: 100%; opacity: 1; }
+}
+.logo-loader-bar {
+  height: 35%;
+  animation: bynku-bar-bounce 900ms ease-in-out infinite;
+  transform-origin: bottom;
+}
+

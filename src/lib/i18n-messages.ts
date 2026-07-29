@@ -310,6 +310,7 @@ const en = {
   "shell.showNumbers": "Show numbers",
   "shell.hideNumbers": "Hide numbers",
   "shell.signOut": "Sign out",
+  "shell.loading": "Loading…",
 
   // Common
   "common.save": "Save",
@@ -1809,6 +1810,7 @@ const pt: Record<BaseKey, string> = {
   "shell.showNumbers": "Mostrar valores",
   "shell.hideNumbers": "Ocultar valores",
   "shell.signOut": "Terminar sessão",
+  "shell.loading": "A carregar…",
 
   "common.save": "Guardar",
   "common.cancel": "Cancelar",
@@ -3298,6 +3300,7 @@ const es: Record<BaseKey, string> = {
   "shell.showNumbers": "Mostrar cifras",
   "shell.hideNumbers": "Ocultar cifras",
   "shell.signOut": "Cerrar sesión",
+  "shell.loading": "Cargando…",
 
   "common.save": "Guardar",
   "common.cancel": "Cancelar",
@@ -4786,6 +4789,7 @@ const de: Record<BaseKey, string> = {
   "shell.showNumbers": "Zahlen anzeigen",
   "shell.hideNumbers": "Zahlen ausblenden",
   "shell.signOut": "Abmelden",
+  "shell.loading": "Wird geladen…",
 
   "common.save": "Speichern",
   "common.cancel": "Abbrechen",
@@ -6282,6 +6286,7 @@ const fr: Record<BaseKey, string> = {
   "shell.showNumbers": "Afficher les montants",
   "shell.hideNumbers": "Masquer les montants",
   "shell.signOut": "Se déconnecter",
+  "shell.loading": "Chargement…",
 
   "common.save": "Enregistrer",
   "common.cancel": "Annuler",
