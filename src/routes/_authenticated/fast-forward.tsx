@@ -488,7 +488,16 @@ function ScenarioBuilder({
 
   function summarise(e: ScenarioEvent): string {
     const m = e.kind === "recurring" ? e.fromMonth : e.month;
-    const amt = e.kind === "loan" ? e.principal : e.kind === "asset_purchase" ? e.price : e.amount;
+    const amt =
+      e.kind === "loan"
+        ? e.principal
+        : e.kind === "asset_purchase"
+          ? e.price
+          : e.kind === "retirement"
+            ? e.monthlyPension
+            : e.kind === "salary_change"
+              ? e.newMonthlySalary
+              : e.amount;
     const bits = [e.label, money(amt), monthLabel(m)].filter(Boolean);
     if (e.kind === "loan") bits.push(`${e.aprPct}% · ${e.termMonths}m`);
     if (e.kind === "overpay") bits.push(debts.find((d) => d.id === e.targetDebtId)?.label ?? "");
@@ -636,5 +645,8 @@ function uiTypeOf(e: ScenarioEvent): UiType {
       return e.direction === "income" ? "raise" : "recurringCost";
     case "one_off":
       return e.direction === "income" ? "oneOffIncome" : "oneOffExpense";
+    default:
+      // retirement / salary_change aren't creatable in Fast Forward.
+      return "oneOffExpense";
   }
 }

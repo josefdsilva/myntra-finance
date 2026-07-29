@@ -68,12 +68,43 @@ export type ScenarioEvent =
       /** Value it adds to assets (defaults to price). */
       assetValue?: number;
       label?: string;
+    }
+  | {
+      id: string;
+      /**
+       * From `month` onward, salary income stops and a pension of
+       * `monthlyPension` begins (grown by the income-growth assumption as a
+       * proxy for a cost-of-living adjustment). Non-salary income (rent,
+       * benefits, an existing pension) keeps flowing.
+       */
+      kind: "retirement";
+      month: string;
+      monthlyPension: number;
+      label?: string;
+    }
+  | {
+      id: string;
+      /**
+       * From `month` onward, the salary portion becomes `newMonthlySalary` — a
+       * raise, a pay cut, or a new job. Everything else is unchanged.
+       */
+      kind: "salary_change";
+      month: string;
+      newMonthlySalary: number;
+      label?: string;
     };
 
 export type ProjectionInput = {
   startMonth: Date;
   months: number;
   monthlyIncome: number;
+  /**
+   * The salary portion of monthlyIncome. Only used by `retirement` events, which
+   * stop it and replace it with a pension. Defaults to 0 (no salary to stop).
+   */
+  salaryMonthly?: number;
+  /** Raise the horizon cap above the default 60 months (e.g. retirement). */
+  maxMonths?: number;
   fixedNonDebtMonthly: number;
   variableMonthly: number;
   debts: ProjectionDebt[];
@@ -107,7 +138,10 @@ function monthlyGrowth(annualPct: number): number {
   return Math.pow(1 + annualPct / 100, 1 / 12) - 1;
 }
 
-const clampMonths = (m: number) => Math.max(1, Math.min(MAX_PROJECTION_MONTHS, Math.round(m)));
+/** Hard ceiling on any projection horizon (retirement planning aside, 40y is plenty). */
+export const ABSOLUTE_MAX_MONTHS = 480;
+const clampMonths = (m: number, cap = MAX_PROJECTION_MONTHS) =>
+  Math.max(1, Math.min(cap, ABSOLUTE_MAX_MONTHS, Math.round(m)));
 
 export function projectForward(input: ProjectionInput): ProjectionMonth[] {
   const {
@@ -119,8 +153,12 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
     startingSavings,
     assetsTotal,
   } = input;
-  const months = clampMonths(input.months);
+  const months = clampMonths(input.months, input.maxMonths ?? MAX_PROJECTION_MONTHS);
   const events = input.events ?? [];
+
+  // Split salary out so a retirement event can stop it while other income stays.
+  const salaryMonthly = Math.max(0, Math.min(input.salaryMonthly ?? 0, monthlyIncome));
+  const nonSalaryMonthly = Math.max(0, monthlyIncome - salaryMonthly);
 
   const gIncome = monthlyGrowth(input.incomeGrowthAnnualPct ?? 0);
   const gExpense = monthlyGrowth(input.expenseInflationAnnualPct ?? 0);
@@ -172,7 +210,38 @@ export function projectForward(input: ProjectionInput): ProjectionMonth[] {
       }
     }
 
-    const income = monthlyIncome * fI + planIncome + recIncome + oneIncome;
+    // Salary regime this month. A job change (salary_change) swaps the salary
+    // amount; retirement stops salary for a pension and takes precedence once
+    // reached. For each kind the most recent event on/before this month wins.
+    let activeRetire: { month: string; pension: number } | null = null;
+    let activeJob: { month: string; salary: number } | null = null;
+    for (const e of events) {
+      if (e.kind === "retirement" && e.month <= ym) {
+        if (!activeRetire || e.month > activeRetire.month) {
+          activeRetire = { month: e.month, pension: e.monthlyPension };
+        }
+      } else if (e.kind === "salary_change" && e.month <= ym) {
+        if (!activeJob || e.month > activeJob.month) {
+          activeJob = { month: e.month, salary: e.newMonthlySalary };
+        }
+      }
+    }
+    // Grow an amount by the income assumption from the month it started.
+    const grownFrom = (m: string, baseAmt: number) => {
+      const [gy, gm] = m.split("-").map(Number);
+      const since = monthsBetween(new Date(gy, (gm || 1) - 1, 1), date);
+      return baseAmt * Math.pow(1 + gIncome, Math.max(0, since));
+    };
+    let employmentIncome = salaryMonthly * fI;
+    let pensionIncome = 0;
+    if (activeRetire) {
+      employmentIncome = 0;
+      pensionIncome = grownFrom(activeRetire.month, activeRetire.pension);
+    } else if (activeJob) {
+      employmentIncome = grownFrom(activeJob.month, activeJob.salary);
+    }
+    const income =
+      nonSalaryMonthly * fI + employmentIncome + pensionIncome + planIncome + recIncome + oneIncome;
     const everyday = (fixedNonDebtMonthly + variableMonthly) * fE * spendMult + recExpense;
     const expenses = everyday + planSpend + oneExpense;
 

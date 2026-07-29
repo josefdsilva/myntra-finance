@@ -51,6 +51,47 @@ test("debt pays off and then frees up surplus", () => {
   expect(s[2].surplus).toBe(700); // 1000 - 300 - 0
 });
 
+test("retirement stops salary and starts the pension", () => {
+  const s = projectForward(
+    base({
+      months: 4, // Feb, Mar, Apr, May 2026
+      monthlyIncome: 1000,
+      salaryMonthly: 1000,
+      events: [{ id: "r", kind: "retirement", month: "2026-04", monthlyPension: 400 }],
+    }),
+  );
+  expect(s[0].income).toBe(1000); // Feb: still working
+  expect(s[2].income).toBe(400); // Apr: retired, pension only
+  expect(s[3].income).toBe(400); // May: pension continues
+});
+
+test("retirement keeps non-salary income flowing", () => {
+  const s = projectForward(
+    base({
+      months: 4,
+      monthlyIncome: 1200, // 1000 salary + 200 rent
+      salaryMonthly: 1000,
+      events: [{ id: "r", kind: "retirement", month: "2026-03", monthlyPension: 400 }],
+    }),
+  );
+  expect(s[0].income).toBe(1200); // Feb: working
+  expect(s[1].income).toBe(600); // Mar: retired -> 200 rent + 400 pension
+});
+
+test("salary change swaps the salary from its month", () => {
+  const s = projectForward(
+    base({
+      months: 4,
+      monthlyIncome: 1000,
+      salaryMonthly: 1000,
+      events: [{ id: "j", kind: "salary_change", month: "2026-03", newMonthlySalary: 1500 }],
+    }),
+  );
+  expect(s[0].income).toBe(1000); // Feb: old pay
+  expect(s[1].income).toBe(1500); // Mar: new job
+  expect(s[3].income).toBe(1500);
+});
+
 test("plans land on their own month", () => {
   const s = projectForward(
     base({
