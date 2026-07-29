@@ -169,10 +169,31 @@ export const markIncomeReceived = createServerFn({ method: "POST" })
       throw new Error("This income has no amount set.");
     }
 
-    // The anchor income rolls the cycle. With no explicit anchor, the primary
-    // salary (type 'salary') plays that role, matching today's default.
+    // The anchor income rolls the cycle. Priority: an explicit anchor, else the
+    // income tagged 'salary', else — so an event-mode cycle still rolls even
+    // when nothing is tagged — the household's largest recurring income.
     const anchorId = hh?.cycle_anchor_income_id ?? null;
-    const isAnchor = anchorId ? anchorId === income.id : income.type === "salary";
+    let isAnchor: boolean;
+    if (anchorId) {
+      isAnchor = anchorId === income.id;
+    } else if ((income.type ?? "") === "salary") {
+      isAnchor = true;
+    } else {
+      const { data: allIncomes } = await context.supabase
+        .from("incomes")
+        .select("id, monthly_amount, type")
+        .eq("household_id", data.household_id);
+      const hasSalary = (allIncomes ?? []).some((i) => (i.type ?? "") === "salary");
+      if (hasSalary) {
+        // A salary is tagged elsewhere; this non-salary income doesn't roll.
+        isAnchor = false;
+      } else {
+        const primaryId = (allIncomes ?? [])
+          .slice()
+          .sort((a, b) => Number(b.monthly_amount || 0) - Number(a.monthly_amount || 0))[0]?.id;
+        isAnchor = primaryId ? primaryId === income.id : true;
+      }
+    }
 
     const { data: row, error } = await context.supabase
       .from("expenses")

@@ -485,7 +485,17 @@ function IncomeStep({ householdId, isBusiness }: { householdId: string; isBusine
     if (!label || !amount) return;
     setSaving(true);
     try {
-      await add({ data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0 } });
+      await add({
+        data: {
+          household_id: householdId,
+          label,
+          monthly_amount: parseFloat(amount) || 0,
+          // Tag the first personal income as salary (the usual case) so payday
+          // cycles, the coach and retirement planning have a salary signal from
+          // the start. It can be re-typed later in Money In.
+          type: isBusiness ? undefined : items.length === 0 ? "salary" : "other",
+        },
+      });
       setLabel("");
       setAmount("");
       qc.invalidateQueries({ queryKey: ["ob-incomes", householdId] });
