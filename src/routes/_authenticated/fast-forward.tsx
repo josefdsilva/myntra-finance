@@ -83,6 +83,19 @@ function FastForwardPage() {
 
   const isBusiness = data?.isBusiness ?? false;
   const worthKey = isBusiness ? "ff.cash" : "ff.netWorth";
+  // A business is read in cash-flow terms: the trajectory is projected CASH (the
+  // running accumulation of free cash flow), not net worth (which folds in
+  // illiquid equipment). Households keep net worth.
+  const worthOf = (m: { netWorth: number; savings: number }) =>
+    isBusiness ? m.savings : m.netWorth;
+
+  // Runway: the first projected month cash goes negative under the expected path.
+  const runwayYm = useMemo(() => {
+    if (!isBusiness) return null;
+    const series = data?.scenarios.find((s) => s.key === "expected")?.series ?? [];
+    const hit = series.find((m) => m.savings < 0);
+    return hit ? hit.ym : null;
+  }, [isBusiness, data]);
 
   const byKey = useMemo(() => {
     const m: Record<string, { key: string; series: ProjectionMonth[]; at: ProjectionMonth }> = {};
@@ -96,21 +109,22 @@ function FastForwardPage() {
     const cau = byKey.cautious?.series ?? [];
     const opt = byKey.optimistic?.series ?? [];
     const bas = data.baseline?.series ?? [];
+    const cur = worthOf(data.current);
     const head = {
       ym: data.startYm,
       label: monthLabel(data.startYm),
-      expected: data.current.netWorth,
-      cautious: data.current.netWorth,
-      optimistic: data.current.netWorth,
-      baseline: data.current.netWorth,
+      expected: cur,
+      cautious: cur,
+      optimistic: cur,
+      baseline: cur,
     };
     const rest = exp.map((row, i) => ({
       ym: row.ym,
       label: monthLabel(row.ym),
-      expected: row.netWorth,
-      cautious: cau[i]?.netWorth ?? null,
-      optimistic: opt[i]?.netWorth ?? null,
-      baseline: bas[i]?.netWorth ?? null,
+      expected: worthOf(row),
+      cautious: cau[i] ? worthOf(cau[i]) : null,
+      optimistic: opt[i] ? worthOf(opt[i]) : null,
+      baseline: bas[i] ? worthOf(bas[i]) : null,
     }));
     return [head, ...rest];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,7 +174,9 @@ function FastForwardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="size-5 text-primary" />
-                {t("ff.positionIn", { date: monthLabel(data.targetYm) })}
+                {t(isBusiness ? "ff.positionInBiz" : "ff.positionIn", {
+                  date: monthLabel(data.targetYm),
+                })}
               </CardTitle>
               <CardDescription>{t("ff.headlineDesc")}</CardDescription>
             </CardHeader>
@@ -180,17 +196,23 @@ function FastForwardPage() {
                       <p
                         className={`font-display tabular-nums ${primary ? "text-2xl" : "text-xl text-muted-foreground"}`}
                       >
-                        {money(at?.netWorth ?? 0)}
+                        {money(at ? worthOf(at) : 0)}
                       </p>
                       <p className="text-xs text-muted-foreground">{t(worthKey)}</p>
                     </div>
                   );
                 })}
               </div>
+              {isBusiness && runwayYm && (
+                <div className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {t("ff.runwayNote", { date: monthLabel(runwayYm) })}
+                </div>
+              )}
               {data.hasEvents &&
                 (() => {
                   const delta =
-                    (byKey.expected?.at.netWorth ?? 0) - (data.baseline?.at.netWorth ?? 0);
+                    (byKey.expected?.at ? worthOf(byKey.expected.at) : 0) -
+                    (data.baseline?.at ? worthOf(data.baseline.at) : 0);
                   const up = delta >= 0;
                   return (
                     <div
@@ -209,6 +231,7 @@ function FastForwardPage() {
           <ScenarioBuilder
             events={events}
             onChange={setEvents}
+            isBusiness={isBusiness}
             debts={data.debts}
             salaryIncomes={data.salaryIncomes ?? []}
             minMonth={minMonth}
@@ -218,11 +241,11 @@ function FastForwardPage() {
 
           {/* Now vs then breakdown */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Stat label={t("ff.now")} value={money(data.current.netWorth)} sub={t(worthKey)} />
+            <Stat label={t("ff.now")} value={money(worthOf(data.current))} sub={t(worthKey)} />
             <Stat
-              label={t("ff.savingsThen")}
+              label={isBusiness ? t("ff.cashThen") : t("ff.savingsThen")}
               value={money(byKey.expected?.at.savings ?? 0)}
-              sub={t("ff.savings")}
+              sub={isBusiness ? t("ff.cash") : t("ff.savings")}
             />
             <Stat
               label={t("ff.debtThen")}
@@ -235,9 +258,9 @@ function FastForwardPage() {
               good={byKey.expected?.at.debtFree}
             />
             <Stat
-              label={t("ff.surplusThen")}
+              label={isBusiness ? t("ff.cashflowThen") : t("ff.surplusThen")}
               value={money(byKey.expected?.at.surplus ?? 0)}
-              sub={t("ff.surplusMonthly")}
+              sub={isBusiness ? t("ff.cashflowMonthly") : t("ff.surplusMonthly")}
             />
           </div>
 
@@ -385,9 +408,17 @@ type UiType =
   | "salaryChange"
   | "retirement"
   | "loan"
-  | "overpay";
+  | "overpay"
+  // Business presets — each maps to an engine primitive below.
+  | "hire"
+  | "payrollRaise"
+  | "bonus"
+  | "newRevenue"
+  | "newOffice"
+  | "buyEquipment"
+  | "newSite";
 
-const UI_TYPES: UiType[] = [
+const PERSONAL_UI_TYPES: UiType[] = [
   "salaryChange",
   "retirement",
   "raise",
@@ -399,9 +430,28 @@ const UI_TYPES: UiType[] = [
   "overpay",
 ];
 
+const BUSINESS_UI_TYPES: UiType[] = [
+  "hire",
+  "payrollRaise",
+  "bonus",
+  "newRevenue",
+  "newOffice",
+  "buyEquipment",
+  "newSite",
+  "oneOffExpense",
+  "loan",
+  "overpay",
+];
+
+// Business presets that add a recurring monthly cost/income (apply from a month
+// onward), vs one-off / capital events that land on a single month.
+const BUSINESS_RECURRING: UiType[] = ["hire", "payrollRaise", "newOffice", "newRevenue"];
+const BUSINESS_CAPEX: UiType[] = ["buyEquipment", "newSite"];
+
 function ScenarioBuilder({
   events,
   onChange,
+  isBusiness,
   debts,
   salaryIncomes,
   minMonth,
@@ -410,6 +460,7 @@ function ScenarioBuilder({
 }: {
   events: ScenarioEvent[];
   onChange: (e: ScenarioEvent[]) => void;
+  isBusiness: boolean;
   debts: Array<{ id: string; label: string }>;
   salaryIncomes: Array<{ id: string; label: string; monthly: number }>;
   minMonth: string;
@@ -418,10 +469,12 @@ function ScenarioBuilder({
 }) {
   const t = useT();
   const locale = useLocale();
-  const [type, setType] = useState<UiType>("oneOffExpense");
+  const uiTypes = isBusiness ? BUSINESS_UI_TYPES : PERSONAL_UI_TYPES;
+  const [type, setType] = useState<UiType>(isBusiness ? "hire" : "oneOffExpense");
   const [month, setMonth] = useState(defaultMonth);
   const [amount, setAmount] = useState("");
   const [name, setName] = useState("");
+  const [count, setCount] = useState("1");
   // "__all__" targets the whole salary; otherwise a specific salary income id.
   const [replacesId, setReplacesId] = useState("__all__");
   const [apr, setApr] = useState("");
@@ -439,19 +492,29 @@ function ScenarioBuilder({
   };
   const clampMonth = (v: string) => (v < minMonth ? minMonth : v > maxMonth ? maxMonth : v);
 
-  const isRecurring = type === "raise" || type === "recurringCost";
+  const isRecurring =
+    type === "raise" || type === "recurringCost" || BUSINESS_RECURRING.includes(type);
+  const isCapex = type === "purchaseAsset" || BUSINESS_CAPEX.includes(type);
   // Events that apply "from a month onward" rather than on a single month.
   const usesFromMonth = isRecurring || type === "retirement" || type === "salaryChange";
   const amountKey =
     type === "loan"
       ? "ff.evt.principal"
-      : type === "purchaseAsset"
+      : isCapex
         ? "ff.evt.price"
         : type === "retirement"
           ? "ff.evt.pension"
           : type === "salaryChange"
             ? "ff.evt.newSalary"
-            : "ff.evt.amount";
+            : type === "hire"
+              ? "ff.evt.perEmployee"
+              : type === "newOffice"
+                ? "ff.evt.monthlyRent"
+                : type === "newRevenue"
+                  ? "ff.evt.monthlyRevenue"
+                  : type === "payrollRaise"
+                    ? "ff.evt.monthlyExtra"
+                    : "ff.evt.amount";
 
   function add() {
     const amt = num(amount);
@@ -459,8 +522,75 @@ function ScenarioBuilder({
     if (type === "overpay" && !targetDebtId) return;
     const id = crypto.randomUUID();
     const label = name.trim() || undefined;
+    // Auto-label the business presets so the chip/summary stays meaningful even
+    // though they map down to generic engine primitives.
+    const nHires = Math.max(1, Math.round(num(count)) || 1);
     let ev: ScenarioEvent;
     switch (type) {
+      // ---- Business presets → engine primitives ----
+      case "hire":
+        // N employees × per-employee monthly cost = a recurring payroll cost.
+        ev = {
+          id,
+          kind: "recurring",
+          direction: "expense",
+          fromMonth: month,
+          amount: amt * nHires,
+          label: label ?? t("ff.evt.hireLabel", { count: nHires }),
+        };
+        break;
+      case "payrollRaise":
+        ev = {
+          id,
+          kind: "recurring",
+          direction: "expense",
+          fromMonth: month,
+          amount: amt,
+          label: label ?? t("ff.evt.type.payrollRaise"),
+        };
+        break;
+      case "newOffice":
+        ev = {
+          id,
+          kind: "recurring",
+          direction: "expense",
+          fromMonth: month,
+          amount: amt,
+          label: label ?? t("ff.evt.type.newOffice"),
+        };
+        break;
+      case "newRevenue":
+        ev = {
+          id,
+          kind: "recurring",
+          direction: "income",
+          fromMonth: month,
+          amount: amt,
+          label: label ?? t("ff.evt.type.newRevenue"),
+        };
+        break;
+      case "bonus":
+        ev = {
+          id,
+          kind: "one_off",
+          direction: "expense",
+          month,
+          amount: amt,
+          label: label ?? t("ff.evt.type.bonus"),
+        };
+        break;
+      case "buyEquipment":
+      case "newSite":
+        // Capex: cash out now, adds to assets (net-worth neutral, cash-negative).
+        ev = {
+          id,
+          kind: "asset_purchase",
+          month,
+          price: amt,
+          assetValue: assetValue.trim() ? num(assetValue) : amt,
+          label: label ?? t(`ff.evt.type.${type}` as MessageKey),
+        };
+        break;
       case "purchaseAsset":
         ev = {
           id,
@@ -584,7 +714,7 @@ function ScenarioBuilder({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {UI_TYPES.map((ut) => (
+                {uiTypes.map((ut) => (
                   <SelectItem key={ut} value={ut}>
                     {t(`ff.evt.type.${ut}` as MessageKey)}
                   </SelectItem>
@@ -628,7 +758,18 @@ function ScenarioBuilder({
               </div>
             </>
           )}
-          {type === "purchaseAsset" && (
+          {type === "hire" && (
+            <div>
+              <Label className="text-xs">{t("ff.evt.count")}</Label>
+              <Input
+                inputMode="numeric"
+                placeholder="1"
+                value={count}
+                onChange={(e) => setCount(e.target.value)}
+              />
+            </div>
+          )}
+          {isCapex && (
             <div>
               <Label className="text-xs">{t("ff.evt.assetValue")}</Label>
               <Input
