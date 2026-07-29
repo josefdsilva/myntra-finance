@@ -68,6 +68,8 @@ export type ScheduleInput = {
 };
 
 export type ScheduleSummary = {
+  /** The fixed monthly installment driving this schedule. */
+  installment: number;
   /** Live remaining balance at `today`. */
   remaining: number;
   /** Total principal paid off since the loan opened. */
@@ -103,6 +105,7 @@ export function scheduleSummary(input: ScheduleInput): ScheduleSummary {
     nTotal === null ? 0 : round2(Math.max(0, installment * (nTotal - k) - remaining));
 
   return {
+    installment: round2(installment),
     remaining,
     paidPrincipal,
     progressPct,
