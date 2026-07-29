@@ -212,6 +212,30 @@ export function computeTimeCycle(
   return bounds(start, end, now);
 }
 
+/**
+ * The last `count` fixed-length periods for a time-driven space, oldest first,
+ * ending with the one that contains `now`. Used by the Analysis window/selector
+ * so a quarterly (or weekly/yearly) space shows real fiscal periods instead of
+ * falling back to calendar months. `predicted` marks the current period while it
+ * is still running.
+ */
+export function buildTimeCycles(
+  length: Cycle,
+  anchorIso: string | null | undefined,
+  count: number,
+  now = new Date(),
+): Array<{ start: Date; end: Date; predicted: boolean }> {
+  const out: Array<{ start: Date; end: Date; predicted: boolean }> = [];
+  let probe = now;
+  for (let i = 0; i < Math.max(1, count); i++) {
+    const c = computeTimeCycle(length, anchorIso, probe);
+    out.push({ start: c.start, end: c.end, predicted: i === 0 && now.getTime() < c.end.getTime() });
+    // Step to the instant before this period's start to land in the previous one.
+    probe = new Date(c.start.getTime() - 86400000);
+  }
+  return out.reverse();
+}
+
 export type CycleMode = "event" | "time";
 
 export type CycleConfig = {

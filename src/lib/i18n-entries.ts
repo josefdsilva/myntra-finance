@@ -735,6 +735,13 @@ export const ENTRIES = {
     de: "Meine Prognose zeigt, dass die Liquidität im {month} knapp wird. Wie bereite ich mich vor — welche Abflüsse verschieben oder welche Forderungen eintreiben?",
     fr: "Ma prévision montre une trésorerie insuffisante en {month}. Comment m'y préparer — quelles sorties déplacer ou quels encaissements relancer ?",
   },
+  "ana.perMonthTimesMonths": {
+    en: "/mo × {months} months",
+    pt: "/mês × {months} meses",
+    es: "/mes × {months} meses",
+    de: "/Mon. × {months} Monate",
+    fr: "/mois × {months} mois",
+  },
   "exp.subtitle.salary": {
     en: "Grouped by pay cycle — from one payday to the next.",
     pt: "Agrupado por ciclo de pagamento — de um dia de pagamento ao seguinte.",

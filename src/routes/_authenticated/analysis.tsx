@@ -31,7 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { format as fmt } from "date-fns";
-import { cycleFor, cycleConfigForSpace } from "@/lib/cycle";
+import { cycleFor, cycleConfigForSpace, buildTimeCycles } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
 import { BenchmarksCard } from "@/components/benchmarks-card";
 import { pageShellClass } from "@/components/page-shell";
@@ -151,8 +151,30 @@ function AnalysisPage() {
     },
   });
 
+  const cycleConfig = cycleConfigForSpace(hh?.household);
+  // How many months one cycle spans — so a monthly fixed cost is counted the
+  // right number of times per cycle (3× for a quarter, 12× for a year, ~1 for a
+  // pay/monthly cycle). Weekly is a fraction of a month.
+  const monthsPerCycle =
+    cycleConfig.mode === "time"
+      ? cycleConfig.length === "weekly"
+        ? 7 / 30.4375
+        : cycleConfig.length === "quarterly"
+          ? 3
+          : cycleConfig.length === "yearly"
+            ? 12
+            : 1
+      : 1;
+
   const cycles = useMemo(() => {
-    // Build cycles from consecutive salaries; last cycle end predicted from prior interval
+    // Time-driven spaces (e.g. a business on quarterly/weekly periods) step by
+    // fixed fiscal periods, not salary events — build the window from the
+    // configured cycle so a quarter shows as a quarter, not a calendar month.
+    if (cycleConfig.mode === "time") {
+      return buildTimeCycles(cycleConfig.length, cycleConfig.anchorDate, 12);
+    }
+    // Otherwise build cycles from consecutive salaries; last cycle end predicted
+    // from the prior interval.
     const out: { start: Date; end: Date; predicted: boolean }[] = [];
     if (!salaryAsc.length) return out;
     for (let i = 0; i < salaryAsc.length; i++) {
@@ -190,7 +212,7 @@ function AnalysisPage() {
       out.push({ start, end, predicted });
     }
     return out;
-  }, [salaryAsc]);
+  }, [salaryAsc, cycleConfig.mode, cycleConfig.length, cycleConfig.anchorDate]);
 
   const { start, end, cycleCount, windowProgress } = useMemo(() => {
     if (!cycles.length) {
@@ -449,7 +471,8 @@ function AnalysisPage() {
         events: [{ kind: ev.kind, label: ev.label, amount: ev.amount, delta: ev.delta }],
       });
       if (!fixedReserved && ev.isSalary && fixedTotal > 0) {
-        bal -= fixedTotal;
+        const fixedPerCycle = fixedTotal * monthsPerCycle;
+        bal -= fixedPerCycle;
         out.push({
           label: fmt(new Date(ev.iso), "dd/MM HH:mm") + " · fixed",
           iso: ev.iso,
@@ -458,8 +481,8 @@ function AnalysisPage() {
             {
               kind: "fixed",
               label: t("ana.fixedExpensesReserved"),
-              amount: fixedTotal,
-              delta: -fixedTotal,
+              amount: fixedPerCycle,
+              delta: -fixedPerCycle,
             },
           ],
         });
@@ -474,7 +497,7 @@ function AnalysisPage() {
       events: [],
     });
     return out;
-  }, [cycleData, fixedTotal, t]);
+  }, [cycleData, fixedTotal, monthsPerCycle, t]);
 
   // Multi-cycle burndown: the same per-cycle balance line, but concatenated
   // across every selected cycle — each cycle resets to 0, jumps with income,
@@ -501,7 +524,7 @@ function AnalysisPage() {
         const lbl = fmt(new Date(ev.time), "dd/MM");
         points.push({ label: lbl, iso: new Date(ev.time).toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
         if (!fixedReserved && ev.kind === "income" && fixedTotal > 0) {
-          bal -= fixedTotal;
+          bal -= fixedTotal * monthsPerCycle;
           points.push({ label: lbl, iso: new Date(ev.time).toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
           fixedReserved = true;
         }
@@ -522,24 +545,24 @@ function AnalysisPage() {
     if (includeFixed && fixedRows.length) {
       for (const r of fixedRows) {
         const cat = (r.category?.trim() || r.label?.trim() || "fixed").toLowerCase();
-        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * cycleCount);
+        map.set(cat, (map.get(cat) ?? 0) + Number(r.monthly_amount) * cycleCount * monthsPerCycle);
       }
     }
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
       .sort((a, b) => b.value - a.value);
-  }, [onlySpend, includeFixed, fixedRows, cycleCount]);
+  }, [onlySpend, includeFixed, fixedRows, cycleCount, monthsPerCycle]);
 
   const totalVariableSpend = onlySpend.reduce((s, e) => s + Number(e.amount), 0);
   const totalIncome = (expenses ?? [])
     .filter((e) => e.kind === "income")
     .reduce((s, e) => s + Number(e.amount), 0);
 
-  // Fixed expenses over selected cycles (1 monthly amount per cycle)
-  const proratedFixed = fixedTotal * cycleCount;
+  // Fixed expenses over the selected window = monthly fixed × (months per cycle
+  // × number of cycles). A quarter counts three months of fixed costs.
+  const fixedMonths = Math.round(cycleCount * monthsPerCycle * 10) / 10;
+  const proratedFixed = fixedTotal * fixedMonths;
   const totalSpend = includeFixed ? totalVariableSpend + proratedFixed : totalVariableSpend;
-
-  const cycleLabel = cycleCount === 1 ? "cycle" : "cycles";
 
   if (householdId && !txCountLoading && !hasAnyData) {
     return (
@@ -601,7 +624,8 @@ function AnalysisPage() {
           <span>
             {t("ana.includeFixed")}
             <span className="text-muted-foreground ml-1">
-              (+{money(proratedFixed)} · {money(fixedTotal)}/mo × {cycleCount} {cycleLabel})
+              (+{money(proratedFixed)} · {money(fixedTotal)}
+              {t("ana.perMonthTimesMonths", { months: fixedMonths })})
             </span>
           </span>
         </Label>
