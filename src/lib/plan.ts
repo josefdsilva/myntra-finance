@@ -144,6 +144,22 @@ export function leftoverObligation(plans: Plan[], ym: string): number {
   return round2(sum);
 }
 
+/**
+ * Same as `leftoverObligation` but scoped to a cycle WINDOW `[start, end)`
+ * instead of a calendar month. Use this on payday cycles that straddle two
+ * calendar months so a plan dated in the tail month is counted in the right
+ * cycle. Each plan is counted once (its occurrence that falls in the window).
+ */
+export function leftoverObligationInWindow(plans: Plan[], start: Date, end: Date): number {
+  let sum = 0;
+  for (const p of plansInWindow(plans, start, end, true)) {
+    if (p.direction !== "spend" || p.bucket_id) continue;
+    const val = p.done ? Number(p.actual_amount ?? 0) : Math.abs(Number(p.amount) || 0);
+    if (val > 0) sum += val;
+  }
+  return round2(sum);
+}
+
 export type ForecastMonth = {
   ym: string;
   /** Recurring income plus any income plans landing this month. */

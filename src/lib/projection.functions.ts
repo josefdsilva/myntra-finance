@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertHouseholdMember } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { z } from "zod";
-import { debtMonthlyRate, type Debt } from "@/lib/debt-schedule";
+import { debtMonthlyRate, debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import type { Plan } from "@/lib/plan";
 import {
@@ -174,14 +174,19 @@ export const fastForward = createServerFn({ method: "POST" })
 
     const debtRows = rowsOrEmpty<Debt>(debtsData);
     const debtMonthly = debtRows.reduce((s, d) => s + Number(d.monthly_amount || 0), 0);
+    // Start from TODAY's live amortized balance (same basis as the Net Worth
+    // card), not the stale stored principal, so projected net worth matches.
     const debts: ProjectionDebt[] = debtRows
-      .map((d) => ({
-        id: d.id,
-        label: d.label,
-        balance: Number(d.principal_remaining ?? d.starting_principal ?? 0),
-        monthlyRate: debtMonthlyRate(d),
-        installment: Number(d.monthly_amount || 0),
-      }))
+      .map((d) => {
+        const live = debtLiveSchedule(d);
+        return {
+          id: d.id,
+          label: d.label,
+          balance: live.remaining,
+          monthlyRate: debtMonthlyRate(d),
+          installment: live.installment,
+        };
+      })
       .filter((d) => d.balance > 0 && d.installment > 0);
 
     // Project balances (initial + confirmations + net movements) — same as the
@@ -310,7 +315,14 @@ export const fastForward = createServerFn({ method: "POST" })
         savings: Math.round(startingSavings * 100) / 100,
         assets: Math.round(assetsTotal * 100) / 100,
         debtRemaining: Math.round(debts.reduce((s, d) => s + d.balance, 0) * 100) / 100,
-        monthlySurplus: Math.round((monthlyIncome - fixedNonDebtMonthly - variableMonthly - debtMonthly) * 100) / 100,
+        monthlySurplus:
+          Math.round(
+            Math.max(
+              0,
+              monthlyIncome -
+                (Number(hh?.baseline_budget) || fixedNonDebtMonthly + variableMonthly + debtMonthly),
+            ) * 100,
+          ) / 100,
       },
       scenarios,
       baseline,

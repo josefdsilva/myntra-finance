@@ -17,6 +17,7 @@ import {
   type AgeBand,
 } from "./benchmarks";
 import { monthlyRateFromTaeg, monthlyRateFromNominalTan, termMonthsFor } from "./amortization";
+import { debtLiveSchedule, type Debt } from "./debt-schedule";
 import { buildForecast, monthKey, type Plan } from "./plan";
 import { summariseIntent, resolveIntent, isDiscretionary } from "./intent";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
@@ -325,7 +326,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     supabase
       .from("debts")
       .select(
-        "label, kind, monthly_amount, taeg_pct, tan_pct, deduced_rate_pct, principal_remaining, maturity_date",
+        "label, kind, monthly_amount, taeg_pct, tan_pct, deduced_rate_pct, principal_remaining, starting_principal, maturity_date, last_recompute_at, opened_at, created_at",
       )
       .eq("household_id", householdId),
     supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
@@ -399,8 +400,15 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     tan_pct: number | string | null;
     deduced_rate_pct: number | string | null;
     principal_remaining: number | string | null;
+    starting_principal: number | string | null;
     maturity_date: string | null;
+    last_recompute_at: string | null;
+    opened_at: string | null;
+    created_at: string | null;
   };
+  // Today's live amortized balance per debt (same basis as the Net Worth card),
+  // keyed by index so we don't recompute it repeatedly.
+  const liveRemaining = (d: DebtRow): number => debtLiveSchedule(d as unknown as Debt).remaining;
   const debts = rowsOrEmpty<DebtRow>(debtsData).map((d) => ({
     label: d.label,
     kind: d.kind,
@@ -409,8 +417,8 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     principal_remaining: d.principal_remaining == null ? null : Number(d.principal_remaining),
     maturity_date: d.maturity_date,
   }));
-  const debtPrincipalOutstanding = debts.reduce(
-    (s, d) => s + (d.principal_remaining ?? 0),
+  const debtPrincipalOutstanding = rowsOrEmpty<DebtRow>(debtsData).reduce(
+    (s, d) => s + liveRemaining(d),
     0,
   );
 
@@ -432,9 +440,9 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
           ? Number(d.tan_pct)
           : 0;
   const debtProjections = debtRows
-    .filter((d) => Number(d.principal_remaining ?? 0) > 0 && Number(d.monthly_amount) > 0)
+    .filter((d) => liveRemaining(d) > 0 && Number(d.monthly_amount) > 0)
     .map((d) => {
-      const principal = Number(d.principal_remaining);
+      const principal = liveRemaining(d);
       const installment = Number(d.monthly_amount);
       const r = rateOf(d);
       const n = termMonthsFor(principal, r, installment);

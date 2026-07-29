@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
-import { leftoverObligation, monthKey, plansInWindow, type Plan } from "@/lib/plan";
+import { leftoverObligationInWindow, plansInWindow, type Plan } from "@/lib/plan";
 import {
   bucketsQuery,
   incomesQuery,
@@ -158,13 +158,18 @@ function Dashboard() {
   // real surplus so the dashboard reflects money already spoken for by plans.
   const { data: plannedThisCycle } = useQuery({
     enabled: !!householdId,
-    queryKey: ["dashboard-planned", householdId],
+    queryKey: ["dashboard-planned", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      const { data: rows } = await supabase
-        .from("plans")
-        .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
-        .eq("household_id", householdId!);
-      return leftoverObligation((rows ?? []) as unknown as Plan[], monthKey(new Date()));
+      const [{ data: rows }, bounds] = await Promise.all([
+        supabase
+          .from("plans")
+          .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
+          .eq("household_id", householdId!),
+        fetchCycleBounds(supabase, householdId!, hh?.household),
+      ]);
+      // Cycle window, not calendar month, so a plan dated in the tail month of a
+      // payday cycle is counted in the right cycle.
+      return leftoverObligationInWindow((rows ?? []) as unknown as Plan[], bounds.start, bounds.end);
     },
   });
 
