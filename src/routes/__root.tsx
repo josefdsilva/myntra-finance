@@ -193,6 +193,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
+        <GlobalLoader />
         <Outlet />
         <Toaster richColors position="top-right" />
       </I18nProvider>
