@@ -1129,6 +1129,64 @@ export const ENTRIES = {
     de: "Nicht Teil des Ausgabenvergleichs, der nur den Alltagskonsum abdeckt: {list}. Ersparnisse und Investitionen fließen stattdessen in dein Nettovermögen ein.",
     fr: "Hors de la comparaison des dépenses, qui ne couvre que la consommation courante : {list}. L'épargne et les investissements alimentent plutôt votre patrimoine net.",
   },
+
+  // Danger zone: "Start fresh" (wipe household data, re-run onboarding).
+  "danger.reset.title": {
+    en: "Start fresh",
+    pt: "Começar de novo",
+    es: "Empezar de cero",
+    de: "Neu beginnen",
+    fr: "Repartir de zéro",
+  },
+  "danger.reset.body": {
+    en: "Erase everything you have entered in {name} and go through the setup wizard again. Your account and members stay; the data does not.",
+    pt: "Apaga tudo o que introduziu em {name} e volta a passar pelo assistente de configuração. A sua conta e membros permanecem; os dados não.",
+    es: "Borra todo lo que has introducido en {name} y vuelve a pasar por el asistente de configuración. Tu cuenta y miembros se mantienen; los datos no.",
+    de: "Löscht alles, was du in {name} eingegeben hast, und führt dich erneut durch die Einrichtung. Dein Konto und die Mitglieder bleiben; die Daten nicht.",
+    fr: "Efface tout ce que vous avez saisi dans {name} et vous fait repasser par l'assistant de configuration. Votre compte et les membres restent ; les données non.",
+  },
+  "danger.reset.button": {
+    en: "Start fresh",
+    pt: "Começar de novo",
+    es: "Empezar de cero",
+    de: "Neu beginnen",
+    fr: "Repartir de zéro",
+  },
+  "danger.reset.confirmTitle": {
+    en: "Erase all data in {name}?",
+    pt: "Apagar todos os dados em {name}?",
+    es: "¿Borrar todos los datos de {name}?",
+    de: "Alle Daten in {name} löschen?",
+    fr: "Effacer toutes les données de {name} ?",
+  },
+  "danger.reset.confirmBody": {
+    en: "This permanently deletes all income, expenses, loans, projects, plans and history in this space, then restarts onboarding. This cannot be undone.",
+    pt: "Isto elimina permanentemente todos os rendimentos, despesas, empréstimos, projetos, planos e histórico deste espaço e reinicia a configuração. Não pode ser anulado.",
+    es: "Esto elimina de forma permanente todos los ingresos, gastos, préstamos, proyectos, planes e historial de este espacio y reinicia la configuración. No se puede deshacer.",
+    de: "Dies löscht dauerhaft alle Einnahmen, Ausgaben, Kredite, Projekte, Pläne und den Verlauf dieses Bereichs und startet die Einrichtung neu. Das kann nicht rückgängig gemacht werden.",
+    fr: "Cela supprime définitivement tous les revenus, dépenses, prêts, projets, plans et l'historique de cet espace, puis relance la configuration. Cette action est irréversible.",
+  },
+  "danger.reset.action": {
+    en: "Erase and restart",
+    pt: "Apagar e recomeçar",
+    es: "Borrar y reiniciar",
+    de: "Löschen und neu starten",
+    fr: "Effacer et recommencer",
+  },
+  "danger.reset.done": {
+    en: "Your space has been reset. Let's set it up again.",
+    pt: "O seu espaço foi reiniciado. Vamos configurá-lo de novo.",
+    es: "Tu espacio se ha reiniciado. Vamos a configurarlo de nuevo.",
+    de: "Dein Bereich wurde zurückgesetzt. Richten wir ihn neu ein.",
+    fr: "Votre espace a été réinitialisé. Configurons-le à nouveau.",
+  },
+  "danger.reset.failed": {
+    en: "Could not reset the space.",
+    pt: "Não foi possível reiniciar o espaço.",
+    es: "No se pudo reiniciar el espacio.",
+    de: "Der Bereich konnte nicht zurückgesetzt werden.",
+    fr: "Impossible de réinitialiser l'espace.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

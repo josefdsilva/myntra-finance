@@ -1808,6 +1808,7 @@ export type Database = {
         Returns: undefined
       }
       redeem_beta_code: { Args: { p_code: string }; Returns: string }
+      reset_household: { Args: { hh: string }; Returns: undefined }
       service_debt: {
         Args: {
           p_amount: number

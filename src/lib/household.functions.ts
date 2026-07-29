@@ -170,6 +170,54 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
   });
 
 /**
+ * "Start fresh": erase every piece of data the household owner entered and put
+ * the space back into its first-run state so the onboarding wizard runs again.
+ * The household row, its members and currency are kept; only the data is wiped.
+ * The heavy lifting is an atomic SECURITY DEFINER function; here we re-seed the
+ * same starter projects a brand-new space would get.
+ */
+export const resetHousehold = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ household_id: z.string().uuid(), confirm: z.literal("RESET") }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+
+    // Owner check (the RPC re-checks under SECURITY DEFINER; this gives a clean error).
+    const { data: membership, error: mErr } = await supabase
+      .from("household_members")
+      .select("role")
+      .eq("household_id", data.household_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (mErr) throw mErr;
+    if (!membership || membership.role !== "owner") {
+      throw new Error("Only a household owner can reset the household.");
+    }
+
+    // Read the kind before the wipe so we re-seed the right starter projects.
+    const { data: hh } = await supabase
+      .from("households")
+      .select("kind")
+      .eq("id", data.household_id)
+      .maybeSingle();
+    const kind: "personal" | "business" = hh?.kind === "business" ? "business" : "personal";
+
+    // Atomic wipe + reset onboarded_at.
+    const { error: rErr } = await supabase.rpc("reset_household", { hh: data.household_id });
+    if (rErr) throw rErr;
+
+    // Re-seed the default projects a fresh space starts with.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("buckets")
+      .insert(defaultBucketsFor(kind).map((b) => ({ ...b, household_id: data.household_id })));
+
+    return { ok: true };
+  });
+
+/**
  * Redeem a beta access code. Delegates to the redeem_beta_code database function,
  * which throttles attempts (max 3 per hour), validates the code against the
  * beta_codes table, and admits the caller only if the code still has a free seat.

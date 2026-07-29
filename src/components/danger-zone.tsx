@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AlertTriangle, Download } from "lucide-react";
+import { AlertTriangle, Download, RotateCcw } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -11,6 +11,8 @@ import {
   exportMyData,
   leaveHousehold,
 } from "@/lib/privacy.functions";
+import { resetHousehold } from "@/lib/household.functions";
+import { setActiveHouseholdId } from "@/lib/active-household";
 import { useT } from "@/lib/i18n";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -55,6 +57,7 @@ export function DangerZone({ householdId, householdName, role }: Props) {
       </CardHeader>
       <CardContent className="space-y-4">
         <ExportDataRow />
+        {isOwner && <StartFreshRow householdId={householdId} householdName={householdName} />}
         <LeaveHouseholdRow householdId={householdId} householdName={householdName} />
         {isOwner && <DeleteHouseholdRow householdId={householdId} householdName={householdName} />}
         <DeleteAccountRow />
@@ -145,6 +148,75 @@ function LeaveHouseholdRow({
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction disabled={busy} onClick={onLeave}>
               {t("danger.leave.confirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </RowShell>
+  );
+}
+
+function StartFreshRow({
+  householdId,
+  householdName,
+}: {
+  householdId: string;
+  householdName: string;
+}) {
+  const reset = useServerFn(resetHousehold);
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const t = useT();
+
+  async function onReset() {
+    setBusy(true);
+    try {
+      await reset({ data: { household_id: householdId, confirm: "RESET" } });
+      // Household id is unchanged; just clear caches and re-enter the wizard.
+      setActiveHouseholdId(householdId);
+      toast.success(t("danger.reset.done"));
+      window.location.href = "/onboarding";
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("danger.reset.failed"));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <RowShell
+      title={t("danger.reset.title")}
+      body={t("danger.reset.body", { name: householdName })}
+      danger
+    >
+      <AlertDialog onOpenChange={() => setConfirm("")}>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" size="sm">
+            <RotateCcw className="size-4" /> {t("danger.reset.button")}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("danger.reset.confirmTitle", { name: householdName })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("danger.reset.confirmBody")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-1">
+            <Label htmlFor="confirm-reset">{t("danger.confirmLabel")}</Label>
+            <Input
+              id="confirm-reset"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="RESET"
+              autoComplete="off"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy || confirm !== "RESET"}
+              onClick={onReset}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("danger.reset.action")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
