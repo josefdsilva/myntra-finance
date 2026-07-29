@@ -34,6 +34,7 @@ import { format as fmt } from "date-fns";
 import { cycleFor, cycleConfigForSpace, buildTimeCycles } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
 import { BenchmarksCard } from "@/components/benchmarks-card";
+import { BusinessBenchmarksCard } from "@/components/business-benchmarks-card";
 import { pageShellClass } from "@/components/page-shell";
 import { EmptyState } from "@/components/empty-state";
 import { LineChart } from "lucide-react";
@@ -778,6 +779,9 @@ function AnalysisPage() {
           progress={windowProgress}
         />
       )}
+
+      {/* Business spaces get a sector comparison (Eurostat SBS) instead. */}
+      {householdId && <BusinessBenchmarksCard householdId={householdId} />}
 
       <Card>
         <CardHeader>

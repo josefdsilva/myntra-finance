@@ -1163,6 +1163,7 @@ export type Database = {
           advisor_email: string | null
           age_band: string | null
           baseline_budget: number
+          sector: string | null
           children: number
           country: string
           created_at: string
@@ -1185,6 +1186,7 @@ export type Database = {
           adults?: number
           advisor_email?: string | null
           age_band?: string | null
+          sector?: string | null
           baseline_budget?: number
           children?: number
           country?: string
@@ -1208,6 +1210,7 @@ export type Database = {
           adults?: number
           advisor_email?: string | null
           age_band?: string | null
+          sector?: string | null
           baseline_budget?: number
           children?: number
           country?: string

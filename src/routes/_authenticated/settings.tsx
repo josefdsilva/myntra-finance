@@ -56,6 +56,7 @@ import { CategoryManager } from "@/components/category-manager";
 import { useCategoryNames } from "@/hooks/use-categories";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
+import { groupSectors, NACE_SECTIONS } from "@/lib/business-benchmarks";
 import {
   defaultIntentForCategory,
   resolveIntent,
@@ -311,6 +312,9 @@ function HouseholdSection({
   const [children, setChildren] = useState(Number(household.children ?? 0));
   const [ageBand, setAgeBand] = useState<string>(household.age_band ?? "");
   const [employees, setEmployees] = useState(Number(household.employees ?? 0));
+  const [sector, setSector] = useState<string>(
+    (household as { sector?: string | null }).sector ?? "",
+  );
   const [currency, setCurrency] = useState<"EUR" | "USD" | "GBP">(
     (String(household.currency ?? "EUR").toUpperCase() as "EUR" | "USD" | "GBP") ?? "EUR",
   );
@@ -470,7 +474,7 @@ function HouseholdSection({
           household_id: household.id,
           country: country.toUpperCase().slice(0, 2),
           ...(isBusiness
-            ? { employees: Math.max(0, Math.round(employees)) }
+            ? { employees: Math.max(0, Math.round(employees)), sector: sector || null }
             : {
                 adults: Math.max(1, Math.round(adults)),
                 children: Math.max(0, Math.round(children)),
@@ -665,15 +669,37 @@ function HouseholdSection({
               />
             </div>
             {isBusiness ? (
-              <div>
-                <Label>{t("hh.employees")}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={employees}
-                  onChange={(e) => setEmployees(Number(e.target.value))}
-                />
-              </div>
+              <>
+                <div>
+                  <Label>{t("hh.employees")}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={employees}
+                    onChange={(e) => setEmployees(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label>{t("hh.sector")}</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={sector}
+                    onChange={(e) => setSector(e.target.value)}
+                  >
+                    <option value="">{t("hh.sectorNone")}</option>
+                    {groupSectors().map(([section, items]) => (
+                      <optgroup key={section} label={NACE_SECTIONS[section] ?? section}>
+                        {items.map((s) => (
+                          <option key={s.code} value={s.code}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">{t("hh.sectorHint")}</p>
+                </div>
+              </>
             ) : (
               <>
                 <div>
