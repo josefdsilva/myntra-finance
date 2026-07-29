@@ -25,6 +25,7 @@ import { Route as AuthenticatedMoneyInRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
 import { Route as AuthenticatedHandoffRouteImport } from './routes/_authenticated/handoff'
+import { Route as AuthenticatedFastForwardRouteImport } from './routes/_authenticated/fast-forward'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCycleReportRouteImport } from './routes/_authenticated/cycle-report'
@@ -123,6 +124,12 @@ const AuthenticatedHandoffRoute = AuthenticatedHandoffRouteImport.update({
   path: '/handoff',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFastForwardRoute =
+  AuthenticatedFastForwardRouteImport.update({
+    id: '/fast-forward',
+    path: '/fast-forward',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
@@ -229,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/cycle-report': typeof AuthenticatedCycleReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/fast-forward': typeof AuthenticatedFastForwardRoute
   '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/loans': typeof AuthenticatedLoansRoute
@@ -263,6 +271,7 @@ export interface FileRoutesByTo {
   '/cycle-report': typeof AuthenticatedCycleReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/fast-forward': typeof AuthenticatedFastForwardRoute
   '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/loans': typeof AuthenticatedLoansRoute
@@ -299,6 +308,7 @@ export interface FileRoutesById {
   '/_authenticated/cycle-report': typeof AuthenticatedCycleReportRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
+  '/_authenticated/fast-forward': typeof AuthenticatedFastForwardRoute
   '/_authenticated/handoff': typeof AuthenticatedHandoffRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
   '/_authenticated/loans': typeof AuthenticatedLoansRoute
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/cycle-report'
     | '/dashboard'
     | '/expenses'
+    | '/fast-forward'
     | '/handoff'
     | '/households'
     | '/loans'
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/cycle-report'
     | '/dashboard'
     | '/expenses'
+    | '/fast-forward'
     | '/handoff'
     | '/households'
     | '/loans'
@@ -404,6 +416,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cycle-report'
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
+    | '/_authenticated/fast-forward'
     | '/_authenticated/handoff'
     | '/_authenticated/households'
     | '/_authenticated/loans'
@@ -561,6 +574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHandoffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fast-forward': {
+      id: '/_authenticated/fast-forward'
+      path: '/fast-forward'
+      fullPath: '/fast-forward'
+      preLoaderRoute: typeof AuthenticatedFastForwardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/expenses': {
       id: '/_authenticated/expenses'
       path: '/expenses'
@@ -691,6 +711,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCycleReportRoute: typeof AuthenticatedCycleReportRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
+  AuthenticatedFastForwardRoute: typeof AuthenticatedFastForwardRoute
   AuthenticatedHandoffRoute: typeof AuthenticatedHandoffRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
   AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
@@ -711,6 +732,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCycleReportRoute: AuthenticatedCycleReportRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
+  AuthenticatedFastForwardRoute: AuthenticatedFastForwardRoute,
   AuthenticatedHandoffRoute: AuthenticatedHandoffRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
   AuthenticatedLoansRoute: AuthenticatedLoansRoute,

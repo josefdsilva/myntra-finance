@@ -38,6 +38,7 @@ import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.function
 import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
+import { LogoLoader } from "@/components/logo-loader";
 
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isNavigating = useRouterState({
+    select: (s) => s.status === "pending" || s.isLoading || s.isTransitioning,
+  });
   const t = useT();
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
@@ -404,7 +408,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0">{children}</main>
+      <main className="flex-1 min-w-0 relative">
+        {isNavigating && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center pt-3 print:hidden animate-fade-in"
+            aria-live="polite"
+          >
+            <div className="pointer-events-auto flex items-center gap-2 rounded-full border bg-card/95 px-3 py-1.5 shadow-sm backdrop-blur">
+              <LogoLoader size={18} />
+              <span className="text-xs text-muted-foreground">{t("shell.loading")}</span>
+            </div>
+          </div>
+        )}
+        {children}
+      </main>
       <CoachDock />
       
     </div>
