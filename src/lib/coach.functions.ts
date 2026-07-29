@@ -7,7 +7,15 @@ import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { addMonths } from "date-fns";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
-import { computeBenchmarkComparison, type BenchmarkComparison } from "./benchmarks";
+import {
+  computeBenchmarkComparison,
+  computeWealthComparison,
+  computeDebtServiceComparison,
+  type BenchmarkComparison,
+  type WealthComparison,
+  type DebtServiceComparison,
+  type AgeBand,
+} from "./benchmarks";
 import { monthlyRateFromTaeg, monthlyRateFromNominalTan, termMonthsFor } from "./amortization";
 import { buildForecast, monthKey, type Plan } from "./plan";
 import { summariseIntent, resolveIntent, isDiscretionary } from "./intent";
@@ -190,6 +198,8 @@ type CoachContext = {
   }>;
   topSpends: Array<{ amount: number; category: string; note: string | null; occurred_at: string }>;
   benchmark: BenchmarkComparison | null;
+  wealthComparison: WealthComparison | null;
+  debtServiceComparison: DebtServiceComparison | null;
   country: string;
   countryName: string;
   /** fixed (incl. debt) + variable estimate per month. */
@@ -702,6 +712,24 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
         })
       : null;
 
+  // Net worth & debt-service vs similar households (ECB HFCS), age-adjusted when
+  // the household set an age band. Same engine the "How you compare" card uses.
+  const monthlyDebtService = debtProjections.reduce((s, d) => s + d.monthlyInstallment, 0);
+  const wealthComparison = computeWealthComparison({
+    country: hh?.country ?? "",
+    userNetWorth: netWorth,
+    incomeQuintile: benchmark?.incomeQuintile ?? null,
+    ageBand: (hh?.age_band ?? null) as AgeBand | null,
+  });
+  const debtServiceComparison =
+    settingsIncome > 0
+      ? computeDebtServiceComparison({
+          country: hh?.country ?? "",
+          monthlyDebtService,
+          monthlyIncome: settingsIncome,
+        })
+      : null;
+
   // ---- Forward plans (future costs & income changes the household entered) ----
   const planList = rowsOrEmpty<Plan>(plansData as Plan[] | null);
   const planForecast = buildForecast({
@@ -802,6 +830,8 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     })),
     topSpends: spendsForTop.slice(0, 8),
     benchmark,
+    wealthComparison,
+    debtServiceComparison,
     // Never fabricate Portugal for an unknown country: leave the code blank (so
     // no benchmark is invented) and use a neutral country name in the prompt.
     country: (hh?.country ?? "").toUpperCase(),
@@ -896,6 +926,8 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - Projects are typed: each buckets[] item has kind ∈ savings | emergency | investment. Balances are split into emergencyBalance, savingsBalance and investmentBalance; liquidReserve is the safety cushion (emergency projects if hasEmergencyBucket, else all non-investment savings) and is what emergencyFundMonths measures — investments are excluded on purpose because they shouldn't be raided.
 - assets[] are significant things the household owns (property, vehicles, stocks, bonds, funds, a business) with currentValue; assetsTotal is their sum and liquidAssetsTotal is the quickly-sellable part (stocks/bonds/funds). netWorth = assetsTotal + totalSavings − debtPrincipalOutstanding (bank cash is not tracked, so it is excluded). Use netWorth for the big-picture "how am I really doing" and solvency questions, and treat liquidAssetsTotal as a secondary emergency backstop BEHIND liquidReserve.
 - Liquidity levers: when cash is genuinely tight (thin liquidReserve, a shortfall month in planForecast, or high-APR debt) and the household holds sizeable illiquid assets, selling one — or borrowing against it — is a legitimate option to raise liquidity; surface it WITH its trade-offs (transaction costs, weeks/months to sell, losing future growth or rent), never as a default and never lightly. The opposite lever applies too: if there is idle cash or a reserve well beyond a healthy emergency cushion, converting some into productive assets or investments puts it to work. Frame both as trade-offs and cite the figures.
+- wealthComparison — how netWorth compares to similar households from the ECB HFCS survey: peerMedian is the median for the same country, income band and (if ageBand is set) age band; ratio is user/peer. Use it for "how does my net worth compare" questions. If ageBand is null, note the comparison is against all ages and suggest setting an age band in Settings for a fairer read. It is a public survey median, never other users; may be null.
+- debtServiceComparison — userPct is the share of monthly income going to debt payments; medianPct is the country median for indebted households (HFCS). Use it to judge whether the debt load is heavy relative to peers; may be null.
 - debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
 - avalancheOrder (highest APR first, minimises interest) and snowballOrder (smallest balance first, quick wins).
 - benchmark — national averages from Eurostat / national statistics, never other users.

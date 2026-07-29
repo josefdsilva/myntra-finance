@@ -28,7 +28,8 @@ import {
 } from "@/components/ui/select";
 import { StatementImportButton } from "@/components/statement-import-flow";
 import { money, currencySymbol } from "@/lib/format";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
+import { AGE_BANDS } from "@/lib/benchmarks";
 
 import {
   Plus,
@@ -123,6 +124,7 @@ function Wizard({
   const [country, setCountry] = useState(initialCountry);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
+  const [ageBand, setAgeBand] = useState<string>("");
   const [cycleLen, setCycleLen] = useState<Cycle>("quarterly");
   const [fiscalStart, setFiscalStart] = useState("");
 
@@ -151,7 +153,21 @@ function Wizard({
           },
         });
       if (key === "household")
-        await updateHh({ data: { household_id: householdId, adults, children } });
+        await updateHh({
+          data: {
+            household_id: householdId,
+            adults,
+            children,
+            age_band: (ageBand || null) as
+              | "under35"
+              | "35_44"
+              | "45_54"
+              | "55_64"
+              | "65_74"
+              | "75plus"
+              | null,
+          },
+        });
       qc.invalidateQueries();
       if (isLast) {
         await finish();
@@ -205,6 +221,8 @@ function Wizard({
               setAdults={setAdults}
               children={children}
               setChildren={setChildren}
+              ageBand={ageBand}
+              setAgeBand={setAgeBand}
             />
           )}
           {key === "income" && <IncomeStep householdId={householdId} isBusiness={isBusiness} />}
@@ -365,19 +383,44 @@ function HouseholdStep({
   setAdults,
   children,
   setChildren,
+  ageBand,
+  setAgeBand,
 }: {
   adults: number;
   setAdults: (v: number) => void;
   children: number;
   setChildren: (v: number) => void;
+  ageBand: string;
+  setAgeBand: (v: string) => void;
 }) {
   const t = useT();
+  // "none" is the sentinel for "prefer not to say" (Select can't hold "").
   return (
     <div>
       <StepHead icon={Users} title={t("ob.household.title")} subtitle={t("ob.household.subtitle")} />
       <div className="space-y-3">
         <Stepper label={t("ob.household.adults")} value={adults} setValue={setAdults} min={1} />
         <Stepper label={t("ob.household.children")} value={children} setValue={setChildren} min={0} />
+        <div>
+          <Label>{t("hh.ageBand")}</Label>
+          <Select
+            value={ageBand || "none"}
+            onValueChange={(v) => setAgeBand(v === "none" ? "" : v)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">{t("hh.ageBandNone")}</SelectItem>
+              {AGE_BANDS.map((b) => (
+                <SelectItem key={b} value={b}>
+                  {t(`hh.ageBand.${b}` as MessageKey)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-muted-foreground">{t("hh.ageBandHint")}</p>
+        </div>
       </div>
     </div>
   );

@@ -1112,6 +1112,23 @@ export const ENTRIES = {
     de: "75 oder älter",
     fr: "75 ans ou plus",
   },
+  // Overrides the legacy note: debt now has its own comparison (debt-service),
+  // so this only concerns the everyday-SPENDING comparison and should point to
+  // where debt and savings actually show up instead of saying they're ignored.
+  "benchmarks.excludedNote": {
+    en: "Not in the spending comparison, which covers everyday consumption only: {list}. Debt is compared separately above, and savings and investments feed your net worth.",
+    pt: "Fora da comparação de despesas, que abrange apenas o consumo do dia a dia: {list}. A dívida é comparada em separado acima, e as poupanças e investimentos entram no seu património líquido.",
+    es: "Fuera de la comparación de gasto, que solo cubre el consumo cotidiano: {list}. La deuda se compara aparte más arriba, y el ahorro y las inversiones alimentan tu patrimonio neto.",
+    de: "Nicht Teil des Ausgabenvergleichs, der nur den Alltagskonsum abdeckt: {list}. Schulden werden oben separat verglichen, und Ersparnisse und Investitionen fließen in dein Nettovermögen ein.",
+    fr: "Hors de la comparaison des dépenses, qui ne couvre que la consommation courante : {list}. La dette est comparée séparément ci-dessus, et l'épargne et les investissements alimentent votre patrimoine net.",
+  },
+  "benchmarks.excludedNoteNoDebt": {
+    en: "Not in the spending comparison, which covers everyday consumption only: {list}. Savings and investments feed your net worth instead.",
+    pt: "Fora da comparação de despesas, que abrange apenas o consumo do dia a dia: {list}. As poupanças e investimentos entram, em vez disso, no seu património líquido.",
+    es: "Fuera de la comparación de gasto, que solo cubre el consumo cotidiano: {list}. El ahorro y las inversiones alimentan en cambio tu patrimonio neto.",
+    de: "Nicht Teil des Ausgabenvergleichs, der nur den Alltagskonsum abdeckt: {list}. Ersparnisse und Investitionen fließen stattdessen in dein Nettovermögen ein.",
+    fr: "Hors de la comparaison des dépenses, qui ne couvre que la consommation courante : {list}. L'épargne et les investissements alimentent plutôt votre patrimoine net.",
+  },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;

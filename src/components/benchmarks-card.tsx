@@ -366,7 +366,9 @@ export function BenchmarksCard({
 
             {comp.excludedCategories.length > 0 && (
               <p className="text-xs text-muted-foreground">
-                {t("benchmarks.excludedNote", { list: excludedLabel })}
+                {t(debtComp ? "benchmarks.excludedNote" : "benchmarks.excludedNoteNoDebt", {
+                  list: excludedLabel,
+                })}
               </p>
             )}
 
