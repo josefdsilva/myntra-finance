@@ -40,6 +40,7 @@ import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.function
 import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
+import { InstallApp } from "@/components/install-app";
 
 
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
@@ -400,6 +401,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="p-3 border-t space-y-1">
+          <InstallApp />
           <Button
             variant="ghost"
             className="w-full justify-start"

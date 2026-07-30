@@ -14,6 +14,34 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "install.button": {
+    en: "Install app",
+    pt: "Instalar aplicação",
+    es: "Instalar app",
+    de: "App installieren",
+    fr: "Installer l'application",
+  },
+  "install.dismiss": {
+    en: "Dismiss",
+    pt: "Dispensar",
+    es: "Descartar",
+    de: "Schließen",
+    fr: "Fermer",
+  },
+  "install.iosTitle": {
+    en: "Add bynku to your Home Screen",
+    pt: "Adiciona o bynku ao ecrã principal",
+    es: "Añade bynku a tu pantalla de inicio",
+    de: "bynku zum Home-Bildschirm hinzufügen",
+    fr: "Ajoutez bynku à votre écran d'accueil",
+  },
+  "install.iosBody": {
+    en: "In Safari, tap the Share button, then choose 'Add to Home Screen' — then you can share receipts straight to bynku.",
+    pt: "No Safari, toca no botão Partilhar e escolhe 'Adicionar ao ecrã principal' — depois podes partilhar recibos diretamente para o bynku.",
+    es: "En Safari, toca el botón Compartir y elige 'Añadir a pantalla de inicio' — después podrás compartir recibos directamente a bynku.",
+    de: "Tippe in Safari auf Teilen und wähle 'Zum Home-Bildschirm' — danach kannst du Belege direkt an bynku senden.",
+    fr: "Dans Safari, appuyez sur Partager, puis 'Sur l'écran d'accueil' — vous pourrez ensuite partager des reçus directement vers bynku.",
+  },
   "nav.capture": {
     en: "Capture",
     pt: "Capturar",
