@@ -256,7 +256,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const { data: hh } = await supabase
     .from("households")
     .select(
-      "currency, baseline_budget, margin_pct, country, adults, children, kind, cycle, cycle_mode, cycle_anchor_date",
+      "currency, baseline_budget, margin_pct, country, adults, children, kind, age_band, cycle, cycle_mode, cycle_anchor_date",
     )
     .eq("id", householdId)
     .maybeSingle();
