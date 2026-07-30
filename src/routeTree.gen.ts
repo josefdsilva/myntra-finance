@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -46,6 +47,11 @@ import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksCycleStartRouteImport } from './routes/api/public/hooks/cycle-start'
 import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/allocations': typeof AuthenticatedAllocationsRoute
   '/analysis': typeof AuthenticatedAnalysisRoute
   '/assets': typeof AuthenticatedAssetsRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/allocations': typeof AuthenticatedAllocationsRoute
   '/analysis': typeof AuthenticatedAnalysisRoute
   '/assets': typeof AuthenticatedAssetsRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/allocations': typeof AuthenticatedAllocationsRoute
   '/_authenticated/analysis': typeof AuthenticatedAnalysisRoute
   '/_authenticated/assets': typeof AuthenticatedAssetsRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/privacy'
+    | '/sitemap.xml'
     | '/allocations'
     | '/analysis'
     | '/assets'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/privacy'
+    | '/sitemap.xml'
     | '/allocations'
     | '/analysis'
     | '/assets'
@@ -431,6 +442,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/privacy'
+    | '/sitemap.xml'
     | '/_authenticated/allocations'
     | '/_authenticated/analysis'
     | '/_authenticated/assets'
@@ -470,6 +482,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   InviteTokenRoute: typeof InviteTokenRoute
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
@@ -486,6 +499,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -795,6 +815,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   InviteTokenRoute: InviteTokenRoute,
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
