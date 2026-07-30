@@ -742,6 +742,20 @@ export const ENTRIES = {
     de: "/Mon. × {months} Monate",
     fr: "/mois × {months} mois",
   },
+  "handoff.sentToast": {
+    en: "Sent {count} entries to {email}.",
+    pt: "Enviámos {count} movimentos para {email}.",
+    es: "Enviamos {count} movimientos a {email}.",
+    de: "{count} Einträge an {email} gesendet.",
+    fr: "{count} écritures envoyées à {email}.",
+  },
+  "handoff.note": {
+    en: "Sends a ledger of every entry with links to the attached invoices, and flags any that are missing one. Your accountant's figures remain the official ones.",
+    pt: "Envia um livro-razão de cada movimento com ligações às faturas anexadas e assinala os que não têm. Os valores do seu contabilista continuam a ser os oficiais.",
+    es: "Envía un libro de todos los movimientos con enlaces a las facturas adjuntas y señala los que faltan. Las cifras de tu contable siguen siendo las oficiales.",
+    de: "Sendet ein Journal aller Einträge mit Links zu den angehängten Rechnungen und markiert fehlende. Die Zahlen deines Buchhalters bleiben maßgeblich.",
+    fr: "Envoie un journal de toutes les écritures avec des liens vers les factures jointes et signale celles qui manquent. Les chiffres de votre comptable restent la référence.",
+  },
   "handoff.year": {
     en: "Year",
     pt: "Ano",
