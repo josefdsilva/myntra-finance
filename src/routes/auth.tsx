@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useT } from "@/lib/i18n";
 import { money } from "@/lib/format";
+import { InstallApp } from "@/components/install-app";
 
 
 export const Route = createFileRoute("/auth")({
@@ -385,6 +386,10 @@ function AuthPage() {
 
             </CardContent>
           </Card>
+
+          <div className="mt-4">
+            <InstallApp />
+          </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
             {t("auth.footerTagline")}
