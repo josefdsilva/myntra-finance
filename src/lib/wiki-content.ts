@@ -89,7 +89,7 @@ export const WIKI_META: Loc<{
     eyebrow: "Manual",
     title: "How bynku works",
     subtitle:
-      "A short, plain-language guide to the app. Read a section, or search for what you need.",
+      "Part guide, part short course on money — how bynku works and how to think about it. Read a section, or search what you need.",
     tocTitle: "In this guide",
     searchPlaceholder: "Search the manual",
     noResults: "No results for",
@@ -119,7 +119,7 @@ export const WIKI_META: Loc<{
     eyebrow: "Manual",
     title: "Como funciona o bynku",
     subtitle:
-      "Um guia curto e em linguagem simples. Lê uma secção ou pesquisa o que precisas.",
+      "Meio guia, meio curso curto sobre dinheiro — como o bynku funciona e como pensar nele. Lê uma secção ou pesquisa o que precisas.",
     tocTitle: "Neste guia",
     searchPlaceholder: "Pesquisar no manual",
     noResults: "Sem resultados para",
@@ -153,7 +153,7 @@ export const WIKI_META: Loc<{
     eyebrow: "Manual",
     title: "Cómo funciona bynku",
     subtitle:
-      "Una guía corta y en lenguaje sencillo. Lee una sección o busca lo que necesites.",
+      "Mitad guía, mitad curso breve sobre el dinero — cómo funciona bynku y cómo pensarlo. Lee una sección o busca lo que necesites.",
     tocTitle: "En esta guía",
     searchPlaceholder: "Buscar en el manual",
     noResults: "Sin resultados para",
@@ -187,7 +187,7 @@ export const WIKI_META: Loc<{
     eyebrow: "Handbuch",
     title: "So funktioniert bynku",
     subtitle:
-      "Ein kurzer Leitfaden in einfacher Sprache. Lies einen Abschnitt oder suche direkt.",
+      "Halb Leitfaden, halb kurzer Geldkurs — wie bynku funktioniert und wie man übers Geld denkt. Lies einen Abschnitt oder suche direkt.",
     tocTitle: "In diesem Leitfaden",
     searchPlaceholder: "Handbuch durchsuchen",
     noResults: "Keine Treffer für",
@@ -221,7 +221,7 @@ export const WIKI_META: Loc<{
     eyebrow: "Manuel",
     title: "Comment bynku fonctionne",
     subtitle:
-      "Un guide court, en langage clair. Lis une section ou cherche directement.",
+      "Mi-guide, mi-cours d'argent — comment bynku fonctionne et comment y penser. Lis une section ou cherche directement.",
     tocTitle: "Dans ce guide",
     searchPlaceholder: "Rechercher dans le manuel",
     noResults: "Aucun résultat pour",
@@ -305,6 +305,401 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Estás en un espacio de empresa, así que este manual usa lenguaje de negocio: los ingresos son facturación y cobros pendientes, los gastos son costes fijos y pagos pendientes, y el mismo motor proyecta el flujo de caja y la autonomía en vez del patrimonio familiar. La página de Traspaso entrega el espacio a un contable.",
       "Du bist in einem Firmenraum, daher nutzt dieses Handbuch Geschäftssprache: Einnahmen sind Umsatz und Forderungen, Ausgaben sind Fixkosten und Verbindlichkeiten, und dieselbe Engine projiziert Cashflow und Runway statt Haushalts-Nettovermögen. Die Übergabeseite übergibt einen Raum an eine Buchhalterin.",
       "Vous êtes dans un espace entreprise : ce manuel emploie donc un vocabulaire pro : les entrées sont le chiffre d'affaires et les créances, les sorties les charges fixes et les dettes fournisseurs, et le même moteur projette la trésorerie et l'autonomie plutôt que le patrimoine du foyer. La page de Transfert confie un espace à un comptable.",
+    ),
+  },
+
+  // ------------------------------------------------------------ mindset
+  {
+    id: "mindset",
+    icon: "Sparkles",
+    title: L(
+      "Money is a tool, not a scoreboard",
+      "O dinheiro é uma ferramenta, não um placar",
+      "El dinero es una herramienta, no un marcador",
+      "Geld ist ein Werkzeug, kein Punktestand",
+      "L'argent est un outil, pas un score",
+    ),
+    paragraphs: L(
+      [
+        "Most money stress isn't about the amount — it's about not knowing where you stand. bynku starts there: it turns a fuzzy feeling into one clear number you can trust today, and rebuilds it every payday. Clarity first, optimisation later.",
+        "Two ideas run through everything here. Think in flows, not just balances: what comes in, what goes out, and what that leaves — a balance is a photo, a flow is the film. And money is for a life, not a high score: the aim isn't the biggest number, it's enough freedom to sleep well and say yes to what matters.",
+        "bynku is on your side and no one else's. It has nothing to sell you — no loans, no cards — so its advice can point wherever your interest lies, even when that means paying a bank less. Read the rest of this guide as a short course, not a manual: each part explains a money idea, then shows how bynku puts it to work on your real numbers.",
+      ],
+      [
+        "A maior parte do stress com dinheiro não é o valor — é não saber onde estás. O bynku começa aí: transforma uma sensação difusa num número claro em que podes confiar hoje, e reconstrói-o a cada dia de pagamento. Primeiro clareza, depois otimização.",
+        "Duas ideias atravessam tudo aqui. Pensa em fluxos, não só em saldos: o que entra, o que sai e o que sobra — um saldo é uma foto, um fluxo é o filme. E o dinheiro é para uma vida, não para um recorde: o objetivo não é o maior número, é liberdade suficiente para dormir descansado e dizer sim ao que importa.",
+        "O bynku está do teu lado e de mais ninguém. Não tem nada para te vender — nem créditos, nem cartões — por isso o conselho pode apontar para onde estiver o teu interesse, mesmo que isso signifique pagar menos ao banco. Lê o resto deste guia como um curso curto, não um manual: cada parte explica uma ideia sobre dinheiro e mostra como o bynku a aplica aos teus números reais.",
+      ],
+      [
+        "Casi todo el estrés con el dinero no es por la cantidad, sino por no saber dónde estás. bynku empieza ahí: convierte una sensación difusa en un número claro en el que puedes confiar hoy, y lo rehace cada día de cobro. Primero claridad, luego optimización.",
+        "Dos ideas recorren todo esto. Piensa en flujos, no solo en saldos: lo que entra, lo que sale y lo que queda — un saldo es una foto, un flujo es la película. Y el dinero es para una vida, no para un récord: la meta no es el número más grande, sino libertad suficiente para dormir tranquilo y decir sí a lo que importa.",
+        "bynku está de tu lado y de nadie más. No tiene nada que venderte — ni préstamos, ni tarjetas — así que su consejo puede apuntar a donde esté tu interés, aunque implique pagar menos al banco. Lee el resto de esta guía como un curso breve, no un manual: cada parte explica una idea sobre el dinero y muestra cómo bynku la aplica a tus números reales.",
+      ],
+      [
+        "Der meiste Geldstress dreht sich nicht um die Summe, sondern darum, nicht zu wissen, wo man steht. Genau da setzt bynku an: Es macht aus einem vagen Gefühl eine klare Zahl, der du heute vertrauen kannst, und baut sie an jedem Zahltag neu auf. Erst Klarheit, dann Optimierung.",
+        "Zwei Gedanken ziehen sich durch alles hier. Denke in Flüssen, nicht nur in Ständen: was reinkommt, was rausgeht und was übrig bleibt — ein Kontostand ist ein Foto, ein Fluss ist der Film. Und Geld ist für ein Leben da, nicht für einen Highscore: Ziel ist nicht die größte Zahl, sondern genug Freiheit, ruhig zu schlafen und Ja zum Wichtigen zu sagen.",
+        "bynku steht auf deiner Seite und auf keiner anderen. Es hat dir nichts zu verkaufen — keine Kredite, keine Karten — deshalb kann sein Rat dorthin zeigen, wo dein Interesse liegt, auch wenn das heißt, der Bank weniger zu zahlen. Lies den Rest als kurzen Kurs, nicht als Handbuch: Jeder Teil erklärt eine Geldidee und zeigt, wie bynku sie auf deine echten Zahlen anwendet.",
+      ],
+      [
+        "Le stress financier vient rarement du montant — mais du fait de ne pas savoir où l'on en est. bynku part de là : il transforme une impression floue en un chiffre clair, fiable dès aujourd'hui, et le reconstruit à chaque paie. La clarté d'abord, l'optimisation ensuite.",
+        "Deux idées traversent tout ceci. Pensez en flux, pas seulement en soldes : ce qui entre, ce qui sort, ce qu'il reste — un solde est une photo, un flux est le film. Et l'argent est fait pour une vie, pas pour un score : le but n'est pas le plus gros chiffre, mais assez de liberté pour dormir tranquille et dire oui à l'essentiel.",
+        "bynku est de votre côté et d'aucun autre. Il n'a rien à vous vendre — ni prêts, ni cartes — son conseil peut donc pointer là où est votre intérêt, même s'il faut payer moins à une banque. Lisez la suite comme un petit cours, pas un manuel : chaque partie explique une idée d'argent, puis montre comment bynku l'applique à vos vrais chiffres.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Flows over balances", body: "A big balance can hide a leak; a healthy flow builds wealth quietly. bynku watches the flow." },
+        { label: "Enough, defined", body: "Name what 'enough' means for you — a buffer, a goal — and bynku tracks the distance to it." },
+        { label: "Understand, then trust", body: "You're never asked to trust a number you can't see the working for. Every figure is explained." },
+        { label: "On your side", body: "No product to sell means advice that can favour you over any bank or lender." },
+      ],
+      [
+        { label: "Fluxos acima de saldos", body: "Um saldo grande pode esconder uma fuga; um fluxo saudável cria riqueza em silêncio. O bynku vê o fluxo." },
+        { label: "Definir o 'suficiente'", body: "Dá nome ao que é 'suficiente' para ti — uma almofada, um objetivo — e o bynku mede a distância até lá." },
+        { label: "Perceber e depois confiar", body: "Nunca te pedimos para confiar num número sem veres as contas. Tudo é explicado." },
+        { label: "Do teu lado", body: "Não ter produtos para vender significa conselhos que te podem favorecer face a qualquer banco." },
+      ],
+      [
+        { label: "Flujos sobre saldos", body: "Un saldo grande puede ocultar una fuga; un flujo sano crea riqueza en silencio. bynku mira el flujo." },
+        { label: "Definir lo 'suficiente'", body: "Pon nombre a lo que es 'suficiente' para ti — un colchón, una meta — y bynku mide la distancia." },
+        { label: "Entender y luego confiar", body: "Nunca se te pide confiar en un número sin ver el cálculo. Todo se explica." },
+        { label: "De tu lado", body: "No tener producto que vender permite un consejo que puede favorecerte frente a cualquier banco." },
+      ],
+      [
+        { label: "Flüsse vor Ständen", body: "Ein hoher Stand kann ein Leck verbergen; ein gesunder Fluss baut leise Vermögen auf. bynku sieht den Fluss." },
+        { label: "'Genug' definieren", body: "Benenne, was 'genug' für dich heißt — ein Puffer, ein Ziel — und bynku misst die Distanz dorthin." },
+        { label: "Verstehen, dann vertrauen", body: "Du sollst keiner Zahl vertrauen, deren Rechenweg du nicht siehst. Alles wird erklärt." },
+        { label: "Auf deiner Seite", body: "Kein Produkt zu verkaufen heißt Rat, der dich gegenüber jeder Bank bevorzugen darf." },
+      ],
+      [
+        { label: "Les flux avant les soldes", body: "Un gros solde peut masquer une fuite ; un flux sain bâtit la richesse en silence. bynku regarde le flux." },
+        { label: "Définir « assez »", body: "Nommez ce qu'« assez » veut dire pour vous — un coussin, un objectif — et bynku mesure la distance." },
+        { label: "Comprendre puis faire confiance", body: "On ne vous demande jamais de croire un chiffre sans en voir le calcul. Tout est expliqué." },
+        { label: "De votre côté", body: "Rien à vendre, donc un conseil qui peut vous favoriser face à n'importe quelle banque." },
+      ],
+    ),
+    callout: L(
+      "You don't need to be good with numbers. You need a plan you understand and a habit you can keep. bynku is built for exactly that.",
+      "Não precisas de ser bom com números. Precisas de um plano que percebes e de um hábito que consegues manter. O bynku foi feito para isso.",
+      "No hace falta que se te den bien los números. Hace falta un plan que entiendas y un hábito que puedas mantener. bynku está hecho para eso.",
+      "Du musst nicht gut mit Zahlen sein. Du brauchst einen Plan, den du verstehst, und eine Gewohnheit, die du hältst. Genau dafür ist bynku gebaut.",
+      "Pas besoin d'être doué avec les chiffres. Il faut un plan que vous comprenez et une habitude que vous tenez. bynku est fait pour ça.",
+    ),
+  },
+
+  // ------------------------------------------------------------ spending well
+  {
+    id: "spendingWell",
+    icon: "Receipt",
+    title: L(
+      "Spending is a choice, not an accident",
+      "Gastar é uma escolha, não um acaso",
+      "Gastar es una elección, no un accidente",
+      "Ausgeben ist eine Wahl, kein Zufall",
+      "Dépenser est un choix, pas un accident",
+    ),
+    paragraphs: L(
+      [
+        "Most overspending isn't reckless — it's invisible: a dozen small, reasonable yeses that add up. The cure isn't guilt, it's visibility. bynku gives you one honest figure, safe to spend, that already sets aside your bills, loans and goals — so what's left is genuinely yours to enjoy without a second thought.",
+        "The useful line isn't needs versus wants; it's how much a purchase matters to you. bynku lets you tag spending on a gentle scale from essential to treat — not to scold, but so it can tell a thin month from a fun one, and celebrate treats when you're on track. Lifestyle creep — costs quietly rising with income — is the slow leak, and naming each expense is how you catch it.",
+        "For bigger buys, momentum is the enemy of good decisions. The 'Plan a purchase' helper checks a specific buy against your real capacity and, if it's borderline, shows how to make it work — spread it, wait a cycle, or trim elsewhere — always comparing the total cost, never just the monthly.",
+      ],
+      [
+        "A maior parte dos gastos a mais não é imprudência — é invisibilidade: uma dúzia de 'sins' pequenos e razoáveis que se somam. A cura não é a culpa, é a visibilidade. O bynku dá-te um número honesto, o seguro a gastar, que já reservou contas, créditos e objetivos — o que sobra é mesmo teu para aproveitar sem remorsos.",
+        "A linha útil não é necessidades contra desejos; é o quanto uma compra te importa. O bynku deixa-te marcar cada gasto numa escala suave de essencial a miminho — não para censurar, mas para distinguir um mês apertado de um mês divertido, e celebrar os miminhos quando estás no caminho certo. A inflação de estilo de vida — custos a subir com o rendimento — é a fuga lenta, e dar nome a cada despesa é como a apanhas.",
+        "Nas compras maiores, o impulso é inimigo das boas decisões. O 'Planear uma compra' testa uma compra concreta face à tua capacidade real e, se estiver renhida, mostra como fazer resultar — dividir, esperar um ciclo, ou cortar noutro lado — comparando sempre o custo total, nunca só a mensalidade.",
+      ],
+      [
+        "Casi todo el gasto de más no es imprudencia, sino invisibilidad: una docena de pequeños 'sí' razonables que suman. La cura no es la culpa, es la visibilidad. bynku te da un número honesto, lo seguro para gastar, que ya ha apartado facturas, préstamos y metas — lo que queda es de verdad tuyo para disfrutarlo sin remordimientos.",
+        "La línea útil no es necesidades frente a caprichos; es cuánto te importa una compra. bynku te deja etiquetar el gasto en una escala suave de esencial a capricho — no para reñir, sino para distinguir un mes justo de uno divertido, y celebrar los caprichos cuando vas bien. La inflación del estilo de vida — costes que suben con los ingresos — es la fuga lenta, y nombrar cada gasto es como la detectas.",
+        "En las compras grandes, el impulso es enemigo de las buenas decisiones. 'Planear una compra' contrasta una compra concreta con tu capacidad real y, si está justa, muestra cómo lograrlo — repartirla, esperar un ciclo o recortar en otro sitio — comparando siempre el coste total, nunca solo la cuota.",
+      ],
+      [
+        "Zu viel ausgeben ist meist keine Leichtsinnigkeit, sondern Unsichtbarkeit: ein Dutzend kleiner, vernünftiger Jas, die sich summieren. Die Kur heißt nicht Schuld, sondern Sichtbarkeit. bynku gibt dir eine ehrliche Zahl, das sichere Ausgeben, in der Rechnungen, Kredite und Ziele schon zurückgelegt sind — der Rest gehört wirklich dir, ohne Grübeln.",
+        "Die nützliche Linie ist nicht Bedarf gegen Wunsch, sondern wie wichtig dir ein Kauf ist. bynku lässt dich Ausgaben auf einer sanften Skala von notwendig bis Vergnügen markieren — nicht zum Tadeln, sondern um einen knappen Monat von einem schönen zu unterscheiden und Vergnügen zu feiern, wenn du gut liegst. Lebensstil-Inflation — Kosten, die leise mit dem Einkommen steigen — ist das langsame Leck; jede Ausgabe zu benennen ist, wie du es fängst.",
+        "Bei größeren Käufen ist Schwung der Feind guter Entscheidungen. „Kauf planen“ prüft einen konkreten Kauf gegen deine echte Kapazität und zeigt, falls knapp, wie es klappt — strecken, einen Zyklus warten oder woanders kürzen — immer im Vergleich der Gesamtkosten, nie nur der Rate.",
+      ],
+      [
+        "La plupart des excès de dépense ne sont pas de l'imprudence — mais de l'invisibilité : une douzaine de petits « oui » raisonnables qui s'additionnent. Le remède n'est pas la culpabilité, c'est la visibilité. bynku vous donne un chiffre honnête, le montant sûr à dépenser, qui a déjà mis de côté factures, prêts et objectifs — le reste est vraiment à vous, sans arrière-pensée.",
+        "La bonne ligne n'est pas besoin contre envie ; c'est l'importance d'un achat pour vous. bynku vous laisse étiqueter les dépenses sur une échelle douce, d'essentiel à petit plaisir — pas pour gronder, mais pour distinguer un mois serré d'un mois joyeux, et célébrer les plaisirs quand tout va bien. L'inflation du train de vie — des coûts qui montent avec les revenus — est la fuite lente ; nommer chaque dépense, c'est la repérer.",
+        "Pour les gros achats, l'élan est l'ennemi des bonnes décisions. « Planifier un achat » confronte un achat précis à votre capacité réelle et, si c'est juste, montre comment y arriver — étaler, attendre un cycle, rogner ailleurs — en comparant toujours le coût total, jamais la seule mensualité.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Safe to spend", body: "Bills, loans and goals are already reserved, so this number is guilt-free." },
+        { label: "Need-level, not judgement", body: "Tag essential to treat; bynku tunes its tolerance to match, never lectures." },
+        { label: "Watch the creep", body: "When everyday spending drifts above your estimate, bynku flags it early and gently." },
+        { label: "Total cost, not the monthly", body: "The purchase helper weighs full price, finance cost, and the dent to your cushion." },
+      ],
+      [
+        { label: "Seguro a gastar", body: "Contas, créditos e objetivos já estão reservados, por isso este número é sem culpa." },
+        { label: "Nível de necessidade, não juízo", body: "Marca de essencial a miminho; o bynku ajusta a tolerância, nunca dá sermões." },
+        { label: "Atenção à inflação", body: "Quando o dia a dia foge acima da estimativa, o bynku avisa cedo e com jeito." },
+        { label: "Custo total, não a mensalidade", body: "O assistente pesa o preço total, o custo do crédito e o dano à almofada." },
+      ],
+      [
+        { label: "Seguro para gastar", body: "Facturas, préstamos y metas ya están apartados, así que este número es sin culpa." },
+        { label: "Nivel de necesidad, no juicio", body: "Etiqueta de esencial a capricho; bynku ajusta su tolerancia, nunca sermonea." },
+        { label: "Ojo a la inflación", body: "Cuando el día a día se dispara sobre tu estimación, bynku lo avisa pronto y con tacto." },
+        { label: "Coste total, no la cuota", body: "El asistente pesa el precio total, el coste de financiar y el daño a tu colchón." },
+      ],
+      [
+        { label: "Sicheres Ausgeben", body: "Rechnungen, Kredite und Ziele sind schon zurückgelegt — diese Zahl ist schuldfrei." },
+        { label: "Bedarfsstufe, kein Urteil", body: "Markiere von notwendig bis Vergnügen; bynku passt die Toleranz an, ohne Belehrung." },
+        { label: "Auf das Leck achten", body: "Driftet der Alltag über deine Schätzung, meldet bynku es früh und behutsam." },
+        { label: "Gesamtkosten, nicht die Rate", body: "Der Helfer wägt Vollpreis, Finanzierungskosten und den Schlag für deinen Puffer ab." },
+      ],
+      [
+        { label: "Montant sûr à dépenser", body: "Factures, prêts et objectifs sont déjà réservés : ce chiffre est sans culpabilité." },
+        { label: "Niveau de besoin, pas jugement", body: "Étiquetez d'essentiel à plaisir ; bynku ajuste sa tolérance, sans sermon." },
+        { label: "Surveiller la dérive", body: "Quand le quotidien dépasse votre estimation, bynku le signale tôt et en douceur." },
+        { label: "Coût total, pas la mensualité", body: "L'assistant pèse le prix total, le coût du crédit et l'entaille à votre coussin." },
+      ],
+    ),
+    callout: L(
+      "A treat is part of a healthy budget, not a failure of one. The point of tracking isn't to spend less — it's to spend on purpose.",
+      "Um miminho faz parte de um orçamento saudável, não é uma falha. O objetivo de registar não é gastar menos — é gastar com intenção.",
+      "Un capricho es parte de un presupuesto sano, no un fallo. El objetivo de registrar no es gastar menos, sino gastar a propósito.",
+      "Ein Vergnügen gehört zu einem gesunden Budget, es ist kein Versagen. Ziel des Erfassens ist nicht, weniger auszugeben — sondern bewusst.",
+      "Un plaisir fait partie d'un budget sain, ce n'est pas un échec. Le but du suivi n'est pas de dépenser moins, mais de dépenser à dessein.",
+    ),
+  },
+
+  // ------------------------------------------------------------ saving well
+  {
+    id: "savingWell",
+    icon: "PiggyBank",
+    title: L(
+      "Pay yourself first",
+      "Paga a ti primeiro",
+      "Págate a ti primero",
+      "Zahle zuerst dir selbst",
+      "Payez-vous d'abord",
+    ),
+    paragraphs: L(
+      [
+        "Saving rarely fails for lack of will — it fails because it's the leftover, and leftovers are unreliable. Flip it: decide what goes aside first, then live on the rest. bynku builds this in — from your surplus you set money into projects before it can leak into everyday spending, and your savings rate is measured on what you actually moved, not what was theoretically spare.",
+        "Not all saving is the same. A safety net is money you hope never to touch — it turns a crisis into an inconvenience and keeps you from borrowing at 20% to fix a 200 problem. Goals are money with a name and a date — a deposit, a trip, a laptop. bynku separates them as projects (emergency, savings, investment) so the buffer you mustn't raid never gets confused with the fun you're funding.",
+        "Two numbers make saving feel real: months of cover — how long your reserve would last if income stopped — and your savings rate, the share of income you set aside. bynku tracks both against sensible milestones — a first month of cover, then three, then six — so progress is visible even when the totals are small.",
+      ],
+      [
+        "Poupar raramente falha por falta de vontade — falha por ser a sobra, e as sobras não são de confiança. Inverte: decide primeiro o que pões de lado e vive com o resto. O bynku faz isto — do teu excedente colocas dinheiro em projetos antes que fuja para o dia a dia, e a taxa de poupança mede o que mexeste, não o que teoricamente sobrava.",
+        "Nem toda a poupança é igual. Uma rede de segurança é dinheiro que esperas nunca tocar — transforma uma crise num incómodo e evita que peças crédito a 20% para resolver um problema de 200. Os objetivos são dinheiro com nome e data — uma entrada, uma viagem, um portátil. O bynku separa-os como projetos (emergência, poupança, investimento) para a almofada que não deves mexer nunca se confundir com o que estás a financiar por prazer.",
+        "Dois números tornam a poupança real: meses de cobertura — quanto duraria a reserva se o rendimento parasse — e a taxa de poupança, a parte do rendimento que pões de lado. O bynku acompanha ambos face a metas sensatas — um primeiro mês de cobertura, depois três, depois seis — para o progresso ser visível mesmo com valores pequenos.",
+      ],
+      [
+        "Ahorrar rara vez falla por falta de voluntad — falla por ser el sobrante, y los sobrantes no son fiables. Dale la vuelta: decide primero qué apartas y vive con el resto. bynku lo integra — de tu excedente pones dinero en proyectos antes de que se filtre al día a día, y tu tasa de ahorro mide lo que moviste de verdad, no lo que teóricamente sobraba.",
+        "No todo el ahorro es igual. Una red de seguridad es dinero que esperas no tocar nunca — convierte una crisis en una molestia y evita que pidas crédito al 20% para arreglar un problema de 200. Las metas son dinero con nombre y fecha — una entrada, un viaje, un portátil. bynku los separa como proyectos (emergencia, ahorro, inversión) para que el colchón intocable no se confunda con lo que financias por gusto.",
+        "Dos números hacen real el ahorro: meses de cobertura — cuánto duraría tu reserva si pararan los ingresos — y tu tasa de ahorro, la parte de ingresos que apartas. bynku sigue ambos frente a hitos sensatos — un primer mes de cobertura, luego tres, luego seis — para que el avance se vea aunque los totales sean pequeños.",
+      ],
+      [
+        "Sparen scheitert selten am Willen — es scheitert, weil es der Rest ist, und Reste sind unzuverlässig. Dreh es um: Entscheide zuerst, was beiseitegeht, und lebe vom Rest. bynku baut das ein — aus deinem Überschuss legst du Geld in Projekte, bevor es in den Alltag sickert, und deine Sparquote misst, was du wirklich bewegt hast, nicht das theoretisch Übrige.",
+        "Nicht jedes Sparen ist gleich. Ein Notgroschen ist Geld, das du nie anrühren willst — er macht aus einer Krise ein Ärgernis und verhindert, dass du zu 20% borgst, um ein 200-Problem zu lösen. Ziele sind Geld mit Namen und Datum — eine Anzahlung, eine Reise, ein Laptop. bynku trennt sie als Projekte (Notfall, Sparen, Investieren), damit der unantastbare Puffer nie mit dem verwechselt wird, was du zum Vergnügen finanzierst.",
+        "Zwei Zahlen machen Sparen greifbar: Monate Deckung — wie lange die Reserve ohne Einkommen hielte — und deine Sparquote, der Anteil des Einkommens, den du zurücklegst. bynku verfolgt beide gegen sinnvolle Meilensteine — ein erster Monat Deckung, dann drei, dann sechs — damit Fortschritt sichtbar ist, auch bei kleinen Summen.",
+      ],
+      [
+        "L'épargne échoue rarement par manque de volonté — elle échoue parce qu'elle est le reste, et le reste n'est pas fiable. Inversez : décidez d'abord ce que vous mettez de côté, puis vivez sur le reste. bynku l'intègre — depuis votre excédent, vous placez de l'argent dans des projets avant qu'il ne fuie vers le quotidien, et votre taux d'épargne mesure ce que vous avez vraiment déplacé, pas le théoriquement disponible.",
+        "Toute épargne ne se vaut pas. Un matelas de sécurité est un argent qu'on espère ne jamais toucher — il change une crise en désagrément et évite d'emprunter à 20% pour régler un souci de 200. Les objectifs sont de l'argent avec un nom et une date — un apport, un voyage, un ordinateur. bynku les sépare en projets (urgence, épargne, investissement) pour que le coussin intouchable ne se confonde jamais avec ce que vous financez par plaisir.",
+        "Deux chiffres rendent l'épargne concrète : les mois de couverture — combien de temps votre réserve tiendrait sans revenu — et votre taux d'épargne, la part de revenu mise de côté. bynku suit les deux face à des paliers raisonnables — un premier mois de couverture, puis trois, puis six — pour rendre le progrès visible même avec de petits montants.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "First, not last", body: "Set aside from surplus at cycle start; what's left is safe to spend, already net of savings." },
+        { label: "Two jobs, two pots", body: "Emergency money you don't touch; goal money you're building — kept separate on purpose." },
+        { label: "Sinking funds", body: "Turn a big future cost into a small monthly set-aside so it never becomes a shock or a loan." },
+        { label: "Milestones, not perfection", body: "One month of cover beats zero. bynku celebrates the rung you're on and shows the next." },
+      ],
+      [
+        { label: "Primeiro, não por último", body: "Põe de lado do excedente no início do ciclo; o que sobra é seguro a gastar, já líquido de poupança." },
+        { label: "Duas funções, dois potes", body: "Dinheiro de emergência que não tocas; dinheiro de objetivo que constróis — separados de propósito." },
+        { label: "Fundos a acumular", body: "Transforma um custo futuro grande numa pequena reserva mensal, para nunca virar choque ou crédito." },
+        { label: "Metas, não perfeição", body: "Um mês de cobertura vale mais que zero. O bynku celebra o degrau em que estás e mostra o seguinte." },
+      ],
+      [
+        { label: "Primero, no lo último", body: "Aparta del excedente al inicio del ciclo; lo que queda es seguro para gastar, ya neto de ahorro." },
+        { label: "Dos funciones, dos botes", body: "Dinero de emergencia que no tocas; dinero de meta que construyes — separados a propósito." },
+        { label: "Fondos que se acumulan", body: "Convierte un gran coste futuro en un pequeño apartado mensual, para que nunca sea un susto ni un crédito." },
+        { label: "Hitos, no perfección", body: "Un mes de cobertura supera a cero. bynku celebra el peldaño en que estás y muestra el siguiente." },
+      ],
+      [
+        { label: "Zuerst, nicht zuletzt", body: "Lege am Zyklusstart aus dem Überschuss zurück; der Rest ist sicheres Ausgeben, schon nach Sparen." },
+        { label: "Zwei Aufgaben, zwei Töpfe", body: "Notfallgeld, das du nicht anrührst; Zielgeld, das du aufbaust — bewusst getrennt." },
+        { label: "Ansparfonds", body: "Mach aus einem großen Zukunftskosten eine kleine monatliche Rücklage — nie Schock oder Kredit." },
+        { label: "Meilensteine, keine Perfektion", body: "Ein Monat Deckung schlägt null. bynku feiert deine Stufe und zeigt die nächste." },
+      ],
+      [
+        { label: "D'abord, pas en dernier", body: "Mettez de côté depuis l'excédent en début de cycle ; le reste est sûr à dépenser, déjà net d'épargne." },
+        { label: "Deux rôles, deux pots", body: "L'argent d'urgence qu'on ne touche pas ; l'argent d'objectif qu'on construit — séparés à dessein." },
+        { label: "Fonds d'amortissement", body: "Transformez un gros coût futur en petite réserve mensuelle, pour éviter le choc ou l'emprunt." },
+        { label: "Des paliers, pas la perfection", body: "Un mois de couverture vaut mieux que zéro. bynku fête l'échelon atteint et montre le suivant." },
+      ],
+    ),
+    callout: L(
+      "The emergency fund is the least exciting and most powerful thing you'll build. It's what lets every other plan survive a bad week.",
+      "O fundo de emergência é a coisa menos entusiasmante e mais poderosa que vais construir. É o que deixa todos os outros planos sobreviver a uma má semana.",
+      "El fondo de emergencia es lo menos emocionante y más poderoso que construirás. Es lo que deja que cualquier otro plan sobreviva a una mala semana.",
+      "Der Notgroschen ist das Unspektakulärste und Mächtigste, das du aufbaust. Er lässt jeden anderen Plan eine schlechte Woche überstehen.",
+      "Le fonds d'urgence est la chose la moins excitante et la plus puissante que vous bâtirez. C'est lui qui permet à tout autre plan de survivre à une mauvaise semaine.",
+    ),
+  },
+
+  // ------------------------------------------------------------ investing basics
+  {
+    id: "investingBasics",
+    icon: "BarChart3",
+    title: L(
+      "Let time do the heavy lifting",
+      "Deixa o tempo fazer o trabalho pesado",
+      "Deja que el tiempo haga el trabajo pesado",
+      "Lass die Zeit die Arbeit machen",
+      "Laissez le temps faire le gros du travail",
+    ),
+    paragraphs: L(
+      [
+        "Investing sounds complicated, but the core is simple: money put to work can grow on its own, and growth on past growth — compounding — is the quiet force that builds wealth. A small amount invested early can outrun a larger amount invested late, purely because it had more time. Time in the market beats timing the market.",
+        "Order matters. Investing comes after a starter buffer and after clearing expensive debt — paying off a 15% card is a guaranteed 15% return no fund can promise. Once those are handled, idle cash in a low-interest account is quietly losing to inflation; that's the money to put to work. bynku models this: an investment project earns an assumed return, and Fast Forward compounds it forward so you can see what years of patience are worth.",
+        "Return comes with risk, and risk needs time and diversification to tame — never invest the rent, never the emergency fund. bynku keeps investment money in its own project, separate from the reserve, so a market dip never touches the cash you need this month. It won't pick stocks for you; it shows the shape of the decision and where it fits in the order.",
+      ],
+      [
+        "Investir parece complicado, mas o essencial é simples: dinheiro posto a render pode crescer sozinho, e o crescimento sobre o crescimento passado — juro composto — é a força silenciosa que cria riqueza. Uma pequena quantia investida cedo pode ultrapassar uma maior investida tarde, só por ter tido mais tempo. Tempo no mercado vale mais do que acertar o momento.",
+        "A ordem importa. Investir vem depois da almofada inicial e de liquidar a dívida cara — pagar um cartão a 15% é um retorno garantido de 15% que nenhum fundo promete. Feito isso, dinheiro parado numa conta com juro baixo perde silenciosamente para a inflação; é esse que deves pôr a render. O bynku modela isto: um projeto de investimento rende um retorno assumido, e o Avançar rápido compõe-no no tempo para veres quanto valem anos de paciência.",
+        "O retorno vem com risco, e o risco precisa de tempo e diversificação para se domar — nunca invistas a renda, nunca o fundo de emergência. O bynku mantém o dinheiro de investimento num projeto próprio, separado da reserva, para que uma queda do mercado nunca toque no dinheiro deste mês. Não escolhe ações por ti; mostra o formato da decisão e onde ela encaixa na ordem.",
+      ],
+      [
+        "Invertir suena complicado, pero el núcleo es simple: el dinero puesto a trabajar puede crecer solo, y el crecimiento sobre el crecimiento pasado — el interés compuesto — es la fuerza silenciosa que crea riqueza. Una cantidad pequeña invertida pronto puede superar a una mayor invertida tarde, solo por haber tenido más tiempo. Tiempo en el mercado supera a acertar el momento.",
+        "El orden importa. Invertir va después del colchón inicial y de saldar la deuda cara — pagar una tarjeta al 15% es un retorno garantizado del 15% que ningún fondo promete. Hecho eso, el dinero parado en una cuenta de bajo interés pierde en silencio ante la inflación; ese es el que hay que poner a trabajar. bynku lo modela: un proyecto de inversión rinde un retorno supuesto, y Avance rápido lo compone en el tiempo para que veas cuánto valen los años de paciencia.",
+        "El retorno viene con riesgo, y el riesgo necesita tiempo y diversificación para domarse — nunca inviertas el alquiler, nunca el fondo de emergencia. bynku mantiene el dinero de inversión en su propio proyecto, aparte de la reserva, para que una caída del mercado nunca toque el dinero de este mes. No elige acciones por ti; muestra la forma de la decisión y dónde encaja en el orden.",
+      ],
+      [
+        "Investieren klingt kompliziert, doch der Kern ist einfach: arbeitendes Geld kann von selbst wachsen, und Wachstum auf früherem Wachstum — Zinseszins — ist die leise Kraft, die Vermögen aufbaut. Eine kleine, früh investierte Summe kann eine größere, spät investierte überholen, nur weil sie mehr Zeit hatte. Zeit im Markt schlägt das Timen des Marktes.",
+        "Die Reihenfolge zählt. Investieren kommt nach dem Startpuffer und nach dem Tilgen teurer Schuld — eine 15%-Karte zu tilgen ist eine garantierte Rendite von 15%, die kein Fonds verspricht. Danach verliert ruhendes Geld auf einem Niedrigzinskonto leise gegen die Inflation; genau das gehört an die Arbeit. bynku bildet das ab: Ein Investitionsprojekt erzielt eine angenommene Rendite, und Vorspulen verzinst sie in die Zukunft, damit du siehst, was Jahre Geduld wert sind.",
+        "Rendite bringt Risiko, und Risiko braucht Zeit und Streuung zur Zähmung — investiere nie die Miete, nie den Notgroschen. bynku hält Investitionsgeld in einem eigenen Projekt, getrennt von der Reserve, damit ein Markteinbruch nie das Geld dieses Monats berührt. Es wählt keine Aktien für dich; es zeigt die Form der Entscheidung und wo sie in der Reihenfolge steht.",
+      ],
+      [
+        "Investir semble compliqué, mais le cœur est simple : un argent mis au travail peut croître seul, et la croissance sur la croissance passée — les intérêts composés — est la force silencieuse qui bâtit la richesse. Une petite somme investie tôt peut dépasser une plus grosse investie tard, juste parce qu'elle a eu plus de temps. Le temps dans le marché vaut mieux que le bon moment.",
+        "L'ordre compte. Investir vient après le coussin de départ et après avoir soldé la dette chère — rembourser une carte à 15% est un rendement garanti de 15% qu'aucun fonds ne promet. Ensuite, un argent dormant sur un compte peu rémunéré perd en silence face à l'inflation ; c'est celui-là qu'il faut faire travailler. bynku le modélise : un projet d'investissement gagne un rendement supposé, et Avance rapide le capitalise pour montrer ce que valent des années de patience.",
+        "Le rendement s'accompagne de risque, et le risque se dompte par le temps et la diversification — n'investissez jamais le loyer, jamais le fonds d'urgence. bynku garde l'argent d'investissement dans son propre projet, séparé de la réserve, pour qu'une baisse des marchés ne touche jamais l'argent du mois. Il ne choisit pas d'actions pour vous ; il montre la forme de la décision et sa place dans l'ordre.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Compounding", body: "Growth earns growth. Starting small but early usually beats starting big but late." },
+        { label: "After the essentials", body: "Buffer and dear debt first — then invest the surplus instead of letting it idle." },
+        { label: "Risk in its own pot", body: "Investment is a separate project; the emergency fund stays untouched and liquid." },
+        { label: "See patience pay off", body: "Fast Forward compounds an assumed return so long horizons stop feeling abstract." },
+      ],
+      [
+        { label: "Juro composto", body: "O crescimento gera crescimento. Começar pequeno mas cedo costuma bater começar grande mas tarde." },
+        { label: "Depois do essencial", body: "Primeiro almofada e dívida cara — depois investe o excedente em vez de o deixar parado." },
+        { label: "Risco em pote próprio", body: "O investimento é um projeto à parte; o fundo de emergência fica intocado e líquido." },
+        { label: "Vê a paciência render", body: "O Avançar rápido compõe um retorno assumido para os longos prazos deixarem de ser abstratos." },
+      ],
+      [
+        { label: "Interés compuesto", body: "El crecimiento genera crecimiento. Empezar pequeño pero pronto suele ganar a empezar grande pero tarde." },
+        { label: "Tras lo esencial", body: "Primero colchón y deuda cara — luego invierte el excedente en vez de dejarlo parado." },
+        { label: "Riesgo en su propio bote", body: "La inversión es un proyecto aparte; el fondo de emergencia sigue intacto y líquido." },
+        { label: "Ve rendir la paciencia", body: "Avance rápido compone un retorno supuesto para que los plazos largos dejen de ser abstractos." },
+      ],
+      [
+        { label: "Zinseszins", body: "Wachstum bringt Wachstum. Klein aber früh schlägt meist groß aber spät." },
+        { label: "Nach dem Wesentlichen", body: "Erst Puffer und teure Schuld — dann den Überschuss investieren, statt ihn ruhen zu lassen." },
+        { label: "Risiko im eigenen Topf", body: "Investieren ist ein eigenes Projekt; der Notgroschen bleibt unberührt und liquide." },
+        { label: "Geduld zahlt sich aus", body: "Vorspulen verzinst eine angenommene Rendite, damit lange Horizonte greifbar werden." },
+      ],
+      [
+        { label: "Intérêts composés", body: "La croissance nourrit la croissance. Petit mais tôt bat souvent gros mais tard." },
+        { label: "Après l'essentiel", body: "Coussin et dette chère d'abord — puis investir l'excédent plutôt que le laisser dormir." },
+        { label: "Le risque dans son pot", body: "L'investissement est un projet à part ; le fonds d'urgence reste intact et liquide." },
+        { label: "Voir la patience payer", body: "Avance rapide capitalise un rendement supposé pour rendre les longs horizons concrets." },
+      ],
+    ),
+    callout: L(
+      "bynku won't tell you what to buy — that's not its job, and be wary of anyone paid to. It shows why investing comes when it does, and what time can do.",
+      "O bynku não te diz o que comprar — não é o seu papel, e desconfia de quem é pago para isso. Mostra porque é que investir vem quando vem, e o que o tempo pode fazer.",
+      "bynku no te dice qué comprar — no es su función, y desconfía de quien cobra por ello. Muestra por qué invertir llega cuando llega, y lo que el tiempo puede hacer.",
+      "bynku sagt dir nicht, was du kaufen sollst — das ist nicht seine Aufgabe, und sei vorsichtig bei jedem, der dafür bezahlt wird. Es zeigt, warum Investieren dann kommt, und was Zeit bewirken kann.",
+      "bynku ne vous dit pas quoi acheter — ce n'est pas son rôle, et méfiez-vous de qui est payé pour ça. Il montre pourquoi investir vient à ce moment, et ce que le temps peut faire.",
+    ),
+  },
+
+  // ------------------------------------------------------------ understanding debt
+  {
+    id: "understandingDebt",
+    icon: "CreditCard",
+    title: L(
+      "Borrowing, and the true cost of it",
+      "Pedir emprestado, e o seu custo real",
+      "Endeudarse, y su coste real",
+      "Kredit — und was er wirklich kostet",
+      "Emprunter, et son coût réel",
+    ),
+    paragraphs: L(
+      [
+        "Debt isn't good or bad by itself — it's a tool with a price. A low-rate loan for a home or a productive asset can be sensible; a card balance rolling at 20% is a leak that quietly drains everything else. The number that matters is the rate; the number lenders love to show instead is the monthly payment — small, friendly, and silent about the total you'll actually hand over.",
+        "bynku always works in total cost. Enter a loan and it reconstructs the real amortization — how much of each payment is interest versus principal, when it's truly gone, and the actual annual rate even when only the instalment was advertised. Seeing that a 'cheap' 60-month plan costs a third more than the sticker is often all it takes to change a decision.",
+        "When there's spare money, expensive debt usually deserves it before investing — clearing it is a risk-free return at the debt's rate. Two proven orders help: the avalanche (attack the highest rate first, least interest paid) and the snowball (clear the smallest balance first, fastest sense of progress). bynku's overpay simulator shows what an extra amount saves in interest and months, and the coach — with nothing to sell — will happily suggest overpaying, refinancing, or renegotiating with your bank.",
+      ],
+      [
+        "A dívida não é boa nem má por si — é uma ferramenta com preço. Um empréstimo a taxa baixa para casa ou um bem produtivo pode fazer sentido; um saldo de cartão a 20% é uma fuga que drena silenciosamente tudo o resto. O número que importa é a taxa; o que os credores adoram mostrar é a mensalidade — pequena, simpática e calada quanto ao total que vais mesmo pagar.",
+        "O bynku trabalha sempre em custo total. Insere um empréstimo e ele reconstrói a amortização real — quanto de cada pagamento é juro e quanto é capital, quando fica mesmo pago, e a taxa anual real mesmo quando só a prestação foi anunciada. Ver que um plano 'barato' a 60 meses custa mais um terço do que o preço à vista costuma bastar para mudar a decisão.",
+        "Havendo dinheiro a mais, a dívida cara costuma merecê-lo antes de investir — liquidá-la é um retorno sem risco à taxa da dívida. Duas ordens comprovadas ajudam: a avalanche (atacar primeiro a taxa mais alta, menos juro pago) e a bola de neve (liquidar primeiro o saldo mais pequeno, sensação de progresso mais rápida). O simulador de amortização do bynku mostra o que um valor extra poupa em juro e meses, e o coach — sem nada para vender — sugere de bom grado amortizar, refinanciar ou renegociar com o banco.",
+      ],
+      [
+        "La deuda no es buena ni mala en sí — es una herramienta con precio. Un préstamo a tipo bajo para una casa o un activo productivo puede ser sensato; un saldo de tarjeta al 20% es una fuga que drena en silencio todo lo demás. El número que importa es el tipo; el que a los prestamistas les encanta mostrar es la cuota — pequeña, amable y callada sobre el total que de verdad pagarás.",
+        "bynku siempre trabaja en coste total. Introduce un préstamo y reconstruye la amortización real — cuánto de cada pago es interés y cuánto principal, cuándo queda de verdad saldado, y el tipo anual real aunque solo se anunciara la cuota. Ver que un plan 'barato' a 60 meses cuesta un tercio más que el precio suele bastar para cambiar una decisión.",
+        "Cuando sobra dinero, la deuda cara suele merecerlo antes que invertir — saldarla es un retorno sin riesgo al tipo de la deuda. Dos órdenes probados ayudan: la avalancha (atacar primero el tipo más alto, menos interés pagado) y la bola de nieve (saldar primero el saldo más pequeño, sensación de avance más rápida). El simulador de amortización de bynku muestra lo que un extra ahorra en interés y meses, y el asistente — sin nada que vender — sugiere con gusto amortizar, refinanciar o renegociar con tu banco.",
+      ],
+      [
+        "Schulden sind an sich weder gut noch schlecht — ein Werkzeug mit Preis. Ein zinsgünstiges Darlehen für ein Zuhause oder einen produktiven Wert kann sinnvoll sein; ein Kartensaldo zu 20% ist ein Leck, das leise alles andere leert. Es zählt der Zins; Kreditgeber zeigen lieber die Rate — klein, freundlich und still zum Gesamtbetrag, den du wirklich zahlst.",
+        "bynku rechnet immer in Gesamtkosten. Gib einen Kredit ein, und es rekonstruiert die echte Tilgung — wie viel jeder Zahlung Zins und wie viel Kapital ist, wann er wirklich weg ist, und den tatsächlichen Jahreszins, selbst wenn nur die Rate beworben wurde. Zu sehen, dass ein 'günstiger' 60-Monats-Plan ein Drittel mehr kostet als der Preis, reicht oft, um eine Entscheidung zu ändern.",
+        "Gibt es Übriges, verdient teure Schuld es meist vor dem Investieren — sie zu tilgen ist eine risikofreie Rendite zum Schuldzins. Zwei bewährte Reihenfolgen helfen: die Lawine (zuerst den höchsten Zins, am wenigsten Zins gezahlt) und der Schneeball (zuerst den kleinsten Saldo, schnellstes Erfolgsgefühl). bynkus Sondertilgungs-Simulator zeigt, was ein Extra an Zins und Monaten spart, und der Coach — ohne etwas zu verkaufen — schlägt gern Sondertilgung, Umschuldung oder Neuverhandlung mit der Bank vor.",
+      ],
+      [
+        "La dette n'est ni bonne ni mauvaise en soi — c'est un outil avec un prix. Un prêt à taux bas pour un logement ou un actif productif peut être sensé ; un solde de carte à 20% est une fuite qui vide en silence tout le reste. Le chiffre qui compte est le taux ; celui que les prêteurs adorent montrer est la mensualité — petite, aimable et muette sur le total que vous paierez vraiment.",
+        "bynku raisonne toujours en coût total. Saisissez un prêt et il reconstruit l'amortissement réel — la part d'intérêts et de capital de chaque paiement, la vraie date de fin, et le taux annuel réel même quand seule l'échéance était affichée. Voir qu'un plan « pas cher » sur 60 mois coûte un tiers de plus que le prix suffit souvent à changer une décision.",
+        "Quand il reste de l'argent, la dette chère le mérite souvent avant d'investir — la solder est un rendement sans risque au taux de la dette. Deux ordres éprouvés aident : l'avalanche (attaquer d'abord le taux le plus élevé, moins d'intérêts) et la boule de neige (solder d'abord le plus petit solde, progression la plus rapide). Le simulateur de remboursement de bynku montre ce qu'un extra économise en intérêts et en mois, et l'assistant — sans rien à vendre — suggère volontiers de rembourser par anticipation, refinancer ou renégocier avec votre banque.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Rate over monthly", body: "A low payment can hide a high total. bynku surfaces the APR and full cost, always." },
+        { label: "Real amortization", body: "See interest vs principal, the payoff date, and the deduced true rate from just the instalment." },
+        { label: "Avalanche vs snowball", body: "Highest-rate first saves the most; smallest-balance first feels the best. Pick your motivator." },
+        { label: "Overpay, refinance, negotiate", body: "The simulator quantifies overpayments; the coach suggests moves a bank never would." },
+      ],
+      [
+        { label: "Taxa acima da mensalidade", body: "Uma prestação baixa pode esconder um total alto. O bynku mostra sempre a taxa e o custo total." },
+        { label: "Amortização real", body: "Vê juro vs capital, a data de fim e a taxa real deduzida só a partir da prestação." },
+        { label: "Avalanche vs bola de neve", body: "Taxa mais alta primeiro poupa mais; saldo mais pequeno primeiro sabe melhor. Escolhe o teu motor." },
+        { label: "Amortizar, refinanciar, negociar", body: "O simulador quantifica amortizações; o coach sugere jogadas que um banco nunca faria." },
+      ],
+      [
+        { label: "Tipo sobre la cuota", body: "Una cuota baja puede ocultar un total alto. bynku muestra siempre el tipo y el coste total." },
+        { label: "Amortización real", body: "Ve interés vs principal, la fecha de fin y el tipo real deducido solo desde la cuota." },
+        { label: "Avalancha vs bola de nieve", body: "El tipo más alto primero ahorra más; el saldo menor primero sienta mejor. Elige tu motor." },
+        { label: "Amortizar, refinanciar, negociar", body: "El simulador cuantifica amortizaciones; el asistente sugiere jugadas que un banco nunca haría." },
+      ],
+      [
+        { label: "Zins vor Rate", body: "Eine niedrige Rate kann einen hohen Gesamtbetrag verbergen. bynku zeigt immer Zins und Gesamtkosten." },
+        { label: "Echte Tilgung", body: "Sieh Zins vs Kapital, das Enddatum und den echten Zins, abgeleitet nur aus der Rate." },
+        { label: "Lawine vs Schneeball", body: "Höchster Zins zuerst spart am meisten; kleinster Saldo zuerst fühlt sich am besten an. Wähle deinen Antrieb." },
+        { label: "Tilgen, umschulden, verhandeln", body: "Der Simulator beziffert Sondertilgungen; der Coach schlägt Züge vor, die keine Bank täte." },
+      ],
+      [
+        { label: "Le taux avant la mensualité", body: "Une petite échéance peut cacher un gros total. bynku affiche toujours le taux et le coût total." },
+        { label: "Amortissement réel", body: "Voyez intérêts vs capital, la date de fin et le vrai taux déduit de la seule échéance." },
+        { label: "Avalanche vs boule de neige", body: "Le taux le plus haut d'abord économise le plus ; le plus petit solde d'abord motive le plus. À vous de choisir." },
+        { label: "Rembourser, refinancer, négocier", body: "Le simulateur chiffre les remboursements ; l'assistant suggère des coups qu'une banque ne ferait jamais." },
+      ],
+    ),
+    callout: L(
+      "The cheapest debt is the one you understand before you sign. bynku's job is to make the total cost impossible to miss — and to always take your side against it.",
+      "A dívida mais barata é a que percebes antes de assinar. O papel do bynku é tornar o custo total impossível de ignorar — e estar sempre do teu lado contra ela.",
+      "La deuda más barata es la que entiendes antes de firmar. El papel de bynku es hacer el coste total imposible de pasar por alto — y ponerse siempre de tu lado frente a ella.",
+      "Die günstigste Schuld ist die, die du vor der Unterschrift verstehst. bynkus Aufgabe ist, die Gesamtkosten unübersehbar zu machen — und immer auf deiner Seite gegen sie zu stehen.",
+      "La dette la moins chère est celle que vous comprenez avant de signer. Le rôle de bynku est de rendre le coût total impossible à manquer — et de toujours prendre votre parti contre elle.",
     ),
   },
 
