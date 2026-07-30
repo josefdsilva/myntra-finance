@@ -30,6 +30,7 @@ import {
   Send,
   ArrowLeftRight,
   FastForward,
+  FileSpreadsheet,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -377,6 +378,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                 >
                   <Send className="size-4" />
                   {t("nav.handoff")}
+                </Link>
+              )}
+              {isBusiness && section.titleKey === "navSection.data" && (
+                <Link
+                  to="/statements"
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    pathname === "/statements"
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <FileSpreadsheet className="size-4" />
+                  {t("nav.statements")}
                 </Link>
               )}
             </Fragment>
