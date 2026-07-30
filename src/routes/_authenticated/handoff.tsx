@@ -222,6 +222,8 @@ function HandoffPage() {
                                     </a>
                                   ))}
                                 </span>
+                              ) : e.invoiceExempt ? (
+                                <span className="text-muted-foreground">—</span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
                                   <AlertTriangle className="size-3" /> {t("handoff.missingTag")}
@@ -284,7 +286,9 @@ function buildHandoffHtml(pkg: HandoffPackage): string {
       const inv =
         e.invoices.length > 0
           ? e.invoices.map((i) => `<a href="${esc(i.url)}">${esc(i.name)}</a>`).join("<br>")
-          : `<span style="color:#b91c1c;font-weight:bold">missing</span>`;
+          : e.invoiceExempt
+            ? `<span style="color:#94a3b8">—</span>`
+            : `<span style="color:#b91c1c;font-weight:bold">missing</span>`;
       const amt = `${e.direction === "in" ? "+" : "−"}${fmt(e.amount)}`;
       const color = e.direction === "in" ? "#166534" : "#0f172a";
       return `<tr><td>${e.date}</td><td>${esc(e.description)}</td><td style="text-align:right;color:${color};font-weight:bold">${amt}</td><td>${inv}</td></tr>`;

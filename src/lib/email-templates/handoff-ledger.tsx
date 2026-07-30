@@ -25,6 +25,7 @@ interface Entry {
   amount: number
   description: string
   category?: string | null
+  invoiceExempt?: boolean
   invoices: InvoiceLink[]
 }
 interface MissingItem {
@@ -134,6 +135,8 @@ const HandoffLedger = ({
                       {inv.name}
                     </Link>
                   ))
+                ) : e.invoiceExempt ? (
+                  <span style={naTag}>—</span>
                 ) : (
                   <span style={missingTag}>missing</span>
                 )}
@@ -216,5 +219,6 @@ const tdAmount = { fontSize: '12px', fontWeight: 'bold' as const, width: '110px'
 const tdInv = { fontSize: '12px', width: '160px', padding: '6px' }
 const invLink = { color: '#0f172a', textDecoration: 'underline', display: 'block' as const, fontSize: '12px' }
 const missingTag = { color: '#b91c1c', fontSize: '11px', fontWeight: 'bold' as const }
+const naTag = { color: '#94a3b8', fontSize: '12px' }
 const link = { color: '#0f172a', textDecoration: 'underline' }
 const footer = { fontSize: '11px', color: '#94a3b8', margin: '20px 0 0', lineHeight: '1.5' }
