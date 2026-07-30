@@ -1,0 +1,10 @@
+# bynku
+
+> bynku is a simple personal finance app for households: track income and spending across your cycle, plan fixed costs and loans, allocate what's left to savings goals, and get plain-language coaching.
+
+bynku helps people see their money in one place — recurring income, fixed monthly costs, loans and debts, variable spending, and savings projects — and turn the leftover surplus into a plan. It includes a loan payoff simulator (avalanche and snowball), spending benchmarks, shareable financial snapshots, and an AI coach that explains finance concepts in easy language. Available in English, Portuguese, Spanish, German and French.
+
+## Pages
+
+- [Home](/): What bynku is, who it's for, and how the budgeting cycle works.
+- [Privacy](/privacy): How financial data is stored, kept household-scoped, exported and erased (GDPR).
