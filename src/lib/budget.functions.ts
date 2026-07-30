@@ -19,7 +19,7 @@ const expenseInput = z.object({
       return isNaN(d.getTime()) ? undefined : d.toISOString();
     }),
   note: z.string().max(500).optional().nullable(),
-  source: z.enum(["manual", "ai_memo", "ai_voice", "ai_photo", "statement"]).default("manual"),
+  source: z.enum(["manual", "ai_memo", "ai_voice", "ai_photo", "statement", "share"]).default("manual"),
   source_meta: z.record(z.unknown()).optional(),
   kind: z.enum(["expense", "income"]).default("expense"),
   is_salary: z.boolean().optional().default(false),

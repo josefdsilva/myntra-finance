@@ -31,6 +31,7 @@ import {
   ArrowLeftRight,
   FastForward,
   FileSpreadsheet,
+  ScanLine,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -61,6 +62,7 @@ const NAV_SECTIONS = [
   {
     titleKey: "navSection.manage",
     items: [
+      { to: "/share", labelKey: "nav.capture", icon: ScanLine },
       { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
       { to: "/assets", labelKey: "nav.assets", icon: Gem },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
