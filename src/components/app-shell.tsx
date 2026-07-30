@@ -62,7 +62,6 @@ const NAV_SECTIONS = [
   {
     titleKey: "navSection.manage",
     items: [
-      { to: "/share", labelKey: "nav.capture", icon: ScanLine },
       { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
       { to: "/assets", labelKey: "nav.assets", icon: Gem },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
@@ -90,6 +89,7 @@ const NAV_SECTIONS = [
     titleKey: "navSection.account",
     items: [
       { to: "/households", labelKey: "nav.households", icon: Users },
+      { to: "/share", labelKey: "nav.capture", icon: ScanLine },
       { to: "/settings", labelKey: "nav.settings", icon: Settings },
     ],
   },
