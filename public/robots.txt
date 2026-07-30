@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /lovable/
+Disallow: /api/
+
+Sitemap: https://bynku.app/sitemap.xml
