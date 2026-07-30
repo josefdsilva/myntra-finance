@@ -1678,22 +1678,61 @@ function MembersSection({ householdId }: { householdId: string }) {
   );
 }
 
-type DebtKind = "mortgage" | "personal" | "auto" | "credit_card" | "student" | "other";
+type DebtKind =
+  | "mortgage"
+  | "personal"
+  | "auto"
+  | "credit_card"
+  | "student"
+  | "other"
+  | "business_loan"
+  | "credit_line"
+  | "equipment_finance"
+  | "leasing"
+  | "vehicle"
+  | "factoring"
+  | "property";
 
-function debtKinds(t: ReturnType<typeof useT>): Array<{ value: DebtKind; label: string }> {
-  return [
-    { value: "mortgage", label: t("debts.kindMortgage") },
-    { value: "personal", label: t("debts.kindPersonal") },
-    { value: "auto", label: t("debts.kindAuto") },
-    { value: "credit_card", label: t("debts.kindCreditCard") },
-    { value: "student", label: t("debts.kindStudent") },
-    { value: "other", label: t("debts.kindOther") },
-  ];
+/** Full kind → label map (for displaying any saved debt, whatever the space). */
+function debtKindLabel(t: ReturnType<typeof useT>, kind: string): string {
+  const map: Record<string, string> = {
+    mortgage: t("debts.kindMortgage"),
+    personal: t("debts.kindPersonal"),
+    auto: t("debts.kindAuto"),
+    credit_card: t("debts.kindCreditCard"),
+    student: t("debts.kindStudent"),
+    other: t("debts.kindOther"),
+    business_loan: t("debts.kindBusinessLoan"),
+    credit_line: t("debts.kindCreditLine"),
+    equipment_finance: t("debts.kindEquipment"),
+    leasing: t("debts.kindLeasing"),
+    vehicle: t("debts.kindVehicle"),
+    factoring: t("debts.kindFactoring"),
+    property: t("debts.kindProperty"),
+  };
+  return map[kind] ?? kind;
 }
 
-export function DebtsSection({ householdId }: { householdId: string }) {
+/** The kind options offered in the picker, tailored to the space. */
+function debtKindOptions(
+  t: ReturnType<typeof useT>,
+  isBusiness: boolean,
+): Array<{ value: DebtKind; label: string }> {
+  const kinds: DebtKind[] = isBusiness
+    ? ["business_loan", "credit_line", "equipment_finance", "leasing", "vehicle", "property", "factoring", "credit_card", "other"]
+    : ["mortgage", "personal", "auto", "credit_card", "student", "other"];
+  return kinds.map((value) => ({ value, label: debtKindLabel(t, value) }));
+}
+
+export function DebtsSection({
+  householdId,
+  isBusiness = false,
+}: {
+  householdId: string;
+  isBusiness?: boolean;
+}) {
   const t = useT();
-  const DEBT_KINDS = debtKinds(t);
+  const DEBT_KINDS = debtKindOptions(t, isBusiness);
   const qc = useQueryClient();
   const upsert = useServerFn(upsertDebt);
   const del = useServerFn(deleteDebt);
@@ -1711,7 +1750,7 @@ export function DebtsSection({ householdId }: { householdId: string }) {
   });
 
   const [label, setLabel] = useState("");
-  const [kind, setKind] = useState<(typeof DEBT_KINDS)[number]["value"]>("mortgage");
+  const [kind, setKind] = useState<DebtKind>(isBusiness ? "business_loan" : "mortgage");
   const [monthly, setMonthly] = useState("");
   const [taeg, setTaeg] = useState("");
   const [principal, setPrincipal] = useState("");
@@ -1810,15 +1849,17 @@ export function DebtsSection({ householdId }: { householdId: string }) {
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="min-w-0">
-            <CardTitle>Debt</CardTitle>
+            <CardTitle>{t(isBusiness ? "debts.setupTitleBiz" : "debts.setupTitle")}</CardTitle>
             <CardDescription>
-              Loans and credit lines with an interest rate ({t("settings.debtRateLabel")}) and
-              maturity. Counted alongside fixed expenses in your monthly baseline. Total:{" "}
+              {t(isBusiness ? "debts.setupDescBiz" : "debts.setupDesc", {
+                rate: t("settings.debtRateLabel"),
+              })}{" "}
+              {t("debts.totalLabel")}:{" "}
               <span className="font-medium text-foreground">{money(total)}</span>
               {principalTotal > 0 && (
                 <>
                   {" "}
-                  · principal outstanding{" "}
+                  · {t("debts.principalOutstanding")}{" "}
                   <span className="font-medium text-foreground">{money(principalTotal)}</span>
                 </>
               )}
@@ -1840,7 +1881,7 @@ export function DebtsSection({ householdId }: { householdId: string }) {
               <div className="min-w-0">
                 <p className="truncate font-medium">{r.label}</p>
                 <p className="text-xs text-muted-foreground break-words">
-                  {DEBT_KINDS.find((k) => k.value === r.kind)?.label ?? r.kind}
+                  {debtKindLabel(t, r.kind)}
                   {r.taeg_pct != null && ` · ${t("debt.apr", { pct: Number(r.taeg_pct).toFixed(2) })}`}
                   {r.principal_remaining != null &&
                     ` · principal ${money(Number(r.principal_remaining))}`}
@@ -1863,15 +1904,15 @@ export function DebtsSection({ householdId }: { householdId: string }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div>
-            <Label className="text-xs">Label</Label>
+            <Label className="text-xs">{t("debts.labelField")}</Label>
             <Input
-              placeholder="e.g. Prestação Crédito Habitação"
+              placeholder={t(isBusiness ? "debts.labelPhBiz" : "debts.labelPh")}
               value={label}
               onChange={(e) => setLabel(e.target.value)}
             />
           </div>
           <div>
-            <Label className="text-xs">Type</Label>
+            <Label className="text-xs">{t("debts.typeField")}</Label>
             <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
               <SelectTrigger>
                 <SelectValue />

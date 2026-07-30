@@ -545,7 +545,23 @@ export const upsertDebt = createServerFn({ method: "POST" })
         household_id: z.string().uuid(),
         label: z.string().min(1).max(80),
         kind: z
-          .enum(["mortgage", "personal", "auto", "credit_card", "student", "other"])
+          .enum([
+            // Household loan kinds
+            "mortgage",
+            "personal",
+            "auto",
+            "credit_card",
+            "student",
+            "other",
+            // Business financing kinds
+            "business_loan",
+            "credit_line",
+            "equipment_finance",
+            "leasing",
+            "vehicle",
+            "factoring",
+            "property",
+          ])
           .default("other"),
         monthly_amount: z.number().min(0),
         taeg_pct: z.number().min(0).max(100).nullable().optional(),
