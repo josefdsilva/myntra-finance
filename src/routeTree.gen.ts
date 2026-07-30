@@ -19,10 +19,12 @@ import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/w
 import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
 import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticated/snapshot'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedRetirementRouteImport } from './routes/_authenticated/retirement'
 import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMoneyInRouteImport } from './routes/_authenticated/money-in'
 import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
+import { Route as AuthenticatedJobChangeRouteImport } from './routes/_authenticated/job-change'
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
 import { Route as AuthenticatedHandoffRouteImport } from './routes/_authenticated/handoff'
 import { Route as AuthenticatedFastForwardRouteImport } from './routes/_authenticated/fast-forward'
@@ -94,6 +96,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRetirementRoute = AuthenticatedRetirementRouteImport.update({
+  id: '/retirement',
+  path: '/retirement',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
   id: '/plan',
   path: '/plan',
@@ -112,6 +119,11 @@ const AuthenticatedMoneyInRoute = AuthenticatedMoneyInRouteImport.update({
 const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
   id: '/loans',
   path: '/loans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJobChangeRoute = AuthenticatedJobChangeRouteImport.update({
+  id: '/job-change',
+  path: '/job-change',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHouseholdsRoute = AuthenticatedHouseholdsRouteImport.update({
@@ -239,10 +251,12 @@ export interface FileRoutesByFullPath {
   '/fast-forward': typeof AuthenticatedFastForwardRoute
   '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
+  '/job-change': typeof AuthenticatedJobChangeRoute
   '/loans': typeof AuthenticatedLoansRoute
   '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/plan': typeof AuthenticatedPlanRoute
+  '/retirement': typeof AuthenticatedRetirementRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
@@ -274,10 +288,12 @@ export interface FileRoutesByTo {
   '/fast-forward': typeof AuthenticatedFastForwardRoute
   '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
+  '/job-change': typeof AuthenticatedJobChangeRoute
   '/loans': typeof AuthenticatedLoansRoute
   '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/plan': typeof AuthenticatedPlanRoute
+  '/retirement': typeof AuthenticatedRetirementRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
@@ -311,10 +327,12 @@ export interface FileRoutesById {
   '/_authenticated/fast-forward': typeof AuthenticatedFastForwardRoute
   '/_authenticated/handoff': typeof AuthenticatedHandoffRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
+  '/_authenticated/job-change': typeof AuthenticatedJobChangeRoute
   '/_authenticated/loans': typeof AuthenticatedLoansRoute
   '/_authenticated/money-in': typeof AuthenticatedMoneyInRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
+  '/_authenticated/retirement': typeof AuthenticatedRetirementRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/snapshot': typeof AuthenticatedSnapshotRoute
   '/_authenticated/statement-import': typeof AuthenticatedStatementImportRoute
@@ -348,10 +366,12 @@ export interface FileRouteTypes {
     | '/fast-forward'
     | '/handoff'
     | '/households'
+    | '/job-change'
     | '/loans'
     | '/money-in'
     | '/onboarding'
     | '/plan'
+    | '/retirement'
     | '/settings'
     | '/snapshot'
     | '/statement-import'
@@ -383,10 +403,12 @@ export interface FileRouteTypes {
     | '/fast-forward'
     | '/handoff'
     | '/households'
+    | '/job-change'
     | '/loans'
     | '/money-in'
     | '/onboarding'
     | '/plan'
+    | '/retirement'
     | '/settings'
     | '/snapshot'
     | '/statement-import'
@@ -419,10 +441,12 @@ export interface FileRouteTypes {
     | '/_authenticated/fast-forward'
     | '/_authenticated/handoff'
     | '/_authenticated/households'
+    | '/_authenticated/job-change'
     | '/_authenticated/loans'
     | '/_authenticated/money-in'
     | '/_authenticated/onboarding'
     | '/_authenticated/plan'
+    | '/_authenticated/retirement'
     | '/_authenticated/settings'
     | '/_authenticated/snapshot'
     | '/_authenticated/statement-import'
@@ -532,6 +556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/retirement': {
+      id: '/_authenticated/retirement'
+      path: '/retirement'
+      fullPath: '/retirement'
+      preLoaderRoute: typeof AuthenticatedRetirementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/plan': {
       id: '/_authenticated/plan'
       path: '/plan'
@@ -558,6 +589,13 @@ declare module '@tanstack/react-router' {
       path: '/loans'
       fullPath: '/loans'
       preLoaderRoute: typeof AuthenticatedLoansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/job-change': {
+      id: '/_authenticated/job-change'
+      path: '/job-change'
+      fullPath: '/job-change'
+      preLoaderRoute: typeof AuthenticatedJobChangeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/households': {
@@ -714,10 +752,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFastForwardRoute: typeof AuthenticatedFastForwardRoute
   AuthenticatedHandoffRoute: typeof AuthenticatedHandoffRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
+  AuthenticatedJobChangeRoute: typeof AuthenticatedJobChangeRoute
   AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
   AuthenticatedMoneyInRoute: typeof AuthenticatedMoneyInRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
+  AuthenticatedRetirementRoute: typeof AuthenticatedRetirementRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSnapshotRoute: typeof AuthenticatedSnapshotRoute
   AuthenticatedStatementImportRoute: typeof AuthenticatedStatementImportRoute
@@ -735,10 +775,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFastForwardRoute: AuthenticatedFastForwardRoute,
   AuthenticatedHandoffRoute: AuthenticatedHandoffRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
+  AuthenticatedJobChangeRoute: AuthenticatedJobChangeRoute,
   AuthenticatedLoansRoute: AuthenticatedLoansRoute,
   AuthenticatedMoneyInRoute: AuthenticatedMoneyInRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
+  AuthenticatedRetirementRoute: AuthenticatedRetirementRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSnapshotRoute: AuthenticatedSnapshotRoute,
   AuthenticatedStatementImportRoute: AuthenticatedStatementImportRoute,
@@ -769,3 +811,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
