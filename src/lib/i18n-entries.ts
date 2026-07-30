@@ -742,6 +742,20 @@ export const ENTRIES = {
     de: "/Mon. × {months} Monate",
     fr: "/mois × {months} mois",
   },
+  "businesses.limitNote": {
+    en: "Beta: up to {limit} company per tester ({count} used). It has its own members and invitations.",
+    pt: "Beta: até {limit} empresa por testador ({count} usada). Tem membros e convites próprios.",
+    es: "Beta: hasta {limit} empresa por tester ({count} usada). Tiene sus propios miembros e invitaciones.",
+    de: "Beta: bis zu {limit} Unternehmen pro Tester ({count} genutzt). Mit eigenen Mitgliedern und Einladungen.",
+    fr: "Bêta : jusqu'à {limit} entreprise par testeur ({count} utilisée). Avec ses propres membres et invitations.",
+  },
+  "businesses.limitReached": {
+    en: "You've reached your company limit. Delete the existing one to create another.",
+    pt: "Atingiu o limite de empresas. Elimine a existente para criar outra.",
+    es: "Has alcanzado el límite de empresas. Elimina la existente para crear otra.",
+    de: "Du hast dein Unternehmenslimit erreicht. Lösche das bestehende, um ein neues zu erstellen.",
+    fr: "Vous avez atteint la limite d'entreprises. Supprimez l'existante pour en créer une autre.",
+  },
   "nav.statements": {
     en: "Finance statements",
     pt: "Demonstrações financeiras",

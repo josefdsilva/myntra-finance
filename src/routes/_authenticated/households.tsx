@@ -51,7 +51,7 @@ function HouseholdsPage() {
   const businesses = households.filter((h) => h.household.kind === "business");
   const ownedPersonal = personal.filter((h) => h.role === "owner").length;
   const ownedBusiness = businesses.filter((h) => h.role === "owner").length;
-  const BUSINESS_LIMIT = 3;
+  const BUSINESS_LIMIT = 1;
 
   const [newName, setNewName] = useState("");
   const [newBizName, setNewBizName] = useState("");
@@ -190,24 +190,36 @@ function HouseholdsPage() {
         <CardContent>
           <form
             className="flex flex-col sm:flex-row gap-2"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = newBizName.trim();
+              if (!n) return;
+              createMutation.mutate({ name: n, kind: "business" });
+            }}
           >
             <div className="flex-1">
+              <Label htmlFor="new-biz" className="sr-only">
+                {t("businesses.namePlaceholder")}
+              </Label>
               <Input
+                id="new-biz"
                 placeholder={t("businesses.namePlaceholder")}
                 value={newBizName}
                 onChange={(e) => setNewBizName(e.target.value)}
                 maxLength={100}
-                disabled
+                disabled={ownedBusiness >= BUSINESS_LIMIT}
               />
             </div>
-            <Button type="submit" disabled>
-              {t("businesses.create")}
+            <Button
+              type="submit"
+              disabled={!newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT}
+            >
+              {createMutation.isPending ? t("households.creating") : t("businesses.create")}
             </Button>
           </form>
-          <p className="mt-2 text-xs font-medium text-muted-foreground">
-            Coming soon — creating new businesses is temporarily disabled. Existing businesses remain fully usable.
-          </p>
+          {ownedBusiness >= BUSINESS_LIMIT && (
+            <p className="mt-2 text-xs text-muted-foreground">{t("businesses.limitReached")}</p>
+          )}
         </CardContent>
       </Card>
 

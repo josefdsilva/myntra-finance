@@ -375,10 +375,10 @@ export const createHousehold = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const kind = data.kind;
 
-    // Limits are per kind so a user can own one personal household AND separate
-    // businesses (businesses are the future paid track). Prototype caps below.
+    // Limits are per kind: a tester can own one personal household AND one
+    // company, each with its own members/invitations.
     const PERSONAL_LIMIT = 1;
-    const BUSINESS_LIMIT = 3;
+    const BUSINESS_LIMIT = 1;
     const { data: owned, error: countErr } = await supabaseAdmin
       .from("household_members")
       .select("households(kind)")
@@ -395,9 +395,7 @@ export const createHousehold = createServerFn({ method: "POST" })
       );
     }
     if (kind === "business" && ownedOfKind >= BUSINESS_LIMIT) {
-      throw new Error(
-        `BUSINESS_LIMIT_REACHED: This prototype allows up to ${BUSINESS_LIMIT} businesses.`,
-      );
+      throw new Error("BUSINESS_LIMIT_REACHED: You can create 1 company.");
     }
 
     const { data: household, error } = await supabaseAdmin
