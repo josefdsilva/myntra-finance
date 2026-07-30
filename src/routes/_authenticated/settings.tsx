@@ -124,13 +124,17 @@ function SettingsPage() {
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
           />
           <CategoryManager householdId={householdId} />
-          <MembersSection householdId={householdId} />
+          <MembersSection
+            householdId={householdId}
+            isBusiness={hh!.household!.kind === "business"}
+          />
           <NotificationSettings householdId={householdId} />
           <CreditUsageSection household={hh!.household!} />
           <DangerZone
             householdId={householdId}
             householdName={hh!.household!.name ?? t("hh.defaultName")}
             role={hh!.role ?? "member"}
+            isBusiness={hh!.household!.kind === "business"}
           />
         </>
       )}
@@ -1566,7 +1570,13 @@ function BucketRow<T extends BucketRowShape>({
 }
 
 
-function MembersSection({ householdId }: { householdId: string }) {
+function MembersSection({
+  householdId,
+  isBusiness = false,
+}: {
+  householdId: string;
+  isBusiness?: boolean;
+}) {
   const t = useT();
   const invite = useServerFn(inviteMember);
   const { data: members } = useQuery({
@@ -1625,7 +1635,7 @@ function MembersSection({ householdId }: { householdId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("members.title")}</CardTitle>
+        <CardTitle>{t(isBusiness ? "members.titleBiz" : "members.title")}</CardTitle>
         <CardDescription>{t("members.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

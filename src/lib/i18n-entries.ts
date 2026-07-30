@@ -742,6 +742,27 @@ export const ENTRIES = {
     de: "/Mon. × {months} Monate",
     fr: "/mois × {months} mois",
   },
+  "members.titleBiz": {
+    en: "Company members",
+    pt: "Membros da empresa",
+    es: "Miembros de la empresa",
+    de: "Unternehmensmitglieder",
+    fr: "Membres de l'entreprise",
+  },
+  "danger.deleteHh.titleBiz": {
+    en: "Delete this company",
+    pt: "Eliminar esta empresa",
+    es: "Eliminar esta empresa",
+    de: "Dieses Unternehmen löschen",
+    fr: "Supprimer cette entreprise",
+  },
+  "danger.deleteHh.buttonBiz": {
+    en: "Delete company",
+    pt: "Eliminar empresa",
+    es: "Eliminar empresa",
+    de: "Unternehmen löschen",
+    fr: "Supprimer l'entreprise",
+  },
   "debts.setupTitle": {
     en: "Debt",
     pt: "Dívida",
