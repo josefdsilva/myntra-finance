@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,16 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { FastForward, Loader2, Info, TrendingUp, Target, Plus, X, FlaskConical } from "lucide-react";
+import {
+  FastForward,
+  Loader2,
+  Info,
+  TrendingUp,
+  Target,
+  Plus,
+  X,
+  FlaskConical,
+} from "lucide-react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { fastForward } from "@/lib/projection.functions";
@@ -33,7 +43,14 @@ import { money } from "@/lib/format";
 import { useLocale, useT, type MessageKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/fast-forward")({
-  head: () => ({ meta: [{ title: "Fast forward · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/fast-forward",
+      title: "Fast forward · bynku",
+      description:
+        "Simulate a job change, a move or retirement and see the effect on your household budget.",
+      noindex: true,
+    }),
   component: FastForwardPage,
 });
 
@@ -267,7 +284,9 @@ function FastForwardPage() {
           {/* Trajectory chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("ff.chartTitle", { worth: t(worthKey) })}</CardTitle>
+              <CardTitle className="text-base">
+                {t("ff.chartTitle", { worth: t(worthKey) })}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-72 w-full">
@@ -393,7 +412,9 @@ function Stat({
   return (
     <div className="rounded-lg border p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`font-display text-lg tabular-nums ${good ? "text-emerald-600" : ""}`}>{value}</p>
+      <p className={`font-display text-lg tabular-nums ${good ? "text-emerald-600" : ""}`}>
+        {value}
+      </p>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
@@ -484,7 +505,10 @@ function ScenarioBuilder({
 
   const monthLabel = (ym: string) => {
     const [y, m] = ym.split("-").map(Number);
-    return new Date(y, (m || 1) - 1, 1).toLocaleDateString(locale, { month: "short", year: "numeric" });
+    return new Date(y, (m || 1) - 1, 1).toLocaleDateString(locale, {
+      month: "short",
+      year: "numeric",
+    });
   };
   const num = (s: string) => {
     const n = parseFloat(s.replace(",", "."));
@@ -743,18 +767,32 @@ function ScenarioBuilder({
           </div>
           <div>
             <Label className="text-xs">{t("ff.evt.nameOpt")}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("ff.evt.namePh")} />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("ff.evt.namePh")}
+            />
           </div>
 
           {type === "loan" && (
             <>
               <div>
                 <Label className="text-xs">{t("ff.evt.apr")}</Label>
-                <Input inputMode="decimal" placeholder="0" value={apr} onChange={(e) => setApr(e.target.value)} />
+                <Input
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={apr}
+                  onChange={(e) => setApr(e.target.value)}
+                />
               </div>
               <div>
                 <Label className="text-xs">{t("ff.evt.term")}</Label>
-                <Input inputMode="numeric" placeholder="60" value={term} onChange={(e) => setTerm(e.target.value)} />
+                <Input
+                  inputMode="numeric"
+                  placeholder="60"
+                  value={term}
+                  onChange={(e) => setTerm(e.target.value)}
+                />
               </div>
             </>
           )}

@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +23,14 @@ import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/statements")({
-  head: () => ({ meta: [{ title: "Finance statements · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/statements",
+      title: "Finance statements · bynku",
+      description:
+        "Review imported bank statements and the transactions bynku matched to your cycle.",
+      noindex: true,
+    }),
   component: StatementsPage,
 });
 
@@ -52,8 +60,7 @@ function StatementsPage() {
   const { data: st, isLoading } = useQuery({
     enabled: !!householdId && isBusiness,
     queryKey: ["statements", householdId, year, period],
-    queryFn: () =>
-      stmtFn({ data: { householdId: householdId!, year: Number(year), quarter } }),
+    queryFn: () => stmtFn({ data: { householdId: householdId!, year: Number(year), quarter } }),
   });
 
   function download() {
@@ -205,7 +212,9 @@ function Line({
         indent ? "pl-4" : ""
       }`}
     >
-      <span className={`${bold ? "font-semibold" : ""} ${muted ? "text-muted-foreground" : ""} text-sm`}>
+      <span
+        className={`${bold ? "font-semibold" : ""} ${muted ? "text-muted-foreground" : ""} text-sm`}
+      >
         {label}
       </span>
       <span

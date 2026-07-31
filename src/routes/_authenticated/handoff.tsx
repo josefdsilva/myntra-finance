@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +24,13 @@ import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/handoff")({
-  head: () => ({ meta: [{ title: "Accountant handoff · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/handoff",
+      title: "Accountant handoff · bynku",
+      description: "Export a clean bookkeeping package for your accountant in one step.",
+      noindex: true,
+    }),
   component: HandoffPage,
 });
 
@@ -189,14 +196,18 @@ function HandoffPage() {
                         <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
                           <th className="py-2 pr-3 font-medium">{t("handoff.colDate")}</th>
                           <th className="py-2 pr-3 font-medium">{t("handoff.colDesc")}</th>
-                          <th className="py-2 pr-3 text-right font-medium">{t("handoff.colAmount")}</th>
+                          <th className="py-2 pr-3 text-right font-medium">
+                            {t("handoff.colAmount")}
+                          </th>
                           <th className="py-2 font-medium">{t("handoff.colInvoice")}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {pkg.entries.map((e) => (
                           <tr key={e.id} className="border-b last:border-0">
-                            <td className="py-2 pr-3 tabular-nums text-muted-foreground">{e.date}</td>
+                            <td className="py-2 pr-3 tabular-nums text-muted-foreground">
+                              {e.date}
+                            </td>
                             <td className="py-2 pr-3">{e.description}</td>
                             <td
                               className={`py-2 pr-3 text-right tabular-nums font-medium ${
@@ -241,7 +252,9 @@ function HandoffPage() {
 
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
                   <p className="text-sm text-muted-foreground">
-                    {advisor ? t("handoff.advisorIs", { email: advisor }) : t("handoff.noAdvisorSet")}
+                    {advisor
+                      ? t("handoff.advisorIs", { email: advisor })
+                      : t("handoff.noAdvisorSet")}
                   </p>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={download} disabled={!pkg}>

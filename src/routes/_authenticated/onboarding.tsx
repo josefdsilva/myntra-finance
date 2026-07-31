@@ -1,9 +1,14 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type ComponentType } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateHousehold, updateHousehold, completeOnboarding } from "@/lib/household.functions";
+import {
+  getOrCreateHousehold,
+  updateHousehold,
+  completeOnboarding,
+} from "@/lib/household.functions";
 import {
   upsertIncome,
   upsertFixedExpense,
@@ -49,7 +54,14 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
-  head: () => ({ meta: [{ title: "Welcome · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/onboarding",
+      title: "Get started · bynku",
+      description:
+        "Set up your cycle, income, bills and projects so bynku can compute your daily safe-to-spend.",
+      noindex: true,
+    }),
   component: OnboardingPage,
 });
 
@@ -133,8 +145,7 @@ function Wizard({
   // gets a fiscal-cycle step instead; personal spaces are the reverse (their
   // cycle is payday-driven, so there's nothing to configure).
   const steps = STEPS.filter(
-    (s) =>
-      (s !== "household" || !isBusiness) && (s !== "cycle" || isBusiness),
+    (s) => (s !== "household" || !isBusiness) && (s !== "cycle" || isBusiness),
   );
   const key = steps[step];
   const isLast = step === steps.length - 1;
@@ -251,14 +262,11 @@ function Wizard({
           </div>
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          {t("ob.skipHint")}
-        </p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">{t("ob.skipHint")}</p>
       </div>
     </div>
   );
 }
-
 
 // ---- Step chrome ----------------------------------------------------------
 
@@ -289,17 +297,33 @@ function Welcome({ isBusiness }: { isBusiness: boolean }) {
       <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Sparkles className="size-7" />
       </div>
-      <h1 className="font-display text-3xl">{t(isBusiness ? "ob.welcome.titleBiz" : "ob.welcome.title")}</h1>
-      <p className="text-muted-foreground">{t(isBusiness ? "ob.welcome.bodyBiz" : "ob.welcome.body")}</p>
+      <h1 className="font-display text-3xl">
+        {t(isBusiness ? "ob.welcome.titleBiz" : "ob.welcome.title")}
+      </h1>
+      <p className="text-muted-foreground">
+        {t(isBusiness ? "ob.welcome.bodyBiz" : "ob.welcome.body")}
+      </p>
     </div>
   );
 }
 
-function CountryStep({ country, setCountry, isBusiness }: { country: string; setCountry: (v: string) => void; isBusiness: boolean }) {
+function CountryStep({
+  country,
+  setCountry,
+  isBusiness,
+}: {
+  country: string;
+  setCountry: (v: string) => void;
+  isBusiness: boolean;
+}) {
   const t = useT();
   return (
     <div>
-      <StepHead icon={Home} title={t(isBusiness ? "ob.country.titleBiz" : "ob.country.title")} subtitle={t("ob.country.subtitle")} />
+      <StepHead
+        icon={Home}
+        title={t(isBusiness ? "ob.country.titleBiz" : "ob.country.title")}
+        subtitle={t("ob.country.subtitle")}
+      />
       <Select value={country} onValueChange={setCountry}>
         <SelectTrigger className="w-full">
           <SelectValue />
@@ -330,7 +354,11 @@ function CycleStep({
   const t = useT();
   return (
     <div>
-      <StepHead icon={CalendarClock} title={t("ob.cycle.title")} subtitle={t("ob.cycle.subtitle")} />
+      <StepHead
+        icon={CalendarClock}
+        title={t("ob.cycle.title")}
+        subtitle={t("ob.cycle.subtitle")}
+      />
       <div className="space-y-4">
         <div>
           <Label>{t("ob.cycle.lengthLabel")}</Label>
@@ -349,11 +377,7 @@ function CycleStep({
         </div>
         <div>
           <Label>{t("ob.cycle.fiscalLabel")}</Label>
-          <Input
-            type="date"
-            value={fiscalStart}
-            onChange={(e) => setFiscalStart(e.target.value)}
-          />
+          <Input type="date" value={fiscalStart} onChange={(e) => setFiscalStart(e.target.value)} />
           <p className="mt-1 text-xs text-muted-foreground">{t("ob.cycle.fiscalHint")}</p>
         </div>
       </div>
@@ -361,7 +385,17 @@ function CycleStep({
   );
 }
 
-function Stepper({ label, value, setValue, min }: { label: string; value: number; setValue: (v: number) => void; min: number }) {
+function Stepper({
+  label,
+  value,
+  setValue,
+  min,
+}: {
+  label: string;
+  value: number;
+  setValue: (v: number) => void;
+  min: number;
+}) {
   return (
     <div className="flex items-center justify-between rounded-xl border p-4">
       <Label className="text-sm">{label}</Label>
@@ -397,10 +431,19 @@ function HouseholdStep({
   // "none" is the sentinel for "prefer not to say" (Select can't hold "").
   return (
     <div>
-      <StepHead icon={Users} title={t("ob.household.title")} subtitle={t("ob.household.subtitle")} />
+      <StepHead
+        icon={Users}
+        title={t("ob.household.title")}
+        subtitle={t("ob.household.subtitle")}
+      />
       <div className="space-y-3">
         <Stepper label={t("ob.household.adults")} value={adults} setValue={setAdults} min={1} />
-        <Stepper label={t("ob.household.children")} value={children} setValue={setChildren} min={0} />
+        <Stepper
+          label={t("ob.household.children")}
+          value={children}
+          setValue={setChildren}
+          min={0}
+        />
         <div>
           <Label>{t("hh.ageBand")}</Label>
           <Select
@@ -428,7 +471,11 @@ function HouseholdStep({
 
 // ---- Entry-list steps -----------------------------------------------------
 
-function EntryList({ items }: { items: Array<{ id: string; label: string; monthly_amount: number | string }> }) {
+function EntryList({
+  items,
+}: {
+  items: Array<{ id: string; label: string; monthly_amount: number | string }>;
+}) {
   const t = useT();
   if (!items.length) return null;
   return (
@@ -446,10 +493,12 @@ function EntryList({ items }: { items: Array<{ id: string; label: string; monthl
   );
 }
 
-
 type ListRow = { id: string; label: string; monthly_amount: number };
 
-function useList(table: "incomes" | "fixed_expenses" | "variable_estimates" | "debts", householdId: string) {
+function useList(
+  table: "incomes" | "fixed_expenses" | "variable_estimates" | "debts",
+  householdId: string,
+) {
   return useQuery({
     queryKey: [`ob-${table}`, householdId],
     queryFn: async () => {
@@ -457,7 +506,10 @@ function useList(table: "incomes" | "fixed_expenses" | "variable_estimates" | "d
       const client = supabase as unknown as {
         from: (t: string) => {
           select: (c: string) => {
-            eq: (c: string, v: string) => { order: (c: string) => Promise<{ data: ListRow[] | null }> };
+            eq: (
+              c: string,
+              v: string,
+            ) => { order: (c: string) => Promise<{ data: ListRow[] | null }> };
           };
         };
       };
@@ -506,14 +558,28 @@ function IncomeStep({ householdId, isBusiness }: { householdId: string; isBusine
 
   return (
     <div>
-      <StepHead icon={Wallet} title={t(isBusiness ? "ob.income.titleBiz" : "ob.income.title")} subtitle={t(isBusiness ? "ob.income.subtitleBiz" : "ob.income.subtitle")} />
+      <StepHead
+        icon={Wallet}
+        title={t(isBusiness ? "ob.income.titleBiz" : "ob.income.title")}
+        subtitle={t(isBusiness ? "ob.income.subtitleBiz" : "ob.income.subtitle")}
+      />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder={t(isBusiness ? "ob.income.namePhBiz" : "ob.income.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input
+          placeholder={t(isBusiness ? "ob.income.namePhBiz" : "ob.income.namePh")}
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+        <Input
+          className="w-28"
+          inputMode="decimal"
+          placeholder={t("ob.amountPh", { sym })}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -537,7 +603,9 @@ function FixedStep({ householdId }: { householdId: string }) {
     if (!label || !amount) return;
     setSaving(true);
     try {
-      await add({ data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0 } });
+      await add({
+        data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0 },
+      });
       setLabel("");
       setAmount("");
       qc.invalidateQueries({ queryKey: ["ob-fixed_expenses", householdId] });
@@ -554,8 +622,18 @@ function FixedStep({ householdId }: { householdId: string }) {
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder={t("ob.fixed.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input
+          placeholder={t("ob.fixed.namePh")}
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+        <Input
+          className="w-28"
+          inputMode="decimal"
+          placeholder={t("ob.amountPh", { sym })}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -579,7 +657,9 @@ function VariableStep({ householdId, isBusiness }: { householdId: string; isBusi
     if (!label || !amount) return;
     setSaving(true);
     try {
-      await add({ data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0 } });
+      await add({
+        data: { household_id: householdId, label, monthly_amount: parseFloat(amount) || 0 },
+      });
       setLabel("");
       setAmount("");
       qc.invalidateQueries({ queryKey: ["ob-variable_estimates", householdId] });
@@ -590,14 +670,28 @@ function VariableStep({ householdId, isBusiness }: { householdId: string; isBusi
 
   return (
     <div>
-      <StepHead icon={Receipt} title={t("ob.variable.title")} subtitle={t(isBusiness ? "ob.variable.subtitleBiz" : "ob.variable.subtitle")} />
+      <StepHead
+        icon={Receipt}
+        title={t("ob.variable.title")}
+        subtitle={t(isBusiness ? "ob.variable.subtitleBiz" : "ob.variable.subtitle")}
+      />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orEstimateManually")}</span>
       </div>
       <div className="flex gap-2">
-        <Input placeholder={t(isBusiness ? "ob.variable.namePhBiz" : "ob.variable.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input
+          placeholder={t(isBusiness ? "ob.variable.namePhBiz" : "ob.variable.namePh")}
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+        <Input
+          className="w-28"
+          inputMode="decimal"
+          placeholder={t("ob.amountPh", { sym })}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
         <Button onClick={submit} disabled={saving || !label || !amount}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
         </Button>
@@ -648,15 +742,40 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
 
   return (
     <div>
-      <StepHead icon={Wallet} title={t(isBusiness ? "ob.debt.titleBiz" : "ob.debt.title")} subtitle={t(isBusiness ? "ob.debt.subtitleBiz" : "ob.debt.subtitle")} />
+      <StepHead
+        icon={Wallet}
+        title={t(isBusiness ? "ob.debt.titleBiz" : "ob.debt.title")}
+        subtitle={t(isBusiness ? "ob.debt.subtitleBiz" : "ob.debt.subtitle")}
+      />
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input placeholder={t(isBusiness ? "ob.debt.namePhBiz" : "ob.debt.namePh")} value={label} onChange={(e) => setLabel(e.target.value)} />
-          <Input className="w-28" inputMode="decimal" placeholder={t("ob.amountPh", { sym })} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
+          <Input
+            placeholder={t(isBusiness ? "ob.debt.namePhBiz" : "ob.debt.namePh")}
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+          />
+          <Input
+            className="w-28"
+            inputMode="decimal"
+            placeholder={t("ob.amountPh", { sym })}
+            value={monthly}
+            onChange={(e) => setMonthly(e.target.value)}
+          />
         </div>
         <div className="flex gap-2">
-          <Input inputMode="decimal" placeholder={t("ob.debt.principalPh", { sym })} value={principal} onChange={(e) => setPrincipal(e.target.value)} />
-          <Input className="w-24" inputMode="decimal" placeholder={t("ob.debt.ratePh")} value={rate} onChange={(e) => setRate(e.target.value)} />
+          <Input
+            inputMode="decimal"
+            placeholder={t("ob.debt.principalPh", { sym })}
+            value={principal}
+            onChange={(e) => setPrincipal(e.target.value)}
+          />
+          <Input
+            className="w-24"
+            inputMode="decimal"
+            placeholder={t("ob.debt.ratePh")}
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+          />
           <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
           <Button onClick={submit} disabled={saving || !label || !monthly}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
@@ -667,7 +786,6 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
     </div>
   );
 }
-
 
 // ---- Assets ---------------------------------------------------------------
 
@@ -684,7 +802,12 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
         .select("id, name, kind, current_value")
         .eq("household_id", householdId)
         .order("created_at");
-      return (data ?? []) as Array<{ id: string; name: string; kind: string; current_value: number }>;
+      return (data ?? []) as Array<{
+        id: string;
+        name: string;
+        kind: string;
+        current_value: number;
+      }>;
     },
   });
   const [name, setName] = useState("");
@@ -731,15 +854,39 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
 
   return (
     <div>
-      <StepHead icon={Gem} title={t(isBusiness ? "ob.assets.titleBiz" : "ob.assets.title")} subtitle={t(isBusiness ? "ob.assets.subtitleBiz" : "ob.assets.subtitle")} />
+      <StepHead
+        icon={Gem}
+        title={t(isBusiness ? "ob.assets.titleBiz" : "ob.assets.title")}
+        subtitle={t(isBusiness ? "ob.assets.subtitleBiz" : "ob.assets.subtitle")}
+      />
       <div className="space-y-2">
-        <Input placeholder={t(isBusiness ? "ob.assets.namePhBiz" : "ob.assets.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
+        <Input
+          placeholder={t(isBusiness ? "ob.assets.namePhBiz" : "ob.assets.namePh")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
         <div className="flex gap-2">
-          <Input inputMode="decimal" placeholder={t("ob.assets.acquiredValuePh", { sym })} value={acquired} onChange={(e) => setAcquired(e.target.value)} />
-          <Input type="date" aria-label={t("ob.assets.acquiredOnLabel")} value={acquiredOn} onChange={(e) => setAcquiredOn(e.target.value)} />
+          <Input
+            inputMode="decimal"
+            placeholder={t("ob.assets.acquiredValuePh", { sym })}
+            value={acquired}
+            onChange={(e) => setAcquired(e.target.value)}
+          />
+          <Input
+            type="date"
+            aria-label={t("ob.assets.acquiredOnLabel")}
+            value={acquiredOn}
+            onChange={(e) => setAcquiredOn(e.target.value)}
+          />
         </div>
         <div className="flex gap-2">
-          <Input className="w-40" inputMode="decimal" placeholder={t("ob.assets.valuePh", { sym })} value={current} onChange={(e) => setCurrent(e.target.value)} />
+          <Input
+            className="w-40"
+            inputMode="decimal"
+            placeholder={t("ob.assets.valuePh", { sym })}
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+          />
           <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
             <SelectTrigger>
               <SelectValue />
@@ -776,11 +923,16 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
   );
 }
 
-
 // ---- Projects / allocations ----------------------------------------------
 
 type BucketKind = "savings" | "emergency" | "investment";
-type Suggestion = { name: string; target_type: "pct_surplus" | "fixed_monthly"; target_value: number; why: string; kind: BucketKind };
+type Suggestion = {
+  name: string;
+  target_type: "pct_surplus" | "fixed_monthly";
+  target_value: number;
+  why: string;
+  kind: BucketKind;
+};
 
 function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
   const qc = useQueryClient();
@@ -794,17 +946,25 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
       const [inc, fx, ve, dt, bk] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
-        supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId),
+        supabase
+          .from("variable_estimates")
+          .select("monthly_amount")
+          .eq("household_id", householdId),
         supabase.from("debts").select("monthly_amount").eq("household_id", householdId),
-        supabase.from("buckets").select("id, name").eq("household_id", householdId).order("sort_order"),
+        supabase
+          .from("buckets")
+          .select("id, name")
+          .eq("household_id", householdId)
+          .order("sort_order"),
       ]);
       const sum = (rows: Array<{ monthly_amount: number | string }> | null) =>
         (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount || 0), 0);
-      const surplus = Math.max(
-        0,
-        sum(inc.data) - sum(fx.data) - sum(ve.data) - sum(dt.data),
-      );
-      const { data: hh } = await supabase.from("households").select("children").eq("id", householdId).maybeSingle();
+      const surplus = Math.max(0, sum(inc.data) - sum(fx.data) - sum(ve.data) - sum(dt.data));
+      const { data: hh } = await supabase
+        .from("households")
+        .select("children")
+        .eq("id", householdId)
+        .maybeSingle();
       return { surplus, buckets: bk.data ?? [], children: hh?.children ?? 0 };
     },
   });
@@ -813,15 +973,41 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
   const existing = new Set((data?.buckets ?? []).map((b) => b.name.toLowerCase()));
 
   const suggestions: Suggestion[] = [
-    { name: t("ob.projects.sug.emergency"), target_type: "pct_surplus", target_value: 30, why: t("ob.projects.sug.emergencyWhy"), kind: "emergency" },
-    { name: t("ob.projects.sug.invest"), target_type: "pct_surplus", target_value: 20, why: t("ob.projects.sug.investWhy"), kind: "investment" },
+    {
+      name: t("ob.projects.sug.emergency"),
+      target_type: "pct_surplus",
+      target_value: 30,
+      why: t("ob.projects.sug.emergencyWhy"),
+      kind: "emergency",
+    },
+    {
+      name: t("ob.projects.sug.invest"),
+      target_type: "pct_surplus",
+      target_value: 20,
+      why: t("ob.projects.sug.investWhy"),
+      kind: "investment",
+    },
     // Holidays and kids are personal-only suggestions.
     ...(isBusiness
       ? []
       : [
-          { name: t("ob.projects.sug.holidays"), target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5), why: t("ob.projects.sug.holidaysWhy"), kind: "savings" as const },
+          {
+            name: t("ob.projects.sug.holidays"),
+            target_type: "fixed_monthly" as const,
+            target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5),
+            why: t("ob.projects.sug.holidaysWhy"),
+            kind: "savings" as const,
+          },
           ...(data && data.children > 0
-            ? [{ name: t("ob.projects.sug.kids"), target_type: "fixed_monthly" as const, target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5), why: t("ob.projects.sug.kidsWhy"), kind: "savings" as const }]
+            ? [
+                {
+                  name: t("ob.projects.sug.kids"),
+                  target_type: "fixed_monthly" as const,
+                  target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5),
+                  why: t("ob.projects.sug.kidsWhy"),
+                  kind: "savings" as const,
+                },
+              ]
             : []),
         ]),
   ];
@@ -831,7 +1017,13 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
   const [target, setTarget] = useState("");
   const [saving, setSaving] = useState(false);
 
-  async function addBucket(s: { name: string; target_type: Suggestion["target_type"]; target_value: number; initial_balance?: number; kind?: BucketKind }) {
+  async function addBucket(s: {
+    name: string;
+    target_type: Suggestion["target_type"];
+    target_value: number;
+    initial_balance?: number;
+    kind?: BucketKind;
+  }) {
     await add({
       data: {
         household_id: householdId,
@@ -868,7 +1060,11 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
 
   return (
     <div>
-      <StepHead icon={PiggyBank} title={t(isBusiness ? "ob.projects.titleBiz" : "ob.projects.title")} subtitle={t("ob.projects.subtitle", { amount: money(surplus) })} />
+      <StepHead
+        icon={PiggyBank}
+        title={t(isBusiness ? "ob.projects.titleBiz" : "ob.projects.title")}
+        subtitle={t("ob.projects.subtitle", { amount: money(surplus) })}
+      />
 
       <p className="mb-2 text-sm font-medium">{t("ob.projects.suggested")}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -901,10 +1097,24 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
 
       <p className="mb-2 mt-6 text-sm font-medium">{t("ob.projects.orCustom")}</p>
       <div className="space-y-2">
-        <Input placeholder={t(isBusiness ? "ob.projects.namePhBiz" : "ob.projects.namePh")} value={name} onChange={(e) => setName(e.target.value)} />
+        <Input
+          placeholder={t(isBusiness ? "ob.projects.namePhBiz" : "ob.projects.namePh")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
         <div className="flex gap-2">
-          <Input inputMode="decimal" placeholder={t("ob.projects.balancePh", { sym })} value={balance} onChange={(e) => setBalance(e.target.value)} />
-          <Input inputMode="decimal" placeholder={t("ob.projects.targetPh", { sym })} value={target} onChange={(e) => setTarget(e.target.value)} />
+          <Input
+            inputMode="decimal"
+            placeholder={t("ob.projects.balancePh", { sym })}
+            value={balance}
+            onChange={(e) => setBalance(e.target.value)}
+          />
+          <Input
+            inputMode="decimal"
+            placeholder={t("ob.projects.targetPh", { sym })}
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+          />
           <Button onClick={submitCustom} disabled={saving || !name}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
           </Button>
@@ -983,8 +1193,18 @@ function PlansStep({ householdId, isBusiness }: { householdId: string; isBusines
       />
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input placeholder={t("ob.plans.labelPh")} value={label} onChange={(e) => setLabel(e.target.value)} />
-          <Input className="w-28" inputMode="decimal" placeholder={t("ob.plans.amountPh")} value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <Input
+            placeholder={t("ob.plans.labelPh")}
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+          />
+          <Input
+            className="w-28"
+            inputMode="decimal"
+            placeholder={t("ob.plans.amountPh")}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
         </div>
         <div className="flex flex-wrap gap-2">
           <Select value={direction} onValueChange={(v) => setDirection(v as typeof direction)}>
@@ -996,7 +1216,12 @@ function PlansStep({ householdId, isBusiness }: { householdId: string; isBusines
               <SelectItem value="income">{t("ob.plans.income")}</SelectItem>
             </SelectContent>
           </Select>
-          <Input type="month" className="w-40" value={month} onChange={(e) => setMonth(e.target.value)} />
+          <Input
+            type="month"
+            className="w-40"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+          />
           <Select value={recurrence} onValueChange={(v) => setRecurrence(v as typeof recurrence)}>
             <SelectTrigger className="w-40">
               <SelectValue />
@@ -1036,4 +1261,3 @@ function PlansStep({ householdId, isBusiness }: { householdId: string; isBusines
     </div>
   );
 }
-

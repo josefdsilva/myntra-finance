@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,7 +11,14 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/invite/$token")({
-  head: () => ({ meta: [{ title: "Join household" }] }),
+  head: ({ params }) =>
+    pageMeta({
+      path: `/invite/${params.token}`,
+      title: "You're invited to a bynku household",
+      description:
+        "Accept your invitation to join a shared bynku household and start budgeting together.",
+      noindex: true,
+    }),
   component: InvitePage,
 });
 

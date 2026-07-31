@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { pageShellClass } from "@/components/page-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,12 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { deleteExpense, addExpensesBulk, setExpenseIntent } from "@/lib/budget.functions";
-import {
-  resolveIntent,
-  INTENT_LEVELS,
-  intentLabelKey,
-  type IntentLevel,
-} from "@/lib/intent";
+import { resolveIntent, INTENT_LEVELS, intentLabelKey, type IntentLevel } from "@/lib/intent";
 import { parseBankStatement } from "@/lib/ai-parse.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -43,7 +39,14 @@ import { FileUp, Loader2, Trash2, Paperclip } from "lucide-react";
 import { useT, type MessageKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
-  head: () => ({ meta: [{ title: "Expenses · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/expenses",
+      title: "Expenses ledger · bynku",
+      description:
+        "Log spending by photo, voice or text and browse every transaction in the current cycle.",
+      noindex: true,
+    }),
   component: ExpensesPage,
 });
 
@@ -344,9 +347,7 @@ function ExpensesPage() {
                         <span className="capitalize">{e.source.replace("_", " ")}</span>
                       </p>
                       {e.note && (e.merchant || e.category) && e.note !== e.merchant && (
-                        <p className="text-xs text-muted-foreground/80 italic truncate">
-                          {e.note}
-                        </p>
+                        <p className="text-xs text-muted-foreground/80 italic truncate">{e.note}</p>
                       )}
                       <div className="flex flex-wrap items-center gap-1.5">
                         {Array.isArray(e.labels) &&
@@ -605,78 +606,78 @@ function BankImport({ householdId, onImported }: { householdId: string; onImport
         duplicates are pre-unchecked.
       </p>
       <div className="flex items-center gap-3">
-          <Input
-            ref={ref}
-            type="file"
-            accept=".csv,.pdf,text/csv,application/pdf"
-            onChange={onFile}
-            disabled={loading}
-          />
-          {loading && <Loader2 className="animate-spin text-muted-foreground" />}
-        </div>
-        {items && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>
-                {selectedCount} / {items.length} selected · total {money(selectedTotal)}
-              </span>
-              <div className="flex gap-2">
-                <button className="underline" onClick={() => setSelected(items.map(() => true))}>
-                  Select all
-                </button>
-                <button className="underline" onClick={() => setSelected(dupFlags.map((d) => !d))}>
-                  Reset dupes
-                </button>
-                <button className="underline" onClick={() => setSelected(items.map(() => false))}>
-                  None
-                </button>
-              </div>
-            </div>
-            <div className="max-h-72 overflow-y-auto border rounded-md divide-y">
-              {items.map((t, i) => (
-                <label
-                  key={i}
-                  className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer ${dupFlags[i] ? "bg-amber-500/5" : ""}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!selected[i]}
-                    onChange={(e) =>
-                      setSelected((s) => s.map((v, j) => (j === i ? e.target.checked : v)))
-                    }
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate">
-                      {t.merchant || t.note || t.category}{" "}
-                      {dupFlags[i] && (
-                        <span className="text-amber-600 text-xs">· likely duplicate</span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t.occurred_at ? fmtDate(t.occurred_at) : "—"} · {t.category}
-                    </p>
-                  </div>
-                  <span className="tabular-nums">{money(t.amount)}</span>
-                </label>
-              ))}
-            </div>
+        <Input
+          ref={ref}
+          type="file"
+          accept=".csv,.pdf,text/csv,application/pdf"
+          onChange={onFile}
+          disabled={loading}
+        />
+        {loading && <Loader2 className="animate-spin text-muted-foreground" />}
+      </div>
+      {items && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>
+              {selectedCount} / {items.length} selected · total {money(selectedTotal)}
+            </span>
             <div className="flex gap-2">
-              <Button onClick={confirmImport} disabled={loading || selectedCount === 0}>
-                <FileUp /> Import {selectedCount}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setItems(null);
-                  setSelected([]);
-                  setDupFlags([]);
-                }}
-              >
-                Discard
-              </Button>
+              <button className="underline" onClick={() => setSelected(items.map(() => true))}>
+                Select all
+              </button>
+              <button className="underline" onClick={() => setSelected(dupFlags.map((d) => !d))}>
+                Reset dupes
+              </button>
+              <button className="underline" onClick={() => setSelected(items.map(() => false))}>
+                None
+              </button>
             </div>
           </div>
-        )}
+          <div className="max-h-72 overflow-y-auto border rounded-md divide-y">
+            {items.map((t, i) => (
+              <label
+                key={i}
+                className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer ${dupFlags[i] ? "bg-amber-500/5" : ""}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!selected[i]}
+                  onChange={(e) =>
+                    setSelected((s) => s.map((v, j) => (j === i ? e.target.checked : v)))
+                  }
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="truncate">
+                    {t.merchant || t.note || t.category}{" "}
+                    {dupFlags[i] && (
+                      <span className="text-amber-600 text-xs">· likely duplicate</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.occurred_at ? fmtDate(t.occurred_at) : "—"} · {t.category}
+                  </p>
+                </div>
+                <span className="tabular-nums">{money(t.amount)}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={confirmImport} disabled={loading || selectedCount === 0}>
+              <FileUp /> Import {selectedCount}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setItems(null);
+                setSelected([]);
+                setDupFlags([]);
+              }}
+            >
+              Discard
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

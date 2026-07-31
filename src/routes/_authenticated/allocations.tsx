@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -40,7 +41,13 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/allocations")({
-  head: () => ({ meta: [{ title: "Allocations · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/allocations",
+      title: "Allocations & projects · bynku",
+      description: "Split your surplus across savings projects and mark each allocation as funded.",
+      noindex: true,
+    }),
   component: AllocationsPage,
 });
 
@@ -497,7 +504,9 @@ function AllocationsPage() {
                   </span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
-                  <span className="font-medium text-foreground">{t("alloc.totals.realSurplus")}</span>
+                  <span className="font-medium text-foreground">
+                    {t("alloc.totals.realSurplus")}
+                  </span>
                   <span
                     className={`tabular-nums font-semibold ${realSurplus < 0 ? "text-destructive" : "text-foreground"}`}
                   >

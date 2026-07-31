@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -28,7 +29,14 @@ import { setActiveHouseholdId, useActiveHouseholdId } from "@/lib/active-househo
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/households")({
-  head: () => ({ meta: [{ title: "Households · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/households",
+      title: "Spaces & households · bynku",
+      description:
+        "Switch between households and business spaces, invite members, and manage who shares your bynku budget.",
+      noindex: true,
+    }),
   component: HouseholdsPage,
 });
 
@@ -212,7 +220,9 @@ function HouseholdsPage() {
             </div>
             <Button
               type="submit"
-              disabled={!newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT}
+              disabled={
+                !newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT
+              }
             >
               {createMutation.isPending ? t("households.creating") : t("businesses.create")}
             </Button>

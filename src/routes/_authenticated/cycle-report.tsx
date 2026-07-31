@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +46,14 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/cycle-report")({
-  head: () => ({ meta: [{ title: "Cycle report · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/cycle-report",
+      title: "Cycle report · bynku",
+      description:
+        "A written summary of how your pay cycle went: what came in, what went out, and what to change next.",
+      noindex: true,
+    }),
   component: CycleReportPage,
 });
 
@@ -528,7 +536,11 @@ function CycleReportPage() {
                       <TableRow key={i}>
                         <TableCell className="font-medium">{p.label}</TableCell>
                         <TableCell className="text-muted-foreground">
-                          {t(p.source === "cash" ? "cycleReport.sourceCash" : "cycleReport.sourceProject")}
+                          {t(
+                            p.source === "cash"
+                              ? "cycleReport.sourceCash"
+                              : "cycleReport.sourceProject",
+                          )}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{money(p.amount)}</TableCell>
                       </TableRow>

@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -66,7 +67,14 @@ import {
 } from "@/lib/intent";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/settings",
+      title: "Settings · bynku",
+      description:
+        "Configure your pay cycle, categories, language, notifications and privacy controls.",
+      noindex: true,
+    }),
   component: SettingsPage,
 });
 
@@ -217,7 +225,6 @@ function CreditUsageSection({ household }: { household: { id: string } }) {
           {t("credits.capNote", { cap: capValue })}{" "}
           <span className="italic">{t("credits.topupHint")}</span>
         </p>
-
 
         {data?.breakdown && data.breakdown.length > 0 ? (
           <div>
@@ -553,7 +560,10 @@ function HouseholdSection({
           </div>
           <div>
             <Label>{t("hh.currency")}</Label>
-            <Select value={currency} onValueChange={(v) => saveCurrency(v as "EUR" | "USD" | "GBP")}>
+            <Select
+              value={currency}
+              onValueChange={(v) => saveCurrency(v as "EUR" | "USD" | "GBP")}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -966,9 +976,7 @@ const BUSINESS_INCOME_TYPES = [
   "grants",
   "other",
 ] as const;
-type IncomeType =
-  | (typeof PERSONAL_INCOME_TYPES)[number]
-  | (typeof BUSINESS_INCOME_TYPES)[number];
+type IncomeType = (typeof PERSONAL_INCOME_TYPES)[number] | (typeof BUSINESS_INCOME_TYPES)[number];
 
 export function IncomesSection({
   householdId,
@@ -1192,7 +1200,14 @@ export function FixedExpensesSection({
   // Update just the need-level of an existing fixed cost (re-upsert with its
   // current values so the amount/cadence are preserved).
   async function setRowIntent(
-    r: { id: string; label: string; category: string | null; native_amount: number | string | null; monthly_amount: number | string; cadence: string | null },
+    r: {
+      id: string;
+      label: string;
+      category: string | null;
+      native_amount: number | string | null;
+      monthly_amount: number | string;
+      cadence: string | null;
+    },
     next: IntentLevel,
   ) {
     await upsert({
@@ -1475,9 +1490,7 @@ function BucketRow<T extends BucketRowShape>({
           <Label className="text-xs">{t("buckets.kindLabel")}</Label>
           <Select
             value={b.kind ?? "savings"}
-            onValueChange={(v) =>
-              setB({ ...b, kind: v as "savings" | "emergency" | "investment" })
-            }
+            onValueChange={(v) => setB({ ...b, kind: v as "savings" | "emergency" | "investment" })}
           >
             <SelectTrigger className="h-8">
               <SelectValue />
@@ -1568,7 +1581,6 @@ function BucketRow<T extends BucketRowShape>({
     </div>
   );
 }
-
 
 function MembersSection({
   householdId,
@@ -1729,7 +1741,17 @@ function debtKindOptions(
   isBusiness: boolean,
 ): Array<{ value: DebtKind; label: string }> {
   const kinds: DebtKind[] = isBusiness
-    ? ["business_loan", "credit_line", "equipment_finance", "leasing", "vehicle", "property", "factoring", "credit_card", "other"]
+    ? [
+        "business_loan",
+        "credit_line",
+        "equipment_finance",
+        "leasing",
+        "vehicle",
+        "property",
+        "factoring",
+        "credit_card",
+        "other",
+      ]
     : ["mortgage", "personal", "auto", "credit_card", "student", "other"];
   return kinds.map((value) => ({ value, label: debtKindLabel(t, value) }));
 }
@@ -1892,7 +1914,8 @@ export function DebtsSection({
                 <p className="truncate font-medium">{r.label}</p>
                 <p className="text-xs text-muted-foreground break-words">
                   {debtKindLabel(t, r.kind)}
-                  {r.taeg_pct != null && ` · ${t("debt.apr", { pct: Number(r.taeg_pct).toFixed(2) })}`}
+                  {r.taeg_pct != null &&
+                    ` · ${t("debt.apr", { pct: Number(r.taeg_pct).toFixed(2) })}`}
                   {r.principal_remaining != null &&
                     ` · principal ${money(Number(r.principal_remaining))}`}
                   {r.maturity_date && ` · until ${r.maturity_date}`}
@@ -1910,7 +1933,6 @@ export function DebtsSection({
             </li>
           ))}
         </ul>
-
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div>

@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,11 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
 import { pageShellClass } from "@/components/page-shell";
-import { IncomesSection, FixedExpensesSection, VariableEstimatesSection } from "@/routes/_authenticated/settings";
+import {
+  IncomesSection,
+  FixedExpensesSection,
+  VariableEstimatesSection,
+} from "@/routes/_authenticated/settings";
 import { SpendingVsEstimate } from "@/components/spending-vs-estimate";
 import { CommittedThisCycle, PlannedThisCycle } from "@/components/cycle-ledger";
 import { PlanPanel } from "@/routes/_authenticated/plan";
@@ -21,10 +26,20 @@ import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/cashflow")({
-  head: () => ({ meta: [{ title: "Payables & Receivables · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/cashflow",
+      title: "Payables & receivables · bynku",
+      description:
+        "See recurring income, fixed bills, variable estimates and what actually moved this cycle in one place.",
+      noindex: true,
+    }),
   // ?lens=cycle|planned deep-links a specific lens (used by redirects + CTAs).
-  validateSearch: (search: Record<string, unknown>) => ({
-    lens: search.lens === "cycle" || search.lens === "planned" ? search.lens : undefined,
+  validateSearch: (search: Record<string, unknown>): { lens?: "cycle" | "planned" } => ({
+    lens:
+      search.lens === "cycle" || search.lens === "planned"
+        ? (search.lens as "cycle" | "planned")
+        : undefined,
   }),
   component: CashflowPage,
 });
@@ -55,7 +70,10 @@ function CashflowPage() {
       const [inc, fx, ve, db, cycleBounds] = await Promise.all([
         supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
         supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
-        supabase.from("variable_estimates").select("monthly_amount").eq("household_id", householdId!),
+        supabase
+          .from("variable_estimates")
+          .select("monthly_amount")
+          .eq("household_id", householdId!),
         supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
         fetchCycleBounds(supabase, householdId!, hh?.household),
       ]);

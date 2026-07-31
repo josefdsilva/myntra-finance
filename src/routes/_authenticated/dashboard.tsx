@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -50,7 +51,14 @@ import { IncomeAllocationSuggestion } from "@/components/income-allocation-sugge
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/dashboard",
+      title: "Dashboard · bynku",
+      description:
+        "Your daily safe-to-spend, spending trend and personalised issues and tips at a glance.",
+      noindex: true,
+    }),
   component: Dashboard,
 });
 
@@ -162,7 +170,9 @@ function Dashboard() {
     queryFn: async () => {
       const { data: rows } = await supabase
         .from("plans")
-        .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
+        .select(
+          "id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done",
+        )
         .eq("household_id", householdId!);
       return leftoverObligation((rows ?? []) as unknown as Plan[], monthKey(new Date()));
     },
@@ -212,8 +222,7 @@ function Dashboard() {
     ? Math.floor((Date.now() - new Date(cycle.start).getTime()) / 86400000)
     : 999;
   const upcomingPlanCount = upcomingPlans?.length ?? 0;
-  const showPlansNudge =
-    !plansNudgeDismissed && daysSinceCycleStart <= 3 && upcomingPlanCount > 0;
+  const showPlansNudge = !plansNudgeDismissed && daysSinceCycleStart <= 3 && upcomingPlanCount > 0;
   const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
   // Show the safe amount over a chosen horizon: today (1 day), the next 7 days,
   // or the rest of the cycle (= everything remaining). "Next 7 days" is only
@@ -320,9 +329,9 @@ function Dashboard() {
     [sparkAll, sparkSliceDays],
   );
   const sparkMax = Math.max(safeToday, ...spark.map((d) => d.net), 1);
-  const avgDaily7 = sparkAll.slice(-7).reduce((s, d) => s + d.net, 0) / Math.max(1, Math.min(7, sparkAll.length));
+  const avgDaily7 =
+    sparkAll.slice(-7).reduce((s, d) => s + d.net, 0) / Math.max(1, Math.min(7, sparkAll.length));
   const projectedBalance = remaining - avgDaily7 * daysLeft;
-
 
   function monthsUntil(dateStr: string | null): number {
     if (!dateStr) return 1;
@@ -427,7 +436,9 @@ function Dashboard() {
             </div>
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <Button asChild size="sm">
-                <Link to="/cashflow">{t("dashboard.plansNudge.action")}</Link>
+                <Link to="/cashflow" search={{ lens: undefined }}>
+                  {t("dashboard.plansNudge.action")}
+                </Link>
               </Button>
               <Button
                 variant="ghost"
@@ -460,7 +471,11 @@ function Dashboard() {
                   <Info className="size-4" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent side="bottom" align="start" className="w-72 space-y-2 text-xs leading-relaxed">
+              <PopoverContent
+                side="bottom"
+                align="start"
+                className="w-72 space-y-2 text-xs leading-relaxed"
+              >
                 <p className="text-sm font-medium text-foreground">{t(safeLabelKey)}</p>
                 <p className="text-muted-foreground">{t("dashboard.safe.infoBody")}</p>
                 {variablePool > 0 && (
@@ -485,22 +500,25 @@ function Dashboard() {
                 money(safeForHorizon)
               )}
             </p>
-            {!isLoading && effHorizon === "today" && variablePool > 0 && Math.abs(trendDelta) >= 0.01 && (
-              <span
-                className={`inline-flex items-center gap-1 text-sm font-medium tabular-nums ${trendDelta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
-              >
-                {trendDelta > 0 ? (
-                  <TrendingUp className="size-4" />
-                ) : trendDelta < 0 ? (
-                  <TrendingDown className="size-4" />
-                ) : (
-                  <Minus className="size-4" />
-                )}
-                {t("dashboard.safe.vsYesterday", {
-                  value: `${trendDelta > 0 ? "+" : ""}${money(trendDelta)}`,
-                })}
-              </span>
-            )}
+            {!isLoading &&
+              effHorizon === "today" &&
+              variablePool > 0 &&
+              Math.abs(trendDelta) >= 0.01 && (
+                <span
+                  className={`inline-flex items-center gap-1 text-sm font-medium tabular-nums ${trendDelta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
+                >
+                  {trendDelta > 0 ? (
+                    <TrendingUp className="size-4" />
+                  ) : trendDelta < 0 ? (
+                    <TrendingDown className="size-4" />
+                  ) : (
+                    <Minus className="size-4" />
+                  )}
+                  {t("dashboard.safe.vsYesterday", {
+                    value: `${trendDelta > 0 ? "+" : ""}${money(trendDelta)}`,
+                  })}
+                </span>
+              )}
           </div>
           <div className="mt-3 inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
             {(["today", "week", "cycle"] as const)
@@ -532,7 +550,6 @@ function Dashboard() {
               {t(`dashboard.spark.caption.${effHorizon}`, { days: spark.length })}
             </p>
           </div>
-
 
           <div className="mt-6 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -775,7 +792,11 @@ function SalaryReceivedButton({
     queryKey: ["primary-income", householdId],
     queryFn: async () => {
       const [{ data: hh }, { data: incs }] = await Promise.all([
-        supabase.from("households").select("cycle_anchor_income_id").eq("id", householdId).maybeSingle(),
+        supabase
+          .from("households")
+          .select("cycle_anchor_income_id")
+          .eq("id", householdId)
+          .maybeSingle(),
         supabase
           .from("incomes")
           .select("id, type, native_amount, monthly_amount")
@@ -932,9 +953,7 @@ function StatCard({
         <p className="text-xs uppercase tracking-wider text-muted-foreground min-h-[2rem] leading-tight">
           {label}
         </p>
-        <p
-          className={`text-2xl font-display mt-1 tabular-nums whitespace-nowrap ${toneCls}`}
-        >
+        <p className={`text-2xl font-display mt-1 tabular-nums whitespace-nowrap ${toneCls}`}>
           {value}
         </p>
         {hint && <p className="text-xs text-muted-foreground mt-auto pt-2">{hint}</p>}
@@ -994,7 +1013,6 @@ function Sparkline({
           <title>
             {d.label} · {money(d.net)}
           </title>
-
         </g>
       ))}
     </svg>

@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,7 +10,13 @@ import { NetWorthCard } from "@/components/net-worth-card";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/assets")({
-  head: () => ({ meta: [{ title: "Assets · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/assets",
+      title: "Assets & net worth · bynku",
+      description: "Track what you own, how it depreciates, and how liquid your wealth really is.",
+      noindex: true,
+    }),
   component: AssetsPage,
 });
 

@@ -64,7 +64,7 @@ const HandoffLedger = ({
     <Html lang="en" dir="ltr">
       <Head />
       <Preview>
-        {companyName} — bookkeeping handoff for {periodLabel} ({totals.count} entries)
+        {companyName} — bookkeeping handoff for {periodLabel} ({String(totals.count)} entries)
       </Preview>
       <Body style={main}>
         <Container style={container}>

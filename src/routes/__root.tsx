@@ -14,7 +14,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
-import appIcon from "@/assets/app-icon.svg.asset.json";
 import { GlobalLoader } from "@/components/global-loader";
 
 function NotFoundComponent() {
@@ -103,8 +102,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "bynku: shared household budgeting with daily safe-to-spend, configurable allocation buckets, and AI expense capture.",
       },
-      { property: "og:image", content: appIcon.url },
-      { name: "twitter:image", content: appIcon.url },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
