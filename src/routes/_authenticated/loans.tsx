@@ -18,7 +18,8 @@ export const Route = createFileRoute("/_authenticated/loans")({
     pageMeta({
       path: "/loans",
       title: "Loans & debt payoff · bynku",
-      description: "Track loans with TAEG and total cost, then simulate avalanche or snowball payoff strategies.",
+      description:
+        "Track loans with TAEG and total cost, then simulate avalanche or snowball payoff strategies.",
       noindex: true,
     }),
   component: LoansPage,

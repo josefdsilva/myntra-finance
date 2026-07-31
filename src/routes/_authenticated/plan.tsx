@@ -14,13 +14,7 @@ import {
   resolvePlan,
   reopenPlan,
 } from "@/lib/plan.functions";
-import {
-  buildForecast,
-  plansForMonth,
-  monthKey,
-  type Plan,
-  type PlanRecurrence,
-} from "@/lib/plan";
+import { buildForecast, plansForMonth, monthKey, type Plan, type PlanRecurrence } from "@/lib/plan";
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { PlanTimeline, HorizonToggle, type Horizon } from "@/components/plan-charts";
 import { pageShellClass } from "@/components/page-shell";
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/_authenticated/plan")({
     pageMeta({
       path: "/plan",
       title: "Plans · bynku",
-      description: "Schedule upcoming one-off costs and see how each planned purchase hits your cycle.",
+      description:
+        "Schedule upcoming one-off costs and see how each planned purchase hits your cycle.",
       noindex: true,
     }),
   // Plans now live inside the Payables & Receivables hub. Keep the route as a
@@ -153,19 +148,31 @@ export function PlanPanel({
     enabled: !!householdId,
     queryKey: ["plans", householdId],
     queryFn: async () => {
-      const [{ data: plans }, { data: incomes }, { data: buckets }, { data: allocs }, { data: moves }] =
-        await Promise.all([
-          supabase.from("plans").select("*").eq("household_id", householdId!).order("month"),
-          supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
-          supabase
-            .from("buckets")
-            .select("id, name, initial_balance")
-            .eq("household_id", householdId!)
-            .order("sort_order"),
-          supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId!),
-          supabase.from("account_movements").select("*").eq("household_id", householdId!),
-        ]);
-      const bucketRows = (buckets ?? []) as Array<{ id: string; name: string; initial_balance: number }>;
+      const [
+        { data: plans },
+        { data: incomes },
+        { data: buckets },
+        { data: allocs },
+        { data: moves },
+      ] = await Promise.all([
+        supabase.from("plans").select("*").eq("household_id", householdId!).order("month"),
+        supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
+        supabase
+          .from("buckets")
+          .select("id, name, initial_balance")
+          .eq("household_id", householdId!)
+          .order("sort_order"),
+        supabase
+          .from("bucket_allocations")
+          .select("bucket_id, amount")
+          .eq("household_id", householdId!),
+        supabase.from("account_movements").select("*").eq("household_id", householdId!),
+      ]);
+      const bucketRows = (buckets ?? []) as Array<{
+        id: string;
+        name: string;
+        initial_balance: number;
+      }>;
       const balances = bucketBalancesFor(
         bucketRows,
         (allocs ?? []) as Array<{ bucket_id: string; amount: number }>,
@@ -332,9 +339,7 @@ export function PlanPanel({
   // Resolved plans (history), newest month first.
   const resolved = useMemo(
     () =>
-      plans
-        .filter((p) => p.done)
-        .sort((a, b) => String(b.month).localeCompare(String(a.month))),
+      plans.filter((p) => p.done).sort((a, b) => String(b.month).localeCompare(String(a.month))),
     [plans],
   );
 
@@ -398,10 +403,7 @@ export function PlanPanel({
             </div>
             <div>
               <Label className="text-xs">{t("plan.recurrence")}</Label>
-              <Select
-                value={recurrence}
-                onValueChange={(v) => setRecurrence(v as PlanRecurrence)}
-              >
+              <Select value={recurrence} onValueChange={(v) => setRecurrence(v as PlanRecurrence)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -576,7 +578,9 @@ export function PlanPanel({
                               variant="ghost"
                               className="size-7"
                               onClick={() => openResolve(p)}
-                              title={t(p.direction === "income" ? "plan.markReceived" : "plan.markPaid")}
+                              title={t(
+                                p.direction === "income" ? "plan.markReceived" : "plan.markPaid",
+                              )}
                             >
                               <Check className="size-3.5" />
                             </Button>
@@ -691,7 +695,10 @@ export function PlanPanel({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">{t("plan.kind")}</Label>
-                <Select value={eDirection} onValueChange={(v) => setEDirection(v as typeof eDirection)}>
+                <Select
+                  value={eDirection}
+                  onValueChange={(v) => setEDirection(v as typeof eDirection)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

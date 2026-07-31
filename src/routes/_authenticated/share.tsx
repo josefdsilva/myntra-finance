@@ -15,7 +15,8 @@ export const Route = createFileRoute("/_authenticated/share")({
     pageMeta({
       path: "/share",
       title: "Share to bynku · bynku",
-      description: "Send a receipt, memo or link straight into bynku and let AI turn it into an expense.",
+      description:
+        "Send a receipt, memo or link straight into bynku and let AI turn it into an expense.",
       noindex: true,
     }),
   // Web Share Target (GET) lands here with title/text/url; also used for any

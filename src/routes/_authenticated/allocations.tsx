@@ -504,7 +504,9 @@ function AllocationsPage() {
                   </span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
-                  <span className="font-medium text-foreground">{t("alloc.totals.realSurplus")}</span>
+                  <span className="font-medium text-foreground">
+                    {t("alloc.totals.realSurplus")}
+                  </span>
                   <span
                     className={`tabular-nums font-semibold ${realSurplus < 0 ? "text-destructive" : "text-foreground"}`}
                   >

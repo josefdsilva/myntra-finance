@@ -33,7 +33,8 @@ export const Route = createFileRoute("/_authenticated/households")({
     pageMeta({
       path: "/households",
       title: "Spaces & households · bynku",
-      description: "Switch between households and business spaces, invite members, and manage who shares your bynku budget.",
+      description:
+        "Switch between households and business spaces, invite members, and manage who shares your bynku budget.",
       noindex: true,
     }),
   component: HouseholdsPage,
@@ -219,7 +220,9 @@ function HouseholdsPage() {
             </div>
             <Button
               type="submit"
-              disabled={!newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT}
+              disabled={
+                !newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT
+              }
             >
               {createMutation.isPending ? t("households.creating") : t("businesses.create")}
             </Button>

@@ -48,7 +48,8 @@ export const Route = createFileRoute("/_authenticated/wiki")({
     pageMeta({
       path: "/wiki",
       title: "Manual · bynku",
-      description: "A plain-language guide to bynku: pay cycles, safe-to-spend, projects, loans, plans, analysis and privacy.",
+      description:
+        "A plain-language guide to bynku: pay cycles, safe-to-spend, projects, loans, plans, analysis and privacy.",
       noindex: true,
     }),
   component: WikiPage,

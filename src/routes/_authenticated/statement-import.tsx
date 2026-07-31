@@ -13,7 +13,8 @@ export const Route = createFileRoute("/_authenticated/statement-import")({
     pageMeta({
       path: "/statement-import",
       title: "Import a statement · bynku",
-      description: "Paste or upload a bank statement and review each transaction before it lands in your ledger.",
+      description:
+        "Paste or upload a bank statement and review each transaction before it lands in your ledger.",
       noindex: true,
     }),
   component: StatementImportPage,
@@ -37,7 +38,10 @@ function StatementImportPage() {
         <p className="text-sm text-muted-foreground">{t("stmt.subtitle")}</p>
       </header>
       {householdId && (
-        <StatementImportFlow householdId={householdId} onApplied={() => navigate({ to: "/settings" })} />
+        <StatementImportFlow
+          householdId={householdId}
+          onApplied={() => navigate({ to: "/settings" })}
+        />
       )}
     </div>
   );

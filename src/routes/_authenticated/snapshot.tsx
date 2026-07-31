@@ -5,7 +5,21 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import { Download, Share2, Sparkles, ShieldCheck, TrendingUp, Landmark, PiggyBank, Target, Gem, Users, Gauge, Layers, Activity } from "lucide-react";
+import {
+  Download,
+  Share2,
+  Sparkles,
+  ShieldCheck,
+  TrendingUp,
+  Landmark,
+  PiggyBank,
+  Target,
+  Gem,
+  Users,
+  Gauge,
+  Layers,
+  Activity,
+} from "lucide-react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,11 +105,7 @@ function SnapshotPage() {
         fixed.reduce((s, r) => s + Number(r.monthly_amount), 0) +
         debts.reduce((s, r) => s + Number(r.monthly_amount), 0);
       const debtMonthly = debts.reduce((s, r) => s + Number(r.monthly_amount), 0);
-      const balances = bucketBalancesFor(
-        buckets,
-        allocs ?? [],
-        (moves ?? []) as AccountMovement[],
-      );
+      const balances = bucketBalancesFor(buckets, allocs ?? [], (moves ?? []) as AccountMovement[]);
       // A project linked to an asset is represented by that asset; exclude its
       // balance from savings so net worth and the emergency buffer don't double-count.
       const linkedBucketIds = new Set(
@@ -324,7 +334,9 @@ function SnapshotPage() {
                   badges={health.badges}
                   monthLabel={monthLabel}
                   isBusiness={isBusiness}
-                  t={t as unknown as (key: string, vars?: Record<string, string | number>) => string}
+                  t={
+                    t as unknown as (key: string, vars?: Record<string, string | number>) => string
+                  }
                 />
               )}
             </div>
@@ -341,13 +353,16 @@ function SnapshotPage() {
 // whole card reads more refined than the household rainbow.
 const PREMIUM_TONE = "bg-amber-300/10 text-amber-50 ring-amber-300/30";
 
-const BADGE_META: Record<
-  BadgeKind,
-  { icon: typeof Sparkles; tone: string }
-> = {
-  emergency_ready: { icon: ShieldCheck, tone: "bg-emerald-500/20 text-emerald-100 ring-emerald-400/40" },
+const BADGE_META: Record<BadgeKind, { icon: typeof Sparkles; tone: string }> = {
+  emergency_ready: {
+    icon: ShieldCheck,
+    tone: "bg-emerald-500/20 text-emerald-100 ring-emerald-400/40",
+  },
   debt_slayer: { icon: Landmark, tone: "bg-sky-500/20 text-sky-100 ring-sky-400/40" },
-  consistent_saver: { icon: PiggyBank, tone: "bg-fuchsia-500/20 text-fuchsia-100 ring-fuchsia-400/40" },
+  consistent_saver: {
+    icon: PiggyBank,
+    tone: "bg-fuchsia-500/20 text-fuchsia-100 ring-fuchsia-400/40",
+  },
   budget_hero: { icon: Target, tone: "bg-amber-500/20 text-amber-100 ring-amber-400/40" },
   investing: { icon: TrendingUp, tone: "bg-violet-500/20 text-violet-100 ring-violet-400/40" },
   net_worth_positive: { icon: Gem, tone: "bg-teal-500/20 text-teal-100 ring-teal-400/40" },
@@ -443,7 +458,14 @@ const SnapshotCard = ({
                 <stop offset="100%" stopColor={ringColor} stopOpacity="0.55" />
               </linearGradient>
             </defs>
-            <circle cx={72} cy={72} r={60} stroke="rgba(255,255,255,0.1)" strokeWidth={11} fill="none" />
+            <circle
+              cx={72}
+              cy={72}
+              r={60}
+              stroke="rgba(255,255,255,0.1)"
+              strokeWidth={11}
+              fill="none"
+            />
             <circle
               cx={72}
               cy={72}
@@ -474,7 +496,10 @@ const SnapshotCard = ({
       {/* Score breakdown */}
       <div className="mt-7 grid grid-cols-2 gap-2.5">
         {scores.map((s) => (
-          <div key={s.key} className="rounded-xl bg-white/[0.06] ring-1 ring-white/10 px-3.5 py-2.5 backdrop-blur">
+          <div
+            key={s.key}
+            className="rounded-xl bg-white/[0.06] ring-1 ring-white/10 px-3.5 py-2.5 backdrop-blur"
+          >
             <div className="flex items-center justify-between text-xs">
               <span className="text-white/75">{t(SCORE_LABELS[s.key])}</span>
               <span className="tabular-nums font-semibold">{s.value}</span>

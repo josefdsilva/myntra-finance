@@ -46,7 +46,8 @@ export const Route = createFileRoute("/_authenticated/analysis")({
     pageMeta({
       path: "/analysis",
       title: "Analysis & benchmarks · bynku",
-      description: "Compare your spending shares against national benchmarks and see where your money leaks.",
+      description:
+        "Compare your spending shares against national benchmarks and see where your money leaks.",
       noindex: true,
     }),
   validateSearch: (search: Record<string, unknown>) => ({
@@ -450,16 +451,16 @@ function AnalysisPage() {
       .map((m) => {
         const amt = Number(m.amount);
         const inflow = m.to_type === "cash"; // money returning to cash (withdrawal)
-      return {
-        time: +new Date(m.created_at),
-        iso: m.created_at,
-        kind: inflow ? "income" : "expense",
-        label: m.reason || (inflow ? t("ana.incomeFallback") : t("ana.expenseFallback")),
-        amount: amt,
-        delta: inflow ? amt : -amt,
-        isSalary: false,
-      };
-    });
+        return {
+          time: +new Date(m.created_at),
+          iso: m.created_at,
+          kind: inflow ? "income" : "expense",
+          label: m.reason || (inflow ? t("ana.incomeFallback") : t("ana.expenseFallback")),
+          amount: amt,
+          delta: inflow ? amt : -amt,
+          isSalary: false,
+        };
+      });
     const events = [...txEvts, ...mvEvts].sort((a, b) => a.time - b.time);
     let bal = 0;
     const out: BurnPoint[] = [];
@@ -530,15 +531,30 @@ function AnalysisPage() {
         if (ev.time < startMs || ev.time >= endMs) continue;
         bal += ev.kind === "income" ? ev.amount : -ev.amount;
         const lbl = fmt(new Date(ev.time), "dd/MM");
-        points.push({ label: lbl, iso: new Date(ev.time).toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
+        points.push({
+          label: lbl,
+          iso: new Date(ev.time).toISOString(),
+          balance: Number(bal.toFixed(2)),
+          cycle: cycleLbl,
+        });
         if (!fixedReserved && ev.kind === "income" && fixedTotal > 0) {
           bal -= fixedTotal * monthsPerCycle;
-          points.push({ label: lbl, iso: new Date(ev.time).toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
+          points.push({
+            label: lbl,
+            iso: new Date(ev.time).toISOString(),
+            balance: Number(bal.toFixed(2)),
+            cycle: cycleLbl,
+          });
           fixedReserved = true;
         }
       }
       const endPt = new Date(Math.min(Date.now(), endMs));
-      points.push({ label: fmt(endPt, "dd/MM"), iso: endPt.toISOString(), balance: Number(bal.toFixed(2)), cycle: cycleLbl });
+      points.push({
+        label: fmt(endPt, "dd/MM"),
+        iso: endPt.toISOString(),
+        balance: Number(bal.toFixed(2)),
+        cycle: cycleLbl,
+      });
     }
     return points;
   }, [cycleCount, range, cycles, expenses, fixedTotal]);
@@ -740,7 +756,10 @@ function AnalysisPage() {
             ) : (
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={multiBurnSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <ComposedChart
+                    data={multiBurnSeries}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="label"
