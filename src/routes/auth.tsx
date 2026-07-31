@@ -31,7 +31,6 @@ export const Route = createFileRoute("/auth")({
       title: "Sign in or create your bynku account",
       description:
         "Sign in to bynku to see your daily safe-to-spend, shared household budget, allocations and AI expense capture.",
-      image: appIcon.url,
     }),
   component: AuthPage,
 });
