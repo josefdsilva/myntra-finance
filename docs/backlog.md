@@ -59,11 +59,10 @@ Guiding principle: these are deferred on purpose. Build them in response to real
   - Keep AI-first for statements (the chosen behaviour), but ensure a big import does not re-hit the AI for merchants it just learned in the same batch.
 
   Reliability — fewer failures, graceful when they happen:
-  - Use structured / JSON-schema output (the gateway's `response_format` if available) instead of "respond ONLY with JSON" plus regex extraction. Highest-value reliability fix; removes most parse failures.
-  - Retry once on a parse failure with a "valid JSON only" nudge, plus a tolerant repair (trim to the outermost braces). Today a single malformed response fails the whole import.
+  - DONE — Structured / JSON-schema output via `generateObject` (in `ai-parse.functions.ts`), with a single plain-text `generateText` retry (strict "JSON only" nudge + tolerant outermost-brace extraction) when structured output isn't supported (e.g. some image/file calls). Removes most malformed-JSON failures.
+  - DONE — Per-row normalization skips only the bad rows (unknown category → "other", string amounts coerced, unreadable rows dropped) instead of the old all-or-nothing Zod parse, so one weird line no longer sinks the whole import/receipt. Also added a 45s abort timeout per attempt.
   - Chunk long statements. A statement with hundreds of rows can exceed the output limit and truncate the JSON. For CSV, split rows into batches, extract each, merge. For PDF (hard to chunk), at least detect truncation and show a clear "statement too long, split it" message instead of a silent bad import.
-  - Retry with backoff on transient gateway errors (429/5xx); there is no retry today.
-  - Validate per row and skip only the bad ones, instead of the current all-or-nothing Zod parse, so one weird line does not sink the whole import.
+  - Retry with backoff on transient gateway errors (429/5xx); the single retry above covers a structured-output rejection but not a rate-limit backoff.
 
   Observability — see the problem before the bill does:
   - Add a monthly spend rollup per household with an alert threshold, and a failure-rate counter per operation (extract vs categorize vs coach vs cycle report), on top of the existing per-call metering.

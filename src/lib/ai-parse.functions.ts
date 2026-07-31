@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createHash } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateText } from "ai";
+import { generateText, generateObject } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import {
@@ -31,24 +31,46 @@ const CATEGORIES = [
   "gifts",
   "other",
 ] as const;
+type Category = (typeof CATEGORIES)[number];
+const CATSET = new Set<string>(CATEGORIES);
+const CATEGORY_LIST = CATEGORIES.join(", ");
 
-// Never let the whole receipt fail because the model returned a category outside
-// our fixed list (or none): anything unknown maps to "other". Same idea for the
-// amount — accept a numeric string too instead of throwing.
-const categoryField = z.preprocess(
-  (v) => (typeof v === "string" && (CATEGORIES as readonly string[]).includes(v) ? v : "other"),
-  z.enum(CATEGORIES),
-);
+type Gateway = ReturnType<typeof createLovableAiGatewayProvider>;
+type ChatMessages = Parameters<typeof generateText>[0]["messages"];
 
-const ParsedExpense = z.object({
-  amount: z.coerce.number(),
-  category: categoryField,
-  merchant: z.string().optional(),
-  occurred_at: z.string().optional(),
-  note: z.string().optional(),
+type NormExpense = {
+  amount: number;
+  category: Category;
+  merchant?: string;
+  occurred_at?: string;
+  note?: string;
+};
+type NormExtracted = { date: string; description: string; amount: number };
+
+// Plain (effect-free) schemas used for STRUCTURED output. Keeping them free of
+// z.preprocess/transform means they convert cleanly to a JSON schema the model
+// can be constrained to. Tolerance (unknown category, string amounts, bad rows)
+// is applied afterwards by the normalizers, not by the schema — so a single odd
+// row can never fail the whole parse.
+const RawExpenseList = z.object({
+  items: z.array(
+    z.object({
+      amount: z.number(),
+      category: z.string(),
+      merchant: z.string().optional(),
+      occurred_at: z.string().optional(),
+      note: z.string().optional(),
+    }),
+  ),
 });
 
-const ParsedList = z.object({ items: z.array(ParsedExpense) });
+const ExtractedTxn = z.object({
+  date: z.string().min(4).max(40),
+  description: z.string().max(300),
+  // Signed: negative = money out (debit), positive = money in (credit).
+  amount: z.number(),
+});
+const ExtractedList = z.object({ items: z.array(ExtractedTxn) });
 
 function extractJson(text: string): unknown {
   const trimmed = text
@@ -68,7 +90,109 @@ function extractJson(text: string): unknown {
   }
 }
 
-const CATEGORY_LIST = CATEGORIES.join(", ");
+function toNumber(v: unknown): number | null {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string") {
+    // Keep sign + dot; drop currency symbols, spaces, thousands separators.
+    const cleaned = v.replace(/[^0-9.\-]/g, "");
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+// Per-row normalization: coerce amounts, map unknown categories to "other", and
+// SKIP rows we can't make sense of instead of throwing the whole parse away.
+function normalizeExpenses(items: unknown[]): NormExpense[] {
+  const out: NormExpense[] = [];
+  for (const raw of items) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const n = toNumber(r.amount);
+    if (n === null) continue;
+    const amount = Math.abs(n); // these parsers all produce positive expenses
+    if (amount <= 0) continue;
+    const category: Category =
+      typeof r.category === "string" && CATSET.has(r.category) ? (r.category as Category) : "other";
+    out.push({
+      amount,
+      category,
+      merchant: typeof r.merchant === "string" ? r.merchant : undefined,
+      occurred_at: typeof r.occurred_at === "string" ? r.occurred_at : undefined,
+      note: typeof r.note === "string" ? r.note : undefined,
+    });
+  }
+  return out;
+}
+
+function normalizeExtracted(items: unknown[]): NormExtracted[] {
+  const out: NormExtracted[] = [];
+  for (const raw of items) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const amount = toNumber(r.amount);
+    if (amount === null || amount === 0) continue; // signed; skip zero/unreadable
+    const date = typeof r.date === "string" ? r.date.trim() : "";
+    const description = typeof r.description === "string" ? r.description.trim() : "";
+    if (!date && !description) continue;
+    out.push({
+      date: date || new Date().toISOString().slice(0, 10),
+      description: description.slice(0, 300),
+      amount,
+    });
+  }
+  return out;
+}
+
+const STRICT_JSON =
+  "Respond with ONLY valid, minified JSON matching the requested shape — no prose, no markdown, no code fences.";
+
+/**
+ * Get `{ items }` from the model reliably: first try STRUCTURED output (the
+ * provider is constrained to the JSON schema, which removes almost all
+ * malformed-JSON failures), and if that isn't supported/succeeds, fall back to a
+ * single plain-text attempt with a strict "JSON only" instruction and tolerant
+ * extraction. Either way the caller normalizes the rows. Both attempts are
+ * bounded by PARSE_TIMEOUT_MS so nothing hangs.
+ */
+async function parseItems({
+  gateway,
+  system,
+  prompt,
+  messages,
+  schema,
+}: {
+  gateway: Gateway;
+  system: string;
+  prompt?: string;
+  messages?: ChatMessages;
+  schema: z.ZodTypeAny;
+}): Promise<{ items: unknown[]; usage: unknown }> {
+  try {
+    const res = await generateObject({
+      model: gateway(PARSE_MODEL),
+      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
+      schema,
+      system,
+      prompt,
+      messages,
+    });
+    const obj = res.object as { items?: unknown[] };
+    return { items: Array.isArray(obj?.items) ? obj.items : [], usage: res.usage };
+  } catch {
+    // Single retry: some models/gateways reject structured output (esp. with an
+    // image/file part). Ask again, strictly, and extract tolerantly.
+    const res = await generateText({
+      model: gateway(PARSE_MODEL),
+      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
+      system: `${system}\n\n${STRICT_JSON}`,
+      prompt,
+      messages,
+    });
+    const obj = extractJson(res.text) as { items?: unknown[] };
+    return { items: Array.isArray(obj?.items) ? obj.items : [], usage: res.usage };
+  }
+}
 
 /** Parse a text memo into one or more structured expenses. */
 export const parseMemo = createServerFn({ method: "POST" })
@@ -85,9 +209,9 @@ export const parseMemo = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
     const now = new Date().toISOString();
 
-    const result = await generateText({
-      model: gateway(PARSE_MODEL),
-      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
+    const { items, usage } = await parseItems({
+      gateway,
+      schema: RawExpenseList,
       system: `You extract household expenses from short text memos in any language.
 Current time: ${now}.
 Currency is EUR. Amounts may be written as "12", "12€", "12 EUR", "12.50", "12,50".
@@ -95,15 +219,12 @@ Always return amount as positive number in EUR.
 Pick the best matching category from this list: ${CATEGORY_LIST}.
 If date is not given, use now (ISO 8601).
 Multiple expenses in one memo => multiple items.
-
-Respond ONLY with a JSON object of the shape:
-{"items":[{"amount":number,"category":"<one of the list>","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
-No prose, no markdown fences.`,
+Shape: {"items":[{"amount":number,"category":"<one of the list>","merchant"?:string,"occurred_at"?:string,"note"?:string}]}`,
       prompt: data.text,
     });
-    const parsed = ParsedList.parse(extractJson(result.text));
+
     if (data.householdId) {
-      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      const est = estimateTextCredits(PARSE_MODEL, usage as never);
       await logHouseholdCredits({
         householdId: data.householdId,
         userId: context.userId,
@@ -113,7 +234,7 @@ No prose, no markdown fences.`,
         outputTokens: est.output,
       });
     }
-    return parsed;
+    return { items: normalizeExpenses(items) };
   });
 
 /** Transcribe audio (base64 webm/mp4/wav) and parse to expenses. */
@@ -158,23 +279,20 @@ export const parseVoiceMemo = createServerFn({ method: "POST" })
     const transcript = stt.text?.trim() ?? "";
     if (!transcript) return { transcript: "", items: [] };
 
-    // 2. Reuse parseMemo logic inline
     const gateway = createLovableAiGatewayProvider(apiKey);
     const now = new Date().toISOString();
-    const result = await generateText({
-      model: gateway(PARSE_MODEL),
-      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
+    const { items, usage } = await parseItems({
+      gateway,
+      schema: RawExpenseList,
       system: `You extract household expenses from voice memos in any language.
 Current time: ${now}. Currency EUR. Always positive amounts.
 Categories: ${CATEGORY_LIST}.
-
-Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
-No prose, no markdown fences.`,
+Shape: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}`,
       prompt: transcript,
     });
-    const parsed = ParsedList.parse(extractJson(result.text));
+
     if (data.householdId) {
-      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      const est = estimateTextCredits(PARSE_MODEL, usage as never);
       const trs = estimateTranscribeCredits();
       await logHouseholdCredits({
         householdId: data.householdId,
@@ -186,17 +304,8 @@ No prose, no markdown fences.`,
         meta: { mime_type: data.mime_type },
       });
     }
-    return { transcript, ...parsed };
+    return { transcript, items: normalizeExpenses(items) };
   });
-
-const StatementTx = z.object({
-  amount: z.coerce.number(),
-  category: categoryField,
-  merchant: z.string().optional(),
-  occurred_at: z.string().optional(),
-  note: z.string().optional(),
-});
-const StatementList = z.object({ items: z.array(StatementTx) });
 
 /** Parse a bank statement (PDF or CSV) into categorized expense rows. */
 export const parseBankStatement = createServerFn({ method: "POST" })
@@ -216,25 +325,20 @@ export const parseBankStatement = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(apiKey);
 
     const isText = data.mime_type.includes("csv") || data.mime_type.includes("text");
-
-    let userContent: Parameters<typeof generateText>[0]["messages"];
-
+    let messages: ChatMessages;
     if (isText) {
       const csvText = new TextDecoder().decode(
         Uint8Array.from(atob(data.file_base64), (c) => c.charCodeAt(0)),
       );
-      userContent = [
+      messages = [
         { role: "user", content: `Parse this bank statement CSV:\n\n${csvText.slice(0, 80_000)}` },
       ];
     } else {
-      userContent = [
+      messages = [
         {
           role: "user",
           content: [
-            {
-              type: "text",
-              text: "Parse this bank statement and return all expense transactions.",
-            },
+            { type: "text", text: "Parse this bank statement and return all expense transactions." },
             {
               type: "file",
               data: `data:${data.mime_type};base64,${data.file_base64}`,
@@ -245,21 +349,19 @@ export const parseBankStatement = createServerFn({ method: "POST" })
       ];
     }
 
-    const result = await generateText({
-      model: gateway(PARSE_MODEL),
-      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
+    const { items, usage } = await parseItems({
+      gateway,
+      schema: RawExpenseList,
+      messages,
       system: `You extract expense transactions from bank statements.
 Currency is EUR. Return only debits/expenses (skip incoming credits and transfers in).
 Always positive amounts. Categorize using one of: ${CATEGORY_LIST}.
-Use the transaction date in ISO 8601 format.
-
-Respond with minified JSON on a single line, no extra whitespace: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
-Do not repeat the input. No prose, no markdown fences.`,
-      messages: userContent,
+Use the transaction date in ISO 8601 format. Do not repeat the input.
+Shape: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}`,
     });
 
     if (data.householdId) {
-      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      const est = estimateTextCredits(PARSE_MODEL, usage as never);
       await logHouseholdCredits({
         householdId: data.householdId,
         userId: context.userId,
@@ -271,16 +373,8 @@ Do not repeat the input. No prose, no markdown fences.`,
       });
     }
 
-    return StatementList.parse(extractJson(result.text));
+    return { items: normalizeExpenses(items) };
   });
-
-const ExtractedTxn = z.object({
-  date: z.string().min(4).max(40),
-  description: z.string().max(300),
-  // Signed: negative = money out (debit), positive = money in (credit).
-  amount: z.number(),
-});
-const ExtractedList = z.object({ items: z.array(ExtractedTxn) });
 
 /**
  * Read a bank/card statement (PDF or CSV, any bank/country/language) and return
@@ -324,13 +418,16 @@ export const extractStatementTransactions = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(apiKey);
 
     const isText = data.mime_type.includes("csv") || data.mime_type.includes("text");
-    let messages: Parameters<typeof generateText>[0]["messages"];
+    let messages: ChatMessages;
     if (isText) {
       const csvText = new TextDecoder().decode(
         Uint8Array.from(atob(data.file_base64), (c) => c.charCodeAt(0)),
       );
       messages = [
-        { role: "user", content: `Extract every transaction from this statement:\n\n${csvText.slice(0, 120_000)}` },
+        {
+          role: "user",
+          content: `Extract every transaction from this statement:\n\n${csvText.slice(0, 120_000)}`,
+        },
       ];
     } else {
       messages = [
@@ -348,23 +445,23 @@ export const extractStatementTransactions = createServerFn({ method: "POST" })
       ];
     }
 
-    const result = await generateText({
-      model: gateway(PARSE_MODEL),
-      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
+    const { items, usage } = await parseItems({
+      gateway,
+      schema: ExtractedList,
+      messages,
       system: `You read bank and card statements from any bank, country, or language, given as CSV text or a PDF.
 Extract EVERY transaction line. For each one return:
 - "date": the transaction (booking) date as ISO "yyyy-mm-dd". If only day/month is shown, infer the year from the statement.
 - "description": the raw merchant or description text, kept verbatim. Do not translate or clean it.
 - "amount": a SIGNED number. NEGATIVE for money leaving the account (debits, purchases, withdrawals, fees, direct debits). POSITIVE for money coming in (salary, credits, refunds, transfers in).
 Rules: include BOTH debits and credits. Do not categorize. Do not summarize or merge lines. Ignore running-balance columns and any header, footer, or summary totals. Use a dot as the decimal separator.
-Respond with minified JSON on a single line, no extra whitespace, of shape {"items":[{"date":"yyyy-mm-dd","description":string,"amount":number}]}. Do not repeat the input. No prose, no markdown fences.`,
-      messages,
+Shape: {"items":[{"date":"yyyy-mm-dd","description":string,"amount":number}]}`,
     });
 
-    const parsed = ExtractedList.parse(extractJson(result.text));
+    const parsed = { items: normalizeExtracted(items) };
 
     if (data.householdId) {
-      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      const est = estimateTextCredits(PARSE_MODEL, usage as never);
       await logHouseholdCredits({
         householdId: data.householdId,
         userId: context.userId,
@@ -408,20 +505,9 @@ export const parseReceiptPhoto = createServerFn({ method: "POST" })
       ? ({ type: "file", data: dataUrl, mediaType: data.mime_type } as const)
       : ({ type: "image", image: dataUrl } as const);
 
-    const result = await generateText({
-      model: gateway(PARSE_MODEL),
-      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
-      system: `You extract expense line items from a receipt, bill, or invoice (a photo or a PDF).
-Current time: ${now}. Currency EUR. Always positive amounts.
-Prefer ONE row with the document total when it is from a single merchant;
-only split into multiple rows when it clearly covers different categories
-(e.g. groceries + fuel on the same ticket).
-Pick the best matching category from: ${CATEGORY_LIST}.
-Use the receipt/invoice date in ISO 8601 when visible, otherwise use now.
-Merchant = shop / issuer name on the document.
-
-Respond ONLY with JSON: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}
-No prose, no markdown fences.`,
+    const { items, usage } = await parseItems({
+      gateway,
+      schema: RawExpenseList,
       messages: [
         {
           role: "user",
@@ -431,11 +517,19 @@ No prose, no markdown fences.`,
           ],
         },
       ],
+      system: `You extract expense line items from a receipt, bill, or invoice (a photo or a PDF).
+Current time: ${now}. Currency EUR. Always positive amounts.
+Prefer ONE row with the document total when it is from a single merchant;
+only split into multiple rows when it clearly covers different categories
+(e.g. groceries + fuel on the same ticket).
+Pick the best matching category from: ${CATEGORY_LIST}.
+Use the receipt/invoice date in ISO 8601 when visible, otherwise use now.
+Merchant = shop / issuer name on the document.
+Shape: {"items":[{"amount":number,"category":"...","merchant"?:string,"occurred_at"?:string,"note"?:string}]}`,
     });
 
-    const parsed = ParsedList.parse(extractJson(result.text));
     if (data.householdId) {
-      const est = estimateTextCredits(PARSE_MODEL, result.usage as never);
+      const est = estimateTextCredits(PARSE_MODEL, usage as never);
       await logHouseholdCredits({
         householdId: data.householdId,
         userId: context.userId,
@@ -446,5 +540,5 @@ No prose, no markdown fences.`,
         meta: { mime_type: data.mime_type },
       });
     }
-    return parsed;
+    return { items: normalizeExpenses(items) };
   });
