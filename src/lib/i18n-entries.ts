@@ -14,6 +14,27 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "expQuick.notSavedYet": {
+    en: "Not saved yet — check the details, then press Confirm to add this.",
+    pt: "Ainda não guardado — confirma os detalhes e carrega em Confirmar para adicionar.",
+    es: "Aún no guardado — revisa los datos y pulsa Confirmar para añadirlo.",
+    de: "Noch nicht gespeichert — prüfe die Angaben und tippe auf Bestätigen.",
+    fr: "Pas encore enregistré — vérifiez les détails, puis appuyez sur Confirmer.",
+  },
+  "expQuick.nothingDetectedRetake": {
+    en: "Couldn't read a receipt in that photo. Try again with good light and the whole receipt in frame.",
+    pt: "Não consegui ler um recibo nessa foto. Tenta de novo com boa luz e o recibo todo enquadrado.",
+    es: "No pude leer un recibo en esa foto. Inténtalo de nuevo con buena luz y todo el recibo en el encuadre.",
+    de: "Auf dem Foto war kein Beleg lesbar. Versuche es erneut mit gutem Licht und dem ganzen Beleg im Bild.",
+    fr: "Impossible de lire un reçu sur cette photo. Réessayez avec une bonne lumière et tout le reçu dans le cadre.",
+  },
+  "expQuick.preparingImage": {
+    en: "Preparing photo…",
+    pt: "A preparar a foto…",
+    es: "Preparando la foto…",
+    de: "Foto wird vorbereitet…",
+    fr: "Préparation de la photo…",
+  },
   "pwa.updateTitle": {
     en: "Update available",
     pt: "Atualização disponível",

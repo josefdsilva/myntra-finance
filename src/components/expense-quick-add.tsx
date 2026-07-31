@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Mic, MicOff, Sparkles, Plus, Loader2, Camera, X, Paperclip } from "lucide-react";
 import { parseMemo, parseVoiceMemo, parseReceiptPhoto } from "@/lib/ai-parse.functions";
+import { prepareImageForUpload } from "@/lib/image-prep";
 import { addExpense, addExpensesBulk } from "@/lib/budget.functions";
 import { addInvoice } from "@/lib/invoices.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,9 +186,9 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     if (!readable) return;
     setReading(true);
     try {
-      const b64 = bufferToBase64(await readable.arrayBuffer());
+      const prepped = await prepareImageForUpload(readable);
       const res = await parsePhoto({
-        data: { image_base64: b64, mime_type: readable.type, householdId },
+        data: { image_base64: prepped.base64, mime_type: prepped.mimeType, householdId },
       });
       const it = res.items?.[0];
       if (it) {
@@ -690,6 +691,9 @@ function ParsedReview({
           ? t("expQuick.reviewOneExpense")
           : t("expQuick.reviewExpenses", { count: items.length })}
       </p>
+      <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs font-medium text-foreground">
+        {t("expQuick.notSavedYet")}
+      </div>
       <div className="space-y-2">
         {items.map((it, i) => (
           <div key={i} className="grid grid-cols-12 gap-2 items-center bg-muted/30 rounded-md p-2">
@@ -751,6 +755,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
   const [base64, setBase64] = useState<string>("");
   const [items, setItems] = useState<Parsed[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const t = useT();
 
   function clear() {
@@ -764,14 +769,25 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("image/")) return toast.error(t("expQuick.pickImage"));
-    if (f.size > 8 * 1024 * 1024) return toast.error(t("expQuick.imageTooLarge"));
-    const buf = await f.arrayBuffer();
-    const b64 = bufferToBase64(buf);
-    setBase64(b64);
-    setMime(f.type);
+    const isImg =
+      f.type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
+    if (!isImg) return toast.error(t("expQuick.pickImage"));
+    // Only guard against absurdly huge files; normal iPhone photos (incl. HEIC)
+    // are downscaled + re-encoded to JPEG below rather than rejected.
+    if (f.size > 40 * 1024 * 1024) return toast.error(t("expQuick.imageTooLarge"));
     setPreview(URL.createObjectURL(f));
     setItems(null);
+    setBase64("");
+    setPreparing(true);
+    try {
+      const prepped = await prepareImageForUpload(f);
+      setBase64(prepped.base64);
+      setMime(prepped.mimeType);
+    } catch {
+      toast.error(t("expQuick.photoParsingFailed"));
+    } finally {
+      setPreparing(false);
+    }
   }
 
   async function doParse() {
@@ -780,6 +796,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
     try {
       const res = await parse({ data: { image_base64: base64, mime_type: mime, householdId } });
       setItems(res.items);
+      if (!res.items?.length) toast.info(t("expQuick.nothingDetectedRetake"));
     } catch (err) {
       toast.error(humanError(err, t("expQuick.photoParsingFailed")));
     } finally {
@@ -850,11 +867,11 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
           </div>
           {!items ? (
             <div className="flex gap-2">
-              <Button onClick={doParse} disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : <Sparkles />}{" "}
-                {t("expQuick.parseReceipt")}
+              <Button onClick={doParse} disabled={loading || preparing || !base64}>
+                {loading || preparing ? <Loader2 className="animate-spin" /> : <Sparkles />}{" "}
+                {preparing ? t("expQuick.preparingImage") : t("expQuick.parseReceipt")}
               </Button>
-              <Button variant="ghost" onClick={clear} disabled={loading}>
+              <Button variant="ghost" onClick={clear} disabled={loading || preparing}>
                 {t("expQuick.cancel")}
               </Button>
             </div>

@@ -11,6 +11,9 @@ import {
 } from "./credits.server";
 
 const PARSE_MODEL = "google/gemini-3-flash-preview";
+// Fail a stuck AI call cleanly instead of spinning forever (the "parsing takes
+// long / never finishes" symptom). The client surfaces a friendly retry toast.
+const PARSE_TIMEOUT_MS = 45_000;
 
 const CATEGORIES = [
   "groceries",
@@ -29,9 +32,17 @@ const CATEGORIES = [
   "other",
 ] as const;
 
+// Never let the whole receipt fail because the model returned a category outside
+// our fixed list (or none): anything unknown maps to "other". Same idea for the
+// amount — accept a numeric string too instead of throwing.
+const categoryField = z.preprocess(
+  (v) => (typeof v === "string" && (CATEGORIES as readonly string[]).includes(v) ? v : "other"),
+  z.enum(CATEGORIES),
+);
+
 const ParsedExpense = z.object({
-  amount: z.number(),
-  category: z.enum(CATEGORIES),
+  amount: z.coerce.number(),
+  category: categoryField,
   merchant: z.string().optional(),
   occurred_at: z.string().optional(),
   note: z.string().optional(),
@@ -76,6 +87,7 @@ export const parseMemo = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway(PARSE_MODEL),
+      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
       system: `You extract household expenses from short text memos in any language.
 Current time: ${now}.
 Currency is EUR. Amounts may be written as "12", "12€", "12 EUR", "12.50", "12,50".
@@ -151,6 +163,7 @@ export const parseVoiceMemo = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const result = await generateText({
       model: gateway(PARSE_MODEL),
+      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
       system: `You extract household expenses from voice memos in any language.
 Current time: ${now}. Currency EUR. Always positive amounts.
 Categories: ${CATEGORY_LIST}.
@@ -177,8 +190,8 @@ No prose, no markdown fences.`,
   });
 
 const StatementTx = z.object({
-  amount: z.number(),
-  category: z.enum(CATEGORIES),
+  amount: z.coerce.number(),
+  category: categoryField,
   merchant: z.string().optional(),
   occurred_at: z.string().optional(),
   note: z.string().optional(),
@@ -234,6 +247,7 @@ export const parseBankStatement = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway(PARSE_MODEL),
+      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
       system: `You extract expense transactions from bank statements.
 Currency is EUR. Return only debits/expenses (skip incoming credits and transfers in).
 Always positive amounts. Categorize using one of: ${CATEGORY_LIST}.
@@ -336,6 +350,7 @@ export const extractStatementTransactions = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway(PARSE_MODEL),
+      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
       system: `You read bank and card statements from any bank, country, or language, given as CSV text or a PDF.
 Extract EVERY transaction line. For each one return:
 - "date": the transaction (booking) date as ISO "yyyy-mm-dd". If only day/month is shown, infer the year from the statement.
@@ -395,6 +410,7 @@ export const parseReceiptPhoto = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: gateway(PARSE_MODEL),
+      abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
       system: `You extract expense line items from a receipt, bill, or invoice (a photo or a PDF).
 Current time: ${now}. Currency EUR. Always positive amounts.
 Prefer ONE row with the document total when it is from a single merchant;

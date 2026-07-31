@@ -19,6 +19,7 @@ import {
   extractStatementTransactions,
 } from "@/lib/ai-parse.functions";
 import { categorizeMerchants } from "@/lib/statement-import.functions";
+import { prepareImageForUpload } from "@/lib/image-prep";
 import { addExpensesBulk } from "@/lib/budget.functions";
 import { money, fmtDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n";
@@ -161,19 +162,11 @@ export function ShareCapture({
     }
   }
 
-  function guessMime(file: File): string {
-    if (file.type) return file.type;
-    if (/\.pdf$/i.test(file.name)) return "application/pdf";
-    if (/\.png$/i.test(file.name)) return "image/png";
-    if (/\.webp$/i.test(file.name)) return "image/webp";
-    if (/\.(heic|heif)$/i.test(file.name)) return "image/heic";
-    return "image/jpeg";
-  }
-
   async function runReceipt(file: File): Promise<Row[]> {
-    const b64 = bufferToBase64(await file.arrayBuffer());
+    // Downscale + transcode to JPEG first (handles big iPhone photos and HEIC).
+    const prepped = await prepareImageForUpload(file);
     const res = await parsePhoto({
-      data: { image_base64: b64, mime_type: guessMime(file), householdId },
+      data: { image_base64: prepped.base64, mime_type: prepped.mimeType, householdId },
     });
     return (res.items ?? []).map((i) => ({
       direction: "out" as const,
