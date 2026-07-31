@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Share as ShareIcon, X } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
 /**
- * Thin PWA install affordance — the low-risk installability layer, not the full
- * offline/caching PWA. On Android/desktop it turns the browser's
- * `beforeinstallprompt` into a real "Install app" button. On iOS Safari (which
- * gives no prompt) it shows a dismissible "Add to Home Screen" hint. When the
- * app is already running installed (standalone), it renders nothing.
+ * Thin PWA install + update affordance — the low-risk installability layer, not
+ * the full offline/caching PWA. On Android/desktop it turns the browser's
+ * `beforeinstallprompt` into an "Install app" button. On iOS Safari (which gives
+ * no prompt) it shows a dismissible "Add to Home Screen" hint. It also registers
+ * the service worker on load and, when a new deploy is waiting, shows a
+ * "new version — refresh" toast. When the app is already running installed
+ * (standalone), it renders nothing.
  */
 
 type InstallPromptEvent = Event & {
@@ -34,15 +37,41 @@ if (isBrowser) {
   });
 }
 
-let swRegistered = false;
-async function ensureServiceWorker() {
-  if (swRegistered || !isBrowser || !("serviceWorker" in navigator)) return;
-  swRegistered = true;
+let pwaWired = false;
+let reloading = false;
+
+// Register the service worker and wire the update flow. Guarded so it runs once
+// even though InstallApp is mounted in more than one place.
+async function setupPwa(notifyUpdate: (worker: ServiceWorker) => void) {
+  if (pwaWired || !isBrowser || !("serviceWorker" in navigator)) return;
+  pwaWired = true;
+
+  // When the freshly-installed worker takes control, reload once so the tab runs
+  // the new code. Guarded against reload loops.
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
+
   try {
-    const existing = await navigator.serviceWorker.getRegistration("/sw.js");
-    if (!existing) await navigator.serviceWorker.register("/sw.js");
+    let reg = await navigator.serviceWorker.getRegistration("/sw.js");
+    if (!reg) reg = await navigator.serviceWorker.register("/sw.js");
+
+    // A worker that finished installing before we wired up is already waiting.
+    if (reg.waiting && navigator.serviceWorker.controller) notifyUpdate(reg.waiting);
+
+    reg.addEventListener("updatefound", () => {
+      const installing = reg?.installing;
+      if (!installing) return;
+      installing.addEventListener("statechange", () => {
+        if (installing.state === "installed" && navigator.serviceWorker.controller) {
+          notifyUpdate(installing);
+        }
+      });
+    });
   } catch {
-    swRegistered = false; // allow a later retry
+    pwaWired = false; // allow a retry on a later mount
   }
 }
 
@@ -57,7 +86,20 @@ export function InstallApp({ className }: { className?: string }) {
 
   useEffect(() => {
     setMounted(true);
-    ensureServiceWorker();
+
+    const notifyUpdate = (worker: ServiceWorker) => {
+      toast(t("pwa.updateTitle"), {
+        id: "pwa-update", // fixed id so repeated events don't stack
+        description: t("pwa.updateBody"),
+        duration: Infinity,
+        action: {
+          label: t("pwa.updateAction"),
+          onClick: () => worker.postMessage("SKIP_WAITING"),
+        },
+      });
+    };
+    setupPwa(notifyUpdate);
+
     const onInstallable = () => setCanInstall(true);
     const onInstalled = () => {
       setCanInstall(false);
@@ -74,6 +116,7 @@ export function InstallApp({ className }: { className?: string }) {
       window.removeEventListener("bynku:installable", onInstallable);
       window.removeEventListener("bynku:installed", onInstalled);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Render nothing until mounted so the first client render matches the server

@@ -155,3 +155,15 @@ html.privacy-on .sensitive:hover {
   transform-origin: bottom;
 }
 
+/* Installed-PWA safe areas. Scoped to standalone display so a normal browser
+   tab is never affected; keeps content clear of the notch/status bar and the
+   home indicator when bynku runs as a home-screen app. */
+@media (display-mode: standalone) {
+  .pwa-safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  .pwa-safe-bottom {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+

@@ -80,7 +80,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+      },
+      // Installed-app polish: theme the browser/status bar chrome, and let iOS
+      // treat the home-screen launch as a standalone app.
+      { name: "theme-color", content: "#349245" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "bynku" },
       { title: "bynku — daily safe-to-spend & household allocations" },
       {
         name: "description",

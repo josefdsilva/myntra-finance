@@ -294,7 +294,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Top bar mobile */}
-      <header className="md:hidden flex items-center justify-between p-4 border-b bg-card print:hidden">
+      <header className="pwa-safe-top md:hidden flex items-center justify-between p-4 border-b bg-card print:hidden">
         <Link to="/" className="flex items-center gap-2">
           <img src={appIcon.url} alt="App icon" className="size-8 rounded-lg" />
           <span className="font-display text-lg">Budget</span>
@@ -424,7 +424,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 relative">
+      <main className="pwa-safe-bottom flex-1 min-w-0 relative">
         {children}
       </main>
       <CoachDock />

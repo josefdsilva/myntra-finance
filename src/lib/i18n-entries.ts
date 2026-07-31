@@ -14,6 +14,27 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "pwa.updateTitle": {
+    en: "Update available",
+    pt: "Atualização disponível",
+    es: "Actualización disponible",
+    de: "Update verfügbar",
+    fr: "Mise à jour disponible",
+  },
+  "pwa.updateBody": {
+    en: "A new version of bynku is ready.",
+    pt: "Está pronta uma nova versão do bynku.",
+    es: "Hay una nueva versión de bynku lista.",
+    de: "Eine neue Version von bynku ist bereit.",
+    fr: "Une nouvelle version de bynku est prête.",
+  },
+  "pwa.updateAction": {
+    en: "Refresh",
+    pt: "Atualizar",
+    es: "Actualizar",
+    de: "Neu laden",
+    fr: "Actualiser",
+  },
   "install.button": {
     en: "Install app",
     pt: "Instalar aplicação",
@@ -62,6 +83,13 @@ export const ENTRIES = {
     es: "Suelta una imagen, texto, PDF o CSV y bynku extrae las transacciones para que las revises.",
     de: "Bild, Text, PDF oder CSV ablegen — bynku erkennt die Transaktionen zur Überprüfung.",
     fr: "Déposez une image, un texte, un PDF ou un CSV et bynku en extrait les transactions à vérifier.",
+  },
+  "share.preparing": {
+    en: "Preparing what you shared…",
+    pt: "A preparar o que partilhaste…",
+    es: "Preparando lo que compartiste…",
+    de: "Geteilte Inhalte werden vorbereitet…",
+    fr: "Préparation de ce que vous avez partagé…",
   },
   "share.confirmWord": {
     en: "confirm",

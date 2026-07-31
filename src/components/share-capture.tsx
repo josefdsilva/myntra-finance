@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,10 +90,12 @@ const isPdfFile = (f: File) => f.type.includes("pdf") || /\.pdf$/i.test(f.name);
 export function ShareCapture({
   householdId,
   initialText = "",
+  initialFiles,
   onDone,
 }: {
   householdId: string;
   initialText?: string;
+  initialFiles?: File[];
   onDone?: () => void;
 }) {
   const t = useT();
@@ -123,6 +125,16 @@ export function ShareCapture({
   function addRows(next: Row[]) {
     setRows((prev) => [...(prev ?? []), ...next]);
   }
+
+  // Files handed in from an OS share (via the service worker) are parsed once,
+  // automatically, so the user lands straight on the review deck.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !initialFiles?.length) return;
+    seededRef.current = true;
+    void handleFiles(initialFiles);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFiles]);
 
   async function runText() {
     if (!text.trim()) return;
