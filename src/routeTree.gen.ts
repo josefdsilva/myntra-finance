@@ -31,8 +31,10 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedRetirementRouteImport } from './routes/_authenticated/retirement'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
 import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticated/snapshot'
 import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
+import { Route as AuthenticatedStatementsRouteImport } from './routes/_authenticated/statements'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -159,6 +161,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedShareRoute = AuthenticatedShareRouteImport.update({
+  id: '/share',
+  path: '/share',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSnapshotRoute = AuthenticatedSnapshotRouteImport.update({
   id: '/snapshot',
   path: '/snapshot',
@@ -170,6 +177,11 @@ const AuthenticatedStatementImportRoute =
     path: '/statement-import',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStatementsRoute = AuthenticatedStatementsRouteImport.update({
+  id: '/statements',
+  path: '/statements',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
   id: '/wiki',
   path: '/wiki',
@@ -265,8 +277,10 @@ export interface FileRoutesByFullPath {
   '/plan': typeof AuthenticatedPlanRoute
   '/retirement': typeof AuthenticatedRetirementRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/share': typeof AuthenticatedShareRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
+  '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -303,8 +317,10 @@ export interface FileRoutesByTo {
   '/plan': typeof AuthenticatedPlanRoute
   '/retirement': typeof AuthenticatedRetirementRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/share': typeof AuthenticatedShareRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
+  '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -343,8 +359,10 @@ export interface FileRoutesById {
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/retirement': typeof AuthenticatedRetirementRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/share': typeof AuthenticatedShareRoute
   '/_authenticated/snapshot': typeof AuthenticatedSnapshotRoute
   '/_authenticated/statement-import': typeof AuthenticatedStatementImportRoute
+  '/_authenticated/statements': typeof AuthenticatedStatementsRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -383,8 +401,10 @@ export interface FileRouteTypes {
     | '/plan'
     | '/retirement'
     | '/settings'
+    | '/share'
     | '/snapshot'
     | '/statement-import'
+    | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
@@ -421,8 +441,10 @@ export interface FileRouteTypes {
     | '/plan'
     | '/retirement'
     | '/settings'
+    | '/share'
     | '/snapshot'
     | '/statement-import'
+    | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
@@ -460,8 +482,10 @@ export interface FileRouteTypes {
     | '/_authenticated/plan'
     | '/_authenticated/retirement'
     | '/_authenticated/settings'
+    | '/_authenticated/share'
     | '/_authenticated/snapshot'
     | '/_authenticated/statement-import'
+    | '/_authenticated/statements'
     | '/_authenticated/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
@@ -653,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/share': {
+      id: '/_authenticated/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof AuthenticatedShareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/snapshot': {
       id: '/_authenticated/snapshot'
       path: '/snapshot'
@@ -665,6 +696,13 @@ declare module '@tanstack/react-router' {
       path: '/statement-import'
       fullPath: '/statement-import'
       preLoaderRoute: typeof AuthenticatedStatementImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/statements': {
+      id: '/_authenticated/statements'
+      path: '/statements'
+      fullPath: '/statements'
+      preLoaderRoute: typeof AuthenticatedStatementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/wiki': {
@@ -779,8 +817,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedRetirementRoute: typeof AuthenticatedRetirementRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedShareRoute: typeof AuthenticatedShareRoute
   AuthenticatedSnapshotRoute: typeof AuthenticatedSnapshotRoute
   AuthenticatedStatementImportRoute: typeof AuthenticatedStatementImportRoute
+  AuthenticatedStatementsRoute: typeof AuthenticatedStatementsRoute
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
 }
 
@@ -802,8 +842,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedRetirementRoute: AuthenticatedRetirementRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedShareRoute: AuthenticatedShareRoute,
   AuthenticatedSnapshotRoute: AuthenticatedSnapshotRoute,
   AuthenticatedStatementImportRoute: AuthenticatedStatementImportRoute,
+  AuthenticatedStatementsRoute: AuthenticatedStatementsRoute,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
 }
 
