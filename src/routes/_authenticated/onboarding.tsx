@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type ComponentType } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,7 +50,13 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
-  head: () => ({ meta: [{ title: "Welcome · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/onboarding",
+      title: "Get started · bynku",
+      description: "Set up your cycle, income, bills and projects so bynku can compute your daily safe-to-spend.",
+      noindex: true,
+    }),
   component: OnboardingPage,
 });
 

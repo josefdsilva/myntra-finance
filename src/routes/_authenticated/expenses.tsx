@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { pageShellClass } from "@/components/page-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -43,7 +44,13 @@ import { FileUp, Loader2, Trash2, Paperclip } from "lucide-react";
 import { useT, type MessageKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
-  head: () => ({ meta: [{ title: "Expenses · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/expenses",
+      title: "Expenses ledger · bynku",
+      description: "Log spending by photo, voice or text and browse every transaction in the current cycle.",
+      noindex: true,
+    }),
   component: ExpensesPage,
 });
 

@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,7 +11,13 @@ import { pageShellClass } from "@/components/page-shell";
 type ShareSearch = { title?: string; text?: string; url?: string };
 
 export const Route = createFileRoute("/_authenticated/share")({
-  head: () => ({ meta: [{ title: "Share to bynku · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/share",
+      title: "Share to bynku · bynku",
+      description: "Send a receipt, memo or link straight into bynku and let AI turn it into an expense.",
+      noindex: true,
+    }),
   // Web Share Target (GET) lands here with title/text/url; also used for any
   // deep-linked prefill. Values are coerced to strings and left otherwise raw.
   validateSearch: (search: Record<string, unknown>): ShareSearch => ({

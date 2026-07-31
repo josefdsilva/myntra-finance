@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,7 +14,13 @@ import { debtsQuery } from "@/lib/household-queries";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/loans")({
-  head: () => ({ meta: [{ title: "Loans · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/loans",
+      title: "Loans & debt payoff · bynku",
+      description: "Track loans with TAEG and total cost, then simulate avalanche or snowball payoff strategies.",
+      noindex: true,
+    }),
   component: LoansPage,
 });
 

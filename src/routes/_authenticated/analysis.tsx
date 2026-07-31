@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -41,7 +42,13 @@ import { LineChart } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/analysis")({
-  head: () => ({ meta: [{ title: "Analysis · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/analysis",
+      title: "Analysis & benchmarks · bynku",
+      description: "Compare your spending shares against national benchmarks and see where your money leaks.",
+      noindex: true,
+    }),
   validateSearch: (search: Record<string, unknown>) => ({
     ask: typeof search.ask === "string" ? search.ask : undefined,
   }),

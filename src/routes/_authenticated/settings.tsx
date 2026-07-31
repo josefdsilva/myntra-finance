@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -66,7 +67,13 @@ import {
 } from "@/lib/intent";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/settings",
+      title: "Settings · bynku",
+      description: "Configure your pay cycle, categories, language, notifications and privacy controls.",
+      noindex: true,
+    }),
   component: SettingsPage,
 });
 

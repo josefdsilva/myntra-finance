@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -33,7 +34,13 @@ import { money } from "@/lib/format";
 import { useLocale, useT, type MessageKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/fast-forward")({
-  head: () => ({ meta: [{ title: "Fast forward · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/fast-forward",
+      title: "Fast forward · bynku",
+      description: "Simulate a job change, a move or retirement and see the effect on your household budget.",
+      noindex: true,
+    }),
   component: FastForwardPage,
 });
 

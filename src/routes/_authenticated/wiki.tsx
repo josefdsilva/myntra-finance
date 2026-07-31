@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 
@@ -43,16 +44,13 @@ import {
 } from "@/components/wiki-diagrams";
 
 export const Route = createFileRoute("/_authenticated/wiki")({
-  head: () => ({
-    meta: [
-      { title: "Manual · bynku" },
-      {
-        name: "description",
-        content:
-          "A plain-language guide to bynku: pay cycles, safe-to-spend, projects, loans, plans, analysis and privacy.",
-      },
-    ],
-  }),
+  head: () =>
+    pageMeta({
+      path: "/wiki",
+      title: "Manual · bynku",
+      description: "A plain-language guide to bynku: pay cycles, safe-to-spend, projects, loans, plans, analysis and privacy.",
+      noindex: true,
+    }),
   component: WikiPage,
 });
 

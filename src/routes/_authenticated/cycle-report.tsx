@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +46,13 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/cycle-report")({
-  head: () => ({ meta: [{ title: "Cycle report · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/cycle-report",
+      title: "Cycle report · bynku",
+      description: "A written summary of how your pay cycle went: what came in, what went out, and what to change next.",
+      noindex: true,
+    }),
   component: CycleReportPage,
 });
 

@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -50,7 +51,13 @@ import { IncomeAllocationSuggestion } from "@/components/income-allocation-sugge
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/dashboard",
+      title: "Dashboard · bynku",
+      description: "Your daily safe-to-spend, spending trend and personalised issues and tips at a glance.",
+      noindex: true,
+    }),
   component: Dashboard,
 });
 

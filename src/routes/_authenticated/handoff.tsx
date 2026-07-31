@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +24,13 @@ import { money } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/handoff")({
-  head: () => ({ meta: [{ title: "Accountant handoff · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/handoff",
+      title: "Accountant handoff · bynku",
+      description: "Export a clean bookkeeping package for your accountant in one step.",
+      noindex: true,
+    }),
   component: HandoffPage,
 });
 

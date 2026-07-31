@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,7 +9,13 @@ import { StatementImportFlow } from "@/components/statement-import-flow";
 import { pageShellClass } from "@/components/page-shell";
 
 export const Route = createFileRoute("/_authenticated/statement-import")({
-  head: () => ({ meta: [{ title: "Import statement · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/statement-import",
+      title: "Import a statement · bynku",
+      description: "Paste or upload a bank statement and review each transaction before it lands in your ledger.",
+      noindex: true,
+    }),
   component: StatementImportPage,
 });
 

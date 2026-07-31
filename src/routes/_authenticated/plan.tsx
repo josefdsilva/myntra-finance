@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,7 +65,13 @@ import { InvoiceAttachments } from "@/components/invoice-attachments";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/plan")({
-  head: () => ({ meta: [{ title: "Plan · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/plan",
+      title: "Plans · bynku",
+      description: "Schedule upcoming one-off costs and see how each planned purchase hits your cycle.",
+      noindex: true,
+    }),
   // Plans now live inside the Payables & Receivables hub. Keep the route as a
   // redirect so old links and bookmarks land on the hub's Planned lens.
   beforeLoad: () => {

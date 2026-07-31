@@ -1,3 +1,4 @@
+import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -25,7 +26,13 @@ import { useT } from "@/lib/i18n";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 
 export const Route = createFileRoute("/_authenticated/snapshot")({
-  head: () => ({ meta: [{ title: "Financial snapshot · bynku" }] }),
+  head: () =>
+    pageMeta({
+      path: "/snapshot",
+      title: "Financial snapshot · bynku",
+      description: "A shareable snapshot of your budget health for the current cycle.",
+      noindex: true,
+    }),
   component: SnapshotPage,
 });
 
