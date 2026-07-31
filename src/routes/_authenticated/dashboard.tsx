@@ -427,7 +427,7 @@ function Dashboard() {
             </div>
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <Button asChild size="sm">
-                <Link to="/cashflow">{t("dashboard.plansNudge.action")}</Link>
+                <Link to="/cashflow" search={{ lens: undefined }}>{t("dashboard.plansNudge.action")}</Link>
               </Button>
               <Button
                 variant="ghost"

@@ -23,8 +23,11 @@ import { useT } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/cashflow")({
   head: () => ({ meta: [{ title: "Payables & Receivables · bynku" }] }),
   // ?lens=cycle|planned deep-links a specific lens (used by redirects + CTAs).
-  validateSearch: (search: Record<string, unknown>) => ({
-    lens: search.lens === "cycle" || search.lens === "planned" ? search.lens : undefined,
+  validateSearch: (search: Record<string, unknown>): { lens?: "cycle" | "planned" } => ({
+    lens:
+      search.lens === "cycle" || search.lens === "planned"
+        ? (search.lens as "cycle" | "planned")
+        : undefined,
   }),
   component: CashflowPage,
 });
