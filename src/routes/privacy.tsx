@@ -1,24 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageMeta } from "@/lib/route-meta";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({
-    meta: [
-      { title: "Privacy & data — bynku" },
-      {
-        name: "description",
-        content:
-          "How bynku collects, stores, and protects your household's financial data. GDPR rights, data-sharing scope, and account deletion.",
-      },
-      { property: "og:title", content: "Privacy & data — bynku" },
-      {
-        property: "og:description",
-        content:
-          "How bynku collects, stores, and protects your household's financial data. GDPR rights, data-sharing scope, and account deletion.",
-      },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () =>
+    pageMeta({
+      path: "/privacy",
+      title: "Privacy & data — bynku",
+      description:
+        "How bynku collects, stores, and protects your household's financial data. GDPR rights, data-sharing scope, and account deletion.",
+      ogType: "article",
+    }),
   component: PrivacyPage,
 });
 
