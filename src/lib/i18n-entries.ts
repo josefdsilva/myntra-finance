@@ -14,6 +14,34 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "plan.alsoRecordExpense": {
+    en: "Also record this as an expense",
+    pt: "Registar também como despesa",
+    es: "Registrar también como gasto",
+    de: "Auch als Ausgabe erfassen",
+    fr: "Enregistrer aussi comme dépense",
+  },
+  "plan.alsoRecordIncome": {
+    en: "Also record this as money in",
+    pt: "Registar também como entrada de dinheiro",
+    es: "Registrar también como ingreso",
+    de: "Auch als Geldeingang erfassen",
+    fr: "Enregistrer aussi comme entrée d'argent",
+  },
+  "plan.expenseCategory": {
+    en: "Category",
+    pt: "Categoria",
+    es: "Categoría",
+    de: "Kategorie",
+    fr: "Catégorie",
+  },
+  "plan.expenseUsefulness": {
+    en: "Usefulness",
+    pt: "Utilidade",
+    es: "Utilidad",
+    de: "Nützlichkeit",
+    fr: "Utilité",
+  },
   "expQuick.notSavedYet": {
     en: "Not saved yet — check the details, then press Confirm to add this.",
     pt: "Ainda não guardado — confirma os detalhes e carrega em Confirmar para adicionar.",

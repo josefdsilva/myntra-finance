@@ -34,6 +34,10 @@ export type Plan = {
   done?: boolean;
   /** What it actually cost once resolved (0 = did not happen). Null until resolved. */
   actual_amount?: number | string | null;
+  /** When set, resolving this plan also created a real expense/income row, so the
+   *  amount is counted there — the plan must NOT be subtracted again (see
+   *  leftoverObligation). */
+  expense_id?: string | null;
 };
 
 /** "yyyy-mm" key for a date. */
@@ -134,6 +138,8 @@ export function leftoverObligation(plans: Plan[], ym: string): number {
   let sum = 0;
   for (const p of plans) {
     if (p.direction !== "spend" || p.bucket_id) continue;
+    // Already recorded as a real expense on resolve — counted there, not here.
+    if (p.expense_id) continue;
     const applies = p.done
       ? String(p.month).slice(0, 7) === ym // resolved: only its own month
       : planAppliesToMonth(p, ym); // open: by recurrence

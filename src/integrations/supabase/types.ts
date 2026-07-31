@@ -1558,6 +1558,7 @@ export type Database = {
           created_by: string | null
           direction: string
           done: boolean
+          expense_id: string | null
           household_id: string
           id: string
           label: string
@@ -1575,6 +1576,7 @@ export type Database = {
           created_by?: string | null
           direction?: string
           done?: boolean
+          expense_id?: string | null
           household_id: string
           id?: string
           label: string
@@ -1592,6 +1594,7 @@ export type Database = {
           created_by?: string | null
           direction?: string
           done?: boolean
+          expense_id?: string | null
           household_id?: string
           id?: string
           label?: string
@@ -1858,6 +1861,8 @@ export type Database = {
         | "statement"
         | "ai_photo"
         | "bank_sync"
+        | "share"
+        | "plan"
       import_status: "pending" | "parsed" | "approved" | "failed"
       member_role: "owner" | "member"
       movement_account_type: "cash" | "bucket" | "debt"
@@ -2004,6 +2009,8 @@ export const Constants = {
         "statement",
         "ai_photo",
         "bank_sync",
+        "share",
+        "plan",
       ],
       import_status: ["pending", "parsed", "approved", "failed"],
       member_role: ["owner", "member"],

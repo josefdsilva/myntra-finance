@@ -62,8 +62,15 @@ export const deletePlan = createServerFn({ method: "POST" })
 /**
  * Resolve a plan against reality: mark it done and record what it actually cost
  * (0 when it did not happen). Resolved plans leave the forward forecast and move
- * to the history, where estimate vs actual is shown. The payment itself is not
- * created here — that flows through a project withdrawal or a normal expense.
+ * to the history, where estimate vs actual is shown.
+ *
+ * Optionally (record_expense), also write a real categorized expense / money-in
+ * row so the payment shows up in Expenses with a category and usefulness. To keep
+ * the money counted exactly once, the plan is then linked via `plans.expense_id`
+ * and `leftoverObligation()` stops subtracting it. This is only offered for
+ * leftover-paid plans — a project-paid plan already left savings as a withdrawal,
+ * so recording it as an expense too would double-count; the server ignores the
+ * flag in that case.
  */
 export const resolvePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -76,11 +83,28 @@ export const resolvePlan = createServerFn({ method: "POST" })
         // When set, the payment is taken out of this project (a withdrawal);
         // otherwise it is drawn from the month's unallocated leftover.
         source_bucket_id: z.string().uuid().nullable().optional(),
+        // Also create a real expense/income entry for this payment.
+        record_expense: z.boolean().optional().default(false),
+        expense_category: z.string().max(50).nullable().optional(),
+        expense_intent: z
+          .enum(["essential", "important", "nice_to_have", "treat"])
+          .nullable()
+          .optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     const sb = context.supabase;
+
+    // Load the plan for its direction/label (needed to shape the expense).
+    const { data: plan, error: pErr } = await sb
+      .from("plans")
+      .select("id, label, direction, category")
+      .eq("id", data.id)
+      .eq("household_id", data.household_id)
+      .single();
+    if (pErr) throw pErr;
+
     // Pay from a project: withdraw the actual amount from it (validates balance).
     if (data.source_bucket_id && data.actual_amount > 0) {
       const { error: wErr } = await sb.rpc("fund_withdrawal", {
@@ -91,11 +115,40 @@ export const resolvePlan = createServerFn({ method: "POST" })
       });
       if (wErr) throw wErr;
     }
-    const patch: { done: boolean; actual_amount: number; bucket_id?: string } = {
-      done: true,
-      actual_amount: data.actual_amount,
-    };
+
+    const patch: {
+      done: boolean;
+      actual_amount: number;
+      bucket_id?: string;
+      expense_id?: string;
+    } = { done: true, actual_amount: data.actual_amount };
     if (data.source_bucket_id) patch.bucket_id = data.source_bucket_id;
+
+    // Optionally record a real expense/income — only for leftover-paid plans, so
+    // project withdrawals aren't double-counted.
+    if (data.record_expense && data.actual_amount > 0 && !data.source_bucket_id) {
+      const isIncome = plan.direction === "income";
+      const { data: exp, error: eErr } = await sb
+        .from("expenses")
+        .insert({
+          household_id: data.household_id,
+          added_by_user_id: context.userId,
+          amount: data.actual_amount,
+          category: data.expense_category ?? plan.category ?? "other",
+          merchant: String(plan.label).slice(0, 120),
+          occurred_at: new Date().toISOString(),
+          source: "plan",
+          source_meta: { plan_id: data.id },
+          kind: isIncome ? "income" : "expense",
+          is_salary: false,
+          intent: isIncome ? null : (data.expense_intent ?? null),
+        })
+        .select("id")
+        .single();
+      if (eErr) throw eErr;
+      patch.expense_id = exp.id as string;
+    }
+
     const { error } = await sb.from("plans").update(patch).eq("id", data.id);
     if (error) throw error;
     return { ok: true };
@@ -106,9 +159,20 @@ export const reopenPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase
+    const sb = context.supabase;
+    // If resolving created a linked expense, remove it so reopening doesn't leave
+    // an orphan spend behind (the plan goes back to being a forecast obligation).
+    const { data: plan } = await sb
       .from("plans")
-      .update({ done: false, actual_amount: null })
+      .select("expense_id")
+      .eq("id", data.id)
+      .single();
+    if (plan?.expense_id) {
+      await sb.from("expenses").delete().eq("id", plan.expense_id);
+    }
+    const { error } = await sb
+      .from("plans")
+      .update({ done: false, actual_amount: null, expense_id: null })
       .eq("id", data.id);
     if (error) throw error;
     return { ok: true };

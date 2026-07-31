@@ -599,7 +599,13 @@ export function PlannedThisCycle({ householdId }: { householdId: string }) {
     },
   });
 
-  const items = data ? plansInWindow(data.plans, data.start, data.end, true) : [];
+  const items = data
+    ? plansInWindow(data.plans, data.start, data.end, true).filter(
+        // A resolved plan that was recorded as a real expense shows in the
+        // expenses ledger instead — don't list it here as well.
+        (p) => !(p.done && p.expense_id),
+      )
+    : [];
   if (!items.length) return null;
 
   return (

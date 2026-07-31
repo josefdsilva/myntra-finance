@@ -166,7 +166,7 @@ export async function buildClosedCycleStats(
     supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
     supabase
       .from("plans")
-      .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done")
+      .select("id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done, expense_id")
       .eq("household_id", householdId),
   ]);
 
@@ -330,6 +330,9 @@ export async function buildClosedCycleStats(
   const resolvedPlans = planList
     .filter((p) => {
       if (!p.done) return false;
+      // Recorded as a real expense on resolve — it already shows in the cycle's
+      // spends/categories, so don't also list it as a resolved plan.
+      if (p.expense_id) return false;
       const d = new Date(String(p.month));
       return d >= cycle.start && d < cycle.end;
     })

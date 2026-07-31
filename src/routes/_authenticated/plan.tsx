@@ -53,7 +53,14 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { money } from "@/lib/format";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
+import { useCategoryNames } from "@/hooks/use-categories";
+import {
+  INTENT_LEVELS,
+  intentLabelKey,
+  defaultIntentForCategory,
+  type IntentLevel,
+} from "@/lib/intent";
 import { EmptyState } from "@/components/empty-state";
 import { InvoiceAttachments } from "@/components/invoice-attachments";
 import { toast } from "sonner";
@@ -138,6 +145,25 @@ export function PlanPanel({
 }) {
   const t = useT();
   const qc = useQueryClient();
+  const { names: hhCats } = useCategoryNames(householdId);
+  const catOptions = hhCats.length
+    ? hhCats
+    : [
+        "groceries",
+        "dining",
+        "transport",
+        "fuel",
+        "utilities",
+        "housing",
+        "subscriptions",
+        "health",
+        "kids",
+        "shopping",
+        "entertainment",
+        "travel",
+        "gifts",
+        "other",
+      ];
   const upsertFn = useServerFn(upsertPlan);
   const deleteFn = useServerFn(deletePlan);
   const fundFn = useServerFn(fundPlanAsProject);
@@ -296,6 +322,10 @@ export function PlanPanel({
   const [resolveRow, setResolveRow] = useState<PlanRow | null>(null);
   const [actual, setActual] = useState("");
   const [payFrom, setPayFrom] = useState("");
+  // Optional "also record this as a real expense / money-in" on resolve.
+  const [recordExpense, setRecordExpense] = useState(false);
+  const [expCategory, setExpCategory] = useState("other");
+  const [expIntent, setExpIntent] = useState<IntentLevel>("essential");
 
   // "Your plans" view: a flat list, or the timeline (Gantt).
   const [planView, setPlanView] = useState<"list" | "timeline">("list");
@@ -305,6 +335,10 @@ export function PlanPanel({
     setResolveRow(p);
     setActual(String(Number(p.amount)));
     setPayFrom(p.bucket_id ?? "");
+    setRecordExpense(false);
+    const cat = p.category || catOptions[0] || "other";
+    setExpCategory(cat);
+    setExpIntent(defaultIntentForCategory(cat));
   }
 
   async function saveResolve(amountOverride?: number) {
@@ -312,12 +346,19 @@ export function PlanPanel({
     const value = amountOverride ?? (parseFloat(actual) || 0);
     setBusy(true);
     try {
+      // Only record an expense for a real, leftover-paid payment (never for a
+      // project-paid one — that already left savings as a withdrawal).
+      const doRecord = recordExpense && value > 0 && !payFrom;
       await resolveFn({
         data: {
           id: resolveRow.id,
           household_id: householdId,
           actual_amount: value,
           source_bucket_id: value > 0 ? payFrom || null : null,
+          record_expense: doRecord,
+          expense_category: doRecord ? expCategory : null,
+          expense_intent:
+            doRecord && resolveRow.direction !== "income" ? expIntent : null,
         },
       });
       setResolveRow(null);
@@ -778,6 +819,73 @@ export function PlanPanel({
               </Select>
             </div>
           )}
+          {/* Optionally record a real expense / money-in. Only for leftover-paid
+              plans — a project-paid one already left savings as a withdrawal. */}
+          {(parseFloat(actual) || 0) > 0 &&
+            (resolveRow?.direction === "income" || payFrom === "") && (
+              <div className="space-y-2 rounded-md border p-3">
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="accent-primary size-4"
+                    checked={recordExpense}
+                    onChange={(e) => setRecordExpense(e.target.checked)}
+                  />
+                  <span>
+                    {t(
+                      resolveRow?.direction === "income"
+                        ? "plan.alsoRecordIncome"
+                        : "plan.alsoRecordExpense",
+                    )}
+                  </span>
+                </label>
+                {recordExpense && (
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">{t("plan.expenseCategory")}</Label>
+                      <Select
+                        value={expCategory}
+                        onValueChange={(v) => {
+                          setExpCategory(v);
+                          setExpIntent(defaultIntentForCategory(v));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {catOptions.map((c) => (
+                            <SelectItem key={c} value={c}>
+                              {c}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {resolveRow?.direction !== "income" && (
+                      <div>
+                        <Label className="text-xs">{t("plan.expenseUsefulness")}</Label>
+                        <Select
+                          value={expIntent}
+                          onValueChange={(v) => setExpIntent(v as IntentLevel)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {INTENT_LEVELS.map((lvl) => (
+                              <SelectItem key={lvl} value={lvl}>
+                                {t(intentLabelKey(lvl) as MessageKey)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           {resolveRow && (
             <div className="space-y-1.5">
               <Label className="text-xs">{t("inv.title")}</Label>

@@ -171,7 +171,7 @@ function Dashboard() {
       const { data: rows } = await supabase
         .from("plans")
         .select(
-          "id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done",
+          "id, label, amount, actual_amount, direction, month, recurrence, category, bucket_id, done, expense_id",
         )
         .eq("household_id", householdId!);
       return leftoverObligation((rows ?? []) as unknown as Plan[], monthKey(new Date()));
