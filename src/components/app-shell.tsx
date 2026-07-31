@@ -260,7 +260,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Your households</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("shell.yourSpaces")}</DropdownMenuLabel>
         {(households ?? []).map((h) => (
           <DropdownMenuItem
             key={h.household.id}
@@ -279,12 +279,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/households" className="flex items-center gap-2">
-            <Users className="size-4" /> Manage households
+            <Users className="size-4" /> {t("shell.manageSpaces")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/households" className="flex items-center gap-2">
-            <Plus className="size-4" /> New household
+            <Plus className="size-4" /> {t("shell.newSpace")}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

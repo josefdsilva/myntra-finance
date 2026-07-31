@@ -14,6 +14,27 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "shell.yourSpaces": {
+    en: "Your spaces",
+    pt: "Os teus espaços",
+    es: "Tus espacios",
+    de: "Deine Bereiche",
+    fr: "Vos espaces",
+  },
+  "shell.manageSpaces": {
+    en: "Manage spaces",
+    pt: "Gerir espaços",
+    es: "Gestionar espacios",
+    de: "Bereiche verwalten",
+    fr: "Gérer les espaces",
+  },
+  "shell.newSpace": {
+    en: "New space",
+    pt: "Novo espaço",
+    es: "Nuevo espacio",
+    de: "Neuer Bereich",
+    fr: "Nouvel espace",
+  },
   "plan.alsoRecordExpense": {
     en: "Also record this as an expense",
     pt: "Registar também como despesa",
