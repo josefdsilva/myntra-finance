@@ -217,6 +217,12 @@ function Dashboard() {
   const dailyClaim = netSpent + planOverflow; // everyday spend plus any plan overflow
   const remaining = Math.max(0, variablePool - dailyClaim);
   const overspent = dailyClaim > variablePool;
+  // "Available" = genuinely free cash left this cycle, income-anchored: income
+  // minus fixed+debt (fixedTotal already bundles debt), minus what's already set
+  // aside to projects, minus everyday spend so far. Contrasts with the headline
+  // baseline-derived allowance: when Available drops below the allowance you'd
+  // still spend, that spending is coming out of projects, not slack.
+  const available = income - (dashboard?.fixedTotal ?? 0) - realAllocated - netSpent;
   const cycle = dashboard?.cycle;
   const daysLeft = cycle?.daysLeft ?? 1;
   // A cycle "just rolled over" in its first few days. Pair that with any open
@@ -456,6 +462,7 @@ function Dashboard() {
               >
                 <p className="text-sm font-medium text-foreground">{t(safeLabelKey)}</p>
                 <p className="text-muted-foreground">{t("dashboard.safe.infoBody")}</p>
+                <p className="text-muted-foreground">{t("dashboard.safe.availableInfo")}</p>
                 {variablePool > 0 && (
                   <p className="tabular-nums text-muted-foreground">
                     {t("dashboard.safe.infoBreakdown", {
@@ -517,6 +524,25 @@ function Dashboard() {
                 </button>
               ))}
           </div>
+          {!isLoading && (
+            <div className="mt-4 border-t pt-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {t("dashboard.safe.availableLabel")}
+                </span>
+                <span
+                  className={`text-xl font-semibold tabular-nums ${available < 0 ? "text-destructive" : "text-foreground"}`}
+                >
+                  {money(available)}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {available < 0
+                  ? t("dashboard.safe.availableNeg")
+                  : t("dashboard.safe.availablePos")}
+              </p>
+            </div>
+          )}
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
           )}
