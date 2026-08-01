@@ -74,6 +74,6 @@ function InvitePage() {
           {state === "joining" && <Loader2 className="animate-spin mx-auto" />}
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

@@ -21,5 +21,10 @@ function IndexFallback() {
       navigate({ to: data.user ? "/dashboard" : "/auth", replace: true });
     });
   }, [navigate]);
-  return null;
+  return (
+    <main className="min-h-screen grid place-items-center">
+      <h1 className="sr-only">bynku — daily safe-to-spend & household allocations</h1>
+      <p className="text-sm text-muted-foreground">Loading bynku…</p>
+    </main>
+  );
 }
