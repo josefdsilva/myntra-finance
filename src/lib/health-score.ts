@@ -115,7 +115,13 @@ export function computeHealth(input: ScoreInputs): HealthResult {
   // --- Sub-scores. sqrt curves are "encouraging": they reward early progress
   //     while still requiring a lot for a perfect mark. ------------------------
   // 20% real savings rate = 100; ~5% already reaches ~50.
-  const savings = clamp(100 * Math.sqrt(Math.min(1, savedRate / 0.2)));
+  const savingsRaw = clamp(100 * Math.sqrt(Math.min(1, savedRate / 0.2)));
+  // A just-started cycle hasn't had time to fund projects, so the raw figure is
+  // unreliable early on. Ease from a neutral 55 toward the real number as the
+  // cycle elapses (mirrors the budget pillar), so the headline doesn't crater on
+  // day one of a new cycle. Full weight by ~40% elapsed.
+  const savingsConfidence = Math.min(1, cycleProgress / 0.4);
+  const savings = clamp(55 + (savingsRaw - 55) * savingsConfidence);
   // 6 months of total outgoings = 100; 3 months ≈ 71, 1 month ≈ 41.
   const emergency = clamp(100 * Math.sqrt(Math.min(1, monthsOfEmergency / 6)));
   // 0% debt-to-income = 100, 40% = 0.
