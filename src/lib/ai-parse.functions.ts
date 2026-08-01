@@ -168,14 +168,18 @@ async function parseItems({
   messages?: ChatMessages;
   schema: z.ZodTypeAny;
 }): Promise<{ items: unknown[]; usage: unknown }> {
+  // The AI SDK types treat `prompt` and `messages` as mutually exclusive, so
+  // pick exactly one instead of passing both as possibly-undefined.
+  const promptPart = messages
+    ? ({ messages } as { messages: ChatMessages })
+    : ({ prompt: prompt ?? "" } as { prompt: string });
   try {
     const res = await generateObject({
       model: gateway(PARSE_MODEL),
       abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
       schema,
       system,
-      prompt,
-      messages,
+      ...promptPart,
     });
     const obj = res.object as { items?: unknown[] };
     return { items: Array.isArray(obj?.items) ? obj.items : [], usage: res.usage };
@@ -186,8 +190,7 @@ async function parseItems({
       model: gateway(PARSE_MODEL),
       abortSignal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
       system: `${system}\n\n${STRICT_JSON}`,
-      prompt,
-      messages,
+      ...promptPart,
     });
     const obj = extractJson(res.text) as { items?: unknown[] };
     return { items: Array.isArray(obj?.items) ? obj.items : [], usage: res.usage };
