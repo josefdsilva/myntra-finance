@@ -32,6 +32,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { StatementImportButton } from "@/components/statement-import-flow";
+import { CoachOnboarding } from "@/components/coach-onboarding";
 import { money, currencySymbol } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
@@ -137,6 +138,7 @@ function Wizard({
 
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [chat, setChat] = useState(false);
   const [country, setCountry] = useState(initialCountry);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
@@ -228,13 +230,35 @@ function Wizard({
   const back = () => setStep((s) => Math.max(0, s - 1));
   const skip = () => (isLast ? finish() : setStep((s) => s + 1));
 
+  if (chat) {
+    return (
+      <CoachOnboarding
+        householdId={householdId}
+        isBusiness={isBusiness}
+        onSwitchToForms={() => setChat(false)}
+        onDone={finish}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
       <div className="mx-auto flex min-h-full max-w-xl flex-col px-5 py-8">
         <Progress value={(step / (steps.length - 1)) * 100} className="mb-8" />
 
         <div className="flex-1">
-          {key === "welcome" && <Welcome isBusiness={isBusiness} />}
+          {key === "welcome" && (
+            <div>
+              <Welcome isBusiness={isBusiness} />
+              <button
+                type="button"
+                onClick={() => setChat(true)}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+              >
+                <Sparkles className="size-4" /> {t("coachOb.entryTitle")}
+              </button>
+            </div>
+          )}
           {key === "country" && (
             <CountryStep country={country} setCountry={setCountry} isBusiness={isBusiness} />
           )}
