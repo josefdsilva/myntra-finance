@@ -197,7 +197,7 @@ function AuthPage() {
       </div>
 
       {/* Right: sign in */}
-      <div className="flex items-center justify-center px-4 py-12 sm:px-8">
+      <main className="flex items-center justify-center px-4 py-12 sm:px-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col items-center mb-6 lg:hidden">
             <img src={appIcon.url} alt="bynku" className="size-14 rounded-2xl mb-3 shadow-lg" />
@@ -395,7 +395,7 @@ function AuthPage() {
             </a>
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
