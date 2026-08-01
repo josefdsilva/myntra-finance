@@ -36,7 +36,7 @@ const CATSET = new Set<string>(CATEGORIES);
 const CATEGORY_LIST = CATEGORIES.join(", ");
 
 type Gateway = ReturnType<typeof createLovableAiGatewayProvider>;
-type ChatMessages = Parameters<typeof generateText>[0]["messages"];
+type ChatMessages = NonNullable<Parameters<typeof generateText>[0]["messages"]>;
 
 type NormExpense = {
   amount: number;
