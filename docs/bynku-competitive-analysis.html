@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bynku — Competitive Analysis 2026</title>
+<style>
+  :root{
+    --green:#34925C; --green-deep:#256b43; --cream:#F5F2E9; --ink:#1f2a26;
+    --muted:#5b6b64; --line:#e2e0d6; --rose:#b4472f; --amber:#a9791f;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{
+    margin:0; color:var(--ink); background:#faf8f2;
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.55;
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:0 28px 64px}
+  header.cover{
+    background:linear-gradient(135deg,var(--green) 0%, var(--green-deep) 100%);
+    color:#fff; padding:44px 28px 38px; margin-bottom:8px;
+  }
+  header.cover .inner{max-width:900px; margin:0 auto}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:600; letter-spacing:.2px; opacity:.92}
+  .logo{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.16);
+    display:inline-flex;align-items:flex-end;justify-content:center;gap:2px;padding:5px 4px}
+  .logo i{display:block;width:2px;background:var(--cream);border-radius:2px}
+  h1{font-family:Georgia,"Times New Roman",serif; font-size:31px; line-height:1.15; margin:18px 0 6px; font-weight:600}
+  .sub{opacity:.9; font-size:15px; max-width:640px}
+  .meta{margin-top:16px; font-size:12.5px; opacity:.85}
+  h2{font-family:Georgia,serif; font-size:21px; color:var(--green-deep); margin:34px 0 8px;
+     padding-bottom:6px; border-bottom:2px solid var(--line)}
+  h3{font-size:15.5px; margin:20px 0 4px; color:var(--ink)}
+  p{margin:9px 0}
+  .lead{font-size:16px}
+  ul{margin:8px 0 8px 2px; padding-left:20px}
+  li{margin:6px 0}
+  strong{color:var(--ink)}
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:12.7px}
+  th,td{border:1px solid var(--line); padding:7px 9px; vertical-align:top; text-align:left}
+  th{background:var(--green); color:#fff; font-weight:600}
+  tbody tr:nth-child(even){background:#fdfcf8}
+  tr.bynku td{background:#eef6f0; font-weight:500}
+  .callout{background:var(--cream); border-left:4px solid var(--green); padding:12px 16px; border-radius:4px; margin:14px 0}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+  .card{border:1px solid var(--line); border-radius:8px; padding:14px 16px; background:#fff}
+  .card.win{border-top:3px solid var(--green)}
+  .card.gap{border-top:3px solid var(--rose)}
+  .card h3{margin-top:0}
+  .win h3{color:var(--green-deep)} .gap h3{color:var(--rose)}
+  .src{font-size:12px; color:var(--muted)}
+  .src a{color:var(--green-deep)}
+  footer{margin-top:36px; padding-top:14px; border-top:1px solid var(--line); font-size:11.5px; color:var(--muted)}
+  @media (max-width:680px){ .grid2{grid-template-columns:1fr} h1{font-size:26px} }
+  @media print{
+    body{background:#fff; font-size:11.5px}
+    header.cover{padding:28px}
+    .wrap{padding:0 8px}
+    h2{page-break-after:avoid} table,.card,.callout{page-break-inside:avoid}
+    .grid2{gap:12px}
+  }
+</style>
+</head>
+<body>
+<header class="cover">
+  <div class="inner">
+    <div class="brand">
+      <span class="logo"><i style="height:15px"></i><i style="height:9px"></i><i style="height:9px"></i><i style="height:9px"></i></span>
+      bynku
+    </div>
+    <h1>Competitive Analysis — Household &amp; Business Budgeting</h1>
+    <div class="sub">Where bynku stands against the leading budgeting apps of 2026, and the strategic wedge it can own.</div>
+    <div class="meta">Prepared August 2026 · Based on public product information and reviews · For beta &amp; partner sharing</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2>Executive summary</h2>
+  <p class="lead">The 2026 budgeting market is crowded but converging: the leaders (YNAB, Monarch, Copilot) compete almost entirely on <strong>automatic bank sync plus AI on top of it</strong>. Copilot removes data entry with ~95% machine‑learning categorisation; Monarch has added a natural‑language AI assistant trained with financial planners; YNAB still wins on method and community.</p>
+  <p>bynku sits in a position <strong>no single incumbent occupies</strong>: EU‑native, privacy‑respecting, cycle‑aware (salary‑to‑salary rather than calendar‑month), unusually strong at <em>manual/AI capture</em>, and — uniquely — a single app that serves both a <strong>household and a business</strong>, with real business finance (depreciation, statements, accountant handoff) and European peer benchmarks.</p>
+  <div class="callout">
+    <strong>The one gap that matters:</strong> bynku has no automatic bank feed. For the mass market that is table stakes. bynku has deliberately deferred it on cost grounds and compensates with best‑in‑class capture — a defensible trade for now, and one that points to open banking as a later <em>paid</em> tier rather than a free default.
+  </div>
+
+  <h2>The landscape at a glance</h2>
+  <table>
+    <thead>
+      <tr><th>App</th><th>Core method</th><th>AI</th><th>Bank feed / region</th><th>Price</th><th>Best at</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>YNAB</strong></td><td>Zero‑based / envelopes</td><td>Light</td><td>Plaid (US), TrueLayer (UK); no PSD2 for the rest of the EU → manual</td><td>$109/yr, no free tier</td><td>Discipline, education, community</td></tr>
+      <tr><td><strong>Monarch</strong></td><td>Flexible categories + goals</td><td>AI assistant (NL Q&amp;A on your data), weekly recap, insights</td><td>Aggregator sync, US‑centric</td><td>$99 Core / $199 Plus</td><td>Couples, net worth, planning</td></tr>
+      <tr><td><strong>Copilot</strong></td><td>Automation‑first</td><td>Best‑in‑class ML categorisation (~95%, learns)</td><td>Sync, iOS‑first (thin web)</td><td>$95/yr</td><td>Design + auto‑categorisation</td></tr>
+      <tr><td><strong>Rocket Money</strong></td><td>Subscriptions / bills</td><td>Moderate</td><td>Sync (US)</td><td>Free / paid</td><td>Subscription cancel, bill negotiation</td></tr>
+      <tr><td><strong>Cleo</strong></td><td>Chat‑first coach</td><td>AI chatbot persona, plain‑English Q&amp;A</td><td>Sync</td><td>Free / paid</td><td>Engagement, beginners</td></tr>
+      <tr><td><strong>Actual Budget</strong></td><td>Envelopes, self‑hosted</td><td>None</td><td>Optional; data local</td><td>Free / open‑source</td><td>Privacy, control (technical)</td></tr>
+      <tr><td><strong>Emma / Snoop / Plum</strong> (EU/UK)</td><td>Tracking / autosave / deal‑hunting</td><td>Moderate</td><td>Open banking (PSD2)</td><td>Free / paid</td><td>EU bank‑feed budgeting</td></tr>
+      <tr class="bynku"><td><strong>bynku</strong></td><td>Cycle‑aware daily safe‑to‑spend</td><td>Multi‑modal capture + grounded coach + benchmarks</td><td>None yet (manual + statement import + capture)</td><td>TBD</td><td>EU‑native, capture‑first, household + business</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Where competitors lead bynku</h2>
+  <div class="grid2">
+    <div class="card gap">
+      <h3>Automatic bank sync (the big one)</h3>
+      <p>YNAB, Monarch, Copilot, Emma and Snoop pull transactions automatically. Copilot then auto‑categorises at ~95% and <em>learns from corrections</em>, so the user does essentially no data entry. This is table stakes for the mass market and bynku's single biggest disadvantage.</p>
+    </div>
+    <div class="card gap">
+      <h3>Native mobile apps &amp; store presence</h3>
+      <p>Rivals ship polished iOS/Android apps with App Store distribution and OS share sheets. bynku is a PWA (installable, but no store presence and no iOS share‑target).</p>
+    </div>
+    <div class="card gap">
+      <h3>Live investments &amp; net worth</h3>
+      <p>Monarch and Empower track investment accounts and net worth with live balances via sync. bynku tracks assets and projects manually.</p>
+    </div>
+    <div class="card gap">
+      <h3>Maturity, couples workflows, trust</h3>
+      <p>YNAB's education and community and Monarch's refined couples experience are battle‑tested at scale with large review bases. On raw categorisation quality, Copilot leads bynku's rule‑based engine. Rocket Money and Snoop even negotiate bills for you — bynku only suggests it.</p>
+    </div>
+  </div>
+
+  <h2>Where bynku leads competitors</h2>
+  <div class="grid2">
+    <div class="card win">
+      <h3>Cycle‑aware daily safe‑to‑spend</h3>
+      <p>Most rivals are calendar‑month. bynku budgets salary‑to‑salary (and quarterly for business) and leads with one approachable number. Genuinely differentiated.</p>
+    </div>
+    <div class="card win">
+      <h3>Richest capture for a no‑sync world</h3>
+      <p>Text, voice, receipt photo, any‑bank statement import, and Share‑to‑bynku — now with reliable structured‑output parsing. If bank sync stays costly, this is a real moat; rivals under‑invest here because they lean on the feed.</p>
+    </div>
+    <div class="card win">
+      <h3>Household <em>and</em> business in one app</h3>
+      <p>Real business finance — depreciation, P&amp;L / balance sheet / cash‑flow statements, accountant handoff, sector benchmarks. No consumer budgeting app offers this depth alongside a personal budget.</p>
+    </div>
+    <div class="card win">
+      <h3>EU‑native peer benchmarking</h3>
+      <p>"How you compare" on Eurostat expenditure, HFCS net worth/debt and SBS by sector, sliced by country, age and income. The US incumbents don't do European peer comparison.</p>
+    </div>
+    <div class="card win">
+      <h3>Grounded AI coach + planning</h3>
+      <p>The coach answers from the app's own computed math (baseline, surplus, plans), not generic tips — plus Plans and Fast Forward for forward‑looking what‑ifs.</p>
+    </div>
+    <div class="card win">
+      <h3>Unbiased ethos, privacy &amp; languages</h3>
+      <p>No products to sell, no ads; a privacy/encryption roadmap; five languages. Actual Budget's values, but as a polished, hosted, AI‑assisted, EU‑first app.</p>
+    </div>
+  </div>
+
+  <h2>Positioning &amp; strategy</h2>
+  <p>bynku occupies a wedge no single incumbent covers: <strong>EU‑native, privacy‑respecting, cycle‑aware, capture‑first, and dual household/business, with real peer benchmarks.</strong> That combination is defensible.</p>
+  <p>Its one true vulnerability is the missing bank feed. The recommended play is the one already sketched in the roadmap: keep widening the capture, benchmark, business and coach lead now, and add open banking later as a <strong>paid tier</strong> through a licensed aggregator, so paying users fund the per‑connection cost rather than it being a free default.</p>
+  <div class="callout">
+    <strong>The line to own:</strong> Copilot wins on "never type anything." bynku can win on "understands your cycle, your country and your business — and isn't trying to sell you a product."
+  </div>
+
+  <h2>Sources</h2>
+  <p class="src">
+    NerdWallet, <a href="https://www.nerdwallet.com/finance/learn/best-budget-apps">Best budget apps 2026</a> ·
+    The Penny Hoarder, <a href="https://www.thepennyhoarder.com/budgeting/monarch-money-review/">Monarch Money review 2026</a> ·
+    Freenance, <a href="https://freenance.io/products/ynab-review-2026-budgeting-app-worth-it-european-investors/">YNAB review 2026 (EU)</a> ·
+    Forbes Advisor, <a href="https://www.forbes.com/advisor/banking/copilot-budget-app-review/">Copilot Money review</a> ·
+    Expense Sorted, <a href="https://www.expensesorted.com/blog/144_actual_budget">Actual Budget vs YNAB</a> ·
+    The Penny Hoarder, <a href="https://www.thepennyhoarder.com/budgeting/cleo-app-review/">Cleo review 2026</a> ·
+    Which?, <a href="https://www.which.co.uk/money/money-saving-tips/budgeting/open-banking-budgeting-and-saving-apps-aLl3e0g9I7Ft">Open‑banking budgeting apps</a>.
+  </p>
+
+  <footer>
+    bynku competitive analysis · Compiled from public product pages and third‑party reviews as of August 2026; app pricing and features change frequently, so verify specifics before external use. Prepared for internal and beta‑community sharing.
+  </footer>
+</div>
+</body>
+</html>
