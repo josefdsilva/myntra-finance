@@ -216,15 +216,17 @@ function Dashboard() {
   const spent = dashboard?.spent ?? 0;
   const received = dashboard?.received ?? 0;
   const netSpent = Math.max(0, spent - received);
-  // Everyday allowance = baseline variable budget minus everyday spend, full stop.
-  const remaining = Math.max(0, variablePool - netSpent);
-  const overspent = netSpent > variablePool;
   // "Available" = genuinely free cash left this cycle, income-anchored: income
   // minus fixed+debt (fixedTotal already bundles debt), minus what's already set
-  // aside to projects, minus everyday spend so far. Contrasts with the headline
-  // baseline-derived allowance: when Available drops below the allowance you'd
-  // still spend, that spending is coming out of projects, not slack.
+  // aside to projects, minus everyday spend so far.
   const available = income - (dashboard?.fixedTotal ?? 0) - realAllocated - netSpent;
+  // Everyday allowance is the baseline variable budget minus everyday spend — but
+  // it can never exceed the free cash actually available. If project funding has
+  // pushed Available below the everyday budget, spending the whole budget would
+  // dip into projects, so safe-to-spend is capped at Available.
+  const everydayLeft = Math.max(0, variablePool - netSpent);
+  const remaining = Math.max(0, Math.min(everydayLeft, available));
+  const overspent = netSpent > variablePool;
   const cycle = dashboard?.cycle;
   const daysLeft = cycle?.daysLeft ?? 1;
   // A cycle "just rolled over" in its first few days. Pair that with any open
