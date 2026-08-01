@@ -1,6 +1,6 @@
 import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -160,8 +160,28 @@ function Wizard({
       (s !== "cycle" || isBusiness) &&
       (s !== "business" || isBusiness),
   );
-  const key = steps[step];
+  const key = steps[Math.min(step, steps.length - 1)];
   const isLast = step === steps.length - 1;
+
+  // Remember where the user got to, so re-entering the wizard resumes there
+  // instead of restarting at the welcome screen.
+  const stepKey = `bynku.onboarding.step.${householdId}`;
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem(stepKey));
+      if (Number.isFinite(v) && v > 0 && v < steps.length) setStep(v);
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(stepKey, String(step));
+    } catch {
+      /* ignore */
+    }
+  }, [step, stepKey]);
 
   async function next() {
     setBusy(true);
@@ -218,6 +238,11 @@ function Wizard({
     setBusy(true);
     try {
       await finishFn({ data: { household_id: householdId } });
+      try {
+        localStorage.removeItem(stepKey);
+      } catch {
+        /* ignore */
+      }
       // Await the household refetch so onboarded_at is fresh before navigating,
       // otherwise the shell's guard could bounce us back to /onboarding.
       await qc.invalidateQueries({ queryKey: ["household"] });
@@ -839,6 +864,7 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
   const [maturity, setMaturity] = useState("");
   const [dkind, setDkind] = useState<DebtKind>(isBusiness ? "business_loan" : "other");
   const [saving, setSaving] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const kindOptions = debtKindOptions(t, isBusiness);
 
   async function submit() {
@@ -875,52 +901,81 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
         title={t(isBusiness ? "ob.debt.titleBiz" : "ob.debt.title")}
         subtitle={t(isBusiness ? "ob.debt.subtitleBiz" : "ob.debt.subtitle")}
       />
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <Input
-            placeholder={t(isBusiness ? "ob.debt.namePhBiz" : "ob.debt.namePh")}
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-          />
-          <Input
-            className="w-28"
-            inputMode="decimal"
-            placeholder={t("ob.amountPh", { sym })}
-            value={monthly}
-            onChange={(e) => setMonthly(e.target.value)}
-          />
+      <div className="space-y-3">
+        <div>
+          <Label className="text-xs">{t("ob.debt.whatLabel")}</Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder={t(isBusiness ? "ob.debt.namePhBiz" : "ob.debt.namePh")}
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+            />
+            <Input
+              className="w-28"
+              inputMode="decimal"
+              placeholder={t("ob.debt.monthlyPh", { sym })}
+              value={monthly}
+              onChange={(e) => setMonthly(e.target.value)}
+            />
+          </div>
         </div>
-        <Select value={dkind} onValueChange={(v) => setDkind(v as DebtKind)}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {kindOptions.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex gap-2">
-          <Input
-            inputMode="decimal"
-            placeholder={t("ob.debt.principalPh", { sym })}
-            value={principal}
-            onChange={(e) => setPrincipal(e.target.value)}
-          />
-          <Input
-            className="w-24"
-            inputMode="decimal"
-            placeholder={t("ob.debt.ratePh")}
-            value={rate}
-            onChange={(e) => setRate(e.target.value)}
-          />
-          <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
-          <Button onClick={submit} disabled={saving || !label || !monthly}>
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          </Button>
+        <div>
+          <Label className="text-xs">{t("ob.debt.kindLabel")}</Label>
+          <Select value={dkind} onValueChange={(v) => setDkind(v as DebtKind)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {kindOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowDetails((v) => !v)}
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          {showDetails ? t("ob.debt.hideDetails") : t("ob.debt.moreDetails")}
+        </button>
+        {showDetails && (
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label className="text-xs">{t("ob.debt.balanceLabel")}</Label>
+              <Input
+                inputMode="decimal"
+                placeholder={t("ob.amountPh", { sym })}
+                value={principal}
+                onChange={(e) => setPrincipal(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">{t("ob.debt.rateLabel")}</Label>
+              <Input
+                inputMode="decimal"
+                placeholder={t("ob.debt.ratePh")}
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">{t("ob.debt.maturityLabel")}</Label>
+              <Input type="date" value={maturity} onChange={(e) => setMaturity(e.target.value)} />
+            </div>
+          </div>
+        )}
+        <Button className="w-full" onClick={submit} disabled={saving || !label || !monthly}>
+          {saving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <>
+              <Plus className="size-4" /> {t("ob.debt.addBtn")}
+            </>
+          )}
+        </Button>
       </div>
       <EntryList items={items} />
     </div>

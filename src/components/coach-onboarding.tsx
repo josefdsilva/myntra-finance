@@ -11,6 +11,7 @@ import {
   upsertFixedExpense,
   upsertVariableEstimate,
   upsertDebt,
+  upsertBucket,
 } from "@/lib/budget.functions";
 import { extractSetupItems } from "@/lib/onboarding-chat.functions";
 import { useT, type MessageKey } from "@/lib/i18n";
@@ -30,8 +31,15 @@ const COUNTRIES: Array<[string, string]> = [
 
 type Row = { label: string; monthly_amount: number };
 type Msg = { id: number; role: "coach" | "user"; text: string };
-type Topic = "income" | "fixed" | "variable" | "debt";
-const SCRIPT: Array<"country" | Topic> = ["country", "income", "fixed", "variable", "debt"];
+type Topic = "income" | "fixed" | "variable" | "debt" | "projects";
+const SCRIPT: Array<"country" | Topic> = [
+  "country",
+  "income",
+  "fixed",
+  "variable",
+  "debt",
+  "projects",
+];
 
 /**
  * Conversational onboarding — the controlled-hybrid "chat instead" path. The
@@ -56,6 +64,7 @@ export function CoachOnboarding({
   const addFixed = useServerFn(upsertFixedExpense);
   const addVariable = useServerFn(upsertVariableEstimate);
   const addDebt = useServerFn(upsertDebt);
+  const addBucket = useServerFn(upsertBucket);
   const extract = useServerFn(extractSetupItems);
 
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -80,6 +89,7 @@ export function CoachOnboarding({
       fixed: isBusiness ? "coachOb.fixedQBiz" : "coachOb.fixedQ",
       variable: isBusiness ? "coachOb.variableQBiz" : "coachOb.variableQ",
       debt: isBusiness ? "coachOb.debtQBiz" : "coachOb.debtQ",
+      projects: isBusiness ? "coachOb.projectsQBiz" : "coachOb.projectsQ",
     };
     return t(key[topic]);
   }
@@ -175,6 +185,16 @@ export function CoachOnboarding({
               taeg_pct: null,
               principal_remaining: null,
               maturity_date: null,
+            },
+          });
+        else if (topic === "projects")
+          await addBucket({
+            data: {
+              household_id: householdId,
+              name: r.label,
+              target_type: "fixed_monthly",
+              target_value: r.monthly_amount,
+              kind: "savings",
             },
           });
       }

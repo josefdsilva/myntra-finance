@@ -13,7 +13,7 @@ import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 const MODEL = "google/gemini-3-flash-preview";
 const TIMEOUT_MS = 45_000;
 
-const TOPICS = ["income", "fixed", "variable", "debt"] as const;
+const TOPICS = ["income", "fixed", "variable", "debt", "projects"] as const;
 type Topic = (typeof TOPICS)[number];
 
 const RawList = z.object({
@@ -59,6 +59,8 @@ const TOPIC_SYSTEM: Record<Topic, string> = {
     "Extract typical VARIABLE spending estimates (groceries, dining, fuel, materials). Give each a short label and a MONTHLY amount.",
   debt:
     "Extract debts, loans or financing, using the MONTHLY payment/instalment as the amount. Give each a short label and its MONTHLY payment.",
+  projects:
+    "Extract savings goals or projects the person wants to build (emergency fund, holiday, new equipment). Use the amount they want to SET ASIDE PER MONTH as the amount. Give each a short label and a monthly amount.",
 };
 
 /** Extract structured {label, monthly_amount} rows from a free-text answer. */
