@@ -1612,6 +1612,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "plans_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "plans_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
