@@ -52,7 +52,7 @@ function InvitePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle>{t("invite.title")}</CardTitle>
@@ -74,6 +74,6 @@ function InvitePage() {
           {state === "joining" && <Loader2 className="animate-spin mx-auto" />}
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

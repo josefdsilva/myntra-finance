@@ -37,6 +37,7 @@ function PrivacyPage() {
           </p>
         </header>
 
+        <main>
         <Section title="Who runs bynku">
           <p>
             bynku is a small, self-hosted household budgeting app. The developer operates it as a
@@ -205,6 +206,8 @@ function PrivacyPage() {
             date at the top and notify signed-in users in-app before the change takes effect.
           </p>
         </Section>
+
+        </main>
 
         <footer className="mt-12 border-t pt-6 text-xs text-muted-foreground">
           <p>
