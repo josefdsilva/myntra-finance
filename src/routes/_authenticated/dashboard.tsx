@@ -203,20 +203,22 @@ function Dashboard() {
   const surplus = Math.max(0, income - baseline);
   const realAllocated = realAlloc ?? 0;
 
-  // Plans claim the unallocated leftover first; anything beyond it spills into
-  // the everyday budget (lowering safe-to-spend), never the other way round.
+  // Plans claim the unallocated leftover surplus first; whatever they can't cover
+  // surfaces as pressure on "Available" and the real-surplus stat below. It no
+  // longer silently zeroes the everyday allowance — that was double-counting once
+  // "Available" began carrying project/plan pressure explicitly, and it produced
+  // a €0 daily number even when the everyday pool clearly had room.
   const leftover0 = Math.max(0, surplus - realAllocated);
   const obligation = plannedThisCycle ?? 0;
-  const planOverflow = Math.max(0, obligation - leftover0);
   const realSurplus = leftover0 - Math.min(obligation, leftover0);
 
   const variablePool = Math.max(0, baseline - (dashboard?.fixedTotal ?? 0));
   const spent = dashboard?.spent ?? 0;
   const received = dashboard?.received ?? 0;
   const netSpent = Math.max(0, spent - received);
-  const dailyClaim = netSpent + planOverflow; // everyday spend plus any plan overflow
-  const remaining = Math.max(0, variablePool - dailyClaim);
-  const overspent = dailyClaim > variablePool;
+  // Everyday allowance = baseline variable budget minus everyday spend, full stop.
+  const remaining = Math.max(0, variablePool - netSpent);
+  const overspent = netSpent > variablePool;
   // "Available" = genuinely free cash left this cycle, income-anchored: income
   // minus fixed+debt (fixedTotal already bundles debt), minus what's already set
   // aside to projects, minus everyday spend so far. Contrasts with the headline
@@ -251,9 +253,9 @@ function Dashboard() {
       : effHorizon === "week"
         ? "dashboard.safe.labelWeek"
         : "dashboard.safe.labelCycle";
-  const pctSpent = variablePool > 0 ? Math.min(100, (dailyClaim / variablePool) * 100) : 0;
+  const pctSpent = variablePool > 0 ? Math.min(100, (netSpent / variablePool) * 100) : 0;
 
-  const overspendAmount = Math.max(0, dailyClaim - variablePool);
+  const overspendAmount = Math.max(0, netSpent - variablePool);
   const buckets = dashboard?.buckets ?? [];
 
   // Trend: compare with yesterday's safe-to-spend (spent through end of yesterday, days-left as of yesterday)
