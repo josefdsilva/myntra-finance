@@ -14,6 +14,34 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "snapshot.score.income": {
+    en: "Income",
+    pt: "Rendimento",
+    es: "Ingresos",
+    de: "Einkommen",
+    fr: "Revenu",
+  },
+  "snapshot.score.consumption": {
+    en: "Consumption",
+    pt: "Consumo",
+    es: "Consumo",
+    de: "Konsum",
+    fr: "Consommation",
+  },
+  "snapshot.score.deploy": {
+    en: "Deploying surplus",
+    pt: "Aplicar o excedente",
+    es: "Invertir el excedente",
+    de: "Überschuss anlegen",
+    fr: "Placer l'excédent",
+  },
+  "snapshot.score.funding": {
+    en: "Project funding",
+    pt: "Financiar projetos",
+    es: "Financiar proyectos",
+    de: "Projekt-Finanzierung",
+    fr: "Financement des projets",
+  },
   "setup.title": {
     en: "Finish setting up",
     pt: "Terminar a configuração",

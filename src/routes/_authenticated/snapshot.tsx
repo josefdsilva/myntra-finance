@@ -33,6 +33,8 @@ import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
 import { computeHealth, computeBusinessHealth, type Badge as BadgeKind } from "@/lib/health-score";
+import { getCountryBenchmark, percentileFromDeciles } from "@/lib/benchmarks";
+import { defaultIntentForCategory } from "@/lib/intent";
 import { pageShellClass } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -87,7 +89,7 @@ function SnapshotPage() {
         supabase.from("account_movements").select("*").eq("household_id", householdId!),
         supabase
           .from("expenses")
-          .select("amount, kind, is_salary, merchant")
+          .select("amount, kind, is_salary, merchant, intent, category")
           .eq("household_id", householdId!)
           .gte("occurred_at", cycle.start.toISOString())
           .lt("occurred_at", cycle.end.toISOString()),
@@ -171,6 +173,50 @@ function SnapshotPage() {
       const netWorth = assetsTotal + bucketsTotal - debtRemaining;
       const hasNetWorthData = assetsTotal > 0 || bucketsTotal > 0 || debtRemaining > 0;
 
+      // --- New household scorecard inputs (income, consumption, deploy, funding) --
+      // Consumption quality: share of this cycle's variable spend that is
+      // nice-to-have or treat (from each expense's tag, or its category default).
+      let superSum = 0;
+      for (const r of expenses ?? []) {
+        if (r.kind === "income") continue;
+        const level =
+          (r.intent as string | null) || defaultIntentForCategory(String(r.category ?? "other"));
+        if (level === "nice_to_have" || level === "treat") superSum += Number(r.amount);
+      }
+      const superfluousShare = spent > 0 ? Math.min(1, superSum / spent) : null;
+
+      // Invested holdings = investment-kind projects + quickly-sellable assets.
+      const investedFromBuckets = buckets
+        .filter((b) => b.kind === "investment" && !linkedBucketIds.has(b.id))
+        .reduce((s, b) => s + Math.max(0, balances[b.id] ?? 0), 0);
+      const investedAmount = investedFromBuckets + Math.max(0, liquidAssets);
+
+      // Funding consistency: average funded fraction across projects with a target.
+      const targeted = buckets.filter(
+        (b) => !linkedBucketIds.has(b.id) && Number(b.target_value) > 0,
+      );
+      const fundedFraction =
+        targeted.length > 0
+          ? targeted.reduce(
+              (s, b) => s + Math.min(1, Math.max(0, balances[b.id] ?? 0) / Number(b.target_value)),
+              0,
+            ) / targeted.length
+          : null;
+
+      // Income percentile vs the country's equivalised-income deciles — leak-free
+      // (only the relative position is used). OECD-modified equivalence scale.
+      const adults = Math.max(1, Number(hh?.household?.adults ?? 1));
+      const children = Math.max(0, Number(hh?.household?.children ?? 0));
+      const equivFactor = 1 + 0.5 * (adults - 1) + 0.3 * children;
+      const equivAnnual = (income * 12) / (equivFactor || 1);
+      const bench = getCountryBenchmark(hh?.household?.country);
+      const incomePercentile = bench?.incomeDecilesAnnualEquivalised
+        ? percentileFromDeciles(
+            equivAnnual,
+            bench.incomeDecilesAnnualEquivalised as Parameters<typeof percentileFromDeciles>[1],
+          )
+        : null;
+
       // --- Business indicators ------------------------------------------------
       // Revenue diversification: the monthly amount of each income stream, plus
       // the distinct payers/clients seen in this cycle's receipts.
@@ -203,6 +249,11 @@ function SnapshotPage() {
         variablePool,
         variableSpent,
         cycleProgress,
+        // New scorecard inputs
+        incomePercentile,
+        superfluousShare,
+        investedAmount,
+        fundedFraction,
         // Business
         incomeSources,
         distinctClients,
@@ -380,10 +431,14 @@ const BADGE_META: Record<BadgeKind, { icon: typeof Sparkles; tone: string }> = {
 };
 
 const SCORE_LABELS: Record<string, string> = {
-  savings: "snapshot.score.savings",
+  income: "snapshot.score.income",
+  consumption: "snapshot.score.consumption",
   emergency: "snapshot.score.emergency",
+  deploy: "snapshot.score.deploy",
   debt: "snapshot.score.debt",
+  funding: "snapshot.score.funding",
   networth: "snapshot.score.networth",
+  savings: "snapshot.score.savings",
   budget: "snapshot.score.budget",
   // Business pillars
   cashflow: "snapshot.score.cashflow",

@@ -8,9 +8,12 @@
 export type ScoreInputs = {
   /** Monthly recurring income. */
   income: number;
-  /** Real money set aside into projects this cycle (confirmed allocations +
-   * net deposits into projects). This is actual saving, not leftover surplus. */
-  savedThisCycle: number;
+  /** Monthly amount of each income source (to gauge concentration/resilience). */
+  incomeSources: number[];
+  /** 1-99 percentile of the household's equivalised income vs the country's
+   * income deciles. null when there's no benchmark for the country. Leak-free:
+   * only the relative position is used, never the amount. */
+  incomePercentile: number | null;
   /** Monthly fixed expenses + monthly debt payments. */
   fixedTotal: number;
   /** Monthly debt payments only. */
@@ -20,14 +23,21 @@ export type ScoreInputs = {
   /** Current value of quickly-sellable assets (stocks, bonds, funds) — a real,
    * if secondary, emergency backstop on top of project balances. */
   liquidAssets: number;
-  /** Net worth = assets + project balances − outstanding loan balances. Scored as
-   * its own pillar (a multiple of annual income) and drives the net-worth badge. */
+  /** Money that is actually invested (investment-kind projects + liquid assets).
+   * Used to reward deploying a surplus beyond the emergency buffer. */
+  investedAmount: number;
+  /** Net worth = assets + project balances − outstanding loan balances. */
   netWorth: number;
-  /** Whether the household has enough recorded (assets, savings, or debt) for net
-   * worth to be meaningful. When false, the net-worth pillar is not scored. */
+  /** Whether there's enough recorded for net worth to be meaningful. */
   hasNetWorthData: boolean;
   /** Whether at least one bucket has kind = "investment". */
   hasInvestment: boolean;
+  /** Average funded fraction [0..1] across projects that have a target; null when
+   * no project carries a target (funding-consistency pillar not scored). */
+  fundedFraction: number | null;
+  /** nice-to-have + treat share of variable spend this cycle [0..1]; null when
+   * there's too little tagged spend to judge (consumption quality half not scored). */
+  superfluousShare: number | null;
   /** Variable pool for the current cycle (baseline - fixed). */
   variablePool: number;
   /** Net variable spend so far this cycle (spent - non-salary income). */
@@ -38,6 +48,10 @@ export type ScoreInputs = {
 
 export type SubScore = {
   key:
+    | "income"
+    | "consumption"
+    | "deploy"
+    | "funding"
     | "savings"
     | "emergency"
     | "debt"
@@ -86,95 +100,112 @@ function clamp(n: number, lo = 0, hi = 100): number {
 export function computeHealth(input: ScoreInputs): HealthResult {
   const {
     income,
-    savedThisCycle,
+    incomeSources,
+    incomePercentile,
     fixedTotal,
     debtMonthly,
     bucketsTotal,
     liquidAssets,
+    investedAmount,
     netWorth,
     hasNetWorthData,
     hasInvestment,
+    fundedFraction,
+    superfluousShare,
     variablePool,
-    variableSpent,
     cycleProgress,
   } = input;
 
-  // --- Ratios with honest denominators --------------------------------------
-  // Savings = money actually moved into projects this cycle, not the leftover
-  // after fixed costs (which most households have but never save).
-  const savedRate = income > 0 ? Math.max(0, savedThisCycle) / income : 0;
-  const debtRatio = income > 0 ? debtMonthly / income : 0;
-  // Emergency runway is measured against TOTAL monthly outgoings (fixed +
-  // everyday pool), not fixed costs alone — money you'd actually need to cover.
-  // Accessible buffer = project balances + quickly-sellable assets (stocks,
-  // bonds, funds); illiquid assets like a house are not a real emergency source.
-  const totalOutgoings = Math.max(1, fixedTotal + Math.max(0, variablePool));
+  const outgoings = Math.max(1, fixedTotal + Math.max(0, variablePool));
   const accessibleBuffer = bucketsTotal + Math.max(0, liquidAssets);
-  const monthsOfEmergency = accessibleBuffer / totalOutgoings;
+  const monthsOfEmergency = accessibleBuffer / outgoings;
+  const debtRatio = income > 0 ? debtMonthly / income : 0;
+  // Headroom = share of income not consumed by outgoings; drives the reported
+  // savingsRate + badge and anchors the consumption pillar.
+  const headroom = income > 0 ? (income - outgoings) / income : 0;
 
-  // --- Sub-scores. sqrt curves are "encouraging": they reward early progress
-  //     while still requiring a lot for a perfect mark. ------------------------
-  // 20% real savings rate = 100; ~5% already reaches ~50.
-  const savingsRaw = clamp(100 * Math.sqrt(Math.min(1, savedRate / 0.2)));
-  // A just-started cycle hasn't had time to fund projects, so the raw figure is
-  // unreliable early on. Ease from a neutral 55 toward the real number as the
-  // cycle elapses (mirrors the budget pillar), so the headline doesn't crater on
-  // day one of a new cycle. Full weight by ~40% elapsed.
-  const savingsConfidence = Math.min(1, cycleProgress / 0.4);
-  const savings = clamp(55 + (savingsRaw - 55) * savingsConfidence);
-  // 6 months of total outgoings = 100; 3 months ≈ 71, 1 month ≈ 41.
-  const emergency = clamp(100 * Math.sqrt(Math.min(1, monthsOfEmergency / 6)));
-  // 0% debt-to-income = 100, 40% = 0.
-  const debt = clamp(100 - debtRatio * 250);
+  // 1. INCOME — resilience of sources + where the income sits vs peers. A single
+  //    income is normal for a household (~60 baseline); extra balanced sources
+  //    lift it, and the percentile adds the "higher income helps" signal, using
+  //    only the relative position so no amount leaks.
+  const effN = effectiveSources(incomeSources);
+  const sourcesScore = clamp(60 + 40 * Math.sqrt(Math.min(1, Math.max(0, effN - 1) / 2)));
+  const incomeScore =
+    incomePercentile != null
+      ? clamp(0.5 * sourcesScore + 0.5 * clamp(incomePercentile))
+      : sourcesScore;
 
-  // Budget discipline: spend pace vs elapsed fraction. Only meaningful once the
-  // household has everyday estimates AND some of the cycle has elapsed; until
-  // then it stays a neutral 50 and is excluded from the overall (no free 100).
-  const budgetScored = variablePool > 0;
-  let budget = 50;
-  if (budgetScored) {
-    const expected = variablePool * cycleProgress;
-    const drift = Math.abs(variableSpent - expected) / variablePool;
-    const raw = clamp(100 - drift * 150);
-    // Damp early-cycle certainty toward a neutral 60 until ~40% has elapsed.
-    const confidence = Math.min(1, cycleProgress / 0.4);
-    budget = clamp(60 + (raw - 60) * confidence);
+  // 2. CONSUMPTION — living within income + quality of spend. Consuming below
+  //    income (room to save) scores high; at income is weak; above income (a
+  //    deficit) drops toward 0. The superfluous (nice-to-have + treat) share
+  //    refines it, damped early-cycle until there's enough tagged spend.
+  const consRatio = income > 0 ? outgoings / income : 1.5;
+  let within: number;
+  if (consRatio <= 0.6) within = 100;
+  else if (consRatio <= 1) within = 100 - ((consRatio - 0.6) / 0.4) * 55; // 1.0 → 45
+  else within = 45 - Math.min(1, (consRatio - 1) / 0.2) * 45; // ≥1.2 → 0
+  within = clamp(within);
+  let consumption = within;
+  if (superfluousShare != null) {
+    const rawS = clamp(100 - superfluousShare * 130); // 0 → 100, ~0.5 → ~35
+    const conf = Math.min(1, cycleProgress / 0.4);
+    const superScore = clamp(60 + (rawS - 60) * conf);
+    consumption = clamp(0.6 * within + 0.4 * superScore);
   }
 
-  // Net worth pillar: a stock, scored as a multiple of annual income. Negative
-  // (underwater) scores low, zero is weak, and it climbs with wealth, saturating
-  // around 6x annual income. Only scored once there's something to measure.
+  // 3. EMERGENCY BUFFER — months of outgoings covered. 3mo decent, 6mo strong,
+  //    9mo full.
+  const emergency = clamp(100 * Math.sqrt(Math.min(1, monthsOfEmergency / 9)));
+
+  // 4. DEPLOY SURPLUS — only once a full buffer exists (≥6 months); a large idle
+  //    cash pile beyond that is sub-optimal, so reward investing the excess.
+  const deployScored = monthsOfEmergency >= 6;
+  const investedShare =
+    accessibleBuffer > 0 ? Math.min(1, Math.max(0, investedAmount) / accessibleBuffer) : 0;
+  const deploy = clamp(30 + 70 * Math.sqrt(investedShare));
+
+  // 5. DEBT — debt-to-income. 0% = 100, 40% = 0.
+  const debt = clamp(100 - debtRatio * 250);
+
+  // 6. FUNDING CONSISTENCY — progress toward project targets (a stock, so it's
+  //    stable across the cycle). Only scored when a project carries a target.
+  const fundingScored = fundedFraction != null;
+  const funding = clamp(100 * (fundedFraction ?? 0));
+
+  // 7. NET WORTH — a multiple of annual income (as before).
   const netWorthScored = hasNetWorthData;
   const annualIncome = Math.max(1, income * 12);
   const nwMult = netWorth / annualIncome;
-  let netWorthScore: number;
-  if (nwMult >= 6) netWorthScore = 100;
-  else if (nwMult >= 3) netWorthScore = 85 + 5 * (nwMult - 3);
-  else if (nwMult >= 1) netWorthScore = 60 + 12.5 * (nwMult - 1);
-  else if (nwMult >= 0) netWorthScore = 30 + 30 * nwMult;
-  else if (nwMult > -1) netWorthScore = 30 * (1 + nwMult);
-  else netWorthScore = 0;
-  netWorthScore = clamp(netWorthScore);
+  let networth: number;
+  if (nwMult >= 6) networth = 100;
+  else if (nwMult >= 3) networth = 85 + 5 * (nwMult - 3);
+  else if (nwMult >= 1) networth = 60 + 12.5 * (nwMult - 1);
+  else if (nwMult >= 0) networth = 30 + 30 * nwMult;
+  else if (nwMult > -1) networth = 30 * (1 + nwMult);
+  else networth = 0;
+  networth = clamp(networth);
 
   const scores: SubScore[] = [
-    { key: "savings", value: Math.round(savings) },
+    { key: "income", value: Math.round(incomeScore) },
+    { key: "consumption", value: Math.round(consumption) },
     { key: "emergency", value: Math.round(emergency) },
     { key: "debt", value: Math.round(debt) },
-    { key: "budget", value: Math.round(budget) },
   ];
-  if (netWorthScored) {
-    scores.splice(3, 0, { key: "networth", value: Math.round(netWorthScore) });
-  }
+  if (fundingScored) scores.push({ key: "funding", value: Math.round(funding) });
+  if (deployScored) scores.push({ key: "deploy", value: Math.round(deploy) });
+  if (netWorthScored) scores.push({ key: "networth", value: Math.round(networth) });
 
-  // Overall blends the average with the weakest pillar so one genuinely weak
-  // area drags the headline down without zeroing it out. Budget and net worth
-  // only count once they are actually measurable.
+  // The headline is now dominated by stable STOCKS (buffer, net worth, debt,
+  // income), so a fresh cycle can't swing it; the weakest pillar still drags it
+  // down so one soft spot shows.
   const agg = [
-    savings,
+    incomeScore,
+    consumption,
     emergency,
     debt,
-    ...(budgetScored ? [budget] : []),
-    ...(netWorthScored ? [netWorthScore] : []),
+    ...(fundingScored ? [funding] : []),
+    ...(deployScored ? [deploy] : []),
+    ...(netWorthScored ? [networth] : []),
   ];
   const mean = agg.reduce((s, v) => s + v, 0) / agg.length;
   const weakest = Math.min(...agg);
@@ -183,8 +214,7 @@ export function computeHealth(input: ScoreInputs): HealthResult {
   const badges: Badge[] = [];
   if (monthsOfEmergency >= 3) badges.push("emergency_ready");
   if (debtRatio < 0.15) badges.push("debt_slayer");
-  if (savedRate >= 0.1) badges.push("consistent_saver");
-  if (budgetScored && budget >= 80) badges.push("budget_hero");
+  if ((fundedFraction ?? 0) >= 0.5) badges.push("consistent_saver");
   if (hasInvestment) badges.push("investing");
   if (netWorth > 0) badges.push("net_worth_positive");
   if (badges.length === 0) badges.push("getting_started");
@@ -194,7 +224,7 @@ export function computeHealth(input: ScoreInputs): HealthResult {
     scores,
     badges,
     monthsOfEmergency: Math.round(monthsOfEmergency * 10) / 10,
-    savingsRate: Math.round(savedRate * 100) / 100,
+    savingsRate: Math.round(Math.max(0, headroom) * 100) / 100,
     debtRatio: Math.round(debtRatio * 100) / 100,
   };
 }
