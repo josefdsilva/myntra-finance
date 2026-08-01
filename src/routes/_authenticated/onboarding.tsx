@@ -35,6 +35,8 @@ import { StatementImportButton } from "@/components/statement-import-flow";
 import { money, currencySymbol } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
+import { groupSectors, NACE_SECTIONS } from "@/lib/business-benchmarks";
+import { debtKindOptions, type DebtKind } from "@/lib/debt-kinds";
 
 import {
   Plus,
@@ -50,6 +52,7 @@ import {
   TrendingUp,
   TrendingDown,
   Gem,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -82,6 +85,7 @@ const STEPS = [
   "welcome",
   "country",
   "cycle",
+  "business",
   "household",
   "income",
   "fixed",
@@ -139,13 +143,20 @@ function Wizard({
   const [ageBand, setAgeBand] = useState<string>("");
   const [cycleLen, setCycleLen] = useState<Cycle>("quarterly");
   const [fiscalStart, setFiscalStart] = useState("");
+  const [sector, setSector] = useState("");
+  const [employees, setEmployees] = useState("");
+  const [advisorEmail, setAdvisorEmail] = useState("");
 
   const isBusiness = kind === "business";
   // A business space skips the household (adults/children) demographics step but
-  // gets a fiscal-cycle step instead; personal spaces are the reverse (their
-  // cycle is payday-driven, so there's nothing to configure).
+  // gets a fiscal-cycle step and an "about your business" step (sector, employees,
+  // advisor) that power the benchmarks and accountant handoff; personal spaces are
+  // the reverse (their cycle is payday-driven, so there's nothing to configure).
   const steps = STEPS.filter(
-    (s) => (s !== "household" || !isBusiness) && (s !== "cycle" || isBusiness),
+    (s) =>
+      (s !== "household" || !isBusiness) &&
+      (s !== "cycle" || isBusiness) &&
+      (s !== "business" || isBusiness),
   );
   const key = steps[step];
   const isLast = step === steps.length - 1;
@@ -161,6 +172,15 @@ function Wizard({
             cycle_mode: "time",
             cycle: cycleLen,
             cycle_anchor_date: fiscalStart || null,
+          },
+        });
+      if (key === "business")
+        await updateHh({
+          data: {
+            household_id: householdId,
+            sector: sector || null,
+            employees: employees ? Math.max(0, Math.round(parseFloat(employees))) : 0,
+            advisor_email: advisorEmail.trim() || null,
           },
         });
       if (key === "household")
@@ -224,6 +244,16 @@ function Wizard({
               setCycleLen={setCycleLen}
               fiscalStart={fiscalStart}
               setFiscalStart={setFiscalStart}
+            />
+          )}
+          {key === "business" && (
+            <BusinessStep
+              sector={sector}
+              setSector={setSector}
+              employees={employees}
+              setEmployees={setEmployees}
+              advisorEmail={advisorEmail}
+              setAdvisorEmail={setAdvisorEmail}
             />
           )}
           {key === "household" && (
@@ -407,6 +437,77 @@ function Stepper({
         <Button variant="outline" size="icon" onClick={() => setValue(value + 1)}>
           +
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function BusinessStep({
+  sector,
+  setSector,
+  employees,
+  setEmployees,
+  advisorEmail,
+  setAdvisorEmail,
+}: {
+  sector: string;
+  setSector: (v: string) => void;
+  employees: string;
+  setEmployees: (v: string) => void;
+  advisorEmail: string;
+  setAdvisorEmail: (v: string) => void;
+}) {
+  const t = useT();
+  return (
+    <div>
+      <StepHead
+        icon={Building2}
+        title={t("ob.business.title")}
+        subtitle={t("ob.business.subtitle")}
+      />
+      <div className="space-y-4">
+        <div>
+          <Label>{t("ob.business.sectorLabel")}</Label>
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={sector}
+            onChange={(e) => setSector(e.target.value)}
+          >
+            <option value="">{t("ob.business.sectorPh")}</option>
+            {groupSectors().map(([section, sectors]) => (
+              <optgroup key={section} label={NACE_SECTIONS[section] ?? section}>
+                {sectors.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-muted-foreground">{t("ob.business.sectorHint")}</p>
+        </div>
+        <div>
+          <Label>{t("ob.business.employeesLabel")}</Label>
+          <Input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={employees}
+            onChange={(e) => setEmployees(e.target.value)}
+            placeholder="0"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">{t("ob.business.employeesHint")}</p>
+        </div>
+        <div>
+          <Label>{t("ob.business.advisorLabel")}</Label>
+          <Input
+            type="email"
+            value={advisorEmail}
+            onChange={(e) => setAdvisorEmail(e.target.value)}
+            placeholder="advisor@firm.com"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">{t("ob.business.advisorHint")}</p>
+        </div>
       </div>
     </div>
   );
@@ -712,7 +813,9 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("");
   const [maturity, setMaturity] = useState("");
+  const [dkind, setDkind] = useState<DebtKind>(isBusiness ? "business_loan" : "other");
   const [saving, setSaving] = useState(false);
+  const kindOptions = debtKindOptions(t, isBusiness);
 
   async function submit() {
     if (!label || !monthly) return;
@@ -722,7 +825,7 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
         data: {
           household_id: householdId,
           label,
-          kind: "other",
+          kind: dkind,
           monthly_amount: parseFloat(monthly) || 0,
           taeg_pct: rate ? parseFloat(rate) : null,
           principal_remaining: principal ? parseFloat(principal) : null,
@@ -734,6 +837,7 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
       setPrincipal("");
       setRate("");
       setMaturity("");
+      setDkind(isBusiness ? "business_loan" : "other");
       qc.invalidateQueries({ queryKey: ["ob-debts", householdId] });
     } finally {
       setSaving(false);
@@ -762,6 +866,18 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
             onChange={(e) => setMonthly(e.target.value)}
           />
         </div>
+        <Select value={dkind} onValueChange={(v) => setDkind(v as DebtKind)}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {kindOptions.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="flex gap-2">
           <Input
             inputMode="decimal"
@@ -815,6 +931,7 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
   const [current, setCurrent] = useState("");
   const [acquired, setAcquired] = useState("");
   const [acquiredOn, setAcquiredOn] = useState("");
+  const [deprYears, setDeprYears] = useState("");
   const [saving, setSaving] = useState(false);
 
   const KIND_LABEL: Record<string, string> = {
@@ -840,12 +957,20 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
           acquired_value: acquired ? parseFloat(acquired.replace(",", ".")) : null,
           acquired_on: acquiredOn || null,
           current_value: parseFloat(current.replace(",", ".")) || 0,
+          ...(isBusiness && deprYears && parseFloat(deprYears) > 0
+            ? {
+                depreciation_method: "straight_line" as const,
+                useful_life_months: Math.round(parseFloat(deprYears) * 12),
+                depreciation_start: acquiredOn || null,
+              }
+            : {}),
         },
       });
       setName("");
       setCurrent("");
       setAcquired("");
       setAcquiredOn("");
+      setDeprYears("");
       qc.invalidateQueries({ queryKey: ["ob-assets", householdId] });
     } finally {
       setSaving(false);
@@ -903,6 +1028,19 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
           </Button>
         </div>
+        {isBusiness && (
+          <div>
+            <Input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              placeholder={t("ob.assets.deprYearsPh")}
+              value={deprYears}
+              onChange={(e) => setDeprYears(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">{t("ob.assets.deprHint")}</p>
+          </div>
+        )}
       </div>
       {items.length > 0 && (
         <ul className="mt-4 divide-y rounded-xl border">
