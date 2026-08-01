@@ -130,12 +130,14 @@ function Dashboard() {
   // was actually set aside, not the planned target.
   const { data: realAlloc } = useQuery({
     enabled: !!householdId,
-    queryKey: ["dashboard-real-alloc", householdId],
+    queryKey: ["dashboard-real-alloc", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      const now = new Date();
-      const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+      // Scope to the payday cycle, not the calendar month — a cycle can straddle
+      // two months, so counting only "this month" understates what was set aside.
+      const bounds = await fetchCycleBounds(supabase, householdId!, hh?.household);
+      const period = `${bounds.start.getFullYear()}-${String(
+        bounds.start.getMonth() + 1,
+      ).padStart(2, "0")}-01`;
       const [{ data: confs }, { data: moves }] = await Promise.all([
         supabase
           .from("bucket_allocations")
@@ -146,8 +148,8 @@ function Dashboard() {
           .from("account_movements")
           .select("amount, to_type, from_type, reason")
           .eq("household_id", householdId!)
-          .gte("created_at", monthStart)
-          .lt("created_at", nextMonth)
+          .gte("created_at", bounds.start.toISOString())
+          .lt("created_at", bounds.end.toISOString())
           .or("to_type.eq.bucket,from_type.eq.bucket"),
       ]);
       const confirmed = (confs ?? []).reduce((s, c) => s + Number(c.amount), 0);
