@@ -21,6 +21,7 @@ import { debtLiveSchedule, type Debt } from "./debt-schedule";
 import { computeDepreciation } from "./depreciation";
 import { buildForecast, monthKey, type Plan } from "./plan";
 import { summariseIntent, resolveIntent, isDiscretionary } from "./intent";
+import { trend, deltaVsPrev, meanSignedErrorPct } from "./cycle-metrics";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
 const MODEL = "google/gemini-3-flash-preview";
@@ -249,8 +250,52 @@ type CoachContext = {
   cycleStartKey: string; // yyyy-mm-dd for cache
   /** How this space's budgeting cycle works, so advice matches its rhythm. */
   cycleRhythm: { mode: string; length: string; kind: string };
+  /**
+   * Cross-cycle history (the compounding-value layer): how the score is trending
+   * and how the household's own estimates compare with what really happened, so
+   * the coach can calibrate advice ("your everyday estimate has run ~12% low for
+   * 3 cycles"). null until there are at least two closed cycles on record.
+   */
+  history: {
+    cyclesTracked: number;
+    scoreLatest: number | null;
+    scoreDeltaVsPrev: number | null;
+    scoreDirection: "up" | "down" | "flat";
+    /** Signed % the everyday spend ran vs the everyday estimate (+ = overspent). */
+    everydayDriftPct: number | null;
+    /** Signed % income landed vs what was expected (+ = more than expected). */
+    incomeDriftPct: number | null;
+    /** How many cycles the drift figures are averaged over. */
+    driftCycles: number;
+  } | null;
 };
 
+
+type MetricLite = {
+  score_overall: number | null;
+  everyday_pool: number | null;
+  everyday_spent: number | null;
+  income_expected: number | null;
+  income_actual: number | null;
+};
+
+/** Condense recent cycle_metrics into the coach's cross-cycle history block. */
+function buildHistory(rows: MetricLite[]): CoachContext["history"] {
+  if (rows.length < 2) return null;
+  const scored = rows.filter((r) => typeof r.score_overall === "number");
+  const scoreVals = scored.map((r) => Number(r.score_overall));
+  const everyday = meanSignedErrorPct(rows, "everyday_pool", "everyday_spent");
+  const income = meanSignedErrorPct(rows, "income_expected", "income_actual");
+  return {
+    cyclesTracked: rows.length,
+    scoreLatest: scored.length ? scoreVals[scoreVals.length - 1] : null,
+    scoreDeltaVsPrev: scored.length >= 2 ? deltaVsPrev(scored, "score_overall") : null,
+    scoreDirection: trend(scoreVals).direction,
+    everydayDriftPct: everyday?.pct ?? null,
+    incomeDriftPct: income?.pct ?? null,
+    driftCycles: Math.max(everyday?.n ?? 0, income?.n ?? 0),
+  };
+}
 
 async function buildContext(supabase: Supa, householdId: string): Promise<CoachContext> {
   const { data: hh } = await supabase
@@ -289,6 +334,16 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     prevEnd = new Date(salaryDatesDesc[0]);
     prevStart = new Date(salaryDatesDesc[1]);
   }
+
+  // Cross-cycle history (compounding-value layer): score trend + how the
+  // household's own estimates have compared with reality, for calibration advice.
+  const { data: metricRows } = await supabase
+    .from("cycle_metrics")
+    .select("score_overall, everyday_pool, everyday_spent, income_expected, income_actual")
+    .eq("household_id", householdId)
+    .order("cycle_start", { ascending: true })
+    .limit(12);
+  const history = buildHistory((metricRows ?? []) as MetricLite[]);
 
   const startISO = cycle.start.toISOString();
   const endISO = cycle.end.toISOString();
@@ -905,6 +960,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
       length: cycleCfg.length,
       kind: hh?.kind === "business" ? "business" : "personal",
     },
+    history,
   };
 }
 
@@ -969,6 +1025,7 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - settingsIncome (monthly income), baseline (target cost of living), monthlySurplus (= settingsIncome − baseline), safeNewMonthlyCommitment, emergencyFundMonths, debtToIncomePct.
 - incomeSources[] lists each income with its type (salary, rent, pension, benefits, other). Use it to judge how stable and diversified the income is: a single salary is more fragile than a pension or benefits, and if most income is one source, note the concentration gently. Rent income implies an owned property.
 - savingsRatePct is the REALIZED savings rate: what the household actually set aside vs. what it actually earned (avgRealAllocPerCycle ÷ avgIncomePerCycle over savingsRateCycles complete months). This is the headline rate — quote it as the savings rate. If savingsRatePct is null, there isn't a full month of income history yet; say so and lean on potentialSavingsRatePct instead of inventing a rate.
+- history (may be null until 2+ closed cycles): cross-cycle progress. history.scoreDirection + scoreDeltaVsPrev show whether the financial score is improving. history.everydayDriftPct and incomeDriftPct compare the household's own estimates with reality — a POSITIVE everydayDriftPct means they consistently spend ABOVE their everyday estimate (baseline may be set too low), a positive incomeDriftPct means income lands above expectation. When drift is large and persistent (|pct| ≳ 10 over driftCycles ≥ 3), gently suggest fine-tuning the estimate; never scold. Acknowledge a rising score as real progress.
 - potentialSavingsRatePct is the household's CAPACITY to save (monthlySurplus ÷ income). Use it to contrast with the realized rate: when potential exceeds realized, encourage saving/investing more of the headroom; when they are close, acknowledge they're already converting most of their surplus. emergencyFundMonths already counts pre-funded project balances, so trust it.
 - Projects are typed: each buckets[] item has kind ∈ savings | emergency | investment. Balances are split into emergencyBalance, savingsBalance and investmentBalance; liquidReserve is the safety cushion (emergency projects if hasEmergencyBucket, else all non-investment savings) and is what emergencyFundMonths measures — investments are excluded on purpose because they shouldn't be raided.
 - assets[] are significant things the household owns (property, vehicles, stocks, bonds, funds, a business) with currentValue; assetsTotal is their sum and liquidAssetsTotal is the quickly-sellable part (stocks/bonds/funds). netWorth = assetsTotal + totalSavings − debtPrincipalOutstanding (bank cash is not tracked, so it is excluded). Use netWorth for the big-picture "how am I really doing" and solvency questions, and treat liquidAssetsTotal as a secondary emergency backstop BEHIND liquidReserve.

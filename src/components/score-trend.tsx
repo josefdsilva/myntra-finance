@@ -14,16 +14,21 @@ import { TrendingUp, TrendingDown, Minus, LineChart as LineChartIcon } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useT, type MessageKey } from "@/lib/i18n";
-import { deltaVsPrev } from "@/lib/cycle-metrics";
+import { deltaVsPrev, meanSignedErrorPct } from "@/lib/cycle-metrics";
 
 type MetricRow = {
   cycle_start: string;
   cycle_end: string;
   score_overall: number | null;
   source: string;
+  everyday_pool: number | null;
+  everyday_spent: number | null;
+  income_expected: number | null;
+  income_actual: number | null;
+  superfluous_share: number | null;
 };
 
-/** Cycle-metrics history for a space, oldest first. Shared by both variants. */
+/** Cycle-metrics history for a space, oldest first. Shared by all variants. */
 function useCycleMetrics(householdId?: string) {
   return useQuery({
     enabled: !!householdId,
@@ -31,7 +36,9 @@ function useCycleMetrics(householdId?: string) {
     queryFn: async (): Promise<MetricRow[]> => {
       const { data } = await supabase
         .from("cycle_metrics")
-        .select("cycle_start, cycle_end, score_overall, source")
+        .select(
+          "cycle_start, cycle_end, score_overall, source, everyday_pool, everyday_spent, income_expected, income_actual, superfluous_share",
+        )
         .eq("household_id", householdId!)
         .order("cycle_start", { ascending: true });
       return (data ?? []) as MetricRow[];
@@ -123,6 +130,67 @@ export function ScoreTrendMini({
           <DeltaChip delta={delta} />
         </div>
         <Spark values={values} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function DriftRow({ label, pct }: { label: string; pct: number | null }) {
+  const t = useT();
+  if (pct == null) return null;
+  const over = pct > 2;
+  const under = pct < -2;
+  const tone = over
+    ? "text-orange-600 dark:text-orange-400"
+    : under
+      ? "text-sky-600 dark:text-sky-400"
+      : "text-emerald-600 dark:text-emerald-400";
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={`text-sm font-semibold tabular-nums ${tone}`}>
+        {pct > 0 ? "+" : ""}
+        {pct}% {t("calib.vsEstimate")}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Estimate-vs-actual calibration: how the household's everyday and income
+ * estimates have compared with reality over recent cycles. Positive everyday
+ * drift means they consistently spend above their estimate. Renders nothing
+ * until there are at least two cycles with usable estimates.
+ */
+export function CalibrationCard({
+  householdId,
+  isBusiness = false,
+}: {
+  householdId?: string;
+  isBusiness?: boolean;
+}) {
+  const t = useT();
+  const { data } = useCycleMetrics(householdId);
+  const rows = data ?? [];
+  const everyday = meanSignedErrorPct(rows, "everyday_pool", "everyday_spent");
+  const income = meanSignedErrorPct(rows, "income_expected", "income_actual");
+  const n = Math.max(everyday?.n ?? 0, income?.n ?? 0);
+  if (n < 2 || (everyday == null && income == null)) return null;
+  const overspends = (everyday?.pct ?? 0) > 10 && (everyday?.n ?? 0) >= 3;
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <LineChartIcon className="size-4 text-primary" />
+          {t("calib.title")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <DriftRow label={t(isBusiness ? "calib.costs" : "calib.everyday")} pct={everyday?.pct ?? null} />
+        <DriftRow label={t(isBusiness ? "calib.revenue" : "calib.income")} pct={income?.pct ?? null} />
+        <p className="mt-2 text-xs text-muted-foreground">
+          {overspends ? t("calib.hintOver") : t("calib.subtitle", { n })}
+        </p>
       </CardContent>
     </Card>
   );
