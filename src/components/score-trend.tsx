@@ -14,7 +14,8 @@ import { TrendingUp, TrendingDown, Minus, LineChart as LineChartIcon } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useT, type MessageKey } from "@/lib/i18n";
-import { deltaVsPrev, meanSignedErrorPct } from "@/lib/cycle-metrics";
+import { money } from "@/lib/format";
+import { deltaVsPrev, vsAverage, streak, meanSignedErrorPct } from "@/lib/cycle-metrics";
 
 type MetricRow = {
   cycle_start: string;
@@ -24,7 +25,11 @@ type MetricRow = {
   everyday_pool: number | null;
   everyday_spent: number | null;
   income_expected: number | null;
-  income_actual: number | null;
+  income_actual: number;
+  spend_actual: number;
+  fixed_total: number;
+  project_funded: number;
+  surplus_actual: number;
   superfluous_share: number | null;
 };
 
@@ -37,7 +42,7 @@ function useCycleMetrics(householdId?: string) {
       const { data } = await supabase
         .from("cycle_metrics")
         .select(
-          "cycle_start, cycle_end, score_overall, source, everyday_pool, everyday_spent, income_expected, income_actual, superfluous_share",
+          "cycle_start, cycle_end, score_overall, source, everyday_pool, everyday_spent, income_expected, income_actual, spend_actual, fixed_total, project_funded, surplus_actual, superfluous_share",
         )
         .eq("household_id", householdId!)
         .order("cycle_start", { ascending: true });
@@ -284,6 +289,139 @@ export function ScoreTrendCard({
         {hasEstimated && (
           <p className="mt-2 text-xs text-muted-foreground">{t("trend.estimatedNote")}</p>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Cycle-vs-cycle comparison: this cycle's income, spend, saved and surplus, with
+ * the change since last cycle and versus the trailing 3-cycle average. On the
+ * Analysis page (private), so real amounts are fine here.
+ */
+export function CycleCompareCard({
+  householdId,
+  isBusiness = false,
+}: {
+  householdId?: string;
+  isBusiness?: boolean;
+}) {
+  const t = useT();
+  const { data } = useCycleMetrics(householdId);
+  const rows = data ?? [];
+  if (rows.length < 2) return null;
+
+  const metrics: Array<{ key: keyof MetricRow; label: string; goodUp: boolean }> = [
+    { key: "income_actual", label: t(isBusiness ? "compare.revenue" : "compare.income"), goodUp: true },
+    { key: "spend_actual", label: t(isBusiness ? "compare.costs" : "compare.spend"), goodUp: false },
+    { key: "project_funded", label: t("compare.saved"), goodUp: true },
+    { key: "surplus_actual", label: t("compare.surplus"), goodUp: true },
+  ];
+  const last = rows[rows.length - 1];
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <LineChartIcon className="size-4 text-primary" /> {t("compare.title")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-1 flex items-center justify-end gap-4 text-[10px] uppercase tracking-wide text-muted-foreground">
+          <span>{t("compare.thisCycle")}</span>
+          <span className="w-12 text-right">{t("compare.vsAvg")}</span>
+        </div>
+        {metrics.map((m) => {
+          const latest = Number(last[m.key]);
+          const delta = deltaVsPrev(rows, m.key) ?? 0;
+          const avg = vsAverage(rows, m.key, 3);
+          const goodDelta = m.goodUp ? delta >= 0 : delta <= 0;
+          return (
+            <div
+              key={String(m.key)}
+              className="flex items-center justify-between gap-3 border-b py-1.5 last:border-0"
+            >
+              <span className="text-sm text-muted-foreground">{m.label}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold tabular-nums">{money(latest)}</span>
+                {Math.abs(delta) >= 0.01 && (
+                  <span
+                    className={`inline-flex items-center gap-0.5 text-xs tabular-nums ${goodDelta ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
+                  >
+                    {delta > 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                    {delta > 0 ? "+" : ""}
+                    {money(delta)}
+                  </span>
+                )}
+                <span className="w-12 text-right text-xs tabular-nums text-muted-foreground">
+                  {avg ? `${avg.deltaPct > 0 ? "+" : ""}${avg.deltaPct}%` : "—"}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Superfluous-spending trend: the share of spend going to nice-to-haves and
+ * treats over time, with a badge when it's been falling for a few cycles.
+ */
+export function SuperfluousTrendCard({ householdId }: { householdId?: string }) {
+  const t = useT();
+  const { data } = useCycleMetrics(householdId);
+  const rows = useMemo(
+    () => (data ?? []).filter((r) => typeof r.superfluous_share === "number"),
+    [data],
+  );
+  if (rows.length < 2) return null;
+
+  const chartData = rows.map((r) => ({
+    label: cycleLabel(r.cycle_start),
+    pct: Math.round(Number(r.superfluous_share) * 100),
+  }));
+  const improving = streak(
+    rows,
+    (c, p) => p === undefined || Number(c.superfluous_share) < Number(p.superfluous_share),
+  );
+  const latestPct = chartData[chartData.length - 1].pct;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <LineChartIcon className="size-4 text-primary" /> {t("superfluous.title")}
+          </CardTitle>
+          {improving >= 2 && (
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              {t("superfluous.improving", { n: improving })}
+            </span>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-40 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 4, left: -8 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+              <YAxis tickLine={false} axisLine={false} width={34} fontSize={12} unit="%" />
+              <Tooltip formatter={(v: number | string) => [`${v}%`, t("superfluous.title")]} />
+              <Line
+                type="monotone"
+                dataKey="pct"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2.5}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">{t("superfluous.subtitle", { pct: latestPct })}</p>
       </CardContent>
     </Card>
   );

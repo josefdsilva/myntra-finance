@@ -6,7 +6,12 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { backfillCycleMetrics } from "@/lib/cycle-metrics.functions";
-import { ScoreTrendCard, CalibrationCard } from "@/components/score-trend";
+import {
+  ScoreTrendCard,
+  CalibrationCard,
+  CycleCompareCard,
+  SuperfluousTrendCard,
+} from "@/components/score-trend";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -142,6 +147,7 @@ function AnalysisPage() {
   });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
+  const isBiz = hh?.household?.kind === "business";
   const { ask: initialAsk } = Route.useSearch();
 
   // Heal cycle-metrics history on visit: snapshot any closed cycles that never
@@ -657,14 +663,10 @@ function AnalysisPage() {
 
       {householdId && (
         <div className="grid gap-4 md:grid-cols-2">
-          <ScoreTrendCard
-            householdId={householdId}
-            isBusiness={hh?.household?.kind === "business"}
-          />
-          <CalibrationCard
-            householdId={householdId}
-            isBusiness={hh?.household?.kind === "business"}
-          />
+          <ScoreTrendCard householdId={householdId} isBusiness={isBiz} />
+          <CalibrationCard householdId={householdId} isBusiness={isBiz} />
+          <CycleCompareCard householdId={householdId} isBusiness={isBiz} />
+          <SuperfluousTrendCard householdId={householdId} />
         </div>
       )}
 
