@@ -44,6 +44,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { DashboardTips } from "@/components/dashboard-tips";
+import { MomentumCard } from "@/components/score-trend";
 import { PurchaseCheckButton } from "@/components/purchase-check";
 import { GoalsCard } from "@/components/goals-card";
 import { pageShellClass } from "@/components/page-shell";
@@ -688,6 +689,8 @@ function Dashboard() {
       </div>
 
       {householdId && <NetWorthCard householdId={householdId} />}
+
+      {householdId && <MomentumCard householdId={householdId} />}
 
       {householdId && (
         <DashboardTips

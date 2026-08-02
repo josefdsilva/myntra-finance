@@ -1989,6 +1989,90 @@ export const WIKI_SECTIONS: WikiSection[] = [
     ),
   },
 
+  // ------------------------------------------------------------ progressOverTime
+  {
+    id: "progressOverTime",
+    icon: "BarChart3",
+    title: L(
+      "Your progress over time",
+      "O seu progresso ao longo do tempo",
+      "Tu progreso a lo largo del tiempo",
+      "Dein Fortschritt im Zeitverlauf",
+      "Votre progression dans le temps",
+    ),
+    paragraphs: L(
+      [
+        "bynku gets more useful the longer you use it. At the end of each cycle it quietly saves a snapshot — your score, what you earned and spent, what you set aside — so it can show how you're doing over months, not just today.",
+        "On the Analysis page you'll find four views of that history: how your financial score is trending, how your own estimates compare with what really happened, how this cycle stacks up against the last few, and whether your nice-to-have and treat spending is drifting up or down.",
+        "The coach reads the same history. When your everyday spending has run above your estimate for a few cycles, it can suggest nudging your baseline up so safe-to-spend gets more accurate — small course-corrections instead of guesswork.",
+        "None of this needs extra work from you. Keep recording your cycle as usual and the history builds itself. The first trends appear once you have two closed cycles on record.",
+      ],
+      [
+        "O bynku torna-se mais útil quanto mais o usa. No fim de cada ciclo guarda discretamente um retrato — a sua pontuação, o que ganhou e gastou, o que reservou — para mostrar como está a evoluir ao longo dos meses, e não só hoje.",
+        "Na página de Análise encontra quatro vistas desse histórico: como está a evoluir a sua pontuação, como as suas estimativas se comparam com o que realmente aconteceu, como este ciclo se compara com os anteriores, e se os gastos supérfluos estão a subir ou a descer.",
+        "O coach lê o mesmo histórico. Quando os seus gastos do dia a dia superam a estimativa há alguns ciclos, pode sugerir subir a baseline para que o valor seguro fique mais exato — pequenas correções em vez de adivinhação.",
+        "Nada disto exige trabalho extra. Continue a registar o seu ciclo como sempre e o histórico constrói-se sozinho. As primeiras tendências aparecem quando tiver dois ciclos fechados registados.",
+      ],
+      [
+        "bynku es más útil cuanto más lo usas. Al final de cada ciclo guarda discretamente una instantánea — tu puntuación, lo que ingresaste y gastaste, lo que reservaste — para mostrar cómo evolucionas a lo largo de los meses, no solo hoy.",
+        "En la página de Análisis encontrarás cuatro vistas de ese historial: cómo evoluciona tu puntuación, cómo se comparan tus estimaciones con lo que realmente pasó, cómo se compara este ciclo con los anteriores, y si tu gasto en caprichos sube o baja.",
+        "El coach lee el mismo historial. Cuando tu gasto diario supera tu estimación durante varios ciclos, puede sugerir subir tu baseline para que el gasto seguro sea más exacto — pequeñas correcciones en vez de adivinar.",
+        "Nada de esto requiere trabajo extra. Sigue registrando tu ciclo como siempre y el historial se construye solo. Las primeras tendencias aparecen cuando tengas dos ciclos cerrados registrados.",
+      ],
+      [
+        "bynku wird nützlicher, je länger du es nutzt. Am Ende jedes Zyklus speichert es still eine Momentaufnahme — deinen Score, Einnahmen und Ausgaben, Zurückgelegtes —, um zu zeigen, wie du dich über Monate entwickelst, nicht nur heute.",
+        "Auf der Analyse-Seite findest du vier Ansichten dieser Historie: wie sich dein Score entwickelt, wie deine Schätzungen mit der Realität übereinstimmen, wie dieser Zyklus im Vergleich zu den letzten dasteht, und ob deine Ausgaben für Nice-to-haves steigen oder sinken.",
+        "Der Coach liest dieselbe Historie. Wenn deine Alltagsausgaben über mehrere Zyklen über der Schätzung lagen, kann er vorschlagen, deine Baseline anzuheben, damit der sichere Betrag genauer wird — kleine Korrekturen statt Raten.",
+        "Nichts davon macht Mehrarbeit. Erfasse deinen Zyklus wie gewohnt, und die Historie baut sich von selbst auf. Die ersten Trends erscheinen, sobald zwei abgeschlossene Zyklen vorliegen.",
+      ],
+      [
+        "bynku devient plus utile à mesure que vous l'utilisez. À la fin de chaque cycle, il enregistre discrètement un instantané — votre score, ce que vous avez gagné et dépensé, ce que vous avez mis de côté — pour montrer votre évolution sur les mois, pas seulement aujourd'hui.",
+        "Sur la page Analyse, vous trouverez quatre vues de cet historique : l'évolution de votre score, la comparaison de vos estimations avec la réalité, ce cycle face aux précédents, et si vos dépenses plaisir montent ou descendent.",
+        "Le coach lit le même historique. Quand vos dépenses courantes dépassent votre estimation depuis plusieurs cycles, il peut suggérer de relever votre baseline pour que le montant sûr soit plus juste — de petits ajustements plutôt que des suppositions.",
+        "Rien de tout cela ne demande de travail en plus. Continuez à enregistrer votre cycle comme d'habitude et l'historique se construit tout seul. Les premières tendances apparaissent dès deux cycles clôturés.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Score over time", body: "A line of your health score across cycles, with the change since last cycle." },
+        { label: "Estimates vs reality", body: "How your everyday and income estimates compared with what actually happened, so you can fine-tune them." },
+        { label: "Cycle vs cycle", body: "This cycle's income, spending, saving and surplus against the previous one and your recent average." },
+        { label: "Momentum", body: "Small celebrations when you string together good cycles — saving, cutting back, or a rising score." },
+      ],
+      [
+        { label: "Pontuação ao longo do tempo", body: "Uma linha da sua pontuação ao longo dos ciclos, com a variação desde o último ciclo." },
+        { label: "Estimativas vs. realidade", body: "Como as suas estimativas de dia a dia e de rendimento se compararam com o que aconteceu, para as afinar." },
+        { label: "Ciclo a ciclo", body: "O rendimento, gastos, poupança e excedente deste ciclo face ao anterior e à sua média recente." },
+        { label: "Ritmo", body: "Pequenas celebrações quando encadeia bons ciclos — poupar, conter gastos ou uma pontuação a subir." },
+      ],
+      [
+        { label: "Puntuación a lo largo del tiempo", body: "Una línea de tu puntuación a través de los ciclos, con el cambio desde el último." },
+        { label: "Estimaciones vs. realidad", body: "Cómo se compararon tus estimaciones de día a día e ingresos con lo que ocurrió, para afinarlas." },
+        { label: "Ciclo a ciclo", body: "Los ingresos, gasto, ahorro y excedente de este ciclo frente al anterior y tu media reciente." },
+        { label: "Impulso", body: "Pequeñas celebraciones cuando encadenas buenos ciclos — ahorrar, moderarte o una puntuación que sube." },
+      ],
+      [
+        { label: "Score im Zeitverlauf", body: "Eine Linie deines Scores über die Zyklen, mit der Veränderung seit dem letzten." },
+        { label: "Schätzungen vs. Realität", body: "Wie deine Alltags- und Einkommensschätzungen mit der Realität verglichen — zum Feinjustieren." },
+        { label: "Zyklus für Zyklus", body: "Einkommen, Ausgaben, Sparen und Überschuss dieses Zyklus gegenüber dem letzten und deinem jüngsten Durchschnitt." },
+        { label: "Momentum", body: "Kleine Erfolge, wenn du gute Zyklen aneinanderreihst — sparen, kürzertreten oder ein steigender Score." },
+      ],
+      [
+        { label: "Score dans le temps", body: "Une courbe de votre score au fil des cycles, avec l'écart depuis le dernier." },
+        { label: "Estimations vs réalité", body: "Comment vos estimations quotidiennes et de revenus se sont comparées à la réalité, pour les affiner." },
+        { label: "Cycle par cycle", body: "Revenus, dépenses, épargne et excédent de ce cycle face au précédent et à votre moyenne récente." },
+        { label: "Élan", body: "De petites célébrations quand vous enchaînez de bons cycles — épargner, se modérer ou un score qui monte." },
+      ],
+    ),
+    callout: L(
+      "Estimates that drift are normal — the point is to notice and adjust. A rising score over several cycles is the real signal that your position is improving.",
+      "Estimativas que variam são normais — o importante é reparar e ajustar. Uma pontuação a subir ao longo de vários ciclos é o verdadeiro sinal de que a sua posição está a melhorar.",
+      "Que las estimaciones varíen es normal — lo importante es notarlo y ajustar. Una puntuación que sube durante varios ciclos es la señal real de que tu posición mejora.",
+      "Schwankende Schätzungen sind normal — es geht darum, sie zu bemerken und anzupassen. Ein über mehrere Zyklen steigender Score ist das echte Zeichen, dass sich deine Lage verbessert.",
+      "Des estimations qui varient, c'est normal — l'important est de le remarquer et d'ajuster. Un score qui monte sur plusieurs cycles est le vrai signe que votre situation s'améliore.",
+    ),
+  },
+
   // ------------------------------------------------------------ projects (save & invest)
   {
     id: "projects",

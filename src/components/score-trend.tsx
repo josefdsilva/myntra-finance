@@ -9,7 +9,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, TrendingDown, Minus, LineChart as LineChartIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Sparkles, LineChart as LineChartIcon } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,6 +135,48 @@ export function ScoreTrendMini({
           <DeltaChip delta={delta} />
         </div>
         <Spark values={values} />
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * A single encouraging line for the Dashboard when the household is on a genuine
+ * streak (saving, cutting superfluous spend, or a rising score) or hits a
+ * cycles-tracked milestone. Significance-gated (≥3 for streaks) so it never nags;
+ * renders nothing when there's nothing worth celebrating.
+ */
+export function MomentumCard({ householdId }: { householdId?: string }) {
+  const t = useT();
+  const { data } = useCycleMetrics(householdId);
+  const rows = data ?? [];
+  if (rows.length < 2) return null;
+
+  const scored = rows.filter((r) => typeof r.score_overall === "number");
+  const withShare = rows.filter((r) => typeof r.superfluous_share === "number");
+  const savingStreak = streak(rows, (c) => Number(c.surplus_actual) > 0);
+  const scoreUpStreak = streak(
+    scored,
+    (c, p) => p !== undefined && Number(c.score_overall) > Number(p.score_overall),
+  );
+  const superfluousDown = streak(
+    withShare,
+    (c, p) => p !== undefined && Number(c.superfluous_share) < Number(p.superfluous_share),
+  );
+  const cycles = rows.length;
+
+  let msg: string | null = null;
+  if (superfluousDown >= 3) msg = t("momentum.superfluous", { n: superfluousDown });
+  else if (savingStreak >= 3) msg = t("momentum.saving", { n: savingStreak });
+  else if (scoreUpStreak >= 3) msg = t("momentum.score", { n: scoreUpStreak });
+  else if ([3, 6, 12, 24].includes(cycles)) msg = t("momentum.milestone", { n: cycles });
+  if (!msg) return null;
+
+  return (
+    <Card className="border-emerald-500/30 bg-emerald-500/5">
+      <CardContent className="flex items-center gap-3 pt-6">
+        <Sparkles className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        <p className="text-sm font-medium">{msg}</p>
       </CardContent>
     </Card>
   );
