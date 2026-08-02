@@ -857,7 +857,7 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
               </div>
               <div className="flex items-center gap-3">
                 <span className="tabular-nums font-medium">{money(r.monthly_amount)}</span>
-        aria-label={t("common.delete")}         <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+        <Button aria-label={t("common.delete")} variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>
@@ -1093,7 +1093,7 @@ export function IncomesSection({
                   cadence={(r.cadence as Cadence) ?? "monthly"}
                   cycle={cycle}
                 />
-        aria-label={t("common.delete")}         <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+        <Button aria-label={t("common.delete")} variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>
