@@ -48,7 +48,8 @@ import {
 import { impliedAnnualRate, scheduleSummary, monthlyRateFromTaeg } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
-import { Plus, Trash2, Mail, Copy, Check, Zap, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Mail, Copy, Check, Zap, AlertTriangle, Sparkles } from "lucide-react";
+import { TOUR_OPEN_EVENT } from "@/components/app-tour";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
 import { StatementImportButton } from "@/components/statement-import-flow";
@@ -104,6 +105,21 @@ function SettingsPage() {
       </header>
 
       <LanguageSettings />
+
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+          <div>
+            <p className="font-medium">{t("tour.settingsTitle")}</p>
+            <p className="text-sm text-muted-foreground">{t("tour.settingsBody")}</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => window.dispatchEvent(new CustomEvent(TOUR_OPEN_EVENT))}
+          >
+            <Sparkles className="size-4" /> {t("tour.settingsCta")}
+          </Button>
+        </CardContent>
+      </Card>
 
       {hhLoading && !hh && (
         <div className="space-y-3">

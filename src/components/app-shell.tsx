@@ -41,6 +41,7 @@ import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
 import { InstallApp } from "@/components/install-app";
+import { AppTour } from "@/components/app-tour";
 
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
@@ -430,6 +431,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <main className="pwa-safe-bottom flex-1 min-w-0 relative">{children}</main>
       <CoachDock />
+      <AppTour />
     </div>
   );
 }
