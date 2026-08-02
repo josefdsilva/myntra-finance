@@ -295,7 +295,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Top bar mobile */}
       <header className="pwa-safe-top md:hidden flex items-center justify-between p-4 border-b bg-card print:hidden">
         <Link to="/" className="flex items-center gap-2">
-          <img src={appIcon.url} alt="App icon" className="size-8 rounded-lg" />
+          <img src={appIcon.url} alt="bynku household budget logo" className="size-8 rounded-lg" />
           <span className="font-display text-lg">Budget</span>
         </Link>
         <div className="flex items-center gap-1">
@@ -341,7 +341,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       >
         <div className="hidden md:flex items-center gap-2 p-5 border-b">
-          <img src={appIcon.url} alt="App icon" className="size-9 rounded-xl" />
+          <img src={appIcon.url} alt="bynku household budget logo" className="size-9 rounded-xl" />
           {HouseholdSwitcher}
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
