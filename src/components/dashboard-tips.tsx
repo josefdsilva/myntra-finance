@@ -729,6 +729,29 @@ export function DashboardTips({
         }),
       });
     }
+
+    // Standalone: nice-to-haves + treats are a large share of spending even when
+    // saving is healthy. Framed as an opportunity to reach goals sooner, not a
+    // problem (when the surplus is thin, high-treat-share above already covers
+    // it). Household-only — the intent scale is a household concept.
+    const lowSavings = income > 0 && surplus / income < 0.1;
+    if (!isBusiness && intent.total > 0 && intent.discretionarySharePct >= 45 && !lowSavings) {
+      const heavy = intent.discretionarySharePct >= 55;
+      tips.push({
+        id: "discretionary-heavy",
+        severity: heavy ? "warning" : "info",
+        title: t("tips.discretionaryHeavy.title", {
+          pct: Math.round(intent.discretionarySharePct),
+        }),
+        detail: t("tips.discretionaryHeavy.detail", {
+          discretionary: money(intent.discretionary),
+          treat: money(intent.treat),
+        }),
+        chatPrompt: t("tips.discretionaryHeavy.chat", {
+          pct: Math.round(intent.discretionarySharePct),
+        }),
+      });
+    }
     if (tagged === 0 && recent.length >= 15) {
       tips.push({
         id: "untagged-intent",
