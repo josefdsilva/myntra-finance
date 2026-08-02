@@ -42,6 +42,26 @@ const SCRIPT: Array<"country" | Topic> = [
 ];
 
 /**
+ * A "there is none / no / zero / skip" style answer — the user is telling us this
+ * topic doesn't apply, not giving data. We accept it as a skip instead of asking
+ * them to try again. Multilingual and accent-insensitive; anything containing a
+ * real amount (a digit 1-9) is treated as data, never as a "none".
+ */
+function looksNegative(text: string): boolean {
+  const t = text
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  if (!t) return true;
+  if (/^[\s0.,€$£-]+$/.test(t)) return true; // just zeros / dashes / currency
+  if (/[1-9]/.test(t)) return false; // contains a real amount → treat as data
+  return /\b(no|none|nope|nothing|nil|na|skip|zero|nada|nenhum|nenhuma|ninguno|ninguna|cero|nein|kein|keine|keins|nichts|null|non|aucun|aucune|rien)\b/.test(
+    t,
+  );
+}
+
+/**
  * Conversational onboarding — the controlled-hybrid "chat instead" path. The
  * coach walks a fixed script of topics; each free-text answer is extracted into
  * structured rows the user CONFIRMS before anything is written. The form remains
@@ -138,6 +158,13 @@ export function CoachOnboarding({
     const text = input.trim();
     push("user", text);
     setInput("");
+    // "No debt", "there is none", "zero" → the topic doesn't apply. Accept it as a
+    // skip and move on instead of asking the user to try again.
+    if (looksNegative(text)) {
+      push("coach", t("coachOb.noneNoted"));
+      await advance(stepIdx);
+      return;
+    }
     setBusy(true);
     try {
       const res = await extract({ data: { topic: current as Topic, text, householdId } });

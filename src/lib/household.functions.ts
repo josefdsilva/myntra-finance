@@ -65,6 +65,22 @@ function defaultBucketsFor(kind: "personal" | "business") {
   return kind === "business" ? DEFAULT_BUCKETS_BUSINESS : DEFAULT_BUCKETS_PERSONAL;
 }
 
+// Starter expense categories, seeded on household creation so Settings and
+// expense entry have sensible options immediately (a new household has none).
+// Lowercase to match the category convention used across the app.
+export const DEFAULT_CATEGORIES_PERSONAL = [
+  "groceries", "dining", "transport", "fuel", "utilities", "housing", "health",
+  "subscriptions", "shopping", "clothing", "entertainment", "kids", "insurance", "other",
+];
+export const DEFAULT_CATEGORIES_BUSINESS = [
+  "supplies", "materials", "software", "marketing", "travel", "utilities", "rent",
+  "payroll", "professional_services", "fees", "taxes", "other",
+];
+function categoryRows(householdId: string, kind: "personal" | "business") {
+  const names = kind === "business" ? DEFAULT_CATEGORIES_BUSINESS : DEFAULT_CATEGORIES_PERSONAL;
+  return names.map((name, i) => ({ household_id: householdId, name, sort_order: (i + 1) * 10 }));
+}
+
 /**
  * Returns the current user's household. If `household_id` is provided and the
  * caller is a member, that specific household is returned. Otherwise the
@@ -166,6 +182,9 @@ export const getOrCreateHousehold = createServerFn({ method: "POST" })
       .from("buckets")
       .insert(defaultBucketsFor("personal").map((b) => ({ ...b, household_id: household.id })));
 
+    // Seed starter expense categories so Settings/expense entry aren't empty.
+    await supabaseAdmin.from("expense_categories").insert(categoryRows(household.id, "personal"));
+
     return { household, role: "owner" as const, needsBetaCode: false as const };
   });
 
@@ -213,6 +232,9 @@ export const resetHousehold = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("buckets")
       .insert(defaultBucketsFor(kind).map((b) => ({ ...b, household_id: data.household_id })));
+    // Delete-then-seed so we never duplicate, regardless of what the wipe covered.
+    await supabaseAdmin.from("expense_categories").delete().eq("household_id", data.household_id);
+    await supabaseAdmin.from("expense_categories").insert(categoryRows(data.household_id, kind));
 
     return { ok: true };
   });
@@ -421,6 +443,7 @@ export const createHousehold = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("buckets")
       .insert(defaultBucketsFor(kind).map((b) => ({ ...b, household_id: household.id })));
+    await supabaseAdmin.from("expense_categories").insert(categoryRows(household.id, kind));
 
     return { household, role: "owner" as const };
   });

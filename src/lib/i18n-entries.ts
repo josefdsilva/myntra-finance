@@ -329,6 +329,13 @@ export const ENTRIES = {
     de: "Kein Problem, übersprungen.",
     fr: "Pas de souci, ignoré.",
   },
+  "coachOb.noneNoted": {
+    en: "Got it — nothing to add here. Moving on.",
+    pt: "Entendido — nada a adicionar aqui. Vamos avançar.",
+    es: "Entendido — nada que añadir aquí. Seguimos.",
+    de: "Verstanden — hier gibt es nichts hinzuzufügen. Weiter geht's.",
+    fr: "Compris — rien à ajouter ici. On continue.",
+  },
   "coachOb.done": {
     en: "All set! Setting up your dashboard…",
     pt: "Tudo pronto! A preparar o teu painel…",
