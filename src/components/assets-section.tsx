@@ -510,7 +510,7 @@ export function AssetsSection({
                       )}
                     </div>
                     <div className="flex shrink-0 items-center">
-                      <Button
+        aria-label={t("common.edit")}               <Button
                         variant="ghost"
                         size="icon"
                         title={t("common.edit")}
@@ -518,7 +518,7 @@ export function AssetsSection({
                       >
                         <Pencil className="size-4" />
                       </Button>
-                      <Button
+        aria-label={t("assets.askCoach")}               <Button
                         variant="ghost"
                         size="icon"
                         title={t("assets.askCoach")}
@@ -526,7 +526,7 @@ export function AssetsSection({
                       >
                         <Sparkles className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+        aria-label={t("common.delete")}               <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                         <Trash2 className="size-4" />
                       </Button>
                     </div>

@@ -122,10 +122,10 @@ function CategoryRow({
       <div className="flex gap-1">
         {editing ? (
           <>
-            <Button size="icon" variant="ghost" onClick={save}>
+        aria-label={t("common.save")}     <Button size="icon" variant="ghost" onClick={save}>
               <Check className="h-4 w-4" />
             </Button>
-            <Button
+        aria-label={t("common.cancel")}     <Button
               size="icon"
               variant="ghost"
               onClick={() => {
@@ -138,10 +138,10 @@ function CategoryRow({
           </>
         ) : (
           <>
-            <Button size="icon" variant="ghost" onClick={() => setEditing(true)}>
+        aria-label={t("common.edit")}     <Button size="icon" variant="ghost" onClick={() => setEditing(true)}>
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button
+        aria-label={t("common.delete")}     <Button
               size="icon"
               variant="ghost"
               onClick={() => {

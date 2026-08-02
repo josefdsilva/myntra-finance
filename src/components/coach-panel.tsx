@@ -208,7 +208,7 @@ export function CoachPanel({
                 }}
                 className="min-h-0 resize-none"
               />
-              <Button onClick={sendChat} disabled={!input.trim() || chatMut.isPending} size="icon">
+        aria-label={t("common.send")}       <Button onClick={sendChat} disabled={!input.trim() || chatMut.isPending} size="icon">
                 <Send className="size-4" />
               </Button>
             </div>

@@ -857,7 +857,7 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
               </div>
               <div className="flex items-center gap-3">
                 <span className="tabular-nums font-medium">{money(r.monthly_amount)}</span>
-                <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+        aria-label={t("common.delete")}         <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>
@@ -1093,7 +1093,7 @@ export function IncomesSection({
                   cadence={(r.cadence as Cadence) ?? "monthly"}
                   cycle={cycle}
                 />
-                <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+        aria-label={t("common.delete")}         <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>
@@ -1287,7 +1287,7 @@ export function FixedExpensesSection({
                   cadence={(r.cadence as Cadence) ?? "monthly"}
                   cycle={cycle}
                 />
-                <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+        aria-label={t("common.delete")}         <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>
@@ -1482,7 +1482,7 @@ function BucketRow<T extends BucketRowShape>({
           className="w-10 h-8 p-1 shrink-0"
           aria-label={t("buckets.color")}
         />
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onRemove}>
+        aria-label={t("common.delete")} <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onRemove}>
           <Trash2 className="size-4" />
         </Button>
       </div>
@@ -1872,7 +1872,7 @@ export function DebtsSection({
                   {money(r.monthly_amount)}
                   <span className="text-xs text-muted-foreground">/mo</span>
                 </span>
-                <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+        aria-label={t("common.delete")}         <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>

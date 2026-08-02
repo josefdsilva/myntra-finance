@@ -376,7 +376,7 @@ function ExpensesPage() {
                         {isIncome ? "+" : "−"}
                         {money(e.amount)}
                       </p>
-                      <Button
+        aria-label={t("inv.attach")}               <Button
                         variant="ghost"
                         size="icon"
                         title={t("inv.attach")}
@@ -391,7 +391,7 @@ function ExpensesPage() {
                       >
                         <Paperclip className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(e.id)}>
+        aria-label={t("common.delete")}               <Button variant="ghost" size="icon" onClick={() => remove(e.id)}>
                         <Trash2 className="size-4" />
                       </Button>
                     </div>

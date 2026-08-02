@@ -318,7 +318,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             {privacy ? <EyeOff /> : <Eye />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setOpen((s) => !s)}>
+        aria-label={t("common.openMenu")}   <Button variant="ghost" size="icon" onClick={() => setOpen((s) => !s)}>
             {open ? <X /> : <Menu />}
           </Button>
         </div>
