@@ -698,6 +698,95 @@ export type Database = {
           },
         ]
       }
+      cycle_metrics: {
+        Row: {
+          available_end: number
+          baseline_at_close: number | null
+          consumption_ratio: number | null
+          created_at: string
+          cycle_end: string
+          cycle_start: string
+          debt_total: number
+          everyday_pool: number
+          everyday_spent: number
+          fixed_total: number
+          household_id: string
+          id: string
+          income_actual: number
+          income_expected: number | null
+          kind: string
+          metrics: Json
+          planned_spend: number | null
+          project_funded: number
+          score_overall: number | null
+          source: string
+          spend_actual: number
+          superfluous_share: number | null
+          surplus_actual: number
+          updated_at: string
+        }
+        Insert: {
+          available_end?: number
+          baseline_at_close?: number | null
+          consumption_ratio?: number | null
+          created_at?: string
+          cycle_end: string
+          cycle_start: string
+          debt_total?: number
+          everyday_pool?: number
+          everyday_spent?: number
+          fixed_total?: number
+          household_id: string
+          id?: string
+          income_actual?: number
+          income_expected?: number | null
+          kind?: string
+          metrics?: Json
+          planned_spend?: number | null
+          project_funded?: number
+          score_overall?: number | null
+          source?: string
+          spend_actual?: number
+          superfluous_share?: number | null
+          surplus_actual?: number
+          updated_at?: string
+        }
+        Update: {
+          available_end?: number
+          baseline_at_close?: number | null
+          consumption_ratio?: number | null
+          created_at?: string
+          cycle_end?: string
+          cycle_start?: string
+          debt_total?: number
+          everyday_pool?: number
+          everyday_spent?: number
+          fixed_total?: number
+          household_id?: string
+          id?: string
+          income_actual?: number
+          income_expected?: number | null
+          kind?: string
+          metrics?: Json
+          planned_spend?: number | null
+          project_funded?: number
+          score_overall?: number | null
+          source?: string
+          spend_actual?: number
+          superfluous_share?: number | null
+          surplus_actual?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cycle_metrics_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cycle_reports: {
         Row: {
           cycle_start: string
