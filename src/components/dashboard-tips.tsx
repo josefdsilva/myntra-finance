@@ -328,9 +328,14 @@ export function DashboardTips({
       }),
     });
   } else if (data.buckets.length && surplus > 0 && unallocated > Math.max(50, surplus * 0.1)) {
+    // Idle surplus: money beyond the everyday pool (which already includes the
+    // spendable cushion) and beyond what any project needs. It's an opportunity,
+    // not a problem — so it's an "info", and the personalised "what to do"
+    // (extra debt payments vs emergency top-up vs investing, weighed by interest
+    // rate and buffer) is handed to the coach rather than hard-coded here.
     tips.push({
       id: "unallocated-surplus",
-      severity: "warning",
+      severity: "info",
       title: t("tips.unallocatedSurplus.title", { value: money(unallocated) }),
       detail: t("tips.unallocatedSurplus.detail"),
       cta: { label: t("tips.cta.allocate"), to: "/allocations" },

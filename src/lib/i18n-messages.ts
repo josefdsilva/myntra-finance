@@ -699,11 +699,11 @@ const en = {
     "Your monthly bucket targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
   "tips.overAllocated.chat":
     "My bucket targets add up to {allocated} but my surplus is only {surplus}. Which buckets should I trim first?",
-  "tips.unallocatedSurplus.title": "{value} of surplus is unallocated",
+  "tips.unallocatedSurplus.title": "{value} of surplus isn't working yet",
   "tips.unallocatedSurplus.detail":
-    "Assign it to an existing bucket or create a new one — idle surplus tends to leak into everyday spending.",
+    "That's money left after your everyday spending, your cushion and what your projects need. Rather than let it drift, put it to work — ask the coach for the best move for your situation, like extra debt payments, topping up your emergency fund, or investing.",
   "tips.unallocatedSurplus.chat":
-    "I have {value} of unallocated monthly surplus. What are good uses for it given my current buckets and goals?",
+    "I have about {value} of monthly surplus beyond my everyday spending, my cushion and my project funding. Given my debts and their interest rates, my emergency buffer and my investments, what's the best use for it right now?",
   "tips.confirmAllocations.title": "Confirm this month's allocations ({count} pending)",
   "tips.confirmAllocations.detail": "Month ends in {days} days — lock in {names}.",
   "tips.noFixed.title": "Track your fixed expenses",
@@ -2193,11 +2193,11 @@ const pt: Record<BaseKey, string> = {
     "Os objetivos mensais dos baldes somam mais do que o seu excedente. Reequilibre os objetivos ou aumente a folga na base.",
   "tips.overAllocated.chat":
     "Os objetivos dos meus baldes somam {allocated} mas o meu excedente é apenas {surplus}. Que baldes devo reduzir primeiro?",
-  "tips.unallocatedSurplus.title": "{value} de excedente não está alocado",
+  "tips.unallocatedSurplus.title": "{value} de excedente ainda não está a render",
   "tips.unallocatedSurplus.detail":
-    "Atribua-o a um balde existente ou crie um novo — o excedente parado tende a escapar para gastos do dia a dia.",
+    "É dinheiro que sobra depois dos gastos do dia a dia, da tua almofada e do que os teus projetos precisam. Em vez de o deixar parado, põe-no a trabalhar — pede ao coach a melhor jogada para a tua situação, como pagamentos extra de dívida, reforçar o fundo de emergência ou investir.",
   "tips.unallocatedSurplus.chat":
-    "Tenho {value} de excedente mensal não alocado. Quais são bons usos para ele, dados os meus baldes e objetivos atuais?",
+    "Tenho cerca de {value} de excedente mensal para além dos gastos do dia a dia, da almofada e do financiamento dos projetos. Tendo em conta as minhas dívidas e as respetivas taxas de juro, o meu fundo de emergência e os meus investimentos, qual é o melhor uso para ele agora?",
   "tips.confirmAllocations.title": "Confirme as alocações deste mês ({count} pendentes)",
   "tips.confirmAllocations.detail": "O mês termina em {days} dias — confirme {names}.",
   "tips.noFixed.title": "Registe as suas despesas fixas",
@@ -3680,11 +3680,11 @@ const es: Record<BaseKey, string> = {
     "Las metas mensuales de los cubos suman más que su excedente. Reequilibre las metas o aumente su margen de base.",
   "tips.overAllocated.chat":
     "Las metas de mis cubos suman {allocated} pero mi excedente es solo {surplus}. ¿Qué cubos debo reducir primero?",
-  "tips.unallocatedSurplus.title": "{value} de excedente no está asignado",
+  "tips.unallocatedSurplus.title": "{value} de excedente aún no está trabajando",
   "tips.unallocatedSurplus.detail":
-    "Asígnelo a un cubo existente o cree uno nuevo — el excedente inactivo tiende a filtrarse hacia el gasto diario.",
+    "Es dinero que queda después del gasto del día a día, tu colchón y lo que necesitan tus proyectos. En vez de dejarlo parado, ponlo a trabajar — pide al coach la mejor jugada para tu situación, como pagos extra de deuda, reforzar el fondo de emergencia o invertir.",
   "tips.unallocatedSurplus.chat":
-    "Tengo {value} de excedente mensual sin asignar. ¿Cuáles son buenos usos para él dados mis cubos y metas actuales?",
+    "Tengo unos {value} de excedente mensual más allá del gasto del día a día, el colchón y la financiación de proyectos. Teniendo en cuenta mis deudas y sus tipos de interés, mi fondo de emergencia y mis inversiones, ¿cuál es el mejor uso ahora?",
   "tips.confirmAllocations.title": "Confirme las asignaciones de este mes ({count} pendientes)",
   "tips.confirmAllocations.detail": "El mes termina en {days} días — confirme {names}.",
   "tips.noFixed.title": "Registre sus gastos fijos",
@@ -5172,11 +5172,11 @@ const de: Record<BaseKey, string> = {
     "Ihre monatlichen Topfziele summieren sich auf mehr als Ihren Überschuss. Balancieren Sie die Ziele neu aus oder vergrößern Sie Ihre Grundbudget-Lücke.",
   "tips.overAllocated.chat":
     "Meine Topfziele summieren sich auf {allocated}, aber mein Überschuss beträgt nur {surplus}. Welche Töpfe sollte ich zuerst kürzen?",
-  "tips.unallocatedSurplus.title": "{value} des Überschusses ist nicht zugewiesen",
+  "tips.unallocatedSurplus.title": "{value} Überschuss arbeitet noch nicht",
   "tips.unallocatedSurplus.detail":
-    "Weisen Sie ihn einem bestehenden Topf zu oder erstellen Sie einen neuen — ungenutzter Überschuss fließt tendenziell in alltägliche Ausgaben ab.",
+    "Das ist Geld, das nach deinen Alltagsausgaben, deinem Puffer und dem Bedarf deiner Projekte übrig bleibt. Lass es nicht liegen, sondern setz es ein — frag den Coach nach dem besten Schritt für deine Situation, etwa zusätzliche Schuldentilgung, den Notgroschen aufstocken oder investieren.",
   "tips.unallocatedSurplus.chat":
-    "Ich habe {value} nicht zugewiesenen monatlichen Überschuss. Wofür sollte ich ihn angesichts meiner aktuellen Töpfe und Ziele sinnvoll verwenden?",
+    "Ich habe etwa {value} monatlichen Überschuss über meine Alltagsausgaben, meinen Puffer und die Projektfinanzierung hinaus. Was ist angesichts meiner Schulden und ihrer Zinssätze, meines Notgroschens und meiner Investitionen die beste Verwendung dafür?",
   "tips.confirmAllocations.title":
     "Bestätigen Sie die Zuweisungen dieses Monats ({count} ausstehend)",
   "tips.confirmAllocations.detail": "Der Monat endet in {days} Tagen — bestätigen Sie {names}.",
@@ -6669,11 +6669,11 @@ const fr: Record<BaseKey, string> = {
     "Vos objectifs mensuels de paniers dépassent votre excédent. Rééquilibrez les objectifs ou augmentez votre marge de base.",
   "tips.overAllocated.chat":
     "Mes objectifs de paniers totalisent {allocated} mais mon excédent n'est que de {surplus}. Quels paniers devrais-je réduire en premier ?",
-  "tips.unallocatedSurplus.title": "{value} d'excédent n'est pas réparti",
+  "tips.unallocatedSurplus.title": "{value} d'excédent ne travaille pas encore",
   "tips.unallocatedSurplus.detail":
-    "Attribuez-le à un panier existant ou créez-en un nouveau — un excédent inactif a tendance à filer dans les dépenses quotidiennes.",
+    "C'est l'argent qui reste après tes dépenses courantes, ton coussin et ce dont tes projets ont besoin. Plutôt que de le laisser dormir, fais-le travailler — demande au coach le meilleur choix pour ta situation, comme des remboursements de dette supplémentaires, renforcer le fonds d'urgence ou investir.",
   "tips.unallocatedSurplus.chat":
-    "J'ai {value} d'excédent mensuel non réparti. Quelles seraient de bonnes utilisations compte tenu de mes paniers et objectifs actuels ?",
+    "J'ai environ {value} d'excédent mensuel au-delà de mes dépenses courantes, de mon coussin et du financement de mes projets. Compte tenu de mes dettes et de leurs taux d'intérêt, de mon fonds d'urgence et de mes investissements, quelle est la meilleure utilisation maintenant ?",
   "tips.confirmAllocations.title": "Confirmez les répartitions de ce mois-ci ({count} en attente)",
   "tips.confirmAllocations.detail": "Le mois se termine dans {days} jours — confirmez {names}.",
   "tips.noFixed.title": "Suivez vos dépenses fixes",
