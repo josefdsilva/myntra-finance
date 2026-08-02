@@ -357,8 +357,7 @@ export function PlanPanel({
           source_bucket_id: value > 0 ? payFrom || null : null,
           record_expense: doRecord,
           expense_category: doRecord ? expCategory : null,
-          expense_intent:
-            doRecord && resolveRow.direction !== "income" ? expIntent : null,
+          expense_intent: doRecord && resolveRow.direction !== "income" ? expIntent : null,
         },
       });
       setResolveRow(null);
@@ -603,7 +602,8 @@ export function PlanPanel({
                           </div>
                           <div className="flex items-center gap-0.5 shrink-0">
                             {p.direction === "spend" && !p.bucket_id && (
-        <Button aria-label={t("plan.fund")}
+                              <Button
+                                aria-label={t("plan.fund")}
                                 size="icon"
                                 variant="ghost"
                                 className="size-7 text-emerald-600"
@@ -614,7 +614,8 @@ export function PlanPanel({
                                 <PiggyBank className="size-3.5" />
                               </Button>
                             )}
-        <Button aria-label={t(
+                            <Button
+                              aria-label={t(
                                 p.direction === "income" ? "plan.markReceived" : "plan.markPaid",
                               )}
                               size="icon"
@@ -627,7 +628,8 @@ export function PlanPanel({
                             >
                               <Check className="size-3.5" />
                             </Button>
-        <Button aria-label={t("plan.editTitle")}
+                            <Button
+                              aria-label={t("plan.editTitle")}
                               size="icon"
                               variant="ghost"
                               className="size-7"
@@ -636,7 +638,8 @@ export function PlanPanel({
                             >
                               <Pencil className="size-3.5" />
                             </Button>
-        <Button aria-label={t("common.delete")}
+                            <Button
+                              aria-label={t("common.delete")}
                               size="icon"
                               variant="ghost"
                               className="size-7 text-muted-foreground"
@@ -690,7 +693,8 @@ export function PlanPanel({
                             ? t("plan.diffBetter", { amount: money(magnitude) })
                             : t("plan.diffWorse", { amount: money(magnitude) })}
                       </Badge>
-        <Button aria-label={t("plan.reopen")}
+                      <Button
+                        aria-label={t("plan.reopen")}
                         variant="ghost"
                         size="icon"
                         onClick={() => reopen(p.id)}
@@ -698,7 +702,12 @@ export function PlanPanel({
                       >
                         <RotateCcw className="size-4" />
                       </Button>
-        <Button aria-label={t("common.delete")} variant="ghost" size="icon" onClick={() => remove(p.id)}>
+                      <Button
+                        aria-label={t("common.delete")}
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(p.id)}
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>

@@ -178,11 +178,7 @@ export function CoachPanel({
                         : "rounded-lg px-3 py-2 text-sm bg-muted max-w-[85%] prose prose-sm dark:prose-invert [&_p]:my-1"
                     }
                   >
-                    {m.role === "assistant" ? (
-                      <Markdown>{m.content}</Markdown>
-                    ) : (
-                      m.content
-                    )}
+                    {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
                   </div>
                 </div>
               ))}
@@ -208,7 +204,12 @@ export function CoachPanel({
                 }}
                 className="min-h-0 resize-none"
               />
-        <Button aria-label={t("common.send")} onClick={sendChat} disabled={!input.trim() || chatMut.isPending} size="icon">
+              <Button
+                aria-label={t("common.send")}
+                onClick={sendChat}
+                disabled={!input.trim() || chatMut.isPending}
+                size="icon"
+              >
                 <Send className="size-4" />
               </Button>
             </div>

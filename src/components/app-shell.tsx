@@ -42,7 +42,6 @@ import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
 import { InstallApp } from "@/components/install-app";
 
-
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
 import { useT, type MessageKey } from "@/lib/i18n";
@@ -318,7 +317,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             {privacy ? <EyeOff /> : <Eye />}
           </Button>
-        aria-label={t("common.openMenu")}   <Button variant="ghost" size="icon" onClick={() => setOpen((s) => !s)}>
+          <Button
+            aria-label={t("common.openMenu")}
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpen((s) => !s)}
+          >
             {open ? <X /> : <Menu />}
           </Button>
         </div>
@@ -424,11 +428,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="pwa-safe-bottom flex-1 min-w-0 relative">
-        {children}
-      </main>
+      <main className="pwa-safe-bottom flex-1 min-w-0 relative">{children}</main>
       <CoachDock />
-      
     </div>
   );
 }
