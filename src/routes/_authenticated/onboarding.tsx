@@ -529,6 +529,7 @@ function Welcome({ isBusiness }: { isBusiness: boolean }) {
       <p className="text-muted-foreground">
         {t(isBusiness ? "ob.welcome.bodyBiz" : "ob.welcome.body")}
       </p>
+      <StepInfo body={t("ob.welcome.statementNote")} />
     </div>
   );
 }

@@ -131,6 +131,7 @@ export function CoachOnboarding({
     if (startedRef.current) return;
     startedRef.current = true;
     push("coach", t("coachOb.intro"));
+    push("coach", t("coachOb.statementNote"));
     push("coach", t("coachOb.countryQ"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

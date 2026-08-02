@@ -182,6 +182,13 @@ export const ENTRIES = {
     de: "Lieber reden? Richte alles im Chat mit dem Coach ein",
     fr: "Vous préférez discuter ? Configurez en chattant avec le coach",
   },
+  "coachOb.statementNote": {
+    en: "Tip: you don't have to type everything. You can upload a bank statement (3–6 months) to fill in your income, bills and spending automatically — switch to 'use forms' any time to do it.",
+    pt: "Dica: não precisas de escrever tudo. Podes carregar um extrato bancário (3 a 6 meses) para preencher o rendimento, as contas e os gastos automaticamente — muda para 'usar formulários' quando quiseres.",
+    es: "Consejo: no tienes que escribir todo. Puedes subir un extracto bancario (3 a 6 meses) para rellenar tus ingresos, facturas y gastos automáticamente — cambia a 'usar formularios' cuando quieras.",
+    de: "Tipp: Du musst nicht alles tippen. Du kannst einen Kontoauszug (3–6 Monate) hochladen, um Einkommen, Rechnungen und Ausgaben automatisch zu füllen — wechsle jederzeit zu 'Formulare verwenden'.",
+    fr: "Astuce : vous n'êtes pas obligé de tout saisir. Vous pouvez importer un relevé bancaire (3 à 6 mois) pour remplir vos revenus, factures et dépenses automatiquement — passez à « utiliser les formulaires » quand vous voulez.",
+  },
   "coachOb.intro": {
     en: "Hi! I'm your bynku coach. I'll ask a few quick questions and set things up for you. You can switch to forms anytime.",
     pt: "Olá! Sou o teu coach do bynku. Vou fazer algumas perguntas rápidas e tratar da configuração. Podes mudar para formulários quando quiseres.",
