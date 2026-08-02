@@ -200,7 +200,12 @@ export function AssetsSection({
 
   const formLiquidity = liquidityForKind(kind);
 
-  function askCoach(a: { name: string; kind: string; acquired_value: number | null; acquired_on: string | null }) {
+  function askCoach(a: {
+    name: string;
+    kind: string;
+    acquired_value: number | null;
+    acquired_on: string | null;
+  }) {
     const ask = t("assets.estimatePrompt", {
       name: a.name,
       kind: (KIND_LABEL[a.kind] ?? a.kind).toLowerCase(),
@@ -511,6 +516,7 @@ export function AssetsSection({
                     </div>
                     <div className="flex shrink-0 items-center">
                       <Button
+                        aria-label={t("common.edit")}
                         variant="ghost"
                         size="icon"
                         title={t("common.edit")}
@@ -519,6 +525,7 @@ export function AssetsSection({
                         <Pencil className="size-4" />
                       </Button>
                       <Button
+                        aria-label={t("assets.askCoach")}
                         variant="ghost"
                         size="icon"
                         title={t("assets.askCoach")}
@@ -526,7 +533,12 @@ export function AssetsSection({
                       >
                         <Sparkles className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(r.id)}>
+                      <Button
+                        aria-label={t("common.delete")}
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(r.id)}
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -583,7 +595,11 @@ export function AssetsSection({
             </div>
             <div className="grid gap-1">
               <Label className="text-xs text-muted-foreground">{t("assets.acquiredOn")}</Label>
-              <Input type="date" value={acquiredOn} onChange={(e) => setAcquiredOn(e.target.value)} />
+              <Input
+                type="date"
+                value={acquiredOn}
+                onChange={(e) => setAcquiredOn(e.target.value)}
+              />
             </div>
             <div className="flex items-end">
               <Button className="w-full" onClick={add} disabled={!name || !current}>

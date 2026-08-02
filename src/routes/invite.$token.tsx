@@ -14,7 +14,7 @@ export const Route = createFileRoute("/invite/$token")({
   head: ({ params }) =>
     pageMeta({
       path: `/invite/${params.token}`,
-      title: "You're invited to a bynku household",
+      title: "Join a household · bynku",
       description:
         "Accept your invitation to join a shared bynku household and start budgeting together.",
       noindex: true,
