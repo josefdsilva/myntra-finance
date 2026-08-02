@@ -3387,6 +3387,12 @@ export const ENTRIES = {
     de: "Kein Einkommen ist als Gehalt markiert — markiere eines unter Einnahmen, damit dies es ersetzt.",
     fr: "Aucun revenu n'est marqué comme salaire — marquez-en un dans Revenus pour que cela le remplace.",
   },
+  "common.edit": { en: "Edit", pt: "Editar", es: "Editar", de: "Bearbeiten", fr: "Modifier" },
+  "common.delete": { en: "Delete", pt: "Eliminar", es: "Eliminar", de: "Löschen", fr: "Supprimer" },
+  "common.save": { en: "Save", pt: "Guardar", es: "Guardar", de: "Speichern", fr: "Enregistrer" },
+  "common.cancel": { en: "Cancel", pt: "Cancelar", es: "Cancelar", de: "Abbrechen", fr: "Annuler" },
+  "common.openMenu": { en: "Open menu", pt: "Abrir menu", es: "Abrir menú", de: "Menü öffnen", fr: "Ouvrir le menu" },
+  "common.send": { en: "Send message", pt: "Enviar mensagem", es: "Enviar mensaje", de: "Nachricht senden", fr: "Envoyer le message" },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;
