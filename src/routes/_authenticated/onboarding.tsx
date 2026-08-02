@@ -38,6 +38,7 @@ import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
 import { groupSectors, NACE_SECTIONS } from "@/lib/business-benchmarks";
 import { debtKindOptions, type DebtKind } from "@/lib/debt-kinds";
+import { useCategories, useCategoryMutations } from "@/hooks/use-categories";
 
 import {
   Plus,
@@ -54,6 +55,9 @@ import {
   TrendingDown,
   Gem,
   Building2,
+  Info,
+  Tags,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -88,9 +92,11 @@ const STEPS = [
   "cycle",
   "business",
   "household",
+  "categories",
   "income",
   "fixed",
   "variable",
+  "margin",
   "debt",
   "assets",
   "projects",
@@ -116,6 +122,7 @@ function OnboardingPage() {
     <Wizard
       householdId={householdId}
       initialCountry={hh?.household?.country ?? "PT"}
+      initialMargin={Number(hh?.household?.margin_pct ?? 10)}
       kind={(hh?.household?.kind as "personal" | "business") ?? "personal"}
     />
   );
@@ -124,10 +131,12 @@ function OnboardingPage() {
 function Wizard({
   householdId,
   initialCountry,
+  initialMargin,
   kind,
 }: {
   householdId: string;
   initialCountry: string;
+  initialMargin: number;
   kind: "personal" | "business";
 }) {
   const navigate = useNavigate();
@@ -148,6 +157,8 @@ function Wizard({
   const [sector, setSector] = useState("");
   const [employees, setEmployees] = useState("");
   const [advisorEmail, setAdvisorEmail] = useState("");
+  const [margin, setMargin] = useState(initialMargin);
+  const [cycleMode, setCycleMode] = useState<"event" | "time">("event");
 
   const isBusiness = kind === "business";
   // A business space skips the household (adults/children) demographics step but
@@ -157,7 +168,8 @@ function Wizard({
   const steps = STEPS.filter(
     (s) =>
       (s !== "household" || !isBusiness) &&
-      (s !== "cycle" || isBusiness) &&
+      // The cycle step now shows for both: businesses set a fiscal period,
+      // personal spaces choose payday-anchored vs a fixed day of the month.
       (s !== "business" || isBusiness),
   );
   const key = steps[Math.min(step, steps.length - 1)];
@@ -187,15 +199,38 @@ function Wizard({
     setBusy(true);
     try {
       if (key === "country") await updateHh({ data: { household_id: householdId, country } });
-      if (key === "cycle")
-        await updateHh({
-          data: {
-            household_id: householdId,
-            cycle_mode: "time",
-            cycle: cycleLen,
-            cycle_anchor_date: fiscalStart || null,
-          },
-        });
+      if (key === "cycle") {
+        if (isBusiness) {
+          await updateHh({
+            data: {
+              household_id: householdId,
+              cycle_mode: "time",
+              cycle: cycleLen,
+              cycle_anchor_date: fiscalStart || null,
+            },
+          });
+        } else if (cycleMode === "time") {
+          // Personal, fixed day: a monthly time cycle anchored on the chosen date.
+          await updateHh({
+            data: {
+              household_id: householdId,
+              cycle_mode: "time",
+              cycle: "monthly",
+              cycle_anchor_date: fiscalStart || null,
+            },
+          });
+        } else {
+          // Personal, payday-anchored: event mode (rolls when pay is recorded).
+          await updateHh({
+            data: {
+              household_id: householdId,
+              cycle_mode: "event",
+              cycle: "monthly",
+              cycle_anchor_date: null,
+            },
+          });
+        }
+      }
       if (key === "business")
         await updateHh({
           data: {
@@ -205,6 +240,8 @@ function Wizard({
             advisor_email: advisorEmail.trim() || null,
           },
         });
+      if (key === "margin")
+        await updateHh({ data: { household_id: householdId, margin_pct: margin } });
       if (key === "household")
         await updateHh({
           data: {
@@ -289,6 +326,9 @@ function Wizard({
           )}
           {key === "cycle" && (
             <CycleStep
+              isBusiness={isBusiness}
+              cycleMode={cycleMode}
+              setCycleMode={setCycleMode}
               cycleLen={cycleLen}
               setCycleLen={setCycleLen}
               fiscalStart={fiscalStart}
@@ -315,9 +355,13 @@ function Wizard({
               setAgeBand={setAgeBand}
             />
           )}
+          {key === "categories" && (
+            <CategoriesStep householdId={householdId} isBusiness={isBusiness} />
+          )}
           {key === "income" && <IncomeStep householdId={householdId} isBusiness={isBusiness} />}
           {key === "fixed" && <FixedStep householdId={householdId} />}
           {key === "variable" && <VariableStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "margin" && <MarginStep margin={margin} setMargin={setMargin} />}
           {key === "debt" && <DebtStep householdId={householdId} isBusiness={isBusiness} />}
           {key === "assets" && <AssetsStep householdId={householdId} isBusiness={isBusiness} />}
           {key === "projects" && <ProjectsStep householdId={householdId} isBusiness={isBusiness} />}
@@ -365,6 +409,109 @@ function StepHead({
       </div>
       <h1 className="font-display text-2xl">{title}</h1>
       <p className="text-sm text-muted-foreground">{subtitle}</p>
+    </div>
+  );
+}
+
+// A rich "why we ask this" note: what it is, why it helps bynku, and a nudge if
+// unsure. Keeps the wizard instructive without cluttering the main input.
+function StepInfo({ body }: { body: string }) {
+  return (
+    <div className="mb-5 flex gap-2 rounded-xl border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
+      <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+      <p>{body}</p>
+    </div>
+  );
+}
+
+function CategoriesStep({
+  householdId,
+  isBusiness,
+}: {
+  householdId: string;
+  isBusiness: boolean;
+}) {
+  const t = useT();
+  const { data: cats = [] } = useCategories(householdId);
+  const { add, remove } = useCategoryMutations(householdId);
+  const [name, setName] = useState("");
+
+  function submit() {
+    const clean = name.trim();
+    if (!clean) return;
+    add.mutate(clean, { onSuccess: () => setName("") });
+  }
+
+  return (
+    <div>
+      <StepHead
+        icon={Tags}
+        title={t("ob.categories.title")}
+        subtitle={t(isBusiness ? "ob.categories.subtitleBiz" : "ob.categories.subtitle")}
+      />
+      <StepInfo body={t("ob.categories.info")} />
+      <div className="mb-4 flex gap-2">
+        <Input
+          placeholder={t("ob.categories.addPh")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              submit();
+            }
+          }}
+        />
+        <Button onClick={submit} disabled={!name.trim() || add.isPending}>
+          {add.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+        </Button>
+      </div>
+      {cats.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("ob.categories.empty")}</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {cats.map((c) => (
+            <span
+              key={c.id}
+              className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-sm"
+            >
+              {c.name}
+              <button
+                type="button"
+                aria-label={t("ob.categories.remove", { name: c.name })}
+                className="text-muted-foreground transition-colors hover:text-destructive"
+                onClick={() => remove.mutate({ id: c.id, name: c.name })}
+              >
+                <X className="size-3.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MarginStep({ margin, setMargin }: { margin: number; setMargin: (n: number) => void }) {
+  const t = useT();
+  return (
+    <div>
+      <StepHead icon={PiggyBank} title={t("ob.margin.title")} subtitle={t("ob.margin.subtitle")} />
+      <StepInfo body={t("ob.margin.info")} />
+      <div className="flex items-center gap-4">
+        <input
+          type="range"
+          min={0}
+          max={30}
+          step={1}
+          value={margin}
+          onChange={(e) => setMargin(Number(e.target.value))}
+          className="h-2 flex-1 cursor-pointer accent-primary"
+          aria-label={t("ob.margin.title")}
+        />
+        <span className="w-12 text-right font-display text-xl tabular-nums">{margin}%</span>
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">{t("ob.margin.hint")}</p>
     </div>
   );
 }
@@ -420,46 +567,85 @@ function CountryStep({
 }
 
 function CycleStep({
+  isBusiness,
+  cycleMode,
+  setCycleMode,
   cycleLen,
   setCycleLen,
   fiscalStart,
   setFiscalStart,
 }: {
+  isBusiness: boolean;
+  cycleMode: "event" | "time";
+  setCycleMode: (v: "event" | "time") => void;
   cycleLen: Cycle;
   setCycleLen: (v: Cycle) => void;
   fiscalStart: string;
   setFiscalStart: (v: string) => void;
 }) {
   const t = useT();
+
+  if (isBusiness) {
+    return (
+      <div>
+        <StepHead icon={CalendarClock} title={t("ob.cycle.title")} subtitle={t("ob.cycle.subtitle")} />
+        <StepInfo body={t("ob.cycle.infoBiz")} />
+        <div className="space-y-4">
+          <div>
+            <Label>{t("ob.cycle.lengthLabel")}</Label>
+            <Select value={cycleLen} onValueChange={(v) => setCycleLen(v as Cycle)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CYCLES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {t(`cadence.${c}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>{t("ob.cycle.fiscalLabel")}</Label>
+            <Input type="date" value={fiscalStart} onChange={(e) => setFiscalStart(e.target.value)} />
+            <p className="mt-1 text-xs text-muted-foreground">{t("ob.cycle.fiscalHint")}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const choiceClass = (active: boolean) =>
+    `flex flex-col items-start gap-0.5 rounded-xl border p-4 text-left transition-colors ${
+      active ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+    }`;
+
   return (
     <div>
       <StepHead
         icon={CalendarClock}
         title={t("ob.cycle.title")}
-        subtitle={t("ob.cycle.subtitle")}
+        subtitle={t("ob.cycle.subtitlePersonal")}
       />
-      <div className="space-y-4">
-        <div>
-          <Label>{t("ob.cycle.lengthLabel")}</Label>
-          <Select value={cycleLen} onValueChange={(v) => setCycleLen(v as Cycle)}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CYCLES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {t(`cadence.${c}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t("ob.cycle.fiscalLabel")}</Label>
-          <Input type="date" value={fiscalStart} onChange={(e) => setFiscalStart(e.target.value)} />
-          <p className="mt-1 text-xs text-muted-foreground">{t("ob.cycle.fiscalHint")}</p>
-        </div>
+      <StepInfo body={t("ob.cycle.infoPersonal")} />
+      <div className="grid gap-3">
+        <button type="button" onClick={() => setCycleMode("event")} className={choiceClass(cycleMode === "event")}>
+          <span className="font-medium">{t("ob.cycle.eventTitle")}</span>
+          <span className="text-xs text-muted-foreground">{t("ob.cycle.eventBody")}</span>
+        </button>
+        <button type="button" onClick={() => setCycleMode("time")} className={choiceClass(cycleMode === "time")}>
+          <span className="font-medium">{t("ob.cycle.dateTitle")}</span>
+          <span className="text-xs text-muted-foreground">{t("ob.cycle.dateBody")}</span>
+        </button>
       </div>
+      {cycleMode === "time" && (
+        <div className="mt-4">
+          <Label>{t("ob.cycle.dateLabel")}</Label>
+          <Input type="date" value={fiscalStart} onChange={(e) => setFiscalStart(e.target.value)} />
+          <p className="mt-1 text-xs text-muted-foreground">{t("ob.cycle.dateHint")}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -713,6 +899,7 @@ function IncomeStep({ householdId, isBusiness }: { householdId: string; isBusine
         title={t(isBusiness ? "ob.income.titleBiz" : "ob.income.title")}
         subtitle={t(isBusiness ? "ob.income.subtitleBiz" : "ob.income.subtitle")}
       />
+      <StepInfo body={t("ob.income.info")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
@@ -767,6 +954,7 @@ function FixedStep({ householdId }: { householdId: string }) {
   return (
     <div>
       <StepHead icon={Home} title={t("ob.fixed.title")} subtitle={t("ob.fixed.subtitle")} />
+      <StepInfo body={t("ob.fixed.info")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orAddManually")}</span>
@@ -825,6 +1013,7 @@ function VariableStep({ householdId, isBusiness }: { householdId: string; isBusi
         title={t("ob.variable.title")}
         subtitle={t(isBusiness ? "ob.variable.subtitleBiz" : "ob.variable.subtitle")}
       />
+      <StepInfo body={t("ob.variable.info")} />
       <div className="mb-3">
         <StatementImportButton householdId={householdId} />
         <span className="ml-2 text-xs text-muted-foreground">{t("ob.orEstimateManually")}</span>
@@ -901,6 +1090,7 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
         title={t(isBusiness ? "ob.debt.titleBiz" : "ob.debt.title")}
         subtitle={t(isBusiness ? "ob.debt.subtitleBiz" : "ob.debt.subtitle")}
       />
+      <StepInfo body={t("ob.debt.info")} />
       <div className="space-y-3">
         <div>
           <Label className="text-xs">{t("ob.debt.whatLabel")}</Label>
@@ -1282,6 +1472,7 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
         title={t(isBusiness ? "ob.projects.titleBiz" : "ob.projects.title")}
         subtitle={t("ob.projects.subtitle", { amount: money(surplus) })}
       />
+      <StepInfo body={t("ob.projects.info")} />
 
       <p className="mb-2 text-sm font-medium">{t("ob.projects.suggested")}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

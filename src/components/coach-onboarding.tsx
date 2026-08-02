@@ -114,6 +114,19 @@ export function CoachOnboarding({
     return t(key[topic]);
   }
 
+  // A one-line "why we ask" the coach says before each topic, so the chat teaches
+  // as it goes rather than just collecting numbers.
+  function topicWhy(topic: Topic): string {
+    const key: Record<Topic, MessageKey> = {
+      income: "coachOb.incomeWhy",
+      fixed: "coachOb.fixedWhy",
+      variable: "coachOb.variableWhy",
+      debt: "coachOb.debtWhy",
+      projects: "coachOb.projectsWhy",
+    };
+    return t(key[topic]);
+  }
+
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
@@ -136,7 +149,10 @@ export function CoachOnboarding({
     }
     setStepIdx(nextIdx);
     const next = SCRIPT[nextIdx];
-    if (next !== "country") push("coach", topicQuestion(next));
+    if (next !== "country") {
+      push("coach", topicWhy(next as Topic));
+      push("coach", topicQuestion(next as Topic));
+    }
   }
 
   async function pickCountry(code: string, name: string) {
