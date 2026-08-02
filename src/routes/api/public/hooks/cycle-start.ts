@@ -33,6 +33,7 @@ export const Route = createFileRoute("/api/public/hooks/cycle-start")({
         const { enqueueTemplateEmail } = await import("@/lib/email/send.server");
         const { fetchCycleBoundsById } = await import("@/lib/cycle-bounds");
         const { plansInWindow } = await import("@/lib/plan");
+        const { snapshotJustClosedCycle } = await import("@/lib/cycle-metrics.functions");
 
         // Reuse the weekly-digest opt-in as the email-notifications gate.
         const { data: prefs } = await supabaseAdmin
@@ -63,6 +64,19 @@ export const Route = createFileRoute("/api/public/hooks/cycle-start")({
           if (daysSinceStart > 1) {
             details.push({ user_id: p.user_id, skipped: "cycle not fresh", daysSinceStart });
             continue;
+          }
+
+          // A fresh rollover means the previous cycle just closed — snapshot it
+          // for the compounding-value history. Best-effort; never blocks the email.
+          try {
+            const { data: sp } = await supabaseAdmin
+              .from("households")
+              .select("kind, cycle, cycle_mode, cycle_anchor_date")
+              .eq("id", hhId)
+              .maybeSingle();
+            await snapshotJustClosedCycle(supabaseAdmin as never, hhId, sp, "cron", now);
+          } catch (e) {
+            console.error("cron cycle snapshot failed", hhId, e);
           }
 
           const [{ data: hh }, { data: incomeRows }, { data: plansData }] = await Promise.all([

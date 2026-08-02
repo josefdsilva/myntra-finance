@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { cycleFor, cycleConfigForSpace, type CycleBounds } from "./cycle";
+import {
+  cycleFor,
+  cycleConfigForSpace,
+  buildCyclesFromSalaries,
+  buildTimeCycles,
+  type CycleBounds,
+} from "./cycle";
 
 type Space = Parameters<typeof cycleConfigForSpace>[0];
 
@@ -54,6 +60,44 @@ export async function fetchCycleBoundsById(
   ]);
   const dates = ((salaries ?? []) as Array<{ occurred_at: string }>).map((r) => r.occurred_at);
   return cycleFor(cycleConfigForSpace(space), dates, now);
+}
+
+/**
+ * The last `count` CLOSED cycles for a space (oldest first) — the windows the
+ * compounding-value history is built from. Unifies both modes: a time-driven
+ * space uses its fixed fiscal periods, an event space uses the spans between
+ * consecutive salary receipts. The currently-running cycle is always excluded
+ * (only bounded, finished cycles are returned).
+ */
+export async function resolveClosedCycles(
+  sb: SupabaseClient,
+  householdId: string,
+  space: Space,
+  count = 12,
+  now: Date = new Date(),
+): Promise<Array<{ start: Date; end: Date }>> {
+  const config = cycleConfigForSpace(space);
+  if (config.mode === "time") {
+    // Build a few extra to be safe, then keep only finished periods.
+    const spans = buildTimeCycles(config.length, config.anchorDate, count + 1, now);
+    return spans
+      .filter((s) => s.end.getTime() <= now.getTime())
+      .slice(-count)
+      .map(({ start, end }) => ({ start, end }));
+  }
+  const { data } = await sb
+    .from("expenses")
+    .select("occurred_at")
+    .eq("household_id", householdId)
+    .eq("kind", "income")
+    .eq("is_salary", true)
+    .order("occurred_at", { ascending: true })
+    .limit(count + 2);
+  const asc = ((data ?? []) as Array<{ occurred_at: string }>).map((r) => r.occurred_at);
+  return buildCyclesFromSalaries(asc)
+    .filter((s) => !s.predicted && s.end.getTime() <= now.getTime())
+    .slice(-count)
+    .map(({ start, end }) => ({ start, end }));
 }
 
 /**

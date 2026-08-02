@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
+import { backfillCycleMetrics } from "@/lib/cycle-metrics.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -141,6 +142,19 @@ function AnalysisPage() {
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const { ask: initialAsk } = Route.useSearch();
+
+  // Heal cycle-metrics history on visit: snapshot any closed cycles that never
+  // got recorded (existing users, missed cron). Fire-and-forget, runs once per
+  // household per session; failures are silent.
+  const runBackfill = useServerFn(backfillCycleMetrics);
+  useQuery({
+    enabled: !!householdId,
+    queryKey: ["cycle-metrics-backfill", householdId],
+    queryFn: () => runBackfill({ data: { household_id: householdId! } }),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+  });
 
   const [range, setRange] = useState<RangeKey>("1");
   const [includeFixed, setIncludeFixed] = useState(true);

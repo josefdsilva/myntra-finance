@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { differenceInCalendarMonths } from "date-fns";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { snapshotJustClosedCycle } from "@/lib/cycle-metrics.functions";
 import { impliedAnnualRate } from "@/lib/amortization";
 import { CADENCES, monthlyEquivalent } from "@/lib/cadence";
 import { z } from "zod";
@@ -68,6 +69,18 @@ export const addExpense = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw error;
+
+    // Receiving the anchor income rolls an event/payday space into a new cycle —
+    // so the previous cycle is now closed. Snapshot it for the history/trends.
+    // Best-effort: a failure here must never block recording the salary.
+    const isEventMode = (hh?.cycle_mode ?? "event") !== "time";
+    if (isAnchor && isEventMode) {
+      try {
+        await snapshotJustClosedCycle(context.supabase, data.household_id, hh, "close");
+      } catch (e) {
+        console.error("cycle snapshot on rollover failed", e);
+      }
+    }
     return row;
   });
 
@@ -157,7 +170,7 @@ export const markIncomeReceived = createServerFn({ method: "POST" })
         .maybeSingle(),
       context.supabase
         .from("households")
-        .select("cycle_anchor_income_id")
+        .select("cycle_anchor_income_id, kind, cycle, cycle_mode, cycle_anchor_date")
         .eq("id", data.household_id)
         .maybeSingle(),
     ]);
