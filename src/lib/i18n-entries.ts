@@ -3353,10 +3353,10 @@ export const ENTRIES = {
     fr: "Nouveau salaire mensuel (net)",
   },
   "income.tagSalaryHint": {
-    en: "Tip: mark your main pay as \"Salary\" (edit its type) so payday cycles roll over correctly and retirement/job planning knows which income to replace.",
-    pt: "Dica: marque o seu rendimento principal como \"Salário\" (edite o tipo) para que os ciclos de pagamento avancem corretamente e o planeamento de reforma/emprego saiba que rendimento substituir.",
-    es: "Consejo: marca tu ingreso principal como \"Salario\" (edita su tipo) para que los ciclos de pago avancen bien y la planificación de jubilación/empleo sepa qué ingreso reemplazar.",
-    de: "Tipp: Markiere dein Haupteinkommen als \"Gehalt\" (Typ bearbeiten), damit Zahltags-Zyklen korrekt umschalten und die Ruhestands-/Jobplanung weiß, welches Einkommen zu ersetzen ist.",
+    en: 'Tip: mark your main pay as "Salary" (edit its type) so payday cycles roll over correctly and retirement/job planning knows which income to replace.',
+    pt: 'Dica: marque o seu rendimento principal como "Salário" (edite o tipo) para que os ciclos de pagamento avancem corretamente e o planeamento de reforma/emprego saiba que rendimento substituir.',
+    es: 'Consejo: marca tu ingreso principal como "Salario" (edita su tipo) para que los ciclos de pago avancen bien y la planificación de jubilación/empleo sepa qué ingreso reemplazar.',
+    de: 'Tipp: Markiere dein Haupteinkommen als "Gehalt" (Typ bearbeiten), damit Zahltags-Zyklen korrekt umschalten und die Ruhestands-/Jobplanung weiß, welches Einkommen zu ersetzen ist.',
     fr: "Astuce : marquez votre revenu principal comme « Salaire » (modifiez son type) pour que les cycles de paie basculent correctement et que la planification retraite/emploi sache quel revenu remplacer.",
   },
   "ff.evt.replaces": {
@@ -3386,6 +3386,24 @@ export const ENTRIES = {
     es: "Ningún ingreso está marcado como salario — marca uno en Ingresos para que esto lo reemplace.",
     de: "Kein Einkommen ist als Gehalt markiert — markiere eines unter Einnahmen, damit dies es ersetzt.",
     fr: "Aucun revenu n'est marqué comme salaire — marquez-en un dans Revenus pour que cela le remplace.",
+  },
+  "common.edit": { en: "Edit", pt: "Editar", es: "Editar", de: "Bearbeiten", fr: "Modifier" },
+  "common.delete": { en: "Delete", pt: "Eliminar", es: "Eliminar", de: "Löschen", fr: "Supprimer" },
+  "common.save": { en: "Save", pt: "Guardar", es: "Guardar", de: "Speichern", fr: "Enregistrer" },
+  "common.cancel": { en: "Cancel", pt: "Cancelar", es: "Cancelar", de: "Abbrechen", fr: "Annuler" },
+  "common.openMenu": {
+    en: "Open menu",
+    pt: "Abrir menu",
+    es: "Abrir menú",
+    de: "Menü öffnen",
+    fr: "Ouvrir le menu",
+  },
+  "common.send": {
+    en: "Send message",
+    pt: "Enviar mensagem",
+    es: "Enviar mensaje",
+    de: "Nachricht senden",
+    fr: "Envoyer le message",
   },
 } satisfies Record<string, Record<Locale, string>>;
 
