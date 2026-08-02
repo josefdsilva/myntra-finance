@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { backfillCycleMetrics } from "@/lib/cycle-metrics.functions";
+import { ScoreTrendCard } from "@/components/score-trend";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -653,6 +654,13 @@ function AnalysisPage() {
           </Select>
         </div>
       </header>
+
+      {householdId && (
+        <ScoreTrendCard
+          householdId={householdId}
+          isBusiness={hh?.household?.kind === "business"}
+        />
+      )}
 
       {householdId && <CoachPanel householdId={householdId} initialPrompt={initialAsk} />}
 

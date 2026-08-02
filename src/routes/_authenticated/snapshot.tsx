@@ -38,6 +38,7 @@ import { defaultIntentForCategory } from "@/lib/intent";
 import { pageShellClass } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
+import { ScoreTrendMini } from "@/components/score-trend";
 import { useT } from "@/lib/i18n";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 
@@ -394,6 +395,8 @@ function SnapshotPage() {
               )}
             </div>
           </div>
+
+          <ScoreTrendMini householdId={householdId} isBusiness={isBusiness} />
 
           <p className="text-xs text-muted-foreground">{t("snapshot.privacyNote")}</p>
         </>
