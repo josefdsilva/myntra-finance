@@ -60,10 +60,14 @@ export const getNotificationPrefs = createServerFn({ method: "GET" })
         weekly_digest: boolean;
         baseline_warn: boolean;
         emergency_warn: boolean;
+        push_enabled: boolean;
+        email_enabled: boolean;
       } | null) ?? {
         weekly_digest: false,
         baseline_warn: false,
         emergency_warn: false,
+        push_enabled: true,
+        email_enabled: false,
       }
     );
   });
@@ -76,6 +80,8 @@ export const updateNotificationPrefs = createServerFn({ method: "POST" })
         weekly_digest: z.boolean().optional(),
         baseline_warn: z.boolean().optional(),
         emergency_warn: z.boolean().optional(),
+        push_enabled: z.boolean().optional(),
+        email_enabled: z.boolean().optional(),
       })
       .parse(input),
   )

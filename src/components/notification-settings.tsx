@@ -123,7 +123,10 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
     }
   }
 
-  async function toggle(key: "weekly_digest" | "baseline_warn" | "emergency_warn", value: boolean) {
+  async function toggle(
+    key: "weekly_digest" | "baseline_warn" | "emergency_warn" | "push_enabled" | "email_enabled",
+    value: boolean,
+  ) {
     try {
       await setPrefs({ data: { [key]: value } });
       qc.invalidateQueries({ queryKey: ["notif-prefs"] });
@@ -230,6 +233,20 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         )}
 
         <div className="border-t pt-4 space-y-3">
+          {/* Channels: the in-app coach inbox is always on; these amplify it.
+              English-first; localised in the i18n pass. */}
+          <PrefRow
+            label="Email me"
+            desc="Send digests and important coach alerts to your email."
+            checked={!!prefs?.email_enabled}
+            onChange={(v) => toggle("email_enabled", v)}
+          />
+          <PrefRow
+            label="Web push"
+            desc="Show timely coach alerts on your registered devices."
+            checked={prefs?.push_enabled ?? true}
+            onChange={(v) => toggle("push_enabled", v)}
+          />
           <PrefRow
             label={t("notif.weeklyDigest")}
             desc={t("notif.weeklyDigestDesc")}

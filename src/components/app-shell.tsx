@@ -40,6 +40,7 @@ import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.function
 import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
+import { CoachInbox } from "@/components/coach-inbox";
 import { InstallApp } from "@/components/install-app";
 import { AppTour } from "@/components/app-tour";
 
@@ -306,6 +307,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="font-display text-lg">Budget</span>
         </Link>
         <div className="flex items-center gap-1">
+          <CoachInbox householdId={resolvedId} />
           <Button
             variant="ghost"
             size="icon"
@@ -350,6 +352,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="hidden md:flex items-center gap-2 p-5 border-b">
           <img src={appIcon.url} alt="bynku household budget logo" className="size-9 rounded-xl" />
           {HouseholdSwitcher}
+          <div className="ml-auto">
+            <CoachInbox householdId={resolvedId} />
+          </div>
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
           {NAV_SECTIONS.map((section, si) => (
