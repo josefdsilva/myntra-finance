@@ -31,12 +31,19 @@ export const Route = createFileRoute("/auth")({
       description:
         "Sign in to bynku to see your daily safe-to-spend, shared household budget, allocations and AI expense capture.",
     }),
+  // Let the landing page deep-link straight to the sign-up form (/auth?mode=signup).
+  validateSearch: (search: Record<string, unknown>) => ({
+    mode: search.mode === "signup" ? ("signup" as const) : undefined,
+  }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { mode: modeParam } = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">(
+    modeParam === "signup" ? "signup" : "signin",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

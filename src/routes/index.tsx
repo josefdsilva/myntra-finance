@@ -2,6 +2,7 @@ import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LandingPage } from "@/components/landing-page";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -9,22 +10,18 @@ export const Route = createFileRoute("/")({
       path: "/",
       title: "bynku — daily safe-to-spend & household allocations",
       description:
-        "bynku turns your income, bills and loans into one number: what you can safely spend today. Shared household budgeting with allocation buckets and AI expense capture.",
+        "bynku turns your income, bills and loans into one number: what you can safely spend today. Shared household and small-business budgeting with an AI coach that is committed to improving your financial position, not selling you products.",
     }),
-  component: IndexFallback,
+  component: IndexPage,
 });
 
-function IndexFallback() {
+function IndexPage() {
   const navigate = useNavigate();
+  // Signed-in visitors skip the marketing page and go straight to the app.
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      navigate({ to: data.user ? "/dashboard" : "/auth", replace: true });
+      if (data.user) navigate({ to: "/dashboard", replace: true });
     });
   }, [navigate]);
-  return (
-    <main className="min-h-screen grid place-items-center">
-      <h1 className="sr-only">bynku — daily safe-to-spend & household allocations</h1>
-      <p className="text-sm text-muted-foreground">Loading bynku…</p>
-    </main>
-  );
+  return <LandingPage />;
 }
