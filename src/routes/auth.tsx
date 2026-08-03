@@ -393,9 +393,6 @@ function AuthPage() {
             <a href="/privacy" className="underline hover:text-foreground">
               {t("auth.privacyLink")}
             </a>
-            <a href="/guides" className="underline hover:text-foreground">
-              Guides
-            </a>
           </p>
         </div>
       </main>
