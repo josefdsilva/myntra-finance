@@ -389,9 +389,12 @@ function AuthPage() {
           <p className="text-center text-xs text-muted-foreground mt-6">
             {t("auth.footerTagline")}
           </p>
-          <p className="text-center text-xs text-muted-foreground mt-2">
+          <p className="text-center text-xs text-muted-foreground mt-2 flex justify-center gap-3">
             <a href="/privacy" className="underline hover:text-foreground">
               {t("auth.privacyLink")}
+            </a>
+            <a href="/guides" className="underline hover:text-foreground">
+              Guides
             </a>
           </p>
         </div>
