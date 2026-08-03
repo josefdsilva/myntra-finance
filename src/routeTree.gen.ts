@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as GuidesBudgetingForCouplesRouteImport } from './routes/guides/budgeting-for-couples'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as AuthenticatedStatementsRouteImport } from './routes/_authenticated/statements'
@@ -84,6 +85,12 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuidesBudgetingForCouplesRoute =
+  GuidesBudgetingForCouplesRouteImport.update({
+    id: '/guides/budgeting-for-couples',
+    path: '/guides/budgeting-for-couples',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guides/budgeting-for-couples': typeof GuidesBudgetingForCouplesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/guides/': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
@@ -330,6 +338,7 @@ export interface FileRoutesByTo {
   '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guides/budgeting-for-couples': typeof GuidesBudgetingForCouplesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/guides': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
@@ -373,6 +382,7 @@ export interface FileRoutesById {
   '/_authenticated/statements': typeof AuthenticatedStatementsRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guides/budgeting-for-couples': typeof GuidesBudgetingForCouplesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/guides/': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
     | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
+    | '/guides/budgeting-for-couples'
     | '/invite/$token'
     | '/guides/'
     | '/api/public/benchmarks-version'
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
+    | '/guides/budgeting-for-couples'
     | '/invite/$token'
     | '/guides'
     | '/api/public/benchmarks-version'
@@ -499,6 +511,7 @@ export interface FileRouteTypes {
     | '/_authenticated/statements'
     | '/_authenticated/wiki'
     | '/email/unsubscribe'
+    | '/guides/budgeting-for-couples'
     | '/invite/$token'
     | '/guides/'
     | '/api/public/benchmarks-version'
@@ -520,6 +533,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  GuidesBudgetingForCouplesRoute: typeof GuidesBudgetingForCouplesRoute
   InviteTokenRoute: typeof InviteTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
@@ -583,6 +597,13 @@ declare module '@tanstack/react-router' {
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/budgeting-for-couples': {
+      id: '/guides/budgeting-for-couples'
+      path: '/guides/budgeting-for-couples'
+      fullPath: '/guides/budgeting-for-couples'
+      preLoaderRoute: typeof GuidesBudgetingForCouplesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
@@ -879,6 +900,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  GuidesBudgetingForCouplesRoute: GuidesBudgetingForCouplesRoute,
   InviteTokenRoute: InviteTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
