@@ -28,6 +28,21 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return out;
 }
 
+// Guard every await so the enable button can never hang forever. If a step
+// stalls (e.g. the service worker never activates, or push is unavailable in
+// this environment) we surface a clear error instead of an endless spinner.
+async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return await Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Timed out at ${label}. Push may be unavailable here.`)),
+        ms,
+      ),
+    ),
+  ]);
+}
+
 export function NotificationSettings({ householdId }: { householdId: string }) {
   const t = useT();
   const qc = useQueryClient();
@@ -68,6 +83,11 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
   async function enable() {
     setBusy(true);
     try {
+      // Check the server has a VAPID key before prompting or touching the SW,
+      // so a missing config fails instantly with a clear message.
+      const { key } = await withTimeout(getKey(), 10_000, "server key");
+      if (!key) throw new Error(t("notif.vapidKeyMissing"));
+
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
         toast.error(t("notif.permissionDenied"));
@@ -75,13 +95,16 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
       }
       let reg = await navigator.serviceWorker.getRegistration("/sw.js");
       if (!reg) reg = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-      const { key } = await getKey();
-      if (!key) throw new Error(t("notif.vapidKeyMissing"));
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
-      });
+      // Wait for an active worker, but never wait forever.
+      const ready = await withTimeout(navigator.serviceWorker.ready, 10_000, "service worker");
+      const sub = await withTimeout(
+        ready.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
+        }),
+        15_000,
+        "push subscribe",
+      );
       const j = sub.toJSON();
       await subFn({
         data: {
