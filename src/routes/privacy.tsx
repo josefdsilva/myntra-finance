@@ -2,23 +2,24 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { pageMeta } from "@/lib/route-meta";
 
-// Follow the visitor's OS light/dark setting on this public page, matching the
-// landing page. Never clobber a theme the app already applied (e.g. a signed-in
-// user who chose dark); restore the original state when leaving.
+// Theme for this public page: honour the app's saved choice
+// (localStorage["theme"]) so a signed-in visitor keeps their theme, and fall
+// back to the OS setting for anonymous visitors. Never writes localStorage and
+// never strips the class on unmount, so returning to the app keeps its theme.
 function useDeviceTheme() {
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const root = document.documentElement;
-    const hadDark = root.classList.contains("dark");
-    if (hadDark) return;
+    const stored = localStorage.getItem("theme");
+    if (stored === "dark" || stored === "light") {
+      root.classList.toggle("dark", stored === "dark");
+      return;
+    }
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => root.classList.toggle("dark", mq.matches);
     apply();
     mq.addEventListener("change", apply);
-    return () => {
-      mq.removeEventListener("change", apply);
-      root.classList.toggle("dark", hadDark);
-    };
+    return () => mq.removeEventListener("change", apply);
   }, []);
 }
 

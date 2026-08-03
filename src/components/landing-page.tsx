@@ -47,33 +47,27 @@ const ACCENT = "oklch(0.72 0.12 155)";
 const JoinContext = createContext<() => void>(() => {});
 const useJoin = () => useContext(JoinContext);
 
-// --- Follow the device light/dark preference while on the landing ------------
-// The app toggles a `.dark` class on <html> for its own theme. On the public
-// pages we want to respect the visitor's OS setting, but we must never clobber a
-// theme the app has already applied (e.g. a signed-in user who chose dark). So:
-//   * if the app has NOT set dark (a fresh/anonymous visitor), follow the device
-//     preference while here, then restore on unmount;
-//   * if the app HAS set dark, leave it untouched.
-// Either way the original state is restored when leaving the page.
+// --- Theme for the public pages ---------------------------------------------
+// The app stores the chosen theme in localStorage["theme"] and toggles a `.dark`
+// class on <html>. On the public pages we honour that saved choice so a signed-in
+// visitor keeps their theme, and fall back to the OS setting for anonymous
+// visitors (tracking live changes). We never write localStorage and never strip
+// the class on unmount, so returning to the app leaves its theme intact.
 
 function useDeviceTheme() {
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const root = document.documentElement;
-    const hadDark = root.classList.contains("dark");
-    if (hadDark) {
-      // The app already owns the theme; do not override it.
+    const stored = localStorage.getItem("theme");
+    if (stored === "dark" || stored === "light") {
+      root.classList.toggle("dark", stored === "dark");
       return;
     }
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => root.classList.toggle("dark", mq.matches);
     apply();
     mq.addEventListener("change", apply);
-    return () => {
-      mq.removeEventListener("change", apply);
-      // Restore exactly what we found (removes only the class we may have added).
-      root.classList.toggle("dark", hadDark);
-    };
+    return () => mq.removeEventListener("change", apply);
   }, []);
 }
 

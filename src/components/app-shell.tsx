@@ -103,7 +103,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  // Initialise from the saved choice (falling back to the OS setting) so the
+  // very first render already has the right theme. Starting at "light" and
+  // correcting in an effect caused a flash back to light when the shell
+  // remounted, e.g. after visiting a public route like /privacy and returning.
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+    const stored = localStorage.getItem("theme");
+    if (stored === "light" || stored === "dark") return stored;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   const activeId = useActiveHouseholdId();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
@@ -162,9 +171,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem("privacy-mode") === "1";
     setPrivacy(stored);
-    const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    setTheme(storedTheme ?? (prefersDark ? "dark" : "light"));
   }, []);
 
   useEffect(() => {
