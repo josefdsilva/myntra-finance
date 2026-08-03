@@ -48,21 +48,31 @@ const JoinContext = createContext<() => void>(() => {});
 const useJoin = () => useContext(JoinContext);
 
 // --- Follow the device light/dark preference while on the landing ------------
-// The app itself is light by default (it toggles a `.dark` class on <html>).
-// The public landing should respect the visitor's OS setting, so we manage the
-// class here and restore it when leaving the page.
+// The app toggles a `.dark` class on <html> for its own theme. On the public
+// pages we want to respect the visitor's OS setting, but we must never clobber a
+// theme the app has already applied (e.g. a signed-in user who chose dark). So:
+//   * if the app has NOT set dark (a fresh/anonymous visitor), follow the device
+//     preference while here, then restore on unmount;
+//   * if the app HAS set dark, leave it untouched.
+// Either way the original state is restored when leaving the page.
 
 function useDeviceTheme() {
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    if (hadDark) {
+      // The app already owns the theme; do not override it.
+      return;
+    }
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => root.classList.toggle("dark", mq.matches);
     apply();
     mq.addEventListener("change", apply);
     return () => {
       mq.removeEventListener("change", apply);
-      root.classList.remove("dark");
+      // Restore exactly what we found (removes only the class we may have added).
+      root.classList.toggle("dark", hadDark);
     };
   }, []);
 }
