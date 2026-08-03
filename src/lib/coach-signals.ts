@@ -143,6 +143,107 @@ export function nextOccurrence(plan: PlanRow, now: Date): Date | null {
   return null; // ongoing is not a lumpy event, do not remind
 }
 
+// ---- End-of-cycle recap + milestones --------------------------------------
+
+export type CycleMetric = {
+  cycle_start: string;
+  cycle_end: string;
+  income_actual: number;
+  spend_actual: number;
+  surplus_actual: number;
+  everyday_pool: number;
+  everyday_spent: number;
+  score_overall: number | null;
+};
+
+/** A recap of the just-closed cycle plus the single most useful next action. */
+export function recapSignal(p: {
+  latest: CycleMetric;
+  prev?: CycleMetric | null;
+  money: Money;
+}): Signal {
+  const { latest, prev, money } = p;
+  const overEveryday = latest.everyday_spent - latest.everyday_pool;
+  const scoreDelta =
+    latest.score_overall != null && prev?.score_overall != null
+      ? latest.score_overall - prev.score_overall
+      : null;
+
+  let action: string;
+  let severity: Signal["severity"] = "info";
+  if (overEveryday > 1 && latest.everyday_pool > 0) {
+    action = `You went ${money(overEveryday)} over your everyday budget. Trimming a little next cycle keeps your surplus intact.`;
+    severity = "warn";
+  } else if (latest.surplus_actual > 1) {
+    action = `You finished ${money(
+      latest.surplus_actual,
+    )} ahead. Put it to work in a project before it drifts into everyday spending.`;
+    severity = "success";
+  } else {
+    action = `Steady cycle. Keep everyday spend inside the plan to grow next month's surplus.`;
+  }
+
+  const scoreLine =
+    scoreDelta != null
+      ? ` Health score ${latest.score_overall} (${scoreDelta >= 0 ? "+" : ""}${scoreDelta}).`
+      : "";
+
+  return {
+    kind: "cycle_recap",
+    severity,
+    title: "Your cycle just closed",
+    body: `Spent ${money(latest.spend_actual)}, received ${money(
+      latest.income_actual,
+    )}.${scoreLine} ${action}`,
+    actionLabel: "See analysis",
+    actionUrl: "/analysis",
+    dedupeKey: `cycle_recap:${latest.cycle_start}`,
+  };
+}
+
+/** Wins worth celebrating, from the per-cycle history (ascending by start). */
+export function milestoneSignals(p: { series: CycleMetric[] }): Signal[] {
+  const { series } = p;
+  const out: Signal[] = [];
+  if (series.length < 2) return out;
+  const latest = series[series.length - 1];
+  const prev = series[series.length - 2];
+
+  if (latest.score_overall != null && prev.score_overall != null) {
+    const d = latest.score_overall - prev.score_overall;
+    if (d >= 4) {
+      out.push({
+        kind: "milestone_score",
+        severity: "success",
+        title: `Health score up to ${latest.score_overall}`,
+        body: `That is ${d} points better than last cycle. Whatever you changed, it worked.`,
+        actionLabel: "See snapshot",
+        actionUrl: "/snapshot",
+        dedupeKey: `milestone_score:${latest.cycle_start}`,
+      });
+    }
+  }
+
+  let streak = 0;
+  for (let i = series.length - 1; i >= 0; i--) {
+    if (series[i].surplus_actual > 0) streak++;
+    else break;
+  }
+  if (streak >= 3) {
+    out.push({
+      kind: "milestone_streak",
+      severity: "success",
+      title: `${streak} cycles in the black`,
+      body: `You have finished ${streak} cycles in a row with money to spare. That is how wealth builds.`,
+      actionLabel: "Keep going",
+      actionUrl: "/dashboard",
+      dedupeKey: `milestone_streak:${streak}:${latest.cycle_start}`,
+    });
+  }
+
+  return out;
+}
+
 export function costReminderSignals(p: {
   plans: PlanRow[];
   now: Date;

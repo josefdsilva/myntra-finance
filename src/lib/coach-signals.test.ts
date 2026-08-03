@@ -3,8 +3,11 @@ import {
   driftSignals,
   costReminderSignals,
   nextOccurrence,
+  recapSignal,
+  milestoneSignals,
   moneyFormatter,
   type PlanRow,
+  type CycleMetric,
 } from "./coach-signals";
 
 const money = moneyFormatter("EUR");
@@ -130,6 +133,84 @@ describe("costReminderSignals", () => {
     expect(s).toHaveLength(0);
   });
 });
+
+describe("recapSignal", () => {
+  it("nudges to deploy a positive surplus", () => {
+    const s = recapSignal({
+      latest: cm({ surplus_actual: 300, everyday_spent: 800, everyday_pool: 1000 }),
+      prev: null,
+      money,
+    });
+    expect(s.kind).toBe("cycle_recap");
+    expect(s.severity).toBe("success");
+    expect(s.body).toContain("ahead");
+  });
+
+  it("warns when the everyday budget was overspent", () => {
+    const s = recapSignal({
+      latest: cm({ surplus_actual: 0, everyday_spent: 1100, everyday_pool: 1000 }),
+      prev: null,
+      money,
+    });
+    expect(s.severity).toBe("warn");
+    expect(s.body).toContain("over your everyday budget");
+  });
+
+  it("includes a score delta when both cycles have a score", () => {
+    const s = recapSignal({
+      latest: cm({ score_overall: 74 }),
+      prev: cm({ score_overall: 70 }),
+      money,
+    });
+    expect(s.body).toContain("74");
+    expect(s.body).toContain("+4");
+  });
+});
+
+describe("milestoneSignals", () => {
+  it("celebrates a score jump of 4+", () => {
+    const out = milestoneSignals({
+      series: [cm({ score_overall: 68 }), cm({ score_overall: 73 })],
+    });
+    expect(out.map((s) => s.kind)).toContain("milestone_score");
+  });
+
+  it("celebrates a 3+ cycle positive-surplus streak", () => {
+    const out = milestoneSignals({
+      series: [
+        cm({ surplus_actual: 10 }),
+        cm({ surplus_actual: 20 }),
+        cm({ surplus_actual: 5 }),
+      ],
+    });
+    expect(out.map((s) => s.kind)).toContain("milestone_streak");
+  });
+
+  it("breaks the streak on a negative cycle", () => {
+    const out = milestoneSignals({
+      series: [
+        cm({ surplus_actual: 10 }),
+        cm({ surplus_actual: 0 }),
+        cm({ surplus_actual: 5 }),
+      ],
+    });
+    expect(out.map((s) => s.kind)).not.toContain("milestone_streak");
+  });
+});
+
+function cm(overrides: Partial<CycleMetric>): CycleMetric {
+  return {
+    cycle_start: "2026-08-01",
+    cycle_end: "2026-08-31",
+    income_actual: 3000,
+    spend_actual: 2000,
+    surplus_actual: 0,
+    everyday_pool: 1000,
+    everyday_spent: 900,
+    score_overall: 70,
+    ...overrides,
+  };
+}
 
 function plan(overrides: Partial<PlanRow>): PlanRow {
   return {

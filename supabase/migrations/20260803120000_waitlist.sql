@@ -14,7 +14,7 @@
 --     ON CONFLICT DO NOTHING, so a repeat sign-up cannot leak whether an address
 --     is already on the list.
 
-CREATE TABLE public.waitlist (
+CREATE TABLE IF NOT EXISTS public.waitlist (
   id          UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   email       TEXT NOT NULL,
   -- Normalised form used to dedupe; unique so a person is only listed once.

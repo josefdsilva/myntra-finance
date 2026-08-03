@@ -8,6 +8,12 @@
 -- user_id NULL means the message is for the whole household (every member sees
 -- it); a set user_id targets one person. dedupe_key keeps emits idempotent so a
 -- re-run of a cron never double-posts.
+--
+-- Recreated cleanly: the table is new and holds no data, so dropping it first
+-- guarantees the correct shape even if an earlier partial apply left a malformed
+-- version behind.
+DROP TABLE IF EXISTS public.coach_messages CASCADE;
+
 CREATE TABLE public.coach_messages (
   id            UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   household_id  UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
@@ -27,7 +33,8 @@ CREATE TABLE public.coach_messages (
   UNIQUE (household_id, dedupe_key)
 );
 
-CREATE INDEX coach_messages_hh_idx ON public.coach_messages(household_id, created_at DESC);
+CREATE INDEX coach_messages_hh_idx
+  ON public.coach_messages(household_id, created_at DESC);
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.coach_messages TO authenticated;
 GRANT ALL ON public.coach_messages TO service_role;
@@ -46,7 +53,8 @@ CREATE POLICY "members manage coach messages"
 
 -- Per-channel master toggles. The in-app inbox is always on; these gate the
 -- optional amplifiers. Push defaults on (still needs a subscribed device),
--- email defaults off (explicit opt-in).
+-- email defaults off (explicit opt-in). notification_prefs holds real data, so
+-- only add the columns.
 ALTER TABLE public.notification_prefs
   ADD COLUMN IF NOT EXISTS push_enabled  BOOLEAN NOT NULL DEFAULT true,
   ADD COLUMN IF NOT EXISTS email_enabled BOOLEAN NOT NULL DEFAULT false;
