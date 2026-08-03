@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Sparkles,
-  CalendarClock,
-  Gauge,
+  LayoutDashboard,
+  Wallet,
+  Home,
+  Receipt,
   PiggyBank,
-  MessageCircle,
+  CalendarClock,
   BarChart3,
   ArrowLeft,
   ArrowRight,
@@ -24,11 +26,13 @@ type Slide = { icon: LucideIcon; titleKey: MessageKey; bodyKey: MessageKey };
 
 const SLIDES: Slide[] = [
   { icon: Sparkles, titleKey: "tour.s1.title", bodyKey: "tour.s1.body" },
-  { icon: CalendarClock, titleKey: "tour.s2.title", bodyKey: "tour.s2.body" },
-  { icon: Gauge, titleKey: "tour.s3.title", bodyKey: "tour.s3.body" },
-  { icon: PiggyBank, titleKey: "tour.s4.title", bodyKey: "tour.s4.body" },
-  { icon: MessageCircle, titleKey: "tour.s5.title", bodyKey: "tour.s5.body" },
-  { icon: BarChart3, titleKey: "tour.s6.title", bodyKey: "tour.s6.body" },
+  { icon: LayoutDashboard, titleKey: "tour.s2.title", bodyKey: "tour.s2.body" },
+  { icon: Wallet, titleKey: "tour.s3.title", bodyKey: "tour.s3.body" },
+  { icon: Home, titleKey: "tour.s4.title", bodyKey: "tour.s4.body" },
+  { icon: Receipt, titleKey: "tour.s5.title", bodyKey: "tour.s5.body" },
+  { icon: PiggyBank, titleKey: "tour.s6.title", bodyKey: "tour.s6.body" },
+  { icon: CalendarClock, titleKey: "tour.s7.title", bodyKey: "tour.s7.body" },
+  { icon: BarChart3, titleKey: "tour.s8.title", bodyKey: "tour.s8.body" },
 ];
 
 /**
