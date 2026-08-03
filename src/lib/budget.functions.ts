@@ -73,10 +73,18 @@ export const addExpense = createServerFn({ method: "POST" })
     // Receiving the anchor income rolls an event/payday space into a new cycle —
     // so the previous cycle is now closed. Snapshot it for the history/trends.
     // Best-effort: a failure here must never block recording the salary.
-    const isEventMode = (hh?.cycle_mode ?? "event") !== "time";
-    if (isAnchor && isEventMode) {
+    const isAnchor = data.kind === "income" && !!data.is_salary;
+    if (isAnchor) {
       try {
-        await snapshotJustClosedCycle(context.supabase, data.household_id, hh, "close");
+        const { data: hh } = await context.supabase
+          .from("households")
+          .select("*")
+          .eq("id", data.household_id)
+          .maybeSingle();
+        const isEventMode = ((hh as { cycle_mode?: string } | null)?.cycle_mode ?? "event") !== "time";
+        if (hh && isEventMode) {
+          await snapshotJustClosedCycle(context.supabase, data.household_id, hh, "close");
+        }
       } catch (e) {
         console.error("cycle snapshot on rollover failed", e);
       }
