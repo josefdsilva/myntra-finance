@@ -14,6 +14,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
@@ -71,6 +72,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/guides/': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
@@ -324,6 +331,7 @@ export interface FileRoutesByTo {
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/guides': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
@@ -366,6 +374,7 @@ export interface FileRoutesById {
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/guides/': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
+    | '/guides/'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
@@ -448,6 +458,7 @@ export interface FileRouteTypes {
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
+    | '/guides'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/_authenticated/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
+    | '/guides/'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
@@ -509,6 +521,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBudgetAlertsRoute: typeof ApiPublicHooksBudgetAlertsRoute
@@ -556,6 +569,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/': {
+      id: '/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -860,6 +880,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   InviteTokenRoute: InviteTokenRoute,
+  GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBudgetAlertsRoute: ApiPublicHooksBudgetAlertsRoute,
