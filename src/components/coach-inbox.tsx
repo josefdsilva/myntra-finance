@@ -114,8 +114,11 @@ export function CoachInbox({
       {open && (
         <div
           className={cn(
-            "absolute z-50 mt-2 w-[min(92vw,22rem)] overflow-hidden rounded-xl border bg-card shadow-2xl",
-            align === "right" ? "right-0" : "left-0",
+            // Mobile: pin to the viewport so it can never run off-screen.
+            "fixed inset-x-3 top-[4.5rem] z-50 w-auto overflow-hidden rounded-xl border bg-card shadow-2xl",
+            // Desktop: anchor under the bell instead.
+            "md:absolute md:inset-x-auto md:top-full md:mt-2 md:w-[min(92vw,22rem)]",
+            align === "right" ? "md:right-0" : "md:left-0",
           )}
         >
           <div className="flex items-center justify-between border-b px-4 py-2.5">
