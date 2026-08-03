@@ -14,11 +14,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as GuidesSmallBusinessCashFlowRouteImport } from './routes/guides/small-business-cash-flow'
-import { Route as GuidesFamilyBudgetingRouteImport } from './routes/guides/family-budgeting'
-import { Route as GuidesBudgetingForCouplesRouteImport } from './routes/guides/budgeting-for-couples'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as AuthenticatedStatementsRouteImport } from './routes/_authenticated/statements'
@@ -77,33 +73,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesIndexRoute = GuidesIndexRouteImport.update({
-  id: '/guides/',
-  path: '/guides/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesSmallBusinessCashFlowRoute =
-  GuidesSmallBusinessCashFlowRouteImport.update({
-    id: '/guides/small-business-cash-flow',
-    path: '/guides/small-business-cash-flow',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const GuidesFamilyBudgetingRoute = GuidesFamilyBudgetingRouteImport.update({
-  id: '/guides/family-budgeting',
-  path: '/guides/family-budgeting',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuidesBudgetingForCouplesRoute =
-  GuidesBudgetingForCouplesRouteImport.update({
-    id: '/guides/budgeting-for-couples',
-    path: '/guides/budgeting-for-couples',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -309,11 +283,7 @@ export interface FileRoutesByFullPath {
   '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/guides/budgeting-for-couples': typeof GuidesBudgetingForCouplesRoute
-  '/guides/family-budgeting': typeof GuidesFamilyBudgetingRoute
-  '/guides/small-business-cash-flow': typeof GuidesSmallBusinessCashFlowRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/guides/': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
@@ -353,11 +323,7 @@ export interface FileRoutesByTo {
   '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/guides/budgeting-for-couples': typeof GuidesBudgetingForCouplesRoute
-  '/guides/family-budgeting': typeof GuidesFamilyBudgetingRoute
-  '/guides/small-business-cash-flow': typeof GuidesSmallBusinessCashFlowRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/guides': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
@@ -399,11 +365,7 @@ export interface FileRoutesById {
   '/_authenticated/statements': typeof AuthenticatedStatementsRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/guides/budgeting-for-couples': typeof GuidesBudgetingForCouplesRoute
-  '/guides/family-budgeting': typeof GuidesFamilyBudgetingRoute
-  '/guides/small-business-cash-flow': typeof GuidesSmallBusinessCashFlowRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/guides/': typeof GuidesIndexRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
@@ -445,11 +407,7 @@ export interface FileRouteTypes {
     | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
-    | '/guides/budgeting-for-couples'
-    | '/guides/family-budgeting'
-    | '/guides/small-business-cash-flow'
     | '/invite/$token'
-    | '/guides/'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
@@ -489,11 +447,7 @@ export interface FileRouteTypes {
     | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
-    | '/guides/budgeting-for-couples'
-    | '/guides/family-budgeting'
-    | '/guides/small-business-cash-flow'
     | '/invite/$token'
-    | '/guides'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
@@ -534,11 +488,7 @@ export interface FileRouteTypes {
     | '/_authenticated/statements'
     | '/_authenticated/wiki'
     | '/email/unsubscribe'
-    | '/guides/budgeting-for-couples'
-    | '/guides/family-budgeting'
-    | '/guides/small-business-cash-flow'
     | '/invite/$token'
-    | '/guides/'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
@@ -558,11 +508,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
-  GuidesBudgetingForCouplesRoute: typeof GuidesBudgetingForCouplesRoute
-  GuidesFamilyBudgetingRoute: typeof GuidesFamilyBudgetingRoute
-  GuidesSmallBusinessCashFlowRoute: typeof GuidesSmallBusinessCashFlowRoute
   InviteTokenRoute: typeof InviteTokenRoute
-  GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBudgetAlertsRoute: typeof ApiPublicHooksBudgetAlertsRoute
@@ -612,39 +558,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides/': {
-      id: '/guides/'
-      path: '/guides'
-      fullPath: '/guides/'
-      preLoaderRoute: typeof GuidesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guides/small-business-cash-flow': {
-      id: '/guides/small-business-cash-flow'
-      path: '/guides/small-business-cash-flow'
-      fullPath: '/guides/small-business-cash-flow'
-      preLoaderRoute: typeof GuidesSmallBusinessCashFlowRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guides/family-budgeting': {
-      id: '/guides/family-budgeting'
-      path: '/guides/family-budgeting'
-      fullPath: '/guides/family-budgeting'
-      preLoaderRoute: typeof GuidesFamilyBudgetingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guides/budgeting-for-couples': {
-      id: '/guides/budgeting-for-couples'
-      path: '/guides/budgeting-for-couples'
-      fullPath: '/guides/budgeting-for-couples'
-      preLoaderRoute: typeof GuidesBudgetingForCouplesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
@@ -941,11 +859,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
-  GuidesBudgetingForCouplesRoute: GuidesBudgetingForCouplesRoute,
-  GuidesFamilyBudgetingRoute: GuidesFamilyBudgetingRoute,
-  GuidesSmallBusinessCashFlowRoute: GuidesSmallBusinessCashFlowRoute,
   InviteTokenRoute: InviteTokenRoute,
-  GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBudgetAlertsRoute: ApiPublicHooksBudgetAlertsRoute,
