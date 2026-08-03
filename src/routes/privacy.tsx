@@ -47,6 +47,24 @@ function PrivacyPage() {
           </p>
         </Section>
 
+        <Section title="Waiting list (before launch)">
+          <p>
+            While bynku is preparing for launch, you can join a waiting list so we can tell you when a
+            spot opens. If you do, we store the <strong>email address</strong> you enter, your{" "}
+            <strong>browser language</strong>, a note of where you signed up, and the{" "}
+            <strong>date and time you consented</strong>. We use this only to contact you about early
+            access, never for marketing or advertising, and we never sell it.
+          </p>
+          <p className="mt-3">
+            The legal basis is <strong>your consent</strong>, given by ticking the box on the sign-up
+            form. You can withdraw it and ask us to delete your entry at any time. We keep waiting-list
+            entries only until launch and a short period afterwards, then delete them. Your email is not
+            stored together with your IP address; as with any web request, your IP reaches our hosting
+            processor as a normal part of how the internet works (see &ldquo;Who processes it on our
+            behalf&rdquo; below).
+          </p>
+        </Section>
+
         <Section title="What data we store">
           <ul className="list-disc space-y-2 pl-5">
             <li>
