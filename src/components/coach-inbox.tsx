@@ -33,7 +33,15 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
-export function CoachInbox({ householdId }: { householdId: string | null }) {
+export function CoachInbox({
+  householdId,
+  align = "right",
+}: {
+  householdId: string | null;
+  /** Which edge the panel anchors to. "right" opens leftward (wide headers);
+      "left" opens rightward (use inside the narrow sidebar). */
+  align?: "left" | "right";
+}) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -104,7 +112,12 @@ export function CoachInbox({ householdId }: { householdId: string | null }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-[min(92vw,22rem)] overflow-hidden rounded-xl border bg-card shadow-2xl">
+        <div
+          className={cn(
+            "absolute z-50 mt-2 w-[min(92vw,22rem)] overflow-hidden rounded-xl border bg-card shadow-2xl",
+            align === "right" ? "right-0" : "left-0",
+          )}
+        >
           <div className="flex items-center justify-between border-b px-4 py-2.5">
             <span className="flex items-center gap-2 text-sm font-medium">
               <Inbox className="size-4" /> Coach

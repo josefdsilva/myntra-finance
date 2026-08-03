@@ -353,7 +353,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <img src={appIcon.url} alt="bynku household budget logo" className="size-9 rounded-xl" />
           {HouseholdSwitcher}
           <div className="ml-auto">
-            <CoachInbox householdId={resolvedId} />
+            <CoachInbox householdId={resolvedId} align="left" />
           </div>
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
