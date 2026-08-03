@@ -192,15 +192,15 @@ function SnapshotShowcase() {
   const r = 52;
   const c = 2 * Math.PI * r;
   return (
-    <div className="w-full">
-      <div className="mb-3 inline-flex rounded-lg border bg-card p-0.5 text-sm">
+    <div className="mx-auto w-full min-w-0 max-w-sm md:mx-0 md:ml-auto">
+      <div className="mb-3 inline-flex rounded-lg border bg-card p-0.5 text-xs sm:text-sm">
         {(["household", "business"] as const).map((k) => (
           <button
             key={k}
             type="button"
             onClick={() => setAud(k)}
             className={cn(
-              "rounded-md px-3.5 py-1.5 font-medium transition-colors",
+              "rounded-md px-3 py-1.5 font-medium transition-colors sm:px-3.5",
               aud === k ? "bg-primary text-primary-foreground" : "text-muted-foreground",
             )}
           >
@@ -209,12 +209,12 @@ function SnapshotShowcase() {
         ))}
       </div>
       <div
-        className="rounded-2xl p-6 text-white shadow-xl transition-opacity duration-300"
+        className="min-w-0 rounded-2xl p-5 text-white shadow-xl transition-opacity duration-300 sm:p-6"
         style={{ backgroundColor: DEEP }}
       >
-        <div className="flex items-center gap-5">
-          <div className="relative size-28 shrink-0">
-            <svg viewBox="0 0 120 120" className="size-28 -rotate-90">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="relative size-24 shrink-0 sm:size-28">
+            <svg viewBox="0 0 120 120" className="size-24 -rotate-90 sm:size-28">
               <circle cx="60" cy="60" r={r} fill="none" strokeWidth="10" stroke="rgba(255,255,255,0.18)" />
               <circle
                 cx="60"
@@ -250,12 +250,12 @@ function SnapshotShowcase() {
             </div>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-2.5">
+        <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2.5">
           {d.bars.map(([label, val]) => (
-            <div key={label}>
-              <div className="flex justify-between text-xs">
-                <span className="opacity-85">{label}</span>
-                <span className="tabular-nums">{val}</span>
+            <div key={label} className="min-w-0">
+              <div className="flex justify-between gap-2 text-xs">
+                <span className="truncate opacity-85">{label}</span>
+                <span className="shrink-0 tabular-nums">{val}</span>
               </div>
               <div className="mt-1 h-1.5 overflow-hidden rounded bg-white/15">
                 <div
@@ -839,7 +839,7 @@ export function LandingPage() {
 
   return (
     <JoinContext.Provider value={openJoin}>
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
         <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
             <Logo />
@@ -861,7 +861,7 @@ export function LandingPage() {
               style={{ backgroundColor: DEEP }}
             >
               <div className="grid items-center gap-10 md:grid-cols-2">
-                <div>
+                <div className="min-w-0">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1 text-xs">
                     <Sparkles className="size-3.5" /> For households and small businesses
                   </span>
@@ -897,7 +897,7 @@ export function LandingPage() {
                     your spot opens.
                   </p>
                 </div>
-                <Reveal className="flex justify-center md:justify-end">
+                <Reveal className="flex min-w-0 justify-center md:justify-end">
                   <SnapshotShowcase />
                 </Reveal>
               </div>
