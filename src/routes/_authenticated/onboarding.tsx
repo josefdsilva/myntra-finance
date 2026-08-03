@@ -1205,6 +1205,7 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
   const [saving, setSaving] = useState(false);
 
   const KIND_LABEL: Record<string, string> = {
+    cash: t("assets.kindCash"),
     property: t("assets.kindProperty"),
     land: t("assets.kindLand"),
     vehicle: t("assets.kindVehicle"),

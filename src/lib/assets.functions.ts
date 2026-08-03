@@ -4,6 +4,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assetBookValue, type DepreciationMethod } from "@/lib/depreciation";
 
 export const ASSET_KINDS = [
+  // Cash and goalless savings: a savings or current account with no specific
+  // objective (objectives live in projects/buckets). Listed first as it is the
+  // most common liquid holding a household tracks.
+  "cash",
   "property",
   "land",
   "vehicle",
@@ -23,6 +27,7 @@ export const ASSET_LIQUIDITY = ["liquid", "semi_liquid", "illiquid"] as const;
  */
 export function liquidityForKind(kind: string): (typeof ASSET_LIQUIDITY)[number] {
   switch (kind) {
+    case "cash":
     case "stocks":
     case "bonds":
     case "fund":

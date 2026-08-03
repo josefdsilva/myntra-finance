@@ -183,6 +183,7 @@ export function AssetsSection({
   const [eDepr, setEDepr] = useState<DeprState>(emptyDepr);
 
   const KIND_LABEL: Record<string, string> = {
+    cash: t("assets.kindCash"),
     property: t("assets.kindProperty"),
     land: t("assets.kindLand"),
     vehicle: t("assets.kindVehicle"),

@@ -160,9 +160,9 @@ function SnapshotPage() {
       }, 0);
       const savedThisCycle = Math.max(0, confirmedThisCycle + netIntoProjects);
 
-      // Assets & net worth. Liquid assets (stocks/bonds/funds) count as an
+      // Assets & net worth. Liquid assets (cash/stocks/bonds/funds) count as an
       // accessible emergency backstop; net worth = assets + savings − debt owed.
-      const LIQUID_ASSET_KINDS = new Set(["stocks", "bonds", "fund"]);
+      const LIQUID_ASSET_KINDS = new Set(["cash", "stocks", "bonds", "fund"]);
       const assetsTotal = (assetsRows ?? []).reduce((s, a) => s + Number(a.current_value), 0);
       const liquidAssets = (assetsRows ?? [])
         .filter((a) => LIQUID_ASSET_KINDS.has(a.kind))

@@ -10,7 +10,7 @@ import { plansInWindow, type Plan } from "@/lib/plan";
 import { resolveClosedCycles } from "@/lib/cycle-bounds";
 import { computeCycleMetrics, type CycleMetricsRow } from "@/lib/cycle-metrics";
 
-const LIQUID_ASSET_KINDS = new Set(["stocks", "bonds", "fund"]);
+const LIQUID_ASSET_KINDS = new Set(["cash", "stocks", "bonds", "fund"]);
 
 const pad = (n: number) => String(n).padStart(2, "0");
 /** Local YYYY-MM-DD for a Date (the cycle key), avoiding UTC day-shift. */
