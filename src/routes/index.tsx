@@ -5,6 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { LandingPage } from "@/components/landing-page";
 
 export const Route = createFileRoute("/")({
+  // Client-only so the session check in beforeLoad runs before anything paints.
+  // Server rendering can't see the session (it lives in the browser), so an
+  // SSR'd landing would flash for signed-in users before the redirect.
+  ssr: false,
   head: () =>
     pageMeta({
       path: "/",
