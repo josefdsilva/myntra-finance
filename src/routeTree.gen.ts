@@ -47,6 +47,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/public/hooks/weekly-digest'
 import { Route as ApiPublicHooksCycleStartRouteImport } from './routes/api/public/hooks/cycle-start'
+import { Route as ApiPublicHooksCoachDailyRouteImport } from './routes/api/public/hooks/coach-daily'
 import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -248,6 +249,12 @@ const ApiPublicHooksCycleStartRoute =
     path: '/api/public/hooks/cycle-start',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCoachDailyRoute =
+  ApiPublicHooksCoachDailyRouteImport.update({
+    id: '/api/public/hooks/coach-daily',
+    path: '/api/public/hooks/coach-daily',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBudgetAlertsRoute =
   ApiPublicHooksBudgetAlertsRouteImport.update({
     id: '/api/public/hooks/budget-alerts',
@@ -287,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
+  '/api/public/hooks/coach-daily': typeof ApiPublicHooksCoachDailyRoute
   '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -327,6 +335,7 @@ export interface FileRoutesByTo {
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
+  '/api/public/hooks/coach-daily': typeof ApiPublicHooksCoachDailyRoute
   '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -369,6 +378,7 @@ export interface FileRoutesById {
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
+  '/api/public/hooks/coach-daily': typeof ApiPublicHooksCoachDailyRoute
   '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
+    | '/api/public/hooks/coach-daily'
     | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
@@ -451,6 +462,7 @@ export interface FileRouteTypes {
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
+    | '/api/public/hooks/coach-daily'
     | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
@@ -492,6 +504,7 @@ export interface FileRouteTypes {
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
+    | '/api/public/hooks/coach-daily'
     | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
     | '/lovable/email/auth/preview'
@@ -512,6 +525,7 @@ export interface RootRouteChildren {
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBudgetAlertsRoute: typeof ApiPublicHooksBudgetAlertsRoute
+  ApiPublicHooksCoachDailyRoute: typeof ApiPublicHooksCoachDailyRoute
   ApiPublicHooksCycleStartRoute: typeof ApiPublicHooksCycleStartRoute
   ApiPublicHooksWeeklyDigestRoute: typeof ApiPublicHooksWeeklyDigestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -789,6 +803,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCycleStartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/coach-daily': {
+      id: '/api/public/hooks/coach-daily'
+      path: '/api/public/hooks/coach-daily'
+      fullPath: '/api/public/hooks/coach-daily'
+      preLoaderRoute: typeof ApiPublicHooksCoachDailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/budget-alerts': {
       id: '/api/public/hooks/budget-alerts'
       path: '/api/public/hooks/budget-alerts'
@@ -863,6 +884,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBudgetAlertsRoute: ApiPublicHooksBudgetAlertsRoute,
+  ApiPublicHooksCoachDailyRoute: ApiPublicHooksCoachDailyRoute,
   ApiPublicHooksCycleStartRoute: ApiPublicHooksCycleStartRoute,
   ApiPublicHooksWeeklyDigestRoute: ApiPublicHooksWeeklyDigestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
