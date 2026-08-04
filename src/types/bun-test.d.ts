@@ -22,6 +22,7 @@ declare module "bun:test" {
     toBeTruthy(): R;
     toBeFalsy(): R;
     toContain(expected: unknown): R;
+    toHaveLength(expected: number): R;
     toThrow(expected?: unknown): R;
     not: Matchers<R>;
   }
