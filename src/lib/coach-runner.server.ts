@@ -70,9 +70,12 @@ export async function runCoachForHousehold(
 
   // --- Personal spaces: drift + cost reminders + recap + milestones ---
   const baseline = Number(hh.baseline_budget ?? 0);
+  // Current cycle bounds — used for drift, and to confirm a recap is for a cycle
+  // strictly before the current one (so we never announce a close that has not
+  // happened yet).
+  const cycle = await fetchCycleBounds(admin, hh.id, hh);
 
   if (baseline > 0) {
-    const cycle = await fetchCycleBounds(admin, hh.id, hh);
     const [{ data: fixed }, { data: debts }] = await Promise.all([
       admin.from("fixed_expenses").select("monthly_amount").eq("household_id", hh.id),
       admin.from("debts").select("monthly_amount").eq("household_id", hh.id),
@@ -160,8 +163,11 @@ export async function runCoachForHousehold(
   if (series.length > 0) {
     const latest = series[series.length - 1];
     const prev = series.length >= 2 ? series[series.length - 2] : null;
+    // Only recap a cycle that is genuinely closed: its start must be strictly
+    // before the current cycle's start, and it must have ended recently.
+    const isPastCycle = new Date(latest.cycle_start).getTime() < cycle.start.getTime();
     const closedDaysAgo = (now.getTime() - new Date(latest.cycle_end).getTime()) / 86_400_000;
-    if (closedDaysAgo >= 0 && closedDaysAgo <= 12) {
+    if (isPastCycle && closedDaysAgo >= 0 && closedDaysAgo <= 12) {
       await emit(recapSignal({ latest, prev, money }), latest.cycle_start);
     }
     for (const s of milestoneSignals({ series })) {
