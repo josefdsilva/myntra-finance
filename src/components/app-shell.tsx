@@ -37,6 +37,7 @@ import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrCreateHousehold, listMyHouseholds } from "@/lib/household.functions";
+import { runDailyCoach } from "@/lib/coach-run.functions";
 import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
@@ -118,6 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const activeId = useActiveHouseholdId();
   const fetchHousehold = useServerFn(getOrCreateHousehold);
   const fetchList = useServerFn(listMyHouseholds);
+  const runCoach = useServerFn(runDailyCoach);
   const { data: hh } = useQuery({
     queryKey: ["household", activeId],
     queryFn: () => fetchHousehold({ data: activeId ? { household_id: activeId } : {} }),
@@ -168,6 +170,31 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => setOpen(false), [pathname]);
+
+  // Daily coach pass, timed to 8am in the user's own timezone. Runs on app open
+  // (no external cron); the server only acts once per local day per space.
+  useEffect(() => {
+    if (!resolvedId) return;
+    const now = new Date();
+    const localHour = now.getHours();
+    if (localHour < 8) return;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const localDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const key = `coach-ran:${resolvedId}:${localDate}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      /* storage unavailable — fall through; the server still dedupes per day */
+    }
+    runCoach({
+      data: { household_id: resolvedId, local_date: localDate, local_hour: localHour },
+    })
+      .then((r) => {
+        if (r?.ran) queryClient.invalidateQueries({ queryKey: ["coach-unread", resolvedId] });
+      })
+      .catch(() => {});
+  }, [resolvedId, runCoach, queryClient]);
 
   useEffect(() => {
     const stored = localStorage.getItem("privacy-mode") === "1";

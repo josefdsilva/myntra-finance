@@ -1,63 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Daily SME early-warning pass: runway warnings (3 / 2 / 1 months) and overdue
-// receivable nudges, emitted through the same coach inbox funnel as the
-// household nudges. Idempotent via period-scoped dedupe keys, so an unresolved
-// warning re-surfaces once a month rather than every day.
+// Optional server-side daily pass for business spaces only. The primary trigger
+// is on app-open (runDailyCoach); coach-daily also covers business spaces. This
+// endpoint is a scoped backup and shares the same runner (idempotent emits).
 export const Route = createFileRoute("/api/public/hooks/coach-business-daily")({
   server: {
     handlers: {
       POST: async () => {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { emitCoachMessage } = await import("@/lib/coach-messages.server");
-        const { gatherRunwayReceivables } = await import("@/lib/sme-cash.server");
-        const { smeSignals } = await import("@/lib/sme-signals");
-        const { moneyFormatter } = await import("@/lib/coach-signals");
+        const { runCoachForHousehold } = await import("@/lib/coach-runner.server");
 
         const { data: households } = await supabaseAdmin
           .from("households")
-          .select("id, kind, currency")
+          .select("id, kind, currency, baseline_budget, cycle, cycle_mode, cycle_anchor_date")
           .eq("kind", "business");
-        const list =
-          (households as Array<{ id: string; kind: string | null; currency: string | null }> | null) ??
-          [];
+        const list = (households as Array<Record<string, unknown>> | null) ?? [];
 
-        const periodKey = new Date().toISOString().slice(0, 7);
+        const now = new Date();
         let emitted = 0;
-
-        for (const hh of list) {
-          let picture;
+        for (const h of list) {
           try {
-            picture = await gatherRunwayReceivables(supabaseAdmin, hh.id);
+            emitted += await runCoachForHousehold(
+              supabaseAdmin,
+              {
+                id: String(h.id),
+                kind: (h.kind as string | null) ?? null,
+                currency: (h.currency as string | null) ?? null,
+                baseline_budget: (h.baseline_budget as number | string | null) ?? null,
+                cycle: (h.cycle as string | null) ?? null,
+                cycle_mode: (h.cycle_mode as string | null) ?? null,
+                cycle_anchor_date: (h.cycle_anchor_date as string | null) ?? null,
+              },
+              now,
+            );
           } catch (e) {
-            console.error("coach-business-daily gather failed", hh.id, e);
-            continue;
-          }
-
-          const signals = smeSignals({
-            runway: picture.runway,
-            receivables: picture.receivables,
-            money: moneyFormatter(hh.currency),
-            periodKey,
-          });
-
-          for (const s of signals) {
-            const r = await emitCoachMessage(supabaseAdmin, {
-              householdId: hh.id,
-              userId: null,
-              kind: s.kind,
-              severity: s.severity,
-              title: s.title,
-              body: s.body,
-              actionLabel: s.actionLabel,
-              actionUrl: s.actionUrl,
-              data: s.data,
-              dedupeKey: s.dedupeKey,
-            });
-            if (r.created) emitted++;
+            console.error("coach-business-daily failed for", h.id, e);
           }
         }
-
         return Response.json({ emitted });
       },
     },
