@@ -617,6 +617,8 @@ export type Database = {
           action_label: string | null
           action_url: string | null
           body: string
+          content: string | null
+          conversation_id: string | null
           created_at: string
           cycle_start: string | null
           data: Json
@@ -625,6 +627,7 @@ export type Database = {
           id: string
           kind: string
           read_at: string | null
+          role: string | null
           severity: string
           title: string
           user_id: string | null
@@ -633,22 +636,27 @@ export type Database = {
           action_label?: string | null
           action_url?: string | null
           body?: string
+          content?: string | null
+          conversation_id?: string | null
           created_at?: string
           cycle_start?: string | null
           data?: Json
-          dedupe_key: string
+          dedupe_key?: string
           household_id: string
           id?: string
-          kind: string
+          kind?: string
           read_at?: string | null
+          role?: string | null
           severity?: string
-          title: string
+          title?: string
           user_id?: string | null
         }
         Update: {
           action_label?: string | null
           action_url?: string | null
           body?: string
+          content?: string | null
+          conversation_id?: string | null
           created_at?: string
           cycle_start?: string | null
           data?: Json
@@ -657,11 +665,19 @@ export type Database = {
           id?: string
           kind?: string
           read_at?: string | null
+          role?: string | null
           severity?: string
           title?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "coach_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "coach_conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coach_messages_household_id_fkey"
             columns: ["household_id"]
