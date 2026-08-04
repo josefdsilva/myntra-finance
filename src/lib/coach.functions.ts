@@ -5,6 +5,7 @@ import { z } from "zod";
 import { cycleFor, computeTimeCycle, cycleConfigForSpace } from "@/lib/cycle";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
+import { LIQUID_ASSET_KINDS } from "@/lib/finance-helpers";
 import { addMonths } from "date-fns";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "./ai-gateway.server";
 import {
@@ -591,7 +592,6 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
 
   // Assets & net worth. Liquidity of an asset is a property of its type; the
   // quickly-sellable kinds double as a secondary emergency backstop.
-  const LIQUID_ASSET_KINDS = new Set(["cash", "stocks", "bonds", "fund"]);
   const assetRows = rowsOrEmpty<{
     name: string;
     kind: string;

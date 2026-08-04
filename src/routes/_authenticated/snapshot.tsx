@@ -1,4 +1,5 @@
 import { pageMeta } from "@/lib/route-meta";
+import { LIQUID_ASSET_KINDS } from "@/lib/finance-helpers";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -162,7 +163,6 @@ function SnapshotPage() {
 
       // Assets & net worth. Liquid assets (cash/stocks/bonds/funds) count as an
       // accessible emergency backstop; net worth = assets + savings − debt owed.
-      const LIQUID_ASSET_KINDS = new Set(["cash", "stocks", "bonds", "fund"]);
       const assetsTotal = (assetsRows ?? []).reduce((s, a) => s + Number(a.current_value), 0);
       const liquidAssets = (assetsRows ?? [])
         .filter((a) => LIQUID_ASSET_KINDS.has(a.kind))

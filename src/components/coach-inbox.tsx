@@ -153,7 +153,7 @@ export function CoachInbox({
                   <li
                     key={m.id}
                     className={cn(
-                      "group cursor-default px-4 py-3",
+                      "group cursor-pointer px-4 py-3",
                       !m.read_at && "bg-primary/[0.04]",
                     )}
                     onClick={() => onOpenMessage(m)}
@@ -168,7 +168,9 @@ export function CoachInbox({
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
-                          <p className="truncate text-sm font-medium">{m.title}</p>
+                          <p className="truncate text-sm font-medium">
+                            {m.title?.trim() || m.kind.replace(/_/g, " ")}
+                          </p>
                           <span className="shrink-0 text-[10px] text-muted-foreground">
                             {timeAgo(m.created_at, t)}
                           </span>
@@ -196,9 +198,9 @@ export function CoachInbox({
                           await dismissFn({ data: { id: m.id } });
                           refresh();
                         }}
-                        className="shrink-0 rounded p-1 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
+                        className="-mt-1 -mr-1 shrink-0 rounded p-1.5 text-muted-foreground/60 hover:bg-muted hover:text-foreground"
                       >
-                        <X className="size-3.5" />
+                        <X className="size-4" />
                       </button>
                     </div>
                   </li>

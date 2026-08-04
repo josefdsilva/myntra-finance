@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { sumMonthly } from "@/lib/finance-helpers";
 
 export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
   server: {
@@ -103,9 +104,6 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
               .eq("household_id", hhId),
             supabaseAdmin.from("debts").select("monthly_amount").eq("household_id", hhId),
           ]);
-          const sumMonthly = (
-            rows: Array<{ monthly_amount: number | string }> | null,
-          ) => (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
           const fixedTotal = sumMonthly(fixed) + sumMonthly(debts);
           const variablePool = Math.max(0, baseline - fixedTotal);
 

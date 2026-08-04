@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeRunway, resolveCashOnHand, type RunwayResult } from "@/lib/runway";
 import { ageReceivables, type ReceivablePlan, type ReceivablesResult } from "@/lib/receivables";
+import { sumMonthly } from "@/lib/finance-helpers";
 
 // Shared gathering of the SME runway + receivables picture. Takes any supabase
 // client so both the authed server fn (RLS-scoped) and the cron (service role)
@@ -17,9 +18,6 @@ export type RunwayReceivables = {
   runway: RunwayResult;
   receivables: ReceivablesResult;
 };
-
-const sumMonthly = (rows: Array<{ monthly_amount: number | string }> | null) =>
-  (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
 
 export async function gatherRunwayReceivables(
   sb: SupabaseClient,

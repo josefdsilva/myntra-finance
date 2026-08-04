@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { fetchCycleBounds } from "@/lib/cycle-bounds";
+import { sumMonthly } from "@/lib/finance-helpers";
 
 // Mid-cycle drift alerts. Runs often; every emit is idempotent via the coach
 // inbox dedupe key, so re-runs never double-post. The inbox is the default home
@@ -39,8 +40,6 @@ export const Route = createFileRoute("/api/public/hooks/budget-alerts")({
             supabaseAdmin.from("fixed_expenses").select("monthly_amount").eq("household_id", hh.id),
             supabaseAdmin.from("debts").select("monthly_amount").eq("household_id", hh.id),
           ]);
-          const sumMonthly = (rows: Array<{ monthly_amount: number | string }> | null) =>
-            (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
           const fixedTotal = sumMonthly(fixed) + sumMonthly(debts);
           const variablePool = Math.max(0, baseline - fixedTotal);
 

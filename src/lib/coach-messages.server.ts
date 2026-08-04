@@ -46,6 +46,11 @@ async function targetUserIds(admin: Admin, householdId: string, userId?: string 
  * was new (and thus amplified) or a deduped no-op.
  */
 export async function emitCoachMessage(admin: Admin, msg: CoachEmit): Promise<{ created: boolean }> {
+  // Never post a blank message — a title is the minimum a nudge must carry.
+  if (!msg.title?.trim()) {
+    console.warn("emitCoachMessage skipped: empty title", msg.kind, msg.dedupeKey);
+    return { created: false };
+  }
   const row = {
     household_id: msg.householdId,
     user_id: msg.userId ?? null,

@@ -9,8 +9,7 @@ import { getCountryBenchmark, percentileFromDeciles } from "@/lib/benchmarks";
 import { plansInWindow, type Plan } from "@/lib/plan";
 import { resolveClosedCycles } from "@/lib/cycle-bounds";
 import { computeCycleMetrics, type CycleMetricsRow } from "@/lib/cycle-metrics";
-
-const LIQUID_ASSET_KINDS = new Set(["cash", "stocks", "bonds", "fund"]);
+import { LIQUID_ASSET_KINDS } from "@/lib/finance-helpers";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 /** Local YYYY-MM-DD for a Date (the cycle key), avoiding UTC day-shift. */
