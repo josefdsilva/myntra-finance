@@ -614,37 +614,54 @@ export type Database = {
       }
       coach_messages: {
         Row: {
-          content: string
-          conversation_id: string
+          action_label: string | null
+          action_url: string | null
+          body: string
           created_at: string
+          cycle_start: string | null
+          data: Json
+          dedupe_key: string
           household_id: string
           id: string
-          role: string
+          kind: string
+          read_at: string | null
+          severity: string
+          title: string
+          user_id: string | null
         }
         Insert: {
-          content: string
-          conversation_id: string
+          action_label?: string | null
+          action_url?: string | null
+          body?: string
           created_at?: string
+          cycle_start?: string | null
+          data?: Json
+          dedupe_key: string
           household_id: string
           id?: string
-          role: string
+          kind: string
+          read_at?: string | null
+          severity?: string
+          title: string
+          user_id?: string | null
         }
         Update: {
-          content?: string
-          conversation_id?: string
+          action_label?: string | null
+          action_url?: string | null
+          body?: string
           created_at?: string
+          cycle_start?: string | null
+          data?: Json
+          dedupe_key?: string
           household_id?: string
           id?: string
-          role?: string
+          kind?: string
+          read_at?: string | null
+          severity?: string
+          title?: string
+          user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "coach_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "coach_conversations"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "coach_messages_household_id_fkey"
             columns: ["household_id"]
@@ -1512,21 +1529,27 @@ export type Database = {
       notification_prefs: {
         Row: {
           baseline_warn: boolean
+          email_enabled: boolean
           emergency_warn: boolean
+          push_enabled: boolean
           updated_at: string
           user_id: string
           weekly_digest: boolean
         }
         Insert: {
           baseline_warn?: boolean
+          email_enabled?: boolean
           emergency_warn?: boolean
+          push_enabled?: boolean
           updated_at?: string
           user_id: string
           weekly_digest?: boolean
         }
         Update: {
           baseline_warn?: boolean
+          email_enabled?: boolean
           emergency_warn?: boolean
+          push_enabled?: boolean
           updated_at?: string
           user_id?: string
           weekly_digest?: boolean
@@ -1846,6 +1869,39 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          consent: boolean
+          consent_at: string
+          created_at: string
+          email: string
+          email_norm: string | null
+          id: string
+          locale: string | null
+          source: string
+        }
+        Insert: {
+          consent?: boolean
+          consent_at?: string
+          created_at?: string
+          email: string
+          email_norm?: string | null
+          id?: string
+          locale?: string | null
+          source?: string
+        }
+        Update: {
+          consent?: boolean
+          consent_at?: string
+          created_at?: string
+          email?: string
+          email_norm?: string | null
+          id?: string
+          locale?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1893,6 +1949,10 @@ export type Database = {
           p_reason?: string
         }
         Returns: string
+      }
+      join_waitlist: {
+        Args: { p_email: string; p_locale?: string; p_source?: string }
+        Returns: undefined
       }
       log_scheduled_debt_payment: {
         Args: {
