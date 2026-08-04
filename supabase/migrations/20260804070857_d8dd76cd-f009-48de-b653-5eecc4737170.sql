@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.join_waitlist(text, text, text) FROM anon, PUBLIC;
