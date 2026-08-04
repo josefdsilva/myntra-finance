@@ -49,6 +49,7 @@ import { PurchaseCheckButton } from "@/components/purchase-check";
 import { GoalsCard } from "@/components/goals-card";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
+import { RunwayReceivablesCard } from "@/components/runway-receivables-card";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 import { useT } from "@/lib/i18n";
 
@@ -687,6 +688,10 @@ function Dashboard() {
         />
         <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
+
+      {householdId && hh?.household?.kind === "business" && (
+        <RunwayReceivablesCard householdId={householdId} />
+      )}
 
       {householdId && <NetWorthCard householdId={householdId} />}
 
