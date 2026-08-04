@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Bell, Check, X, Inbox, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import {
   listCoachMessages,
   unreadCoachCount,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/coach-messages.functions";
 
 // The persistent home for proactive coach nudges. A bell with an unread badge in
-// the app shell that opens a panel of messages. English-first; localised later.
+// the app shell that opens a panel of messages.
 
 const DOT: Record<string, string> = {
   info: "bg-primary",
@@ -22,15 +23,15 @@ const DOT: Record<string, string> = {
   critical: "bg-destructive",
 };
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: ReturnType<typeof useT>): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.round(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return t("coach.time.now");
+  if (m < 60) return t("coach.time.min", { m });
   const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return t("coach.time.hour", { h });
   const d = Math.round(h / 24);
-  return `${d}d ago`;
+  return t("coach.time.day", { d });
 }
 
 export function CoachInbox({
@@ -42,6 +43,7 @@ export function CoachInbox({
       "left" opens rightward (use inside the narrow sidebar). */
   align?: "left" | "right";
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -99,7 +101,7 @@ export function CoachInbox({
     <div ref={wrapRef} className="relative">
       <button
         type="button"
-        aria-label="Coach inbox"
+        aria-label={t("coach.inbox.aria")}
         onClick={() => setOpen((s) => !s)}
         className="relative inline-flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
       >
@@ -123,7 +125,7 @@ export function CoachInbox({
         >
           <div className="flex items-center justify-between border-b px-4 py-2.5">
             <span className="flex items-center gap-2 text-sm font-medium">
-              <Inbox className="size-4" /> Coach
+              <Inbox className="size-4" /> {t("coach.inbox.title")}
             </span>
             {count > 0 && (
               <button
@@ -134,7 +136,7 @@ export function CoachInbox({
                 }}
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
               >
-                <Check className="size-3.5" /> Mark all read
+                <Check className="size-3.5" /> {t("coach.inbox.markAllRead")}
               </button>
             )}
           </div>
@@ -143,7 +145,7 @@ export function CoachInbox({
             {(messages ?? []).length === 0 ? (
               <div className="px-4 py-10 text-center text-sm text-muted-foreground">
                 <Inbox className="mx-auto mb-2 size-6 opacity-50" />
-                Nothing yet. bynku will nudge you here when there is something worth your attention.
+                {t("coach.inbox.empty")}
               </div>
             ) : (
               <ul className="divide-y">
@@ -168,7 +170,7 @@ export function CoachInbox({
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="truncate text-sm font-medium">{m.title}</p>
                           <span className="shrink-0 text-[10px] text-muted-foreground">
-                            {timeAgo(m.created_at)}
+                            {timeAgo(m.created_at, t)}
                           </span>
                         </div>
                         {m.body && (
@@ -182,13 +184,13 @@ export function CoachInbox({
                             onClick={() => onOpenMessage(m)}
                             className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                           >
-                            {m.action_label ?? "Open"} <ArrowRight className="size-3.5" />
+                            {m.action_label ?? t("coach.inbox.open")} <ArrowRight className="size-3.5" />
                           </a>
                         )}
                       </div>
                       <button
                         type="button"
-                        aria-label="Dismiss"
+                        aria-label={t("coach.inbox.dismiss")}
                         onClick={async (e) => {
                           e.stopPropagation();
                           await dismissFn({ data: { id: m.id } });

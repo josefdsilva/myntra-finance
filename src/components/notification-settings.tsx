@@ -256,17 +256,16 @@ export function NotificationSettings({ householdId }: { householdId: string }) {
         )}
 
         <div className="border-t pt-4 space-y-3">
-          {/* Channels: the in-app coach inbox is always on; these amplify it.
-              English-first; localised in the i18n pass. */}
+          {/* Channels: the in-app coach inbox is always on; these amplify it. */}
           <PrefRow
-            label="Email me"
-            desc="Send digests and important coach alerts to your email."
+            label={t("notif.emailEnabled")}
+            desc={t("notif.emailEnabledDesc")}
             checked={!!prefs?.email_enabled}
             onChange={(v) => toggle("email_enabled", v)}
           />
           <PrefRow
-            label="Web push"
-            desc="Show timely coach alerts on your registered devices."
+            label={t("notif.pushEnabled")}
+            desc={t("notif.pushEnabledDesc")}
             checked={prefs?.push_enabled ?? true}
             onChange={(v) => toggle("push_enabled", v)}
           />

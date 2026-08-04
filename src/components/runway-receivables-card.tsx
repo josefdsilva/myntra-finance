@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Gauge, Pencil, Check, X, TrendingDown, Wallet } from "lucide-react";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useT, type MessageKey } from "@/lib/i18n";
 import { getRunwayReceivables, setCashOverride } from "@/lib/sme-cash.functions";
 import type { AgeBucket } from "@/lib/receivables";
 
@@ -16,15 +17,16 @@ const SEV_TONE: Record<string, string> = {
   critical: "text-destructive",
 };
 
-const BUCKET_LABEL: Record<AgeBucket, string> = {
-  not_due: "Not due",
-  d0_30: "1-30d",
-  d31_60: "31-60d",
-  d61_90: "61-90d",
-  d90_plus: "90d+",
+const BUCKET_KEY: Record<AgeBucket, MessageKey> = {
+  not_due: "sme.bucket.notDue",
+  d0_30: "sme.bucket.d0_30",
+  d31_60: "sme.bucket.d31_60",
+  d61_90: "sme.bucket.d61_90",
+  d90_plus: "sme.bucket.d90_plus",
 };
 
 export function RunwayReceivablesCard({ householdId }: { householdId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const fetchFn = useServerFn(getRunwayReceivables);
   const setFn = useServerFn(setCashOverride);
@@ -50,30 +52,34 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Gauge className="size-4" /> Runway &amp; receivables
+          <Gauge className="size-4" /> {t("sme.title")}
         </CardTitle>
-        <CardDescription>How long your cash lasts, and what you are owed.</CardDescription>
+        <CardDescription>{t("sme.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Runway */}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl border p-4">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Runway</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">{t("sme.runway")}</p>
             {runway.cashFlowPositive ? (
               <>
-                <p className="mt-1 font-display text-2xl text-success">Cash-flow positive</p>
+                <p className="mt-1 font-display text-2xl text-success">
+                  {t("sme.cashFlowPositive")}
+                </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Income covers outgoings, so you are not burning cash.
+                  {t("sme.cashFlowPositiveDesc")}
                 </p>
               </>
             ) : (
               <>
                 <p className={cn("mt-1 font-display text-3xl tabular-nums", SEV_TONE[runway.severity])}>
                   {runway.months!.toFixed(1)}
-                  <span className="ml-1 text-base font-normal text-muted-foreground">months</span>
+                  <span className="ml-1 text-base font-normal text-muted-foreground">
+                    {t("sme.months")}
+                  </span>
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  at {money(runway.monthlyBurn)} net burn / month
+                  {t("sme.burnLine", { burn: money(runway.monthlyBurn) })}
                 </p>
               </>
             )}
@@ -81,7 +87,7 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
 
           <div className="rounded-xl border p-4">
             <p className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-              <Wallet className="size-3.5" /> Cash on hand
+              <Wallet className="size-3.5" /> {t("sme.cashOnHand")}
             </p>
             {editing ? (
               <div className="mt-1.5 flex items-center gap-1.5">
@@ -97,7 +103,7 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
                   size="icon"
                   variant="ghost"
                   className="size-8 shrink-0"
-                  aria-label="Save"
+                  aria-label={t("common.save")}
                   onClick={() => save(parseFloat(value.replace(",", ".")) || 0)}
                 >
                   <Check className="size-4" />
@@ -106,7 +112,7 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
                   size="icon"
                   variant="ghost"
                   className="size-8 shrink-0"
-                  aria-label="Cancel"
+                  aria-label={t("common.cancel")}
                   onClick={() => setEditing(false)}
                 >
                   <X className="size-4" />
@@ -122,7 +128,7 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
                     setEditing(true);
                   }}
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label="Edit cash on hand"
+                  aria-label={t("common.edit")}
                 >
                   <Pencil className="size-3.5" />
                 </button>
@@ -131,28 +137,32 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
             <p className="mt-0.5 text-xs text-muted-foreground">
               {data.override != null ? (
                 <>
-                  Manual figure.{" "}
+                  {t("sme.manualFigure")}{" "}
                   <button
                     type="button"
                     onClick={() => save(null)}
                     className="text-primary hover:underline"
                   >
-                    Use estimate ({money(data.computedCash)})
+                    {t("sme.useEstimate", { amount: money(data.computedCash) })}
                   </button>
                 </>
               ) : (
-                "Estimated from your liquid assets. Set your real balance for accuracy."
+                t("sme.estimateDesc")
               )}
             </p>
           </div>
 
           <div className="rounded-xl border p-4">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Monthly flow</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              {t("sme.monthlyFlow")}
+            </p>
             <p className="mt-1 text-sm">
-              In <span className="font-medium tabular-nums">{money(data.monthlyIncome)}</span>
+              {t("sme.in")}{" "}
+              <span className="font-medium tabular-nums">{money(data.monthlyIncome)}</span>
             </p>
             <p className="text-sm">
-              Out <span className="font-medium tabular-nums">{money(data.monthlyOutgoings)}</span>
+              {t("sme.out")}{" "}
+              <span className="font-medium tabular-nums">{money(data.monthlyOutgoings)}</span>
             </p>
           </div>
         </div>
@@ -160,23 +170,26 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
         {/* Receivables */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-medium">Receivables</p>
+            <p className="text-sm font-medium">{t("sme.receivables")}</p>
             <p className="text-xs text-muted-foreground">
-              {money(receivables.total)} outstanding
+              {t("sme.outstanding", { amount: money(receivables.total) })}
               {receivables.overdueTotal > 0 && (
-                <span className="text-warning"> · {money(receivables.overdueTotal)} overdue</span>
+                <span className="text-warning">
+                  {" · "}
+                  {t("sme.overdueAmount", { amount: money(receivables.overdueTotal) })}
+                </span>
               )}
             </p>
           </div>
 
           {receivables.items.length === 0 ? (
             <p className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
-              No expected payments outstanding. Add planned money-in to track what you are owed.
+              {t("sme.receivablesEmpty")}
             </p>
           ) : (
             <>
               <div className="grid grid-cols-5 gap-1.5">
-                {(Object.keys(BUCKET_LABEL) as AgeBucket[]).map((k) => {
+                {(Object.keys(BUCKET_KEY) as AgeBucket[]).map((k) => {
                   const b = receivables.buckets[k];
                   const overdue = k !== "not_due" && b.amount > 0;
                   return (
@@ -187,7 +200,7 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
                         overdue && "border-warning/40 bg-warning/5",
                       )}
                     >
-                      <p className="text-[10px] uppercase text-muted-foreground">{BUCKET_LABEL[k]}</p>
+                      <p className="text-[10px] uppercase text-muted-foreground">{t(BUCKET_KEY[k])}</p>
                       <p className={cn("mt-0.5 text-xs font-medium tabular-nums", overdue && "text-warning")}>
                         {money(b.amount)}
                       </p>
@@ -203,10 +216,12 @@ export function RunwayReceivablesCard({ householdId }: { householdId: string }) 
                     <span className="flex shrink-0 items-center gap-2">
                       {r.daysOverdue > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[11px] text-warning">
-                          <TrendingDown className="size-3" /> {r.daysOverdue}d overdue
+                          <TrendingDown className="size-3" /> {t("sme.daysOverdue", { days: r.daysOverdue })}
                         </span>
                       ) : (
-                        <span className="text-[11px] text-muted-foreground">due {r.dueDate}</span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {t("sme.dueOn", { date: r.dueDate })}
+                        </span>
                       )}
                       <span className="tabular-nums font-medium">{money(r.amount)}</span>
                     </span>

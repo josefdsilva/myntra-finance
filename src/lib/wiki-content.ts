@@ -2362,6 +2362,80 @@ export const WIKI_SECTIONS: WikiSection[] = [
     ),
   },
 
+  // ------------------------------------------------------------ coach
+  {
+    id: "coach",
+    icon: "Bell",
+    title: L(
+      "Your coach, proactively",
+      "O teu coach, proativo",
+      "Tu coach, proactivo",
+      "Dein Coach, proaktiv",
+      "Ton coach, proactif",
+    ),
+    paragraphs: L(
+      [
+        "bynku does more than answer when asked. The bell at the top opens your coach inbox, where bynku posts the one thing worth your attention: an end-of-cycle recap with a single next step, a nudge when spending outpaces the plan, a reminder to set aside for a known upcoming cost, and a note when you reach a milestone.",
+        "The inbox is always on. If you want the same nudges to reach you off-app, turn on email or web push in Settings. Each message appears once, and the timing follows your cycle, not the clock.",
+      ],
+      [
+        "O bynku faz mais do que responder quando lhe perguntas. O sino no topo abre a caixa do coach, onde o bynku publica aquilo que merece a tua atenção: um resumo no fim do ciclo com um próximo passo, um aviso quando os gastos ultrapassam o plano, um lembrete para pôr de lado um custo já conhecido e uma nota quando atinges um marco.",
+        "A caixa está sempre ativa. Se quiseres receber os mesmos avisos fora da app, ativa o e-mail ou as notificações push nas Definições. Cada mensagem aparece uma vez e o momento segue o teu ciclo, não o relógio.",
+      ],
+      [
+        "bynku hace más que responder cuando le preguntas. La campana de arriba abre la bandeja del coach, donde bynku publica lo que merece tu atención: un resumen al cerrar el ciclo con un siguiente paso, un aviso cuando el gasto supera el plan, un recordatorio para apartar un coste ya conocido y una nota cuando alcanzas un hito.",
+        "La bandeja está siempre activa. Si quieres recibir los mismos avisos fuera de la app, activa el correo o las notificaciones push en Ajustes. Cada mensaje aparece una vez y el momento sigue tu ciclo, no el reloj.",
+      ],
+      [
+        "bynku antwortet nicht nur auf Nachfrage. Die Glocke oben öffnet den Coach-Posteingang, in dem bynku das eine Wichtige postet: eine Zusammenfassung am Zyklusende mit einem nächsten Schritt, einen Hinweis, wenn die Ausgaben den Plan übertreffen, eine Erinnerung, für bekannte künftige Kosten zurückzulegen, und eine Notiz, wenn du einen Meilenstein erreichst.",
+        "Der Posteingang ist immer an. Wenn dich dieselben Hinweise auch außerhalb der App erreichen sollen, aktiviere E-Mail oder Web-Push in den Einstellungen. Jede Nachricht erscheint einmal, und der Zeitpunkt folgt deinem Zyklus, nicht der Uhr.",
+      ],
+      [
+        "bynku ne se contente pas de répondre quand on l'interroge. La cloche en haut ouvre la boîte du coach, où bynku publie ce qui mérite votre attention : un récapitulatif de fin de cycle avec une prochaine étape, une alerte quand les dépenses dépassent le plan, un rappel pour mettre de côté un coût connu à venir, et une note quand vous atteignez un jalon.",
+        "La boîte est toujours active. Pour recevoir les mêmes alertes hors de l'app, activez l'e-mail ou les notifications push dans les Réglages. Chaque message apparaît une fois, et le moment suit votre cycle, pas l'horloge.",
+      ],
+    ),
+    bullets: L(
+      [
+        { label: "Cycle recap", body: "When a cycle closes: what happened, and the single most useful next move." },
+        { label: "Drift alerts", body: "A heads-up when you pass 80% or 100% of your everyday budget." },
+        { label: "Cost reminders", body: "Ahead of a known plan like a car service or tax, so you can set money aside in time." },
+        { label: "Milestones", body: "A quiet well done when your score jumps or your surplus streak grows." },
+      ],
+      [
+        { label: "Resumo do ciclo", body: "Quando um ciclo fecha: o que aconteceu e o passo seguinte mais útil." },
+        { label: "Alertas de desvio", body: "Um aviso quando passas 80% ou 100% do teu orçamento do dia a dia." },
+        { label: "Lembretes de custos", body: "Antes de um plano conhecido, como a revisão do carro ou impostos, para pores dinheiro de lado a tempo." },
+        { label: "Marcos", body: "Um discreto parabéns quando a tua pontuação sobe ou a tua sequência de excedentes cresce." },
+      ],
+      [
+        { label: "Resumen del ciclo", body: "Cuando un ciclo cierra: qué pasó y el siguiente paso más útil." },
+        { label: "Avisos de desvío", body: "Un aviso cuando superas el 80% o el 100% de tu presupuesto del día a día." },
+        { label: "Recordatorios de gastos", body: "Antes de un plan conocido, como la revisión del coche o impuestos, para apartar dinero a tiempo." },
+        { label: "Hitos", body: "Una discreta enhorabuena cuando tu puntuación sube o crece tu racha de excedente." },
+      ],
+      [
+        { label: "Zyklus-Zusammenfassung", body: "Wenn ein Zyklus endet: was passiert ist und der nützlichste nächste Schritt." },
+        { label: "Abweichungs-Hinweise", body: "Ein Hinweis, wenn du 80% oder 100% deines Alltagsbudgets überschreitest." },
+        { label: "Kostenerinnerungen", body: "Vor einem bekannten Plan wie Autoinspektion oder Steuer, um rechtzeitig zurückzulegen." },
+        { label: "Meilensteine", body: "Ein leises Gut gemacht, wenn dein Score steigt oder deine Überschuss-Serie wächst." },
+      ],
+      [
+        { label: "Récapitulatif de cycle", body: "Quand un cycle se termine : ce qui s'est passé et la prochaine action la plus utile." },
+        { label: "Alertes d'écart", body: "Un signal quand vous dépassez 80% ou 100% de votre budget du quotidien." },
+        { label: "Rappels de coûts", body: "Avant un plan connu comme une révision auto ou un impôt, pour mettre de côté à temps." },
+        { label: "Jalons", body: "Un discret bravo quand votre score grimpe ou que votre série d'excédents s'allonge." },
+      ],
+    ),
+    businessNote: L(
+      "For companies, the coach also watches runway and receivables: it warns as runway falls under three, two, and one month, and nudges you to chase overdue invoices with a ready-to-send message.",
+      "Para empresas, o coach também vigia a autonomia e os valores a receber: avisa quando a autonomia desce abaixo de três, dois e um mês, e lembra-te de cobrar faturas em atraso com uma mensagem pronta a enviar.",
+      "Para empresas, el coach también vigila la autonomía y los cobros: avisa cuando la autonomía baja de tres, dos y un mes, y te recuerda reclamar facturas vencidas con un mensaje listo para enviar.",
+      "Für Unternehmen beobachtet der Coach auch Reichweite und Forderungen: Er warnt, wenn die Reichweite unter drei, zwei und einen Monat fällt, und erinnert dich, überfällige Rechnungen mit einer fertigen Nachricht anzumahnen.",
+      "Pour les entreprises, le coach surveille aussi la trésorerie et les créances : il alerte quand la trésorerie passe sous trois, deux et un mois, et vous rappelle de relancer les factures en retard avec un message prêt à envoyer.",
+    ),
+  },
+
   // ------------------------------------------------------------ analysis
   {
     id: "analysis",
