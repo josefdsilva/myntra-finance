@@ -1,6 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { computeRunway, resolveCashOnHand } from "./runway";
-import { ageReceivables, dueDateFor, type ReceivablePlan } from "./receivables";
+import { describe, it, expect } from "bun:test";
+import { computeRunway, resolveCashOnHand, type RunwayResult } from "./runway";
+import { ageReceivables, dueDateFor, type ReceivablePlan, type ReceivablesResult } from "./receivables";
+import { smeSignals } from "./sme-signals";
+import { moneyFormatter } from "./coach-signals";
 
 describe("resolveCashOnHand", () => {
   it("prefers the manual override when set", () => {
@@ -88,3 +90,68 @@ function rp(overrides: Partial<ReceivablePlan>): ReceivablePlan {
     ...overrides,
   };
 }
+
+describe("smeSignals", () => {
+  const M = moneyFormatter("EUR");
+
+  function runwayR(months: number | null, burn = 3000): RunwayResult {
+    if (months == null) {
+      return { cashOnHand: 10000, monthlyBurn: 0, cashFlowPositive: true, months: null, severity: "ok" };
+    }
+    return {
+      cashOnHand: months * burn,
+      monthlyBurn: burn,
+      cashFlowPositive: false,
+      months,
+      severity: months < 1 ? "critical" : months < 3 ? "warn" : "ok",
+    };
+  }
+
+  function recv(overdueTotal: number): ReceivablesResult {
+    const items =
+      overdueTotal > 0
+        ? [
+            {
+              id: "1",
+              label: "Acme invoice",
+              amount: overdueTotal,
+              dueDate: "2026-06-30",
+              daysOverdue: 46,
+              bucket: "d31_60" as const,
+            },
+          ]
+        : [];
+    return { items, total: overdueTotal, overdueTotal, buckets: {} as ReceivablesResult["buckets"] };
+  }
+
+  it("is critical under 1 month of runway", () => {
+    const s = smeSignals({ runway: runwayR(0.5), receivables: recv(0), money: M, periodKey: "2026-08" });
+    const r = s.find((x) => x.kind === "runway_warning");
+    expect(r?.severity).toBe("critical");
+    expect(r?.dedupeKey).toContain("runway_warning:1:");
+  });
+
+  it("warns under 3 months of runway", () => {
+    const s = smeSignals({ runway: runwayR(2.5), receivables: recv(0), money: M, periodKey: "2026-08" });
+    const r = s.find((x) => x.kind === "runway_warning");
+    expect(r?.severity).toBe("warn");
+    expect(r?.dedupeKey).toContain("runway_warning:3:");
+  });
+
+  it("stays quiet when cash-flow positive", () => {
+    const s = smeSignals({ runway: runwayR(null), receivables: recv(0), money: M, periodKey: "2026-08" });
+    expect(s.find((x) => x.kind === "runway_warning")).toBeUndefined();
+  });
+
+  it("nudges on overdue receivables with a drafted follow-up", () => {
+    const s = smeSignals({ runway: runwayR(null), receivables: recv(900), money: M, periodKey: "2026-08" });
+    const r = s.find((x) => x.kind === "receivables_overdue");
+    expect(r).toBeTruthy();
+    expect((r?.data as { draft?: string })?.draft).toContain("Acme invoice");
+  });
+
+  it("no receivables nudge when nothing is overdue", () => {
+    const s = smeSignals({ runway: runwayR(null), receivables: recv(0), money: M, periodKey: "2026-08" });
+    expect(s.find((x) => x.kind === "receivables_overdue")).toBeUndefined();
+  });
+});

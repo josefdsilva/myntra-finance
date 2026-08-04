@@ -10,6 +10,8 @@ export type Signal = {
   body: string;
   actionLabel?: string;
   actionUrl?: string;
+  /** Optional structured extras carried onto the inbox message (e.g. a draft). */
+  data?: Record<string, unknown>;
   /** Stable within a household so the same nudge posts only once. */
   dedupeKey: string;
 };
