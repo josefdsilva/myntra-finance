@@ -405,6 +405,50 @@ function SnapshotPage() {
   );
 }
 
+/** Fixed export width of the snapshot image — identical on every device. */
+const CARD_WIDTH = 600;
+
+/**
+ * Shows the fixed-width snapshot card scaled to fit the available width, so it
+ * never causes horizontal scrolling. The DOM node keeps its real 600px size, so
+ * the exported PNG stays device-independent.
+ */
+function ScaledPreview({ children }: { children: React.ReactNode }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState<number>(0);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    const inner = innerRef.current;
+    if (!box || !inner) return;
+    const measure = () => {
+      const s = Math.min(1, box.clientWidth / CARD_WIDTH);
+      setScale(s);
+      setHeight(inner.offsetHeight * s);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    ro.observe(inner);
+    return () => ro.disconnect();
+  }, [children]);
+
+  return (
+    <div ref={boxRef} className="w-full min-w-0" style={{ height: height || undefined }}>
+      <div
+        ref={innerRef}
+        style={{ width: CARD_WIDTH, transform: `scale(${scale})`, transformOrigin: "top left" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+
+
 // Premium (gold/emerald) tone used for the business snapshot's badges so the
 // whole card reads more refined than the household rainbow.
 const PREMIUM_TONE = "bg-amber-300/10 text-amber-50 ring-amber-300/30";
