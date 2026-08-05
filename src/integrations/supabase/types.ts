@@ -1285,7 +1285,10 @@ export type Database = {
           advisor_email: string | null
           age_band: string | null
           baseline_budget: number
+          cash_on_hand_override: number | null
+          cash_on_hand_override_at: string | null
           children: number
+          coach_run_on: string | null
           country: string
           created_at: string
           created_by: string
@@ -1309,7 +1312,10 @@ export type Database = {
           advisor_email?: string | null
           age_band?: string | null
           baseline_budget?: number
+          cash_on_hand_override?: number | null
+          cash_on_hand_override_at?: string | null
           children?: number
+          coach_run_on?: string | null
           country?: string
           created_at?: string
           created_by: string
@@ -1333,7 +1339,10 @@ export type Database = {
           advisor_email?: string | null
           age_band?: string | null
           baseline_budget?: number
+          cash_on_hand_override?: number | null
+          cash_on_hand_override_at?: string | null
           children?: number
+          coach_run_on?: string | null
           country?: string
           created_at?: string
           created_by?: string
