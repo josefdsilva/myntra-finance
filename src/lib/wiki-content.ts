@@ -2952,6 +2952,53 @@ export const WIKI_SECTIONS: WikiSection[] = [
     ),
   },
 
+  // ------------------------------------------------------------ how bynku uses AI
+  {
+    id: "aiTransparency",
+    icon: "Sparkles",
+    title: L(
+      "How bynku uses AI",
+      "Como o bynku usa IA",
+      "Cómo bynku usa IA",
+      "Wie bynku KI nutzt",
+      "Comment bynku utilise l'IA",
+    ),
+    paragraphs: L(
+      [
+        "Some parts of bynku are powered by an AI model, and we label them with a small \"AI\" mark so you always know when you're looking at generated content. This follows the transparency principle of the EU AI Act.",
+        "AI powers the coach (its chat, the overview it writes, and the nudges in the coach inbox), the chat-based setup, and the capture tools that read receipts, photos, voice memos, and bank statements to suggest transactions.",
+        "Treat AI output as a helpful draft, not a verdict. It can be inaccurate, no person reviews each message before you see it, and it is educational information about your own numbers — not regulated financial, tax, or legal advice. bynku never scores your creditworthiness. You stay in control: these features run only when you use them, and you can turn them off any time.",
+      ],
+      [
+        "Algumas partes do bynku funcionam com um modelo de IA, e assinalamo-las com uma pequena marca \"IA\" para saberes sempre quando estás a ver conteúdo gerado. Isto segue o princípio de transparência do Regulamento de IA da UE.",
+        "A IA está no coach (o chat, a visão geral que escreve e os avisos na caixa do coach), na configuração por conversa e nas ferramentas de captura que leem recibos, fotos, notas de voz e extratos bancários para sugerir transações.",
+        "Encara o resultado da IA como um rascunho útil, não uma sentença. Pode conter imprecisões, ninguém revê cada mensagem antes de a veres, e é informação educativa sobre os teus números — não aconselhamento financeiro, fiscal ou jurídico regulado. O bynku nunca avalia a tua capacidade de crédito. Manténs o controlo: estas funções só correm quando as usas e podes desligá-las a qualquer momento.",
+      ],
+      [
+        "Algunas partes de bynku funcionan con un modelo de IA, y las marcamos con una pequeña etiqueta \"IA\" para que siempre sepas cuándo ves contenido generado. Esto sigue el principio de transparencia del Reglamento de IA de la UE.",
+        "La IA está en el coach (su chat, el resumen que redacta y los avisos de la bandeja del coach), en la configuración por conversación y en las herramientas de captura que leen recibos, fotos, notas de voz y extractos bancarios para sugerir transacciones.",
+        "Trata el resultado de la IA como un borrador útil, no un veredicto. Puede contener errores, nadie revisa cada mensaje antes de que lo veas, y es información educativa sobre tus propios números — no asesoramiento financiero, fiscal ni legal regulado. bynku nunca evalúa tu solvencia. Tú mandas: estas funciones solo se ejecutan cuando las usas y puedes desactivarlas cuando quieras.",
+      ],
+      [
+        "Einige Teile von bynku werden von einem KI-Modell betrieben, und wir kennzeichnen sie mit einem kleinen \"KI\"-Zeichen, damit du immer weißt, wann du generierte Inhalte siehst. Das folgt dem Transparenzgrundsatz der EU-KI-Verordnung.",
+        "KI steckt im Coach (dem Chat, der Übersicht, die er schreibt, und den Hinweisen im Coach-Posteingang), in der dialogbasierten Einrichtung und in den Erfassungswerkzeugen, die Belege, Fotos, Sprachnotizen und Kontoauszüge lesen, um Buchungen vorzuschlagen.",
+        "Behandle KI-Ausgaben als hilfreichen Entwurf, nicht als Urteil. Sie können Fehler enthalten, niemand prüft jede Nachricht, bevor du sie siehst, und es ist Bildungsinformation zu deinen eigenen Zahlen — keine regulierte Finanz-, Steuer- oder Rechtsberatung. bynku bewertet nie deine Kreditwürdigkeit. Du behältst die Kontrolle: Diese Funktionen laufen nur, wenn du sie nutzt, und du kannst sie jederzeit abschalten.",
+      ],
+      [
+        "Certaines parties de bynku reposent sur un modèle d'IA, et nous les signalons par une petite marque « IA » pour que vous sachiez toujours quand vous regardez du contenu généré. Cela suit le principe de transparence du règlement européen sur l'IA.",
+        "L'IA alimente le coach (son chat, la synthèse qu'il rédige et les alertes de la boîte du coach), la configuration par conversation et les outils de capture qui lisent reçus, photos, mémos vocaux et relevés bancaires pour suggérer des opérations.",
+        "Considérez le résultat de l'IA comme un brouillon utile, pas un verdict. Il peut contenir des erreurs, personne ne relit chaque message avant vous, et c'est une information éducative sur vos propres chiffres — pas un conseil financier, fiscal ou juridique réglementé. bynku n'évalue jamais votre solvabilité. Vous gardez le contrôle : ces fonctions ne s'exécutent que lorsque vous les utilisez, et vous pouvez les désactiver à tout moment.",
+      ],
+    ),
+    callout: L(
+      "Look for the \"AI\" tag: wherever you see it, the content was generated by a model and deserves a quick sanity check before you rely on it.",
+      "Procura a etiqueta \"IA\": onde a vires, o conteúdo foi gerado por um modelo e merece uma verificação rápida antes de confiares nele.",
+      "Busca la etiqueta \"IA\": donde la veas, el contenido lo generó un modelo y merece una comprobación rápida antes de fiarte.",
+      "Achte auf das \"KI\"-Zeichen: Wo du es siehst, wurde der Inhalt von einem Modell erzeugt und verdient einen kurzen Plausibilitätscheck, bevor du dich darauf verlässt.",
+      "Repérez l'étiquette « IA » : là où vous la voyez, le contenu a été généré par un modèle et mérite une vérification rapide avant de vous y fier.",
+    ),
+  },
+
   // ------------------------------------------------------------ faq
   {
     id: "faq",

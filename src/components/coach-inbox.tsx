@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Bell, Check, X, Inbox, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { AiBadge } from "@/components/ai-badge";
 import {
   listCoachMessages,
   unreadCoachCount,
@@ -143,6 +144,7 @@ export function CoachInbox({
           <div className="flex items-center justify-between border-b px-4 py-2.5">
             <span className="flex items-center gap-2 text-sm font-medium">
               <Inbox className="size-4" /> {t("coach.inbox.title")}
+              <AiBadge />
             </span>
             {count > 0 && (
               <button

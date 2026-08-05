@@ -15,6 +15,7 @@ import {
 } from "@/lib/budget.functions";
 import { extractSetupItems } from "@/lib/onboarding-chat.functions";
 import { useT, type MessageKey } from "@/lib/i18n";
+import { AiBadge, AiNotice } from "@/components/ai-badge";
 
 const COUNTRIES: Array<[string, string]> = [
   ["PT", "Portugal"],
@@ -266,6 +267,7 @@ export function CoachOnboarding({
       <header className="flex items-center justify-between border-b px-4 py-3">
         <span className="flex items-center gap-2 font-display text-lg">
           <Sparkles className="size-4 text-primary" /> {t("coachOb.title")}
+          <AiBadge />
         </span>
         <Button variant="ghost" size="sm" onClick={onSwitchToForms} disabled={busy || finishing}>
           {t("coachOb.useForms")}
@@ -274,6 +276,7 @@ export function CoachOnboarding({
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
         <div className="mx-auto flex max-w-lg flex-col gap-3">
+          <AiNotice />
           {messages.map((m) => (
             <div key={m.id} className={m.role === "user" ? "max-w-[85%] self-end" : "max-w-[85%] self-start"}>
               <div

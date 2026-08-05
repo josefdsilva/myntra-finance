@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { AiBadge } from "@/components/ai-badge";
 import {
   Select,
   SelectTrigger,
@@ -319,7 +320,8 @@ export function StatementImportFlow({
         </Card>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <AiBadge />
             {t("stmt.reviewIntro", { file: fileName ?? "" })}
           </p>
 

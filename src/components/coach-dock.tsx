@@ -25,6 +25,7 @@ import {
 } from "@/lib/coach.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { useLocale } from "@/lib/i18n";
+import { AiNotice } from "@/components/ai-badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -282,8 +283,11 @@ export function CoachDock() {
           </Button>
         </div>
 
+        {/* AI transparency notice (Art. 50(1)) */}
+        <AiNotice className="mx-4 mt-3" />
+
         {/* Memory notice */}
-        <div className="mx-4 mt-3 mb-1 flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 border border-border/60 rounded-md px-2.5 py-2">
+        <div className="mx-4 mt-2 mb-1 flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 border border-border/60 rounded-md px-2.5 py-2">
           <Info className="size-3.5 mt-0.5 shrink-0" />
           <span>
             To save credits, the coach only remembers the last{" "}

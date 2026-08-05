@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, RefreshCw, MessageSquare, Send, Loader2 } from "lucide-react";
 import { generateOverview, chatWithCoach } from "@/lib/coach.functions";
 import { useLocale, useT } from "@/lib/i18n";
+import { AiBadge, AiNotice } from "@/components/ai-badge";
 import { toast } from "sonner";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
@@ -83,6 +84,7 @@ export function CoachPanel({
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="size-4 text-primary" />
               {t("coach.title")}
+              <AiBadge />
             </CardTitle>
             <CardDescription className="mt-1">{t("coach.description")}</CardDescription>
           </div>
@@ -139,6 +141,7 @@ export function CoachPanel({
 
         {chatOpen && (
           <div className="border-t pt-3 space-y-3">
+            <AiNotice />
             <div className="max-h-72 overflow-y-auto space-y-3 pr-1">
               {history.length === 0 && (
                 <div className="space-y-2">
