@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { sumMonthly } from "@/lib/finance-helpers";
+import { deriveCycleFacts } from "@/lib/household-facts";
 
 export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
   server: {
@@ -105,16 +106,19 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             supabaseAdmin.from("debts").select("monthly_amount").eq("household_id", hhId),
           ]);
           const fixedTotal = sumMonthly(fixed) + sumMonthly(debts);
-          const variablePool = Math.max(0, baseline - fixedTotal);
 
           const { data: incomes } = await supabaseAdmin
             .from("incomes")
             .select("monthly_amount")
             .eq("household_id", hhId);
-          const income = (
-            (incomes as Array<{ monthly_amount: number | string }> | null) ?? []
-          ).reduce((s, r) => s + Number(r.monthly_amount), 0);
-          const surplus = Math.max(0, income - baseline);
+          const income = sumMonthly(incomes);
+
+          const { variablePool, surplus } = deriveCycleFacts({
+            baseline,
+            fixedTotal,
+            monthlyIncome: income,
+            netSpent: 0,
+          });
 
           // AI outlook
           let aiText = "";
