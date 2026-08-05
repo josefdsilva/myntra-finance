@@ -128,11 +128,13 @@ export async function runCoachForHousehold(
   if (series.length > 0) {
     const latest = series[series.length - 1];
     const prev = series.length >= 2 ? series[series.length - 2] : null;
-    // Only recap a cycle that is genuinely closed: its start must be strictly
-    // before the current cycle's start, and it must have ended recently.
+    // Only recap a cycle that genuinely just closed: its start must be strictly
+    // before the current cycle's start, and it must have ended in the last few
+    // days. A short window keeps "just closed" honest and stops the first coach
+    // run from back-filling a stale recap for a cycle that closed weeks ago.
     const isPastCycle = new Date(latest.cycle_start).getTime() < facts.cycleStart.getTime();
     const closedDaysAgo = (now.getTime() - new Date(latest.cycle_end).getTime()) / 86_400_000;
-    if (isPastCycle && closedDaysAgo >= 0 && closedDaysAgo <= 12) {
+    if (isPastCycle && closedDaysAgo >= 0 && closedDaysAgo <= 3) {
       await emit(recapSignal({ latest, prev, money }), latest.cycle_start);
     }
     for (const s of milestoneSignals({ series })) {
