@@ -54,17 +54,34 @@ export function CoachInbox({
   const markAllFn = useServerFn(markAllCoachRead);
   const dismissFn = useServerFn(dismissCoachMessage);
 
+  // The bell is decorative: a transient server hiccup must never bubble up as a
+  // page-level error, so both queries swallow failures and fall back to empty.
   const { data: unread } = useQuery({
     queryKey: ["coach-unread", householdId],
-    queryFn: () => countFn({ data: { household_id: householdId! } }),
+    queryFn: async () => {
+      try {
+        return await countFn({ data: { household_id: householdId! } });
+      } catch {
+        return { count: 0 };
+      }
+    },
     enabled: !!householdId,
+    retry: false,
     refetchInterval: 60_000,
   });
   const { data: messages } = useQuery({
     queryKey: ["coach-messages", householdId],
-    queryFn: () => listFn({ data: { household_id: householdId! } }),
+    queryFn: async () => {
+      try {
+        return await listFn({ data: { household_id: householdId! } });
+      } catch {
+        return [];
+      }
+    },
     enabled: !!householdId && open,
+    retry: false,
   });
+
 
   useEffect(() => {
     if (!open) return;
