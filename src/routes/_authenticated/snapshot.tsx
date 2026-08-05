@@ -378,23 +378,23 @@ function SnapshotPage() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <div className="min-w-[600px] px-4 sm:px-0">
-              {health && (
-                <SnapshotCard
-                  ref={cardRef}
-                  overall={health.overall}
-                  scores={health.scores}
-                  badges={health.badges}
-                  monthLabel={monthLabel}
-                  isBusiness={isBusiness}
-                  t={
-                    t as unknown as (key: string, vars?: Record<string, string | number>) => string
-                  }
-                />
-              )}
-            </div>
-          </div>
+          {/* The card is authored at a fixed export width so every download and
+              share looks identical on any device. On narrow screens we scale it
+              down visually instead of allowing horizontal scroll. */}
+          <ScaledPreview>
+            {health && (
+              <SnapshotCard
+                ref={cardRef}
+                overall={health.overall}
+                scores={health.scores}
+                badges={health.badges}
+                monthLabel={monthLabel}
+                isBusiness={isBusiness}
+                t={t as unknown as (key: string, vars?: Record<string, string | number>) => string}
+              />
+            )}
+          </ScaledPreview>
+
 
           <ScoreTrendMini householdId={householdId} isBusiness={isBusiness} />
 
