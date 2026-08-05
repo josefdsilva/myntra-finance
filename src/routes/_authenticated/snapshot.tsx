@@ -3,7 +3,7 @@ import { LIQUID_ASSET_KINDS } from "@/lib/finance-helpers";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import {
