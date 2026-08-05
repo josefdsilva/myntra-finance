@@ -252,7 +252,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             user_id: p.user_id,
             kind: "weekly_digest",
             payload_hash: `weekly:${weekStart.toISOString().slice(0, 10)}`,
-          } as never);
+          });
 
           details.push({ user_id: p.user_id, devices: list.length, spentLast, receivedLast, emailQueued });
         }

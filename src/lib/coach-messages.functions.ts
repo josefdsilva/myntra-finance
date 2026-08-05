@@ -54,7 +54,7 @@ export const markCoachRead = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await context.supabase
       .from("coach_messages")
-      .update({ read_at: new Date().toISOString() } as never)
+      .update({ read_at: new Date().toISOString() })
       .eq("id", data.id)
       .is("read_at", null);
     return { ok: true };
@@ -68,7 +68,7 @@ export const markAllCoachRead = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await context.supabase
       .from("coach_messages")
-      .update({ read_at: new Date().toISOString() } as never)
+      .update({ read_at: new Date().toISOString() })
       .eq("household_id", data.household_id)
       .is("read_at", null);
     return { ok: true };

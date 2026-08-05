@@ -28,7 +28,7 @@ export const subscribePush = createServerFn({ method: "POST" })
         p256dh: data.p256dh,
         auth: data.auth,
         user_agent: data.user_agent ?? null,
-      } as never,
+      },
       { onConflict: "endpoint" },
     );
     if (error) throw error;
@@ -91,7 +91,7 @@ export const updateNotificationPrefs = createServerFn({ method: "POST" })
         user_id: context.userId,
         ...data,
         updated_at: new Date().toISOString(),
-      } as never,
+      },
       { onConflict: "user_id" },
     );
     if (error) throw error;

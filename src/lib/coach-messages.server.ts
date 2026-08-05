@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Json } from "@/integrations/supabase/types";
 
 // The single funnel every proactive nudge goes through. It writes the in-app
 // coach inbox (the source of truth) and then, only for a freshly-created
@@ -60,7 +61,7 @@ export async function emitCoachMessage(admin: Admin, msg: CoachEmit): Promise<{ 
     body: msg.body ?? "",
     action_label: msg.actionLabel ?? null,
     action_url: msg.actionUrl ?? null,
-    data: msg.data ?? {},
+    data: (msg.data ?? {}) as Json,
     cycle_start: msg.cycleStart ?? null,
     dedupe_key: msg.dedupeKey,
   };
@@ -69,7 +70,7 @@ export async function emitCoachMessage(admin: Admin, msg: CoachEmit): Promise<{ 
   // the message already existed, so we must not re-notify.
   const { data: inserted, error } = await admin
     .from("coach_messages")
-    .upsert(row as never, { onConflict: "household_id,dedupe_key", ignoreDuplicates: true })
+    .upsert(row, { onConflict: "household_id,dedupe_key", ignoreDuplicates: true })
     .select("id");
   if (error) {
     console.error("emitCoachMessage insert failed", error);

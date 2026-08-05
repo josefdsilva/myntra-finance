@@ -42,7 +42,7 @@ export const runDailyCoach = createServerFn({ method: "POST" })
     // Stamp first so concurrent opens (other devices/members) do not double-run.
     await supabaseAdmin
       .from("households")
-      .update({ coach_run_on: data.local_date } as never)
+      .update({ coach_run_on: data.local_date })
       .eq("id", data.household_id);
 
     const hh: CoachHousehold = {

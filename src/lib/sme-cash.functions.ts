@@ -32,7 +32,7 @@ export const setCashOverride = createServerFn({ method: "POST" })
       .update({
         cash_on_hand_override: data.amount,
         cash_on_hand_override_at: data.amount == null ? null : new Date().toISOString(),
-      } as never)
+      })
       .eq("id", data.household_id);
     if (error) throw error;
     return { ok: true };
