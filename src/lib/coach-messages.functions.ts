@@ -28,6 +28,8 @@ export const listCoachMessages = createServerFn({ method: "GET" })
         "id, kind, severity, title, body, action_label, action_url, cycle_start, read_at, created_at",
       )
       .eq("household_id", data.household_id)
+      // dismissed_at is a temporary cast until types.ts is regenerated.
+      .is("dismissed_at" as never, null)
       .order("created_at", { ascending: false })
       .limit(40);
     return ((rows as CoachMessage[] | null) ?? []);
@@ -44,6 +46,7 @@ export const unreadCoachCount = createServerFn({ method: "GET" })
       .from("coach_messages")
       .select("id", { count: "exact", head: true })
       .eq("household_id", data.household_id)
+      .is("dismissed_at" as never, null)
       .is("read_at", null);
     return { count: count ?? 0 };
   });
@@ -78,9 +81,13 @@ export const dismissCoachMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
+    // Soft-dismiss: keep the row (its dedupe_key blocks re-emit) and hide it.
+    // A hard delete would drop the dedupe anchor and the coach would re-create
+    // the same message on its next run. dismissed_at is a temporary cast until
+    // types.ts is regenerated.
     await context.supabase
       .from("coach_messages")
-      .delete()
+      .update({ dismissed_at: new Date().toISOString() } as never)
       .eq("id", data.id);
     return { ok: true };
   });
