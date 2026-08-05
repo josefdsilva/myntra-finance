@@ -302,11 +302,17 @@ function SnapshotPage() {
     if (!cardRef.current) return null;
     setBusy(true);
     try {
-      const dataUrl = await toPng(cardRef.current, {
+      const node = cardRef.current;
+      // Export at the authored size regardless of the on-screen preview scale.
+      const dataUrl = await toPng(node, {
         pixelRatio: 2,
         cacheBust: true,
+        width: CARD_WIDTH,
+        height: node.offsetHeight,
+        style: { transform: "none", width: `${CARD_WIDTH}px` },
         backgroundColor: isBusiness ? "#0a0a0a" : "#0f172a",
       });
+
       const res = await fetch(dataUrl);
       return await res.blob();
     } finally {
