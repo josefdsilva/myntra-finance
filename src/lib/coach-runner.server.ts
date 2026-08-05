@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fetchCycleBounds } from "@/lib/cycle-bounds";
-import { sumMonthly } from "@/lib/finance-helpers";
+import { gatherCycleFacts } from "@/lib/household-facts";
 import { emitCoachMessage } from "@/lib/coach-messages.server";
 import {
   driftSignals,
@@ -70,57 +69,23 @@ export async function runCoachForHousehold(
 
   // --- Personal spaces: drift + cost reminders + recap + milestones ---
   const baseline = Number(hh.baseline_budget ?? 0);
-  // Current cycle bounds — used for drift, and to confirm a recap is for a cycle
-  // strictly before the current one (so we never announce a close that has not
-  // happened yet).
-  const cycle = await fetchCycleBounds(admin, hh.id, hh);
+  // Canonical cycle facts — used for drift, and for the recap gate (a recap must
+  // be for a cycle strictly before the current one, so we never announce a close
+  // that has not happened yet).
+  const facts = await gatherCycleFacts(admin, hh, now);
 
   if (baseline > 0) {
-    const [{ data: fixed }, { data: debts }] = await Promise.all([
-      admin.from("fixed_expenses").select("monthly_amount").eq("household_id", hh.id),
-      admin.from("debts").select("monthly_amount").eq("household_id", hh.id),
-    ]);
-    const fixedTotal =
-      sumMonthly(fixed as Array<{ monthly_amount: number | string }> | null) +
-      sumMonthly(debts as Array<{ monthly_amount: number | string }> | null);
-    const variablePool = Math.max(0, baseline - fixedTotal);
-
-    const { data: cycleExp } = await admin
-      .from("expenses")
-      .select("amount, kind, is_salary")
-      .eq("household_id", hh.id)
-      .gte("occurred_at", cycle.start.toISOString())
-      .lt("occurred_at", cycle.end.toISOString());
-    const rows =
-      (cycleExp as Array<{ amount: number | string; kind: string; is_salary: boolean }> | null) ?? [];
-    const spent = rows.filter((r) => r.kind !== "income").reduce((s, r) => s + Number(r.amount), 0);
-    const received = rows
-      .filter((r) => r.kind === "income" && !r.is_salary)
-      .reduce((s, r) => s + Number(r.amount), 0);
-    const netSpent = Math.max(0, spent - received);
-    const baselineRatio = variablePool > 0 ? netSpent / variablePool : netSpent > 0 ? 1 : 0;
-
-    const { data: incomes } = await admin
-      .from("incomes")
-      .select("monthly_amount")
-      .eq("household_id", hh.id);
-    const income = sumMonthly(incomes as Array<{ monthly_amount: number | string }> | null);
-    const surplus = Math.max(0, income - baseline);
-    const overspend = Math.max(0, netSpent - variablePool);
-    const emergencyRatio = surplus > 0 ? overspend / surplus : overspend > 0 ? 1 : 0;
-    const cycleKey = cycle.start.toISOString().slice(0, 10);
-
     for (const s of driftSignals({
-      cycleKey,
-      netSpent,
-      variablePool,
-      baselineRatio,
-      surplus,
-      overspend,
-      emergencyRatio,
+      cycleKey: facts.cycleKey,
+      netSpent: facts.netSpent,
+      variablePool: facts.variablePool,
+      baselineRatio: facts.baselineRatio,
+      surplus: facts.surplus,
+      overspend: facts.overspend,
+      emergencyRatio: facts.emergencyRatio,
       money,
     })) {
-      await emit(s, cycleKey);
+      await emit(s, facts.cycleKey);
     }
   }
 
@@ -165,7 +130,7 @@ export async function runCoachForHousehold(
     const prev = series.length >= 2 ? series[series.length - 2] : null;
     // Only recap a cycle that is genuinely closed: its start must be strictly
     // before the current cycle's start, and it must have ended recently.
-    const isPastCycle = new Date(latest.cycle_start).getTime() < cycle.start.getTime();
+    const isPastCycle = new Date(latest.cycle_start).getTime() < facts.cycleStart.getTime();
     const closedDaysAgo = (now.getTime() - new Date(latest.cycle_end).getTime()) / 86_400_000;
     if (isPastCycle && closedDaysAgo >= 0 && closedDaysAgo <= 12) {
       await emit(recapSignal({ latest, prev, money }), latest.cycle_start);
