@@ -140,7 +140,7 @@ export async function runCoachForHousehold(
 
   // Recap + milestones from the per-cycle history.
   const { data: cmRows } = await admin
-    .from("cycle_metrics" as never)
+    .from("cycle_metrics")
     .select(
       "cycle_start, cycle_end, income_actual, spend_actual, surplus_actual, everyday_pool, everyday_spent, score_overall",
     )

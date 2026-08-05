@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
         const { enqueueTemplateEmail } = await import("@/lib/email/send.server");
 
         const { data: prefs } = await supabaseAdmin
-          .from("notification_prefs" as never)
+          .from("notification_prefs")
           .select("user_id")
           .eq("weekly_digest", true);
         const optedIn = (prefs as Array<{ user_id: string }> | null) ?? [];
@@ -179,7 +179,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             .join(" · ");
 
           const { data: subs } = await supabaseAdmin
-            .from("push_subscriptions" as never)
+            .from("push_subscriptions")
             .select("*")
             .eq("user_id", p.user_id);
           const list =
@@ -199,7 +199,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             if (r.ok) sent++;
             else if (r.expired) {
               await supabaseAdmin
-                .from("push_subscriptions" as never)
+                .from("push_subscriptions")
                 .delete()
                 .eq("id", s.id);
             }
@@ -248,7 +248,7 @@ export const Route = createFileRoute("/api/public/hooks/weekly-digest")({
             console.error("weekly-digest email enqueue failed", e)
           }
 
-          await supabaseAdmin.from("notification_log" as never).insert({
+          await supabaseAdmin.from("notification_log").insert({
             user_id: p.user_id,
             kind: "weekly_digest",
             payload_hash: `weekly:${weekStart.toISOString().slice(0, 10)}`,

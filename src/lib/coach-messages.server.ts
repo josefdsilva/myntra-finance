@@ -68,7 +68,7 @@ export async function emitCoachMessage(admin: Admin, msg: CoachEmit): Promise<{ 
   // Insert-if-new. ignoreDuplicates keeps it idempotent; an empty return means
   // the message already existed, so we must not re-notify.
   const { data: inserted, error } = await admin
-    .from("coach_messages" as never)
+    .from("coach_messages")
     .upsert(row as never, { onConflict: "household_id,dedupe_key", ignoreDuplicates: true })
     .select("id");
   if (error) {
@@ -82,7 +82,7 @@ export async function emitCoachMessage(admin: Admin, msg: CoachEmit): Promise<{ 
   const users = await targetUserIds(admin, msg.householdId, msg.userId);
   for (const uid of users) {
     const { data: pref } = await admin
-      .from("notification_prefs" as never)
+      .from("notification_prefs")
       .select("push_enabled, email_enabled")
       .eq("user_id", uid)
       .maybeSingle();
@@ -94,7 +94,7 @@ export async function emitCoachMessage(admin: Admin, msg: CoachEmit): Promise<{ 
       try {
         const { sendWebPush } = await import("./webpush.server");
         const { data: subs } = await admin
-          .from("push_subscriptions" as never)
+          .from("push_subscriptions")
           .select("*")
           .eq("user_id", uid);
         const list =
@@ -109,7 +109,7 @@ export async function emitCoachMessage(admin: Admin, msg: CoachEmit): Promise<{ 
           });
           if (!r.ok && r.expired) {
             await admin
-              .from("push_subscriptions" as never)
+              .from("push_subscriptions")
               .delete()
               .eq("id", s.id);
           }

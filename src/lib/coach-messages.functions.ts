@@ -23,7 +23,7 @@ export const listCoachMessages = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data }) => {
     const { data: rows } = await context.supabase
-      .from("coach_messages" as never)
+      .from("coach_messages")
       .select(
         "id, kind, severity, title, body, action_label, action_url, cycle_start, read_at, created_at",
       )
@@ -41,7 +41,7 @@ export const unreadCoachCount = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data }) => {
     const { count } = await context.supabase
-      .from("coach_messages" as never)
+      .from("coach_messages")
       .select("id", { count: "exact", head: true })
       .eq("household_id", data.household_id)
       .is("read_at", null);
@@ -53,7 +53,7 @@ export const markCoachRead = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     await context.supabase
-      .from("coach_messages" as never)
+      .from("coach_messages")
       .update({ read_at: new Date().toISOString() } as never)
       .eq("id", data.id)
       .is("read_at", null);
@@ -67,7 +67,7 @@ export const markAllCoachRead = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await context.supabase
-      .from("coach_messages" as never)
+      .from("coach_messages")
       .update({ read_at: new Date().toISOString() } as never)
       .eq("household_id", data.household_id)
       .is("read_at", null);
@@ -79,7 +79,7 @@ export const dismissCoachMessage = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     await context.supabase
-      .from("coach_messages" as never)
+      .from("coach_messages")
       .delete()
       .eq("id", data.id);
     return { ok: true };

@@ -20,7 +20,7 @@ export const subscribePush = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from("push_subscriptions" as never).upsert(
+    const { error } = await context.supabase.from("push_subscriptions").upsert(
       {
         user_id: context.userId,
         household_id: data.household_id ?? null,
@@ -40,7 +40,7 @@ export const unsubscribePush = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ endpoint: z.string() }).parse(input))
   .handler(async ({ context, data }) => {
     await context.supabase
-      .from("push_subscriptions" as never)
+      .from("push_subscriptions")
       .delete()
       .eq("endpoint", data.endpoint)
       .eq("user_id", context.userId);
@@ -51,7 +51,7 @@ export const getNotificationPrefs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data } = await context.supabase
-      .from("notification_prefs" as never)
+      .from("notification_prefs")
       .select("*")
       .eq("user_id", context.userId)
       .maybeSingle();
@@ -86,7 +86,7 @@ export const updateNotificationPrefs = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from("notification_prefs" as never).upsert(
+    const { error } = await context.supabase.from("notification_prefs").upsert(
       {
         user_id: context.userId,
         ...data,
@@ -102,7 +102,7 @@ export const listMyDevices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data } = await context.supabase
-      .from("push_subscriptions" as never)
+      .from("push_subscriptions")
       .select("id, endpoint, user_agent, created_at")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false });
@@ -121,7 +121,7 @@ export const deleteDevice = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     await context.supabase
-      .from("push_subscriptions" as never)
+      .from("push_subscriptions")
       .delete()
       .eq("id", data.id)
       .eq("user_id", context.userId);
@@ -132,7 +132,7 @@ export const deleteAllMyDevices = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { error, count } = await context.supabase
-      .from("push_subscriptions" as never)
+      .from("push_subscriptions")
       .delete({ count: "exact" })
       .eq("user_id", context.userId);
     if (error) throw error;
@@ -149,7 +149,7 @@ export const sendTestPush = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     let q = context.supabase
-      .from("push_subscriptions" as never)
+      .from("push_subscriptions")
       .select("*")
       .eq("user_id", context.userId);
     if (data?.endpoint) q = q.eq("endpoint", data.endpoint);
@@ -192,7 +192,7 @@ export const sendTestPush = createServerFn({ method: "POST" })
       let removed = false;
       if (!r.ok && r.expired) {
         await supabaseAdmin
-          .from("push_subscriptions" as never)
+          .from("push_subscriptions")
           .delete()
           .eq("id", s.id);
         removed = true;

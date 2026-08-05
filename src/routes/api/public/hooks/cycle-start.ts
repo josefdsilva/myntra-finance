@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/public/hooks/cycle-start")({
 
         // Reuse the weekly-digest opt-in as the email-notifications gate.
         const { data: prefs } = await supabaseAdmin
-          .from("notification_prefs" as never)
+          .from("notification_prefs")
           .select("user_id")
           .eq("weekly_digest", true);
         const optedIn = (prefs as Array<{ user_id: string }> | null) ?? [];
