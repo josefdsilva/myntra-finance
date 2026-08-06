@@ -533,21 +533,9 @@ function Dashboard() {
                 )}
                 <LedgerRow label={t("dashboard.lens.totalOut")} value={money(spent)} strong />
 
-                {realAllocated > 0 && (
-                  <div className="mt-3 border-t pt-2">
-                    <p className="mb-1 text-xs text-muted-foreground">
-                      {t("dashboard.lens.savedSection")}
-                    </p>
-                    <LedgerRow
-                      label={t("dashboard.lens.toProjects")}
-                      value={money(realAllocated)}
-                    />
-                  </div>
-                )}
-
                 {fixedTotal > 0 && (
                   <div className="mt-3 border-t pt-2">
-                    <LedgerRow label={t("dashboard.lens.fixedCosts")} value={money(fixedTotal)} />
+                    <LedgerRow label={t("dashboard.lens.fixedDebt")} value={money(fixedTotal)} />
                     {obligation > 0 && (
                       <LedgerRow
                         label={t("dashboard.lens.plannedAhead")}
@@ -588,12 +576,17 @@ function Dashboard() {
                   label={`● ${t("dashboard.lens.everydayBudget")}`}
                   value={money(variablePool)}
                 />
+                {marginPct > 0 && (
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {t("dashboard.lens.marginNote", { pct: marginPct })}
+                  </p>
+                )}
                 {spare > 0 && (
                   <LedgerRow label={`● ${t("dashboard.lens.spare")}`} value={money(spare)} />
                 )}
-                {marginPct > 0 && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {t("dashboard.lens.marginNote", { pct: marginPct })}
+                {realAllocated > 0 && (
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {t("dashboard.lens.setAside", { amount: money(realAllocated) })}
                   </p>
                 )}
 
@@ -610,11 +603,6 @@ function Dashboard() {
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
                   {t("dashboard.lens.paceNote", { amount: money(everydayLeft), days: daysLeft })}
                 </p>
-                {realAllocated > 0 && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {t("dashboard.lens.setAside", { amount: money(realAllocated) })}
-                  </p>
-                )}
               </div>
             </div>
           )}
