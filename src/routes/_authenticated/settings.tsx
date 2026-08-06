@@ -1106,7 +1106,7 @@ export function IncomesSection({
                 <Select value={r.type} onValueChange={(v) => setRowType(r, v as IncomeType)}>
                   <SelectTrigger
                     className="h-6 w-auto shrink-0 gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
-                    aria-label={t("income.typeLabel")}
+                    aria-label={t("categoryMgr.title")}
                   >
                     <SelectValue />
                   </SelectTrigger>
