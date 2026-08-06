@@ -250,13 +250,14 @@ function Dashboard() {
   // --- Your spending plan (what's safe, and why) ---
   const freeThisCycle = income - fixedTotal; // = everyday budget + spare
   const spare = surplus; // free cash above the everyday budget
-  const stillExpectedOut = fixedTotal + obligation;
 
   // Honest everyday allowance: what's left of the everyday budget over the days
-  // remaining, capped so spending it can't dip into money set aside for projects.
+  // remaining. The everyday budget is its own envelope (variable estimate +
+  // safety margin), kept apart from money set aside for projects, so it is NOT
+  // capped by remaining free cash — that cap was zeroing the daily number even
+  // when the everyday budget clearly still had room.
   const everydayLeft = Math.max(0, variablePool - everydaySpent);
-  const freeCashLeft = Math.max(0, freeThisCycle - realAllocated - obligation - everydaySpent);
-  const remaining = Math.max(0, Math.min(everydayLeft, freeCashLeft));
+  const remaining = everydayLeft;
   const overspendAmount = Math.max(0, everydaySpent - variablePool);
   const overspent = everydaySpent > variablePool;
 
@@ -528,25 +529,32 @@ function Dashboard() {
                   value={money(everydaySpent)}
                 />
                 {projectPaid > 0 && (
-                  <LedgerRow label={t("dashboard.lens.projectsPaid")} value={money(projectPaid)} />
+                  <LedgerRow label={t("dashboard.lens.plansPaid")} value={money(projectPaid)} />
                 )}
                 <LedgerRow label={t("dashboard.lens.totalOut")} value={money(spent)} strong />
 
-                {stillExpectedOut > 0 && (
-                  <>
-                    <p className="mb-1 mt-3 text-xs text-muted-foreground">
-                      {t("dashboard.lens.expectedOut")}
+                {realAllocated > 0 && (
+                  <div className="mt-3 border-t pt-2">
+                    <p className="mb-1 text-xs text-muted-foreground">
+                      {t("dashboard.lens.savedSection")}
                     </p>
-                    {fixedTotal > 0 && (
-                      <LedgerRow label={t("dashboard.lens.fixedDebt")} value={money(fixedTotal)} />
-                    )}
+                    <LedgerRow
+                      label={t("dashboard.lens.toProjects")}
+                      value={money(realAllocated)}
+                    />
+                  </div>
+                )}
+
+                {fixedTotal > 0 && (
+                  <div className="mt-3 border-t pt-2">
+                    <LedgerRow label={t("dashboard.lens.fixedCosts")} value={money(fixedTotal)} />
                     {obligation > 0 && (
                       <LedgerRow
                         label={t("dashboard.lens.plannedAhead")}
                         value={money(obligation)}
                       />
                     )}
-                  </>
+                  </div>
                 )}
               </div>
 
