@@ -623,6 +623,7 @@ export type Database = {
           cycle_start: string | null
           data: Json
           dedupe_key: string
+          dismissed_at: string | null
           household_id: string
           id: string
           kind: string
@@ -642,6 +643,7 @@ export type Database = {
           cycle_start?: string | null
           data?: Json
           dedupe_key?: string
+          dismissed_at?: string | null
           household_id: string
           id?: string
           kind?: string
@@ -661,6 +663,7 @@ export type Database = {
           cycle_start?: string | null
           data?: Json
           dedupe_key?: string
+          dismissed_at?: string | null
           household_id?: string
           id?: string
           kind?: string

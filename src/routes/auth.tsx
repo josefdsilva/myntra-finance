@@ -32,9 +32,10 @@ export const Route = createFileRoute("/auth")({
         "Sign in to bynku to see your daily safe-to-spend, shared household budget, allocations and AI expense capture.",
     }),
   // Let the landing page deep-link straight to the sign-up form (/auth?mode=signup).
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { mode?: "signup" } => ({
     mode: search.mode === "signup" ? ("signup" as const) : undefined,
   }),
+
   component: AuthPage,
 });
 
