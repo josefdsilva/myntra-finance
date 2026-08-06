@@ -1355,7 +1355,25 @@ export function FixedExpensesSection({
               <div className="min-w-0">
                 <p className="truncate">{r.label}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                  <p className="text-xs text-muted-foreground">{r.category}</p>
+                  <Select
+                    value={r.category ?? categoryOptions[0]}
+                    onValueChange={(v) => setRowCategory(r, v)}
+                  >
+                    <SelectTrigger
+                      className="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                      aria-label={t("categoryMgr.title")}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Select
                     value={resolveIntent(r)}
                     onValueChange={(v) => setRowIntent(r, v as IntentLevel)}
