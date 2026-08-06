@@ -23,16 +23,7 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { markIncomeReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
-import {
-  Wallet,
-  Loader2,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Info,
-  CalendarClock,
-  X,
-} from "lucide-react";
+import { Wallet, Loader2, Info, CalendarClock, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,12 +103,17 @@ function Dashboard() {
       const received = (expenses ?? [])
         .filter((r) => r.kind === "income" && !r.is_salary)
         .reduce((s, r) => s + Number(r.amount), 0);
+      // Salary money that actually landed this cycle (the anchor income receipt).
+      const salaryIn = (expenses ?? [])
+        .filter((r) => r.kind === "income" && r.is_salary)
+        .reduce((s, r) => s + Number(r.amount), 0);
       const income = incomes.reduce((s, r) => s + Number(r.monthly_amount), 0);
       return {
         cycle,
         fixedTotal,
         spent,
         received,
+        salaryIn,
         income,
         buckets,
         recent: (expenses ?? []).slice(0, 10),
@@ -196,39 +192,74 @@ function Dashboard() {
       return plansInWindow((data ?? []) as Plan[], bounds.start, bounds.end);
     },
   });
+  // Expenses that settled a plan/project — so we can tell everyday spending apart
+  // from money that came out of a project's savings.
+  const { data: planExpenseIds } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["dashboard-plan-expense-ids", householdId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("plans")
+        .select("expense_id")
+        .eq("household_id", householdId!)
+        .not("expense_id", "is", null);
+      return new Set((data ?? []).map((r) => r.expense_id as string));
+    },
+  });
+
   const [plansNudgeDismissed, setPlansNudgeDismissed] = useState(false);
 
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const income = dashboard?.income ?? 0;
+  const marginPct = Number(hh?.household?.margin_pct ?? 0);
   const surplus = Math.max(0, income - baseline);
   const realAllocated = realAlloc ?? 0;
 
   // Plans claim the unallocated leftover surplus first; whatever they can't cover
-  // surfaces as pressure on "Available" and the real-surplus stat below. It no
-  // longer silently zeroes the everyday allowance — that was double-counting once
-  // "Available" began carrying project/plan pressure explicitly, and it produced
-  // a €0 daily number even when the everyday pool clearly had room.
+  // surfaces as pressure on the real-surplus stat below.
   const leftover0 = Math.max(0, surplus - realAllocated);
   const obligation = plannedThisCycle ?? 0;
   const realSurplus = leftover0 - Math.min(obligation, leftover0);
 
-  const variablePool = Math.max(0, baseline - (dashboard?.fixedTotal ?? 0));
-  const spent = dashboard?.spent ?? 0;
-  const received = dashboard?.received ?? 0;
-  const netSpent = Math.max(0, spent - received);
-  // "Available" = genuinely free cash left this cycle, income-anchored: income
-  // minus fixed+debt (fixedTotal already bundles debt), minus what's already set
-  // aside to projects, minus everyday spend so far.
-  const available = income - (dashboard?.fixedTotal ?? 0) - realAllocated - netSpent;
-  // Everyday allowance is the baseline variable budget minus everyday spend — but
-  // it can never exceed the free cash actually available. If project funding has
-  // pushed Available below the everyday budget, spending the whole budget would
-  // dip into projects, so safe-to-spend is capped at Available.
-  const everydayLeft = Math.max(0, variablePool - netSpent);
-  const remaining = Math.max(0, Math.min(everydayLeft, available));
-  const overspent = netSpent > variablePool;
+  const fixedTotal = dashboard?.fixedTotal ?? 0;
+  // Everyday budget = the baseline variable pool (variable estimate + safety
+  // margin), i.e. baseline minus fixed + debt.
+  const variablePool = Math.max(0, baseline - fixedTotal);
+
+  // --- This cycle's actual cash (the "cash in and out" lens) ---
+  const salaryIn = dashboard?.salaryIn ?? 0;
+  const received = dashboard?.received ?? 0; // non-salary money in (top-ups, windfalls)
+  const totalIn = salaryIn + received;
+  const spent = dashboard?.spent ?? 0; // every non-income outflow this cycle
+  // Money that settled a project/plan is funded from savings, not the everyday
+  // budget, so keep it apart from everyday spending.
+  const projectPaid = useMemo(() => {
+    if (!planExpenseIds || !dashboard) return 0;
+    return dashboard.expenses
+      .filter((e) => e.kind !== "income" && planExpenseIds.has(e.id))
+      .reduce((s, e) => s + Number(e.amount), 0);
+  }, [planExpenseIds, dashboard]);
+  // Everyday spend is the honest figure: variable outflows only, and crucially
+  // NOT offset by money that came in — a windfall must never silently refill the
+  // everyday budget.
+  const everydaySpent = Math.max(0, spent - projectPaid);
+  const netSpent = everydaySpent; // downstream (tips) reads this as everyday spend
+
+  // --- Your spending plan (what's safe, and why) ---
+  const freeThisCycle = income - fixedTotal; // = everyday budget + spare
+  const spare = surplus; // free cash above the everyday budget
+  const stillExpectedOut = fixedTotal + obligation;
+
+  // Honest everyday allowance: what's left of the everyday budget over the days
+  // remaining, capped so spending it can't dip into money set aside for projects.
+  const everydayLeft = Math.max(0, variablePool - everydaySpent);
+  const freeCashLeft = Math.max(0, freeThisCycle - realAllocated - obligation - everydaySpent);
+  const remaining = Math.max(0, Math.min(everydayLeft, freeCashLeft));
+  const overspendAmount = Math.max(0, everydaySpent - variablePool);
+  const overspent = everydaySpent > variablePool;
+
   const cycle = dashboard?.cycle;
   const daysLeft = cycle?.daysLeft ?? 1;
   // A cycle "just rolled over" in its first few days. Pair that with any open
@@ -238,50 +269,11 @@ function Dashboard() {
     : 999;
   const upcomingPlanCount = upcomingPlans?.length ?? 0;
   const showPlansNudge = !plansNudgeDismissed && daysSinceCycleStart <= 3 && upcomingPlanCount > 0;
-  const safeToday = variablePool > 0 ? remaining / daysLeft : 0;
-  // Show the safe amount over a chosen horizon: today (1 day), the next 7 days,
-  // or the rest of the cycle (= everything remaining). "Next 7 days" is only
-  // offered when more than a week remains, else it duplicates "rest of cycle".
-  const showWeek = daysLeft > 7;
-  // Default to a forward-looking window rather than just today: "Next 7 days"
-  // when there is more than a week left, otherwise "Rest of cycle". Stays null
-  // until the user taps a tab, so the default follows the cycle data as it loads.
-  const [horizonChoice, setHorizon] = useState<"today" | "week" | "cycle" | null>(null);
-  const horizon = horizonChoice ?? (showWeek ? "week" : "cycle");
-  const effHorizon = horizon === "week" && !showWeek ? "cycle" : horizon;
-  const horizonDays = effHorizon === "today" ? 1 : effHorizon === "week" ? 7 : daysLeft;
-  const safeForHorizon = safeToday * horizonDays;
-  const safeLabelKey =
-    effHorizon === "today"
-      ? "dashboard.safe.labelToday"
-      : effHorizon === "week"
-        ? "dashboard.safe.labelWeek"
-        : "dashboard.safe.labelCycle";
-  const pctSpent = variablePool > 0 ? Math.min(100, (netSpent / variablePool) * 100) : 0;
 
-  const overspendAmount = Math.max(0, netSpent - variablePool);
+  const safeToday = daysLeft > 0 ? remaining / daysLeft : 0;
+  const safeWeek = safeToday * Math.min(7, daysLeft);
+  const pctEveryday = variablePool > 0 ? Math.min(100, (everydaySpent / variablePool) * 100) : 0;
   const buckets = dashboard?.buckets ?? [];
-
-  // Trend: compare with yesterday's safe-to-spend (spent through end of yesterday, days-left as of yesterday)
-  const allExpenses = useMemo(() => dashboard?.expenses ?? [], [dashboard?.expenses]);
-  const yesterdayEnd = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-  const netSpentThroughYesterday = useMemo(() => {
-    const s = allExpenses
-      .filter((r) => r.kind !== "income" && new Date(r.occurred_at) < yesterdayEnd)
-      .reduce((s, r) => s + Number(r.amount), 0);
-    const rc = allExpenses
-      .filter((r) => r.kind === "income" && !r.is_salary && new Date(r.occurred_at) < yesterdayEnd)
-      .reduce((s, r) => s + Number(r.amount), 0);
-    return Math.max(0, s - rc);
-  }, [allExpenses, yesterdayEnd]);
-  const daysLeftYesterday = Math.max(1, daysLeft + 1);
-  const safeYesterday =
-    variablePool > 0 ? Math.max(0, variablePool - netSpentThroughYesterday) / daysLeftYesterday : 0;
-  const trendDelta = safeToday - safeYesterday;
 
   // Sparkline of daily net spend. The window matches the selected horizon so
   // the comparison is like-for-like: "today" = today only (vs previous day for
@@ -336,13 +328,8 @@ function Dashboard() {
     }
     return days;
   }, [sparkRows, sparkWindowDays]);
-  // Slice to the selected horizon. "today" is a single point, which reads as a
-  // dot on the line — pair it with yesterday so the user still sees a trend.
-  const sparkSliceDays = effHorizon === "today" ? 2 : effHorizon === "week" ? 7 : daysLeft;
-  const spark = useMemo(
-    () => sparkAll.slice(Math.max(0, sparkAll.length - sparkSliceDays)),
-    [sparkAll, sparkSliceDays],
-  );
+  // Show the last 7 days of everyday spend as a compact trend under the hero.
+  const spark = useMemo(() => sparkAll.slice(Math.max(0, sparkAll.length - 7)), [sparkAll]);
   const sparkMax = Math.max(safeToday, ...spark.map((d) => d.net), 1);
   const avgDaily7 =
     sparkAll.slice(-7).reduce((s, d) => s + d.net, 0) / Math.max(1, Math.min(7, sparkAll.length));
@@ -444,18 +431,16 @@ function Dashboard() {
         </Card>
       )}
 
-      {/* Hero: safe to spend today */}
+      {/* Hero: honest safe-to-spend per day + two lenses */}
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
-          <div className="mb-2 flex items-center gap-1.5">
-            <p className="text-sm uppercase tracking-wider text-muted-foreground">
-              {t(safeLabelKey)}
-            </p>
+          <div className="mb-1 flex items-center gap-1.5">
+            <p className="text-sm text-muted-foreground">{t("dashboard.safe.perDayLabel")}</p>
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  aria-label={t(safeLabelKey)}
+                  aria-label={t("dashboard.safe.perDayLabel")}
                   className="text-muted-foreground/70 transition-colors hover:text-foreground"
                 >
                   <Info className="size-4" />
@@ -466,13 +451,14 @@ function Dashboard() {
                 align="start"
                 className="w-72 space-y-2 text-xs leading-relaxed"
               >
-                <p className="text-sm font-medium text-foreground">{t(safeLabelKey)}</p>
-                <p className="text-muted-foreground">{t("dashboard.safe.infoBody")}</p>
-                <p className="text-muted-foreground">{t("dashboard.safe.availableInfo")}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {t("dashboard.safe.perDayLabel")}
+                </p>
+                <p className="text-muted-foreground">{t("dashboard.safe.infoEveryday")}</p>
                 {variablePool > 0 && (
                   <p className="tabular-nums text-muted-foreground">
                     {t("dashboard.safe.infoBreakdown", {
-                      remaining: money(remaining),
+                      remaining: money(everydayLeft),
                       days: daysLeft,
                       perDay: money(safeToday),
                     })}
@@ -481,128 +467,159 @@ function Dashboard() {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="flex items-baseline gap-3 flex-wrap">
+          <div className="flex items-baseline gap-2">
             <p
               className={`text-5xl md:text-6xl font-display ${overspent ? "text-destructive" : "text-primary"}`}
             >
               {isLoading ? (
                 <span className="inline-block h-12 w-40 rounded-md bg-muted animate-pulse align-middle" />
               ) : (
-                money(safeForHorizon)
+                money(safeToday)
               )}
             </p>
-            {!isLoading &&
-              effHorizon === "today" &&
-              variablePool > 0 &&
-              Math.abs(trendDelta) >= 0.01 && (
-                <span
-                  className={`inline-flex items-center gap-1 text-sm font-medium tabular-nums ${trendDelta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
-                >
-                  {trendDelta > 0 ? (
-                    <TrendingUp className="size-4" />
-                  ) : trendDelta < 0 ? (
-                    <TrendingDown className="size-4" />
-                  ) : (
-                    <Minus className="size-4" />
-                  )}
-                  {t("dashboard.safe.vsYesterday", {
-                    value: `${trendDelta > 0 ? "+" : ""}${money(trendDelta)}`,
-                  })}
-                </span>
-              )}
-          </div>
-          <div className="mt-3 inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
-            {(["today", "week", "cycle"] as const)
-              .filter((h) => h !== "week" || showWeek)
-              .map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => setHorizon(h)}
-                  aria-pressed={effHorizon === h}
-                  className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                    effHorizon === h
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t(`dashboard.safe.horizon.${h}`)}
-                </button>
-              ))}
+            {!isLoading && (
+              <span className="text-base text-muted-foreground">{t("dashboard.safe.perDayUnit")}</span>
+            )}
           </div>
           {!isLoading && (
-            <div className="mt-4 border-t pt-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {t("dashboard.safe.availableLabel")}
-                </span>
-                <span
-                  className={`text-xl font-semibold tabular-nums ${available < 0 ? "text-destructive" : "text-foreground"}`}
-                >
-                  {money(available)}
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {available < 0
-                  ? t("dashboard.safe.availableNeg")
-                  : t("dashboard.safe.availablePos")}
-              </p>
-            </div>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              {t("dashboard.safe.subline", {
+                week: money(safeWeek),
+                cycle: money(everydayLeft),
+              })}
+            </p>
           )}
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
           )}
 
-          {/* Sparkline of net daily spend, matched to the selected horizon */}
-          <div className="mt-5">
-            <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-              {t(`dashboard.spark.caption.${effHorizon}`, { days: spark.length })}
-            </p>
-          </div>
-
-          <div className="mt-6 space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExpenseFilter(expenseFilter === "spent" ? "all" : "spent");
-                    document
-                      .getElementById("recent-expenses")
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                  className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25 ${expenseFilter === "spent" ? "ring-2 ring-orange-500/50" : ""}`}
-                >
-                  {t("dashboard.chip.spent", { value: money(spent) })}
-                </button>
-                {received > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setExpenseFilter(expenseFilter === "received" ? "all" : "received");
-                      document
-                        .getElementById("recent-expenses")
-                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}
-                    className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium tabular-nums transition-colors bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25 ${expenseFilter === "received" ? "ring-2 ring-blue-500/50" : ""}`}
-                  >
-                    {t("dashboard.chip.received", { value: money(received) })}
-                  </button>
-                )}
-                <span className="inline-flex items-center rounded-md px-2 py-0.5 font-medium bg-muted text-foreground tabular-nums">
-                  {t("dashboard.chip.balance", { value: money(netSpent) })}
-                </span>
-              </div>
-              <span className="text-muted-foreground tabular-nums">
-                {t("dashboard.chip.pool", { value: money(variablePool) })}
-              </span>
+          {/* Compact 7-day trend of everyday spend */}
+          {!isLoading && (
+            <div className="mt-5">
+              <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                {t("dashboard.spark.caption.week", { days: spark.length })}
+              </p>
             </div>
-            <Progress
-              value={pctSpent}
-              className={overspent ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"}
-            />
-          </div>
+          )}
+
+          {/* Two lenses: cash in/out, and the spending plan */}
+          {!isLoading && (
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {/* Lens A — cash in and out */}
+              <div className="rounded-lg bg-muted/40 p-4">
+                <p className="text-sm font-medium">{t("dashboard.lens.cashTitle")}</p>
+                <p className="mb-3 text-xs text-muted-foreground">{t("dashboard.lens.cashSub")}</p>
+
+                <p className="mb-1 text-xs text-muted-foreground">{t("dashboard.lens.moneyIn")}</p>
+                {salaryIn > 0 && (
+                  <LedgerRow label={t("dashboard.lens.salary")} value={money(salaryIn)} />
+                )}
+                {received > 0 && (
+                  <LedgerRow label={t("dashboard.lens.otherIn")} value={money(received)} />
+                )}
+                <LedgerRow label={t("dashboard.lens.totalIn")} value={money(totalIn)} strong />
+
+                <p className="mb-1 mt-3 text-xs text-muted-foreground">
+                  {t("dashboard.lens.outSoFar")}
+                </p>
+                <LedgerRow
+                  label={t("dashboard.lens.everydaySpending")}
+                  value={money(everydaySpent)}
+                />
+                {projectPaid > 0 && (
+                  <LedgerRow label={t("dashboard.lens.projectsPaid")} value={money(projectPaid)} />
+                )}
+                <LedgerRow label={t("dashboard.lens.totalOut")} value={money(spent)} strong />
+
+                {stillExpectedOut > 0 && (
+                  <>
+                    <p className="mb-1 mt-3 text-xs text-muted-foreground">
+                      {t("dashboard.lens.expectedOut")}
+                    </p>
+                    {fixedTotal > 0 && (
+                      <LedgerRow label={t("dashboard.lens.fixedDebt")} value={money(fixedTotal)} />
+                    )}
+                    {obligation > 0 && (
+                      <LedgerRow
+                        label={t("dashboard.lens.plannedAhead")}
+                        value={money(obligation)}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Lens B — your spending plan */}
+              <div className="rounded-lg bg-muted/40 p-4">
+                <p className="text-sm font-medium">{t("dashboard.lens.planTitle")}</p>
+                <p className="mb-3 text-xs text-muted-foreground">{t("dashboard.lens.planSub")}</p>
+
+                <LedgerRow label={t("dashboard.lens.regularIncome")} value={money(income)} />
+                <LedgerRow
+                  label={t("dashboard.lens.minusFixedDebt")}
+                  value={`−${money(fixedTotal)}`}
+                  muted
+                />
+                <LedgerRow
+                  label={t("dashboard.lens.freeThisCycle")}
+                  value={money(freeThisCycle)}
+                  strong
+                />
+
+                <div className="mt-3 mb-1.5 flex h-2 overflow-hidden rounded-full bg-background">
+                  <div
+                    className="h-full bg-primary"
+                    style={{
+                      width: `${freeThisCycle > 0 ? Math.min(100, (variablePool / freeThisCycle) * 100) : 0}%`,
+                    }}
+                  />
+                  <div className="h-full flex-1 bg-blue-500/70" />
+                </div>
+                <LedgerRow
+                  label={`● ${t("dashboard.lens.everydayBudget")}`}
+                  value={money(variablePool)}
+                />
+                {spare > 0 && (
+                  <LedgerRow label={`● ${t("dashboard.lens.spare")}`} value={money(spare)} />
+                )}
+                {marginPct > 0 && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {t("dashboard.lens.marginNote", { pct: marginPct })}
+                  </p>
+                )}
+
+                <p className="mb-1 mt-3 text-xs text-muted-foreground">
+                  {t("dashboard.lens.everydayUsed", {
+                    used: money(everydaySpent),
+                    total: money(variablePool),
+                  })}
+                </p>
+                <Progress
+                  value={pctEveryday}
+                  className={overspent ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"}
+                />
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  {t("dashboard.lens.paceNote", { amount: money(everydayLeft), days: daysLeft })}
+                </p>
+                {realAllocated > 0 && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {t("dashboard.lens.setAside", { amount: money(realAllocated) })}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Principle: extra cash in isn't extra to spend */}
+          {!isLoading && received > 0 && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2.5">
+              <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.principle", { in: money(totalIn) })}
+              </p>
+            </div>
+          )}
 
           {/* Payday-driven (event) spaces only: a time-driven cycle rolls on the
               calendar, so there's no "salary received" action to start it. */}
@@ -941,6 +958,29 @@ function SalaryReceivedButton({
         onOpenChange={setSuggestOpen}
       />
     </>
+  );
+}
+
+function LedgerRow({
+  label,
+  value,
+  strong,
+  muted,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between py-0.5 text-sm tabular-nums ${
+        strong ? "mt-1 border-t pt-1.5 font-medium" : ""
+      }`}
+    >
+      <span className="text-muted-foreground">{label}</span>
+      <span className={muted && !strong ? "text-muted-foreground" : "text-foreground"}>{value}</span>
+    </div>
   );
 }
 
