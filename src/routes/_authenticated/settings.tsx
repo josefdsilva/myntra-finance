@@ -1103,10 +1103,23 @@ export function IncomesSection({
             <li key={r.id} className="flex items-center justify-between gap-2 py-2">
               <span className="flex items-center gap-2 min-w-0">
                 <span className="truncate">{r.label}</span>
-                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                  {TYPE_LABEL[r.type] ?? r.type}
-                </span>
+                <Select value={r.type} onValueChange={(v) => setRowType(r, v as IncomeType)}>
+                  <SelectTrigger
+                    className="h-6 w-auto shrink-0 gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                    aria-label={t("income.typeLabel")}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {typeOptions.map((ty) => (
+                      <SelectItem key={ty} value={ty}>
+                        {TYPE_LABEL[ty]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </span>
+
               <div className="flex items-center gap-3 shrink-0">
                 <CadenceLineValue
                   nativeAmount={Number(r.native_amount ?? r.monthly_amount)}
