@@ -1264,6 +1264,36 @@ export function FixedExpensesSection({
     invalidateHouseholdData(qc);
   }
 
+  // Change the category of an existing fixed cost (re-upsert with its current
+  // values so amount/cadence/need-level are preserved).
+  async function setRowCategory(
+    r: {
+      id: string;
+      label: string;
+      native_amount: number | string | null;
+      monthly_amount: number | string;
+      cadence: string | null;
+      intent?: string | null;
+    },
+    next: string,
+  ) {
+    await upsert({
+      data: {
+        id: r.id,
+        household_id: householdId,
+        label: r.label,
+        category: next,
+        native_amount: Number(r.native_amount ?? r.monthly_amount) || 0,
+        cadence: (r.cadence as Cadence) ?? "monthly",
+        intent: (r.intent as IntentLevel) ?? defaultIntentForCategory(next),
+      },
+    });
+    refetch();
+    qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
+    qc.invalidateQueries({ queryKey: ["household"] });
+    invalidateHouseholdData(qc);
+  }
+
   // Update just the need-level of an existing fixed cost (re-upsert with its
   // current values so the amount/cadence are preserved).
   async function setRowIntent(
