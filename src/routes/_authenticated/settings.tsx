@@ -1063,7 +1063,34 @@ export function IncomesSection({
     invalidateHouseholdData(qc);
     qc.invalidateQueries({ queryKey: ["allocations"] });
   }
+  // Change the income type/category of an existing line, keeping amount+cadence.
+  async function setRowType(
+    r: {
+      id: string;
+      label: string;
+      native_amount: number | string | null;
+      monthly_amount: number | string;
+      cadence: string | null;
+      owner_user_id?: string | null;
+    },
+    next: IncomeType,
+  ) {
+    await upsert({
+      data: {
+        id: r.id,
+        household_id: householdId,
+        label: r.label,
+        native_amount: Number(r.native_amount ?? r.monthly_amount) || 0,
+        cadence: (r.cadence as Cadence) ?? "monthly",
+        type: next,
+      },
+    });
+    refetch();
+    invalidateHouseholdData(qc);
+    qc.invalidateQueries({ queryKey: ["allocations"] });
+  }
   async function remove(id: string) {
+
     await del({ data: { id } });
     refetch();
     invalidateHouseholdData(qc);
