@@ -1063,7 +1063,34 @@ export function IncomesSection({
     invalidateHouseholdData(qc);
     qc.invalidateQueries({ queryKey: ["allocations"] });
   }
+  // Change the income type/category of an existing line, keeping amount+cadence.
+  async function setRowType(
+    r: {
+      id: string;
+      label: string;
+      native_amount: number | string | null;
+      monthly_amount: number | string;
+      cadence: string | null;
+      owner_user_id?: string | null;
+    },
+    next: IncomeType,
+  ) {
+    await upsert({
+      data: {
+        id: r.id,
+        household_id: householdId,
+        label: r.label,
+        native_amount: Number(r.native_amount ?? r.monthly_amount) || 0,
+        cadence: (r.cadence as Cadence) ?? "monthly",
+        type: next,
+      },
+    });
+    refetch();
+    invalidateHouseholdData(qc);
+    qc.invalidateQueries({ queryKey: ["allocations"] });
+  }
   async function remove(id: string) {
+
     await del({ data: { id } });
     refetch();
     invalidateHouseholdData(qc);
@@ -1103,10 +1130,23 @@ export function IncomesSection({
             <li key={r.id} className="flex items-center justify-between gap-2 py-2">
               <span className="flex items-center gap-2 min-w-0">
                 <span className="truncate">{r.label}</span>
-                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                  {TYPE_LABEL[r.type] ?? r.type}
-                </span>
+                <Select value={r.type} onValueChange={(v) => setRowType(r, v as IncomeType)}>
+                  <SelectTrigger
+                    className="h-6 w-auto shrink-0 gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                    aria-label={t("categoryMgr.title")}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {typeOptions.map((ty) => (
+                      <SelectItem key={ty} value={ty}>
+                        {TYPE_LABEL[ty]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </span>
+
               <div className="flex items-center gap-3 shrink-0">
                 <CadenceLineValue
                   nativeAmount={Number(r.native_amount ?? r.monthly_amount)}
@@ -1224,6 +1264,36 @@ export function FixedExpensesSection({
     invalidateHouseholdData(qc);
   }
 
+  // Change the category of an existing fixed cost (re-upsert with its current
+  // values so amount/cadence/need-level are preserved).
+  async function setRowCategory(
+    r: {
+      id: string;
+      label: string;
+      native_amount: number | string | null;
+      monthly_amount: number | string;
+      cadence: string | null;
+      intent?: string | null;
+    },
+    next: string,
+  ) {
+    await upsert({
+      data: {
+        id: r.id,
+        household_id: householdId,
+        label: r.label,
+        category: next,
+        native_amount: Number(r.native_amount ?? r.monthly_amount) || 0,
+        cadence: (r.cadence as Cadence) ?? "monthly",
+        intent: (r.intent as IntentLevel) ?? defaultIntentForCategory(next),
+      },
+    });
+    refetch();
+    qc.invalidateQueries({ queryKey: ["fixed-total", householdId] });
+    qc.invalidateQueries({ queryKey: ["household"] });
+    invalidateHouseholdData(qc);
+  }
+
   // Update just the need-level of an existing fixed cost (re-upsert with its
   // current values so the amount/cadence are preserved).
   async function setRowIntent(
@@ -1285,7 +1355,25 @@ export function FixedExpensesSection({
               <div className="min-w-0">
                 <p className="truncate">{r.label}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                  <p className="text-xs text-muted-foreground">{r.category}</p>
+                  <Select
+                    value={r.category ?? categoryOptions[0]}
+                    onValueChange={(v) => setRowCategory(r, v)}
+                  >
+                    <SelectTrigger
+                      className="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                      aria-label={t("categoryMgr.title")}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Select
                     value={resolveIntent(r)}
                     onValueChange={(v) => setRowIntent(r, v as IntentLevel)}
