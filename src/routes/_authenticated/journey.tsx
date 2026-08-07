@@ -351,6 +351,7 @@ function JourneyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [evaluated, householdId]);
   const [editing, setEditing] = useState(false);
+  const [coachOpen, setCoachOpen] = useState(false);
   const [dialog, setDialog] = useState<{ mode: "add" | "edit"; stage?: JourneyStage } | null>(null);
 
   function refresh() {
@@ -403,8 +404,8 @@ function JourneyPage() {
               </p>
             </div>
           )}
-          <Button variant="outline" size="sm" onClick={personalize}>
-            <Sparkles className="size-4" /> {t("journey.personalize")}
+          <Button variant={coachOpen ? "default" : "outline"} size="sm" onClick={() => setCoachOpen((o) => !o)}>
+            <Sparkles className="size-4" /> {t("journey.coachButton")}
           </Button>
           <Button variant={editing ? "default" : "outline"} size="sm" onClick={() => setEditing((e) => !e)}>
             <Pencil className="size-4" /> {editing ? t("journey.doneLabel") : t("journey.edit")}
@@ -550,7 +551,9 @@ function JourneyPage() {
             })}
           </div>
 
-          {householdId && <JourneyCoach householdId={householdId} onChanged={refresh} />}
+          {coachOpen && householdId && (
+            <JourneyCoach householdId={householdId} onChanged={refresh} onPersonalize={personalize} />
+          )}
 
           {(evaluated.side.length > 0 ||
             evaluated.autoQuests.length > 0 ||

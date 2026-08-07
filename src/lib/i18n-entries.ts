@@ -557,6 +557,7 @@ export const ENTRIES = {
   },
 
   // --- Money Journey: conversational coach ---
+  "journey.coachButton": { en: "Coach", pt: "Coach", es: "Coach", de: "Coach", fr: "Coach" },
   "journey.coach.title": {
     en: "Shape it with the coach",
     pt: "Constrói com o coach",

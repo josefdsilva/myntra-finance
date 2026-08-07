@@ -51,7 +51,7 @@ Propose between 1 and 4 concrete stages, grounded ONLY in the facts provided. Ea
 - rationale: one short line on why it matters now, referencing the facts
 - measure: attach this whenever the stage can be tracked against the facts, so its progress updates automatically. Use ONE of: {"metric": one of "emergency_months","dti_pct","invested_months","invested_years", "op": ">=" or "<=", "value": number} OR {"project": "<the EXACT name of an existing project>"} to track that project's balance toward its target. If it genuinely can't be measured, set measure to null and it becomes a manual milestone.
 
-Follow the sound order of operations: emergency fund first, then reduce expensive debt, then invest for the long term, then life goals. Do not duplicate stages that already exist. Do not invent numbers that aren't derivable from the facts. This is educational information, not regulated financial advice — never tell them to buy a specific product. If the user gives a request, honour it while staying grounded. Keep everything concise.`;
+Follow the sound order of operations: emergency fund first, then reduce expensive debt, then invest for the long term, then life goals. CRITICAL: never propose a stage that duplicates or overlaps one already in "Current stages" — check BOTH the name and the measure. If a stage already targets emergency_months >= 6, do NOT propose another six-month safety net; if a project is already tracked, do not propose it again. Do not invent numbers that aren't derivable from the facts. This is educational information, not regulated financial advice — never tell them to buy a specific product. If the user gives a request, honour it while staying grounded. Keep everything concise.`;
 
 export const proposeJourneyStages = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -81,7 +81,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       context.supabase
         .from("journey_stages")
-        .select("template_key, title, objective, optional, objective_type")
+        .select("template_key, title, objective, optional, objective_type, objective_config")
         .eq("household_id", hid)
         .order("sort_order", { ascending: true }),
     ]);
@@ -144,9 +144,41 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
     };
     // For matching a coach-referenced project name back to a real bucket id.
     const projList = bs.map((b) => ({ id: b.id, name: b.name, target: Number(b.target_value) || 0 }));
-    const currentStages = (stages.data ?? []).map((s) => ({
+
+    // Signature of a measurable objective, used to drop proposals that duplicate
+    // a stage the household already has.
+    const sig = (type: string, cfg: Record<string, unknown>): string | null => {
+      if (type === "metric") {
+        const key = String(cfg.key ?? "");
+        return key ? `metric:${key}:${cfg.op === "<=" ? "<=" : ">="}:${Number(cfg.value ?? 0)}` : null;
+      }
+      if (type === "project") {
+        const b = String(cfg.bucket_id ?? "");
+        return b ? `project:${b}` : null;
+      }
+      return null;
+    };
+    const describeMeasure = (type: string, cfg: Record<string, unknown>): string =>
+      type === "metric"
+        ? `${String(cfg.key ?? "")} ${cfg.op ?? ">="} ${cfg.value ?? ""}`.trim()
+        : type === "project"
+          ? "tracks a project"
+          : "manual";
+    const existingStages = (stages.data ?? []) as Array<{
+      template_key: string | null;
+      title: string | null;
+      optional: boolean;
+      objective_type: string;
+      objective_config: Record<string, unknown>;
+    }>;
+    const existingSigs = new Set<string>();
+    for (const s of existingStages) {
+      const sg = sig(s.objective_type, (s.objective_config ?? {}) as Record<string, unknown>);
+      if (sg) existingSigs.add(sg);
+    }
+    const currentStages = existingStages.map((s) => ({
       name: s.title ?? s.template_key ?? "stage",
-      objective: s.objective ?? null,
+      measure: describeMeasure(s.objective_type, (s.objective_config ?? {}) as Record<string, unknown>),
       optional: s.optional,
     }));
 
@@ -198,6 +230,11 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
           };
         })
         .filter((p) => p.title)
+        // Drop anything that duplicates a stage the household already has.
+        .filter((p) => {
+          const sg = sig(p.objectiveType, p.objectiveConfig);
+          return !(sg && existingSigs.has(sg));
+        })
         .slice(0, 4);
       // A successful call that yields no usable proposals is a genuine "nothing to
       // add", not an error — the UI shows the reassuring empty state.

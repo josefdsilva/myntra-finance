@@ -16,9 +16,11 @@ import { useT } from "@/lib/i18n";
 export function JourneyCoach({
   householdId,
   onChanged,
+  onPersonalize,
 }: {
   householdId: string;
   onChanged: () => void;
+  onPersonalize?: () => void;
 }) {
   const t = useT();
   const proposeFn = useServerFn(proposeJourneyStages);
@@ -104,10 +106,17 @@ export function JourneyCoach({
           {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
         </Button>
       </div>
-      <Button variant="outline" size="sm" onClick={() => propose(null)} disabled={loading}>
-        {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{" "}
-        {t("journey.coach.review")}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={() => propose(null)} disabled={loading}>
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{" "}
+          {t("journey.coach.review")}
+        </Button>
+        {onPersonalize && (
+          <Button variant="ghost" size="sm" onClick={onPersonalize}>
+            <Sparkles className="size-4" /> {t("journey.personalize")}
+          </Button>
+        )}
+      </div>
 
       {note && <p className="text-xs text-muted-foreground">{note}</p>}
       {proposals && proposals.length === 0 && !loading && (
