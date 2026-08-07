@@ -700,18 +700,14 @@ function ParsedReview({
               value={it.amount}
               onChange={(e) => update(i, { amount: parseFloat(e.target.value) || 0 })}
             />
-            <Select value={it.category} onValueChange={(v) => update(i, { category: v })}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {catOptions.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategorySelect
+              householdId={householdId}
+              value={it.category}
+              onChange={(v) => update(i, { category: v })}
+              fallback={DEFAULT_CATEGORIES}
+              className="col-span-3"
+            />
+
             <Input
               className="col-span-3"
               placeholder="merchant"
