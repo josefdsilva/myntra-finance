@@ -667,9 +667,8 @@ function ParsedReview({
   loading: boolean;
   householdId: string;
 }) {
-  const { names: hhCats } = useCategoryNames(householdId);
-  const catOptions = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
   const t = useT();
+
   function update(idx: number, patch: Partial<Parsed>) {
     setItems(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
