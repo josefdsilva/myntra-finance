@@ -1,13 +1,16 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { Trophy, Target, Sparkles, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
 import { bucketBalancesFor, fetchMovements, type AccountMovement } from "@/lib/movements";
+import { recordAchievement, listAchievements } from "@/lib/achievements.functions";
 import { useT } from "@/lib/i18n";
 
 type Bucket = {
@@ -31,6 +34,25 @@ const MAX_SHOWN = 5;
  */
 export function GoalsCard({ householdId }: { householdId: string }) {
   const t = useT();
+  const qc = useQueryClient();
+  const recordFn = useServerFn(recordAchievement);
+  const listFn = useServerFn(listAchievements);
+
+  // Durable medals: a persisted record of goals already reached, so recognition
+  // survives later target edits (raising a goal must not erase the trophy).
+  const { data: achievements } = useQuery({
+    queryKey: ["achievements", householdId],
+    queryFn: () => listFn({ data: { household_id: householdId } }),
+  });
+  const achievedByBucket = useMemo(() => {
+    const m: Record<string, { earned_at: string; detail: string | null }> = {};
+    for (const a of achievements ?? []) {
+      if (a.kind === "goal_reached" && a.ref_id)
+        m[a.ref_id] = { earned_at: a.earned_at, detail: a.detail };
+    }
+    return m;
+  }, [achievements]);
+  const recordedRef = useRef<Set<string>>(new Set());
 
   const { data } = useQuery({
     queryKey: ["goals-card", householdId],
@@ -69,6 +91,37 @@ export function GoalsCard({ householdId }: { householdId: string }) {
       return { ...b, balance, target, hasFinishLine, pct, reached, remaining };
     });
   }, [data]);
+
+  // Persist a durable medal the first time a finish-line goal is reached, and
+  // celebrate exactly once. Idempotent server-side (dedupe_key), so re-detecting
+  // the same reached goal on later renders never re-fires.
+  useEffect(() => {
+    for (const g of goals) {
+      if (!g.hasFinishLine || !g.reached) continue;
+      if (recordedRef.current.has(g.id) || achievedByBucket[g.id]) continue;
+      recordedRef.current.add(g.id);
+      recordFn({
+        data: {
+          household_id: householdId,
+          kind: "goal_reached",
+          dedupe_key: `goal_reached:${g.id}`,
+          title: g.name,
+          detail: money(g.target),
+          ref_type: "bucket",
+          ref_id: g.id,
+          meta: { target: g.target, balance: g.balance },
+        },
+      })
+        .then((r) => {
+          if (r?.created) {
+            toast.success(t("goals.reachedToast", { name: g.name }));
+            qc.invalidateQueries({ queryKey: ["achievements", householdId] });
+          }
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goals, achievedByBucket]);
 
   // Sort finish-line goals first (reached float to the top as trophies, then
   // most-complete), ongoing ones after.
@@ -137,7 +190,9 @@ export function GoalsCard({ householdId }: { householdId: string }) {
                     style={{ background: g.color ?? "var(--primary)" }}
                   />
                   <span className="truncate font-medium">{g.name}</span>
-                  {g.reached && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
+                  {(g.reached || achievedByBucket[g.id]) && (
+                    <Trophy className="size-3.5 shrink-0 text-emerald-600" />
+                  )}
                 </span>
                 <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
                   {g.hasFinishLine ? (
@@ -158,12 +213,16 @@ export function GoalsCard({ householdId }: { householdId: string }) {
                 />
               )}
 
-              <p className={`text-xs ${g.reached ? "text-emerald-600" : "text-muted-foreground"}`}>
+              <p
+                className={`text-xs ${g.reached || achievedByBucket[g.id] ? "text-emerald-600" : "text-muted-foreground"}`}
+              >
                 {g.reached
                   ? t("goals.reached")
-                  : g.hasFinishLine
-                    ? t("goals.toGo", { amount: money(g.remaining), pct: g.pct ?? 0 })
-                    : t("goals.growing")}
+                  : achievedByBucket[g.id]
+                    ? t("goals.reachedEarlier")
+                    : g.hasFinishLine
+                      ? t("goals.toGo", { amount: money(g.remaining), pct: g.pct ?? 0 })
+                      : t("goals.growing")}
               </p>
             </li>
           ))}

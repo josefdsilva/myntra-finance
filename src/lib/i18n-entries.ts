@@ -249,6 +249,22 @@ export const ENTRIES = {
     fr: "Vous avez reçu {in} ce cycle, mais votre budget quotidien reste calé sur votre revenu régulier : le surplus est à épargner plutôt qu'à dépenser.",
   },
 
+  // --- Goals / achievements ---
+  "goals.reachedToast": {
+    en: "You reached your {name} goal!",
+    pt: "Atingiste a tua meta {name}!",
+    es: "¡Has alcanzado tu meta {name}!",
+    de: "Du hast dein Ziel {name} erreicht!",
+    fr: "Vous avez atteint votre objectif {name} !",
+  },
+  "goals.reachedEarlier": {
+    en: "Goal reached — you've since raised the target.",
+    pt: "Meta atingida — entretanto aumentaste o objetivo.",
+    es: "Meta alcanzada — desde entonces subiste el objetivo.",
+    de: "Ziel erreicht — du hast das Ziel inzwischen erhöht.",
+    fr: "Objectif atteint — vous avez depuis relevé la cible.",
+  },
+
   // --- Coach inbox ---
   "coach.inbox.aria": { en: "Coach inbox", pt: "Caixa do coach", es: "Bandeja del coach", de: "Coach-Posteingang", fr: "Boîte du coach" },
   "coach.inbox.title": { en: "Coach", pt: "Coach", es: "Coach", de: "Coach", fr: "Coach" },

@@ -612,6 +612,56 @@ export type Database = {
           },
         ]
       }
+      achievements: {
+        Row: {
+          created_at: string
+          dedupe_key: string
+          detail: string | null
+          earned_at: string
+          household_id: string
+          id: string
+          kind: string
+          meta: Json
+          ref_id: string | null
+          ref_type: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key: string
+          detail?: string | null
+          earned_at?: string
+          household_id: string
+          id?: string
+          kind: string
+          meta?: Json
+          ref_id?: string | null
+          ref_type?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string
+          detail?: string | null
+          earned_at?: string
+          household_id?: string
+          id?: string
+          kind?: string
+          meta?: Json
+          ref_id?: string | null
+          ref_type?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_messages: {
         Row: {
           action_label: string | null
