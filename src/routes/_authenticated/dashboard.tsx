@@ -38,6 +38,7 @@ import { DashboardTips } from "@/components/dashboard-tips";
 import { MomentumCard } from "@/components/score-trend";
 import { PurchaseCheckButton } from "@/components/purchase-check";
 import { GoalsCard } from "@/components/goals-card";
+import { JourneySummaryCard } from "@/components/journey-summary-card";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
 import { RunwayReceivablesCard } from "@/components/runway-receivables-card";
@@ -678,6 +679,8 @@ function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {householdId && <JourneySummaryCard householdId={householdId} />}
 
       {householdId && <GoalsCard householdId={householdId} />}
 

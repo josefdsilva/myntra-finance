@@ -609,6 +609,14 @@ export const ENTRIES = {
     fr: "Le coach n'a pas pu répondre. Réessayez.",
   },
 
+  "journey.card.open": { en: "Open", pt: "Abrir", es: "Abrir", de: "Öffnen", fr: "Ouvrir" },
+  "journey.allDone": {
+    en: "All milestones complete!",
+    pt: "Todos os marcos concluídos!",
+    es: "¡Todos los hitos completados!",
+    de: "Alle Meilensteine erreicht!",
+    fr: "Tous les jalons atteints !",
+  },
   "journey.stageDoneToast": {
     en: "Milestone reached: {name}!",
     pt: "Marco alcançado: {name}!",

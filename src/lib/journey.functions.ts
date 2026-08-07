@@ -308,3 +308,120 @@ export const setStageOrder = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+
+/** Compact roadmap summary for the dashboard card: level, active stage, progress. */
+export const journeySummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ household_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const hid = data.household_id;
+    const [hh, buckets, allocs, moves, incomes, debts, fixed, stagesR] = await Promise.all([
+      context.supabase.from("households").select("baseline_budget").eq("id", hid).maybeSingle(),
+      context.supabase
+        .from("buckets")
+        .select("id, kind, target_type, target_value, initial_balance")
+        .eq("household_id", hid),
+      context.supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", hid),
+      context.supabase
+        .from("account_movements")
+        .select("amount, to_type, from_type, to_id, from_id")
+        .eq("household_id", hid),
+      context.supabase.from("incomes").select("monthly_amount").eq("household_id", hid),
+      context.supabase.from("debts").select("monthly_amount").eq("household_id", hid),
+      context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
+      context.supabase
+        .from("journey_stages")
+        .select("template_key, title, objective_type, objective_config, optional, status")
+        .eq("household_id", hid)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    type Active = { template_key: string | null; title: string | null; progress: number } | null;
+    const stages = (stagesR.data ?? []) as Array<{
+      template_key: string | null;
+      title: string | null;
+      objective_type: string;
+      objective_config: Record<string, unknown>;
+      optional: boolean;
+      status: string;
+    }>;
+    if (!stages.length) return { hasStages: false, level: 0, total: 0, active: null as Active };
+
+    const baseline = Number(hh.data?.baseline_budget ?? 0);
+    const income = (incomes.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    const debtMonthly = (debts.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    const fixedMonthly = (fixed.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    const essentials = Math.max(1, baseline || fixedMonthly + debtMonthly);
+
+    const bs = (buckets.data ?? []) as Array<{
+      id: string;
+      kind: string | null;
+      target_type: string;
+      target_value: number | string;
+      initial_balance: number | string;
+    }>;
+    const bal: Record<string, number> = {};
+    for (const b of bs) bal[b.id] = Number(b.initial_balance ?? 0);
+    for (const a of (allocs.data ?? []) as Array<{ bucket_id: string; amount: number | string }>)
+      bal[a.bucket_id] = (bal[a.bucket_id] ?? 0) + Number(a.amount);
+    for (const m of (moves.data ?? []) as Array<{
+      amount: number | string;
+      to_type: string | null;
+      from_type: string | null;
+      to_id: string | null;
+      from_id: string | null;
+    }>) {
+      if (m.to_type === "bucket" && m.to_id) bal[m.to_id] = (bal[m.to_id] ?? 0) + Number(m.amount);
+      if (m.from_type === "bucket" && m.from_id) bal[m.from_id] = (bal[m.from_id] ?? 0) - Number(m.amount);
+    }
+    let emergencyBal = 0;
+    let savingsBal = 0;
+    let investBal = 0;
+    for (const b of bs) {
+      const v = bal[b.id] ?? 0;
+      if (b.kind === "investment") investBal += v;
+      else if (b.kind === "emergency") emergencyBal += v;
+      else savingsBal += v;
+    }
+    const hasEmergency = bs.some((b) => b.kind === "emergency");
+    const liquidReserve = hasEmergency ? emergencyBal : emergencyBal + savingsBal;
+    const metrics: Record<string, number> = {
+      emergency_months: liquidReserve / essentials,
+      dti_pct: income > 0 ? (debtMonthly / income) * 100 : 0,
+      invested_months: investBal / essentials,
+      invested_years: investBal / (12 * essentials),
+    };
+    const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+    const evalStage = (s: (typeof stages)[number]): { complete: boolean; progress: number } => {
+      if (s.objective_type === "custom")
+        return { complete: s.status === "done", progress: s.status === "done" ? 1 : 0 };
+      if (s.objective_type === "project") {
+        const id = String((s.objective_config as { bucket_id?: string }).bucket_id ?? "");
+        const b = bs.find((x) => x.id === id);
+        const cur = bal[id] ?? 0;
+        const target = Number(b?.target_value ?? 0);
+        if (!b || target <= 0) return { complete: false, progress: 0 };
+        return { complete: cur >= target - 0.01, progress: clamp01(cur / target) };
+      }
+      const cfg = s.objective_config as { key?: string; op?: string; value?: number };
+      const cur = metrics[String(cfg.key ?? "")] ?? 0;
+      const target = Number(cfg.value ?? 0);
+      const op = cfg.op === "<=" ? "<=" : ">=";
+      const complete = op === "<=" ? cur <= target : cur >= target;
+      const progress =
+        op === "<=" ? (complete ? 1 : clamp01(target / Math.max(cur, 0.0001))) : clamp01(cur / Math.max(target, 0.0001));
+      return { complete, progress };
+    };
+
+    const spine = stages.filter((s) => !s.optional);
+    let level = 0;
+    let active: Active = null;
+    for (const s of spine) {
+      const e = evalStage(s);
+      if (e.complete) level++;
+      else if (!active) active = { template_key: s.template_key, title: s.title, progress: e.progress };
+    }
+    return { hasStages: true, level, total: spine.length, active };
+  });
