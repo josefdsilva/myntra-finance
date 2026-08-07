@@ -1405,18 +1405,13 @@ export function FixedExpensesSection({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
-          <Select value={category} onValueChange={applyCategory}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategorySelect
+            householdId={householdId}
+            value={category}
+            onChange={applyCategory}
+            fallback={categoryOptions}
+          />
+
           <Select value={intent} onValueChange={(v) => setIntent(v as IntentLevel)}>
             <SelectTrigger aria-label={t("intent.label")}>
               <SelectValue />
