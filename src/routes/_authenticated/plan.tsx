@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import { money } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
+import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
 import {
   INTENT_LEVELS,
