@@ -13,15 +13,20 @@ import { createLovableAiGatewayProvider, requireLovableApiKey } from "@/lib/ai-g
 const MODEL = "google/gemini-3-flash-preview";
 const TIMEOUT_MS = 30_000;
 
+// Metrics the coach may bind a stage to (must match the client-side evaluator).
+const METRIC_KEYS = new Set(["emergency_months", "dti_pct", "invested_months", "invested_years"]);
+
 export type StageProposal = {
   title: string;
   objective: string;
   optional: boolean;
   rationale: string;
+  objectiveType: "metric" | "project" | "custom";
+  objectiveConfig: Record<string, unknown>;
 };
 
 /** Tolerant JSON extraction — models sometimes wrap JSON in prose or code fences. */
-function extractJson(text: string): { note?: string; proposals?: StageProposal[] } | null {
+function extractJson(text: string): { note?: string; proposals?: unknown[] } | null {
   try {
     return JSON.parse(text);
   } catch {
@@ -44,6 +49,7 @@ Propose between 1 and 4 concrete stages, grounded ONLY in the facts provided. Ea
 - objective: one plain-language line describing the goal
 - optional: true if it's a side-quest that runs alongside without blocking the main path (e.g. a house deposit), false if it belongs on the main spine
 - rationale: one short line on why it matters now, referencing the facts
+- measure: attach this whenever the stage can be tracked against the facts, so its progress updates automatically. Use ONE of: {"metric": one of "emergency_months","dti_pct","invested_months","invested_years", "op": ">=" or "<=", "value": number} OR {"project": "<the EXACT name of an existing project>"} to track that project's balance toward its target. If it genuinely can't be measured, set measure to null and it becomes a manual milestone.
 
 Follow the sound order of operations: emergency fund first, then reduce expensive debt, then invest for the long term, then life goals. Do not duplicate stages that already exist. Do not invent numbers that aren't derivable from the facts. This is educational information, not regulated financial advice — never tell them to buy a specific product. If the user gives a request, honour it while staying grounded. Keep everything concise.`;
 
@@ -136,6 +142,8 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
         balance: Math.round(bal[b.id] ?? 0),
       })),
     };
+    // For matching a coach-referenced project name back to a real bucket id.
+    const projList = bs.map((b) => ({ id: b.id, name: b.name, target: Number(b.target_value) || 0 }));
     const currentStages = (stages.data ?? []).map((s) => ({
       name: s.title ?? s.template_key ?? "stage",
       objective: s.objective ?? null,
@@ -153,7 +161,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       const res = await generateText({
         model: gateway(MODEL),
         abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-        system: `${SYSTEM}\n\nRespond ONLY with a JSON object of the form {"note": string, "proposals": [{"title": string, "objective": string, "optional": boolean, "rationale": string}]}. No prose, no code fences, no markdown.`,
+        system: `${SYSTEM}\n\nRespond ONLY with a JSON object of the form {"note": string, "proposals": [{"title": string, "objective": string, "optional": boolean, "rationale": string, "measure": {"metric": string|null, "op": string|null, "value": number|null, "project": string|null} | null}]}. No prose, no code fences, no markdown.`,
         prompt,
       });
       const obj = extractJson(res.text);
@@ -161,11 +169,32 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       const proposals: StageProposal[] = raw
         .map((p) => {
           const o = (p ?? {}) as Record<string, unknown>;
+          const measure = (o.measure ?? {}) as Record<string, unknown>;
+          // Bind a real objective when the coach referenced a metric or an
+          // existing project — that's what makes progress track automatically.
+          const projName = measure.project != null ? String(measure.project).trim().toLowerCase() : "";
+          const proj = projName
+            ? projList.find((x) => x.name.trim().toLowerCase() === projName && x.target > 0)
+            : null;
+          let objectiveType: "metric" | "project" | "custom" = "custom";
+          let objectiveConfig: Record<string, unknown> = {};
+          if (proj) {
+            objectiveType = "project";
+            objectiveConfig = { bucket_id: proj.id };
+          } else {
+            const metric = measure.metric != null ? String(measure.metric) : "";
+            if (METRIC_KEYS.has(metric) && typeof measure.value === "number") {
+              objectiveType = "metric";
+              objectiveConfig = { key: metric, op: measure.op === "<=" ? "<=" : ">=", value: Number(measure.value) };
+            }
+          }
           return {
             title: String(o.title ?? "").trim(),
             objective: String(o.objective ?? "").trim(),
             optional: Boolean(o.optional),
             rationale: String(o.rationale ?? "").trim(),
+            objectiveType,
+            objectiveConfig,
           };
         })
         .filter((p) => p.title)

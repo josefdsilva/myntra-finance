@@ -54,7 +54,14 @@ export function JourneyCoach({
     setAddingIdx(idx);
     try {
       await createFn({
-        data: { household_id: householdId, title: p.title, objective: p.objective || null, optional: p.optional },
+        data: {
+          household_id: householdId,
+          title: p.title,
+          objective: p.objective || null,
+          optional: p.optional,
+          objective_type: p.objectiveType,
+          objective_config: p.objectiveConfig,
+        },
       });
       toast.success(t("journey.coach.addedToast"));
       setProposals((prev) => (prev ? prev.filter((_, i) => i !== idx) : prev));

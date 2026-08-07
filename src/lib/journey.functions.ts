@@ -86,6 +86,8 @@ export const createStage = createServerFn({ method: "POST" })
         title: z.string().min(1).max(120),
         objective: z.string().max(240).nullable().optional(),
         optional: z.boolean().optional(),
+        objective_type: z.enum(["metric", "project", "custom"]).optional(),
+        objective_config: z.record(z.unknown()).optional(),
       })
       .parse(input),
   )
@@ -104,7 +106,8 @@ export const createStage = createServerFn({ method: "POST" })
         household_id: data.household_id,
         title: data.title,
         objective: data.objective ?? null,
-        objective_type: "custom",
+        objective_type: data.objective_type ?? "custom",
+        objective_config: (data.objective_config ?? {}) as never,
         optional: data.optional ?? false,
         sort_order: nextOrder,
         created_by: "user",
