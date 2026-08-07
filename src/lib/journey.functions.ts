@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { JsonObject } from "@/lib/json";
 
 // Money Journey stages — user- and coach-authored roadmap milestones. Objectives
 // are evaluated live on the client against numbers the app already computes; this
@@ -12,7 +13,7 @@ export type JourneyStage = {
   title: string | null;
   objective: string | null;
   objective_type: "metric" | "project" | "custom";
-  objective_config: Record<string, unknown>;
+  objective_config: JsonObject;
   optional: boolean;
   status: "active" | "done";
   reached_at: string | null;
@@ -23,7 +24,7 @@ export type JourneyStage = {
 // The default spine — the classic order of operations. Seeded once per household;
 // fully editable afterwards. Titles/objectives render from i18n via template_key.
 const DEFAULT_STAGES: Array<Pick<JourneyStage, "template_key" | "objective_type"> & {
-  objective_config: Record<string, unknown>;
+  objective_config: JsonObject;
 }> = [
   { template_key: "starter", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 1 } },
   { template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } },
@@ -154,7 +155,7 @@ type DraftSpec = {
   template_key?: string | null;
   title?: string | null;
   objective_type: string;
-  objective_config: Record<string, unknown>;
+  objective_config: JsonObject;
   optional?: boolean;
 };
 
