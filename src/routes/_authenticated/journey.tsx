@@ -50,6 +50,7 @@ import {
   draftJourney,
   type JourneyStage,
 } from "@/lib/journey.functions";
+import { JourneyCoach } from "@/components/journey-coach";
 import { cn } from "@/lib/utils";
 import { useT, type MessageKey } from "@/lib/i18n";
 
@@ -82,6 +83,8 @@ const TEMPLATE_ICON: Record<string, LucideIcon> = {
   net6: ShieldCheck,
   invest: TrendingUp,
   investDeep: TrendingUp,
+  invest12: TrendingUp,
+  fi: Award,
 };
 
 type Status = "done" | "active" | "locked";
@@ -186,6 +189,9 @@ function JourneyPage() {
       // Invested measured in months of essential costs, so "long-term investing"
       // is a meaningful, personalized target rather than "any amount > 0".
       invested_months: investBal / essentials,
+      // Years of essential costs covered by investments — anchors the financial
+      // independence rung (~25× yearly costs).
+      invested_years: investBal / (12 * essentials),
     } as Record<string, number>;
   }, [metricsData, baseline]);
 
@@ -200,7 +206,9 @@ function JourneyPage() {
         ? `${Math.round(cur)}%`
         : key === "invested_amount" || key === "net_worth"
           ? money(cur)
-          : t("journey.months", { n: cur.toFixed(1) });
+          : key === "invested_years"
+            ? t("journey.years", { n: cur.toFixed(1) })
+            : t("journey.months", { n: cur.toFixed(1) });
 
     const evalOne = (s: JourneyStage): { complete: boolean; progress: number; value: string | null } => {
       if (s.objective_type === "custom") {
@@ -252,9 +260,18 @@ function JourneyPage() {
     const activeStage = spineNodes.find((s) => s.status === "active") ?? null;
     const roleKey = activeStage?.template_key ?? "custom";
 
-    // Auto side-quests from goal projects (not yet linked to a stage).
+    // Projects already promoted to a stage (project-type) shouldn't also show as
+    // an "alongside" chip.
+    const linkedBucketIds = new Set(
+      stages
+        .filter((s) => s.objective_type === "project")
+        .map((s) => String((s.objective_config as { bucket_id?: string }).bucket_id ?? ""))
+        .filter(Boolean),
+    );
+
+    // Auto side-quests from goal projects not promoted to their own stage.
     const autoQuests = (metricsData?.buckets ?? [])
-      .filter((b) => b.target_type === "goal_by_date" && Number(b.target_value) > 0)
+      .filter((b) => b.target_type === "goal_by_date" && Number(b.target_value) > 0 && !linkedBucketIds.has(b.id))
       .map((b) => {
         const bal = metricsData?.balances[b.id] ?? 0;
         const target = Number(b.target_value);
@@ -264,7 +281,12 @@ function JourneyPage() {
     // Every other project (ongoing contributions, no finish line) shown so
     // nothing is invisible — investing, kids savings, etc.
     const otherProjects = (metricsData?.buckets ?? [])
-      .filter((b) => b.target_type !== "goal_by_date" && (metricsData?.balances[b.id] ?? 0) > 0)
+      .filter(
+        (b) =>
+          b.target_type !== "goal_by_date" &&
+          (metricsData?.balances[b.id] ?? 0) > 0 &&
+          !linkedBucketIds.has(b.id),
+      )
       .map((b) => ({ id: b.id, name: b.name, balance: metricsData?.balances[b.id] ?? 0 }));
 
     return { all: withEval, spineNodes, side, doneCount, roleKey, autoQuests, otherProjects };
@@ -471,6 +493,8 @@ function JourneyPage() {
             })}
           </div>
 
+          {householdId && <JourneyCoach householdId={householdId} onChanged={refresh} />}
+
           {(evaluated.side.length > 0 ||
             evaluated.autoQuests.length > 0 ||
             evaluated.otherProjects.length > 0) && (
@@ -487,8 +511,25 @@ function JourneyPage() {
                         <span className="truncate font-medium">{s.displayTitle}</span>
                         {s.complete && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
                       </span>
+                      {s.objective_type !== "custom" && (
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {Math.round(s.progress * 100)}%
+                        </span>
+                      )}
                     </div>
-                    {s.displayObjective && <p className="mt-1 text-xs text-muted-foreground">{s.displayObjective}</p>}
+                    {s.objective_type !== "custom" && (
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={cn("h-full", s.complete ? "bg-emerald-500" : "bg-primary")}
+                          style={{ width: `${Math.round(s.progress * 100)}%` }}
+                        />
+                      </div>
+                    )}
+                    {s.value ? (
+                      <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">{s.value}</p>
+                    ) : s.displayObjective ? (
+                      <p className="mt-1 text-xs text-muted-foreground">{s.displayObjective}</p>
+                    ) : null}
                   </div>
                 ))}
                 {evaluated.autoQuests.map((q) => (

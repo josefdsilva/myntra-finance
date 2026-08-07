@@ -150,11 +150,21 @@ export const deleteStage = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+type DraftSpec = {
+  template_key?: string | null;
+  title?: string | null;
+  objective_type: string;
+  objective_config: Record<string, unknown>;
+  optional?: boolean;
+};
+
 /**
- * Coach drafts a personalized roadmap: the order of operations tailored to the
- * household's situation (skips the debt stage when there's no debt). Rebuilds the
- * seeded/coach spine and keeps any stages the user created themselves, appended
- * after. Grounded and deterministic — no model call, no hallucination.
+ * Coach drafts a personalized roadmap, grounded and deterministic (no model
+ * call). It reads the household's real position and tailors the spine: drops the
+ * debt stage when there's no debt, extends the horizon with advanced rungs once
+ * the safety net is built (so a well-off household's journey keeps going instead
+ * of looking finished), and turns goal-by-date projects into real milestones.
+ * The user's own stages are kept, appended after.
  */
 export const draftJourney = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -162,31 +172,108 @@ export const draftJourney = createServerFn({ method: "POST" })
     z.object({ household_id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { data: debts } = await context.supabase
-      .from("debts")
-      .select("monthly_amount")
-      .eq("household_id", data.household_id);
-    const hasDebt = (debts ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0) > 0;
-    const specs = DEFAULT_STAGES.filter((d) => d.template_key !== "debt" || hasDebt);
+    const hid = data.household_id;
+    const [hh, buckets, allocs, moves, debts, fixed] = await Promise.all([
+      context.supabase.from("households").select("baseline_budget").eq("id", hid).maybeSingle(),
+      context.supabase
+        .from("buckets")
+        .select("id, name, kind, target_type, target_value, initial_balance")
+        .eq("household_id", hid)
+        .order("sort_order"),
+      context.supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", hid),
+      context.supabase
+        .from("account_movements")
+        .select("amount, to_type, from_type, to_id, from_id")
+        .eq("household_id", hid),
+      context.supabase.from("debts").select("monthly_amount").eq("household_id", hid),
+      context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
+    ]);
+
+    const baseline = Number(hh.data?.baseline_budget ?? 0);
+    const debtMonthly = (debts.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    const fixedMonthly = (fixed.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    const essentials = Math.max(1, baseline || fixedMonthly + debtMonthly);
+
+    const bs = (buckets.data ?? []) as Array<{
+      id: string;
+      name: string;
+      kind: string | null;
+      target_type: string;
+      target_value: number | string;
+      initial_balance: number | string;
+    }>;
+    // Project balance = initial + confirmed allocations + net bucket movements.
+    const bal: Record<string, number> = {};
+    for (const b of bs) bal[b.id] = Number(b.initial_balance ?? 0);
+    for (const a of (allocs.data ?? []) as Array<{ bucket_id: string; amount: number | string }>)
+      bal[a.bucket_id] = (bal[a.bucket_id] ?? 0) + Number(a.amount);
+    for (const m of (moves.data ?? []) as Array<{
+      amount: number | string;
+      to_type: string | null;
+      from_type: string | null;
+      to_id: string | null;
+      from_id: string | null;
+    }>) {
+      if (m.to_type === "bucket" && m.to_id) bal[m.to_id] = (bal[m.to_id] ?? 0) + Number(m.amount);
+      if (m.from_type === "bucket" && m.from_id) bal[m.from_id] = (bal[m.from_id] ?? 0) - Number(m.amount);
+    }
+    let emergencyBal = 0;
+    let savingsBal = 0;
+    for (const b of bs) {
+      const v = bal[b.id] ?? 0;
+      if (b.kind === "emergency") emergencyBal += v;
+      else if (b.kind !== "investment") savingsBal += v;
+    }
+    const hasEmergency = bs.some((b) => b.kind === "emergency");
+    const emergencyMonths = (hasEmergency ? emergencyBal : emergencyBal + savingsBal) / essentials;
+    const hasDebt = debtMonthly > 0;
+
+    const specs: DraftSpec[] = [
+      { template_key: "starter", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 1 } },
+    ];
+    if (hasDebt)
+      specs.push({ template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } });
+    specs.push(
+      { template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } },
+      { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 6 } },
+      { template_key: "invest", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 1 } },
+      { template_key: "investDeep", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 6 } },
+    );
+    // Advanced rungs appear once the safety net is built — keeps the horizon open
+    // for households that are already well past the basics.
+    if (emergencyMonths >= 6) {
+      specs.push(
+        { template_key: "invest12", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 12 } },
+        { template_key: "fi", objective_type: "metric", objective_config: { key: "invested_years", op: ">=", value: 25 } },
+      );
+    }
+    // Goal-by-date projects become their own milestones (house, property, a big
+    // goal). The emergency fund is skipped — it already drives the safety net.
+    for (const b of bs) {
+      if (b.target_type === "goal_by_date" && Number(b.target_value) > 0 && b.kind !== "emergency") {
+        specs.push({ title: b.name, objective_type: "project", objective_config: { bucket_id: b.id }, optional: true });
+      }
+    }
 
     // Replace the previous suggested spine (seed + earlier coach drafts); keep the
     // user's own stages, re-numbered to follow the fresh spine.
     await context.supabase
       .from("journey_stages")
       .delete()
-      .eq("household_id", data.household_id)
+      .eq("household_id", hid)
       .in("created_by", ["seed", "coach"]);
     const { data: userStages } = await context.supabase
       .from("journey_stages")
       .select("id")
-      .eq("household_id", data.household_id)
+      .eq("household_id", hid)
       .order("sort_order", { ascending: true });
-
     const coachRows = specs.map((d, i) => ({
-      household_id: data.household_id,
-      template_key: d.template_key,
+      household_id: hid,
+      template_key: d.template_key ?? null,
+      title: d.title ?? null,
       objective_type: d.objective_type,
       objective_config: d.objective_config as never,
+      optional: d.optional ?? false,
       sort_order: i,
       created_by: "coach",
     }));
