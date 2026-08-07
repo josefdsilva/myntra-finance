@@ -55,6 +55,7 @@ import { DangerZone } from "@/components/danger-zone";
 import { StatementImportButton } from "@/components/statement-import-flow";
 import { LanguageSettings } from "@/components/language-settings";
 import { CategoryManager } from "@/components/category-manager";
+import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
