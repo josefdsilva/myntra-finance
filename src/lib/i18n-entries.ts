@@ -609,6 +609,14 @@ export const ENTRIES = {
     fr: "Le coach n'a pas pu répondre. Réessayez.",
   },
 
+  "journey.stageDoneToast": {
+    en: "Milestone reached: {name}!",
+    pt: "Marco alcançado: {name}!",
+    es: "¡Hito alcanzado: {name}!",
+    de: "Meilenstein erreicht: {name}!",
+    fr: "Étape franchie : {name} !",
+  },
+
   // --- Coach inbox ---
   "coach.inbox.aria": { en: "Coach inbox", pt: "Caixa do coach", es: "Bandeja del coach", de: "Coach-Posteingang", fr: "Boîte du coach" },
   "coach.inbox.title": { en: "Coach", pt: "Coach", es: "Coach", de: "Coach", fr: "Coach" },

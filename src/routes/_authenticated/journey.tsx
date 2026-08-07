@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import { money } from "@/lib/format";
 import { bucketBalancesFor, fetchMovements, type AccountMovement } from "@/lib/movements";
-import { listAchievements } from "@/lib/achievements.functions";
+import { listAchievements, recordAchievement } from "@/lib/achievements.functions";
 import {
   listStages,
   ensureJourneySeed,
@@ -103,6 +103,7 @@ function JourneyPage() {
   const reorderFn = useServerFn(setStageOrder);
   const draftFn = useServerFn(draftJourney);
   const listAchFn = useServerFn(listAchievements);
+  const recordFn = useServerFn(recordAchievement);
 
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],
@@ -119,6 +120,7 @@ function JourneyPage() {
 
   // Seed the default spine the first time, then reload.
   const seededRef = useRef(false);
+  const recordedStagesRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!householdId || seededRef.current) return;
     if (stagesQ.data && stagesQ.data.length === 0) {
@@ -293,6 +295,37 @@ function JourneyPage() {
   }, [stagesQ.data, metrics, metricsData, t]);
 
   const medals = achievements ?? [];
+
+  // Persist a durable medal the first time a spine stage is complete, and
+  // celebrate once. Idempotent server-side; deduped by template so re-personalizing
+  // doesn't mint a second medal for the same milestone.
+  useEffect(() => {
+    if (!householdId || !evaluated) return;
+    for (const s of evaluated.spineNodes) {
+      if (s.status !== "done") continue;
+      const key = s.template_key ?? s.id;
+      if (recordedStagesRef.current.has(key)) continue;
+      recordedStagesRef.current.add(key);
+      recordFn({
+        data: {
+          household_id: householdId,
+          kind: "stage_complete",
+          dedupe_key: `stage_complete:${key}`,
+          title: s.displayTitle,
+          ref_type: "stage",
+          ref_id: s.id,
+        },
+      })
+        .then((r) => {
+          if (r?.created) {
+            toast.success(t("journey.stageDoneToast", { name: s.displayTitle }));
+            qc.invalidateQueries({ queryKey: ["achievements", householdId] });
+          }
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [evaluated, householdId]);
   const [editing, setEditing] = useState(false);
   const [dialog, setDialog] = useState<{ mode: "add" | "edit"; stage?: JourneyStage } | null>(null);
 
