@@ -14,6 +14,14 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "categorySelect.create": {
+    en: "New category…",
+    pt: "Nova categoria…",
+    es: "Nueva categoría…",
+    de: "Neue Kategorie…",
+    fr: "Nouvelle catégorie…",
+  },
+
   // --- AI transparency (EU AI Act, Art. 50) ---
   "ai.badge.label": { en: "AI", pt: "IA", es: "IA", de: "KI", fr: "IA" },
   "ai.aria.label": {

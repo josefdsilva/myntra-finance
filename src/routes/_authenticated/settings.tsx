@@ -55,6 +55,7 @@ import { DangerZone } from "@/components/danger-zone";
 import { StatementImportButton } from "@/components/statement-import-flow";
 import { LanguageSettings } from "@/components/language-settings";
 import { CategoryManager } from "@/components/category-manager";
+import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
@@ -891,18 +892,13 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategorySelect
+            householdId={householdId}
+            value={category}
+            onChange={setCategory}
+            fallback={categoryOptions}
+          />
+
           <Input
             inputMode="decimal"
             placeholder="0.00"
@@ -1090,7 +1086,6 @@ export function IncomesSection({
     qc.invalidateQueries({ queryKey: ["allocations"] });
   }
   async function remove(id: string) {
-
     await del({ data: { id } });
     refetch();
     invalidateHouseholdData(qc);
@@ -1240,7 +1235,6 @@ export function FixedExpensesSection({
     if (categoryOptions.length && !categoryOptions.includes(category)) {
       applyCategory(categoryOptions[0]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryOptions, category]);
 
   async function add() {
@@ -1355,24 +1349,14 @@ export function FixedExpensesSection({
               <div className="min-w-0">
                 <p className="truncate">{r.label}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                  <Select
+                  <CategorySelect
+                    householdId={householdId}
                     value={r.category ?? categoryOptions[0]}
-                    onValueChange={(v) => setRowCategory(r, v)}
-                  >
-                    <SelectTrigger
-                      className="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
-                      aria-label={t("categoryMgr.title")}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoryOptions.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(v) => setRowCategory(r, v)}
+                    fallback={categoryOptions}
+                    triggerClassName="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                    ariaLabel={t("categoryMgr.title")}
+                  />
 
                   <Select
                     value={resolveIntent(r)}
@@ -1419,18 +1403,13 @@ export function FixedExpensesSection({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
-          <Select value={category} onValueChange={applyCategory}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategorySelect
+            householdId={householdId}
+            value={category}
+            onChange={applyCategory}
+            fallback={categoryOptions}
+          />
+
           <Select value={intent} onValueChange={(v) => setIntent(v as IntentLevel)}>
             <SelectTrigger aria-label={t("intent.label")}>
               <SelectValue />

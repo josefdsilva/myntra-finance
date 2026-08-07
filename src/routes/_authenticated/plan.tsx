@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import { money } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
+import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
 import {
   INTENT_LEVELS,
@@ -854,24 +855,15 @@ export function PlanPanel({
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div>
                       <Label className="text-xs">{t("plan.expenseCategory")}</Label>
-                      <Select
+                      <CategorySelect
+                        householdId={householdId}
                         value={expCategory}
-                        onValueChange={(v) => {
+                        onChange={(v) => {
                           setExpCategory(v);
                           setExpIntent(defaultIntentForCategory(v));
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {catOptions.map((c) => (
-                            <SelectItem key={c} value={c}>
-                              {c}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        fallback={catOptions}
+                      />
                     </div>
                     {resolveRow?.direction !== "income" && (
                       <div>

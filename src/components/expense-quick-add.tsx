@@ -42,6 +42,7 @@ function bufferToBase64(buf: ArrayBuffer): string {
 }
 
 import { useCategoryNames } from "@/hooks/use-categories";
+import { CategorySelect } from "@/components/category-select";
 import { LabelsInput } from "@/components/labels-input";
 import { useRecentLabels } from "@/hooks/use-labels";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
@@ -180,9 +181,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     const arr = Array.from(list ?? []);
     setFiles(arr);
     // Auto-read the first image OR PDF invoice; the parser handles both.
-    const readable = arr.find(
-      (f) => f.type.startsWith("image/") || f.type === "application/pdf",
-    );
+    const readable = arr.find((f) => f.type.startsWith("image/") || f.type === "application/pdf");
     if (!readable) return;
     setReading(true);
     try {
@@ -322,18 +321,12 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           </div>
           <div>
             <Label>{t("expQuick.categoryLabel")}</Label>
-            <Select value={category} onValueChange={applyCategory}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategorySelect
+              householdId={householdId}
+              value={category}
+              onChange={applyCategory}
+              fallback={DEFAULT_CATEGORIES}
+            />
           </div>
           {kind === "expense" && (
             <div>
@@ -426,7 +419,11 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
                 disabled={reading}
                 onClick={() => fileRef.current?.click()}
               >
-                {reading ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}{" "}
+                {reading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Paperclip className="size-4" />
+                )}{" "}
                 {t("inv.attach")}
               </Button>
               {reading ? (
@@ -671,9 +668,8 @@ function ParsedReview({
   loading: boolean;
   householdId: string;
 }) {
-  const { names: hhCats } = useCategoryNames(householdId);
-  const catOptions = hhCats.length ? hhCats : DEFAULT_CATEGORIES;
   const t = useT();
+
   function update(idx: number, patch: Partial<Parsed>) {
     setItems(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
@@ -704,18 +700,14 @@ function ParsedReview({
               value={it.amount}
               onChange={(e) => update(i, { amount: parseFloat(e.target.value) || 0 })}
             />
-            <Select value={it.category} onValueChange={(v) => update(i, { category: v })}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {catOptions.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategorySelect
+              householdId={householdId}
+              value={it.category}
+              onChange={(v) => update(i, { category: v })}
+              fallback={DEFAULT_CATEGORIES}
+              className="col-span-3"
+            />
+
             <Input
               className="col-span-3"
               placeholder="merchant"
@@ -769,8 +761,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const isImg =
-      f.type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
+    const isImg = f.type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
     if (!isImg) return toast.error(t("expQuick.pickImage"));
     // Only guard against absurdly huge files; normal iPhone photos (incl. HEIC)
     // are downscaled + re-encoded to JPEG below rather than rejected.
