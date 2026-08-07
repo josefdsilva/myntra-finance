@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateObject } from "ai";
+import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "@/lib/ai-gateway.server";
@@ -31,6 +31,23 @@ const Schema = z.object({
     }),
   ),
 });
+
+/** Tolerant JSON extraction for the text fallback (models sometimes wrap JSON in prose). */
+function extractJson(text: string): { note?: string; proposals?: StageProposal[] } | null {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) {
+      try {
+        return JSON.parse(m[0]);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
 
 const SYSTEM = `You are bynku's financial coach. You help a household shape their "money journey" — an ordered roadmap of milestone stages.
 
@@ -144,15 +161,31 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
     try {
       const apiKey = requireLovableApiKey();
       const gateway = createLovableAiGatewayProvider(apiKey);
-      const res = await generateObject({
-        model: gateway(MODEL),
-        abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-        schema: Schema,
-        system: SYSTEM,
-        prompt,
-      });
-      const obj = res.object as { note?: string; proposals?: StageProposal[] };
-      return { ok: true, note: obj.note ?? "", proposals: (obj.proposals ?? []).slice(0, 4) };
+      try {
+        const res = await generateObject({
+          model: gateway(MODEL),
+          abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+          schema: Schema,
+          system: SYSTEM,
+          prompt,
+        });
+        const obj = res.object as { note?: string; proposals?: StageProposal[] };
+        return { ok: true, note: obj.note ?? "", proposals: (obj.proposals ?? []).slice(0, 4) };
+      } catch {
+        // Some models/gateways reject structured output; ask again for plain JSON
+        // and parse tolerantly before giving up.
+        const res = await generateText({
+          model: gateway(MODEL),
+          abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+          system: `${SYSTEM}\n\nRespond ONLY with a JSON object of the form {"note": string, "proposals": [{"title": string, "objective": string, "optional": boolean, "rationale": string}]}. No prose, no code fences.`,
+          prompt,
+        });
+        const obj = extractJson(res.text);
+        if (obj && Array.isArray(obj.proposals)) {
+          return { ok: true, note: obj.note ?? "", proposals: obj.proposals.slice(0, 4) };
+        }
+        return { ok: false, note: "", proposals: [] as StageProposal[] };
+      }
     } catch {
       return { ok: false, note: "", proposals: [] as StageProposal[] };
     }

@@ -35,7 +35,12 @@ export function JourneyCoach({
     setNote("");
     try {
       const res = await proposeFn({ data: { household_id: householdId, request } });
-      if (!res.ok && res.proposals.length === 0) toast.error(t("journey.coach.failed"));
+      if (!res.ok) {
+        // Real failure: show the error only, and leave proposals null so the
+        // reassuring "nothing to suggest" message doesn't also appear.
+        toast.error(t("journey.coach.failed"));
+        return;
+      }
       setNote(res.note);
       setProposals(res.proposals);
     } catch {
