@@ -130,18 +130,19 @@ function Dashboard() {
     enabled: !!householdId,
     queryKey: ["dashboard-real-alloc", householdId, ...cycleKeyPart(hh?.household)],
     queryFn: async () => {
-      // Scope to the payday cycle, not the calendar month — a cycle can straddle
-      // two months, so counting only "this month" understates what was set aside.
+      // Scope to the payday cycle, not the calendar month. Allocations are keyed
+      // by the cycle-start date, so filter confirmed allocations by confirmed_at
+      // within the cycle window (matching the projects page) rather than a
+      // first-of-month period key, which silently dropped top-ups on cycles that
+      // don't start on the 1st.
       const bounds = await fetchCycleBounds(supabase, householdId!, hh?.household);
-      const period = `${bounds.start.getFullYear()}-${String(
-        bounds.start.getMonth() + 1,
-      ).padStart(2, "0")}-01`;
       const [{ data: confs }, { data: moves }] = await Promise.all([
         supabase
           .from("bucket_allocations")
           .select("amount")
           .eq("household_id", householdId!)
-          .eq("period", period),
+          .gte("confirmed_at", bounds.start.toISOString())
+          .lt("confirmed_at", bounds.end.toISOString()),
         supabase
           .from("account_movements")
           .select("amount, to_type, from_type, reason")
@@ -219,7 +220,10 @@ function Dashboard() {
 
   // Plans claim the unallocated leftover surplus first; whatever they can't cover
   // surfaces as pressure on the real-surplus stat below.
-  const leftover0 = Math.max(0, surplus - realAllocated);
+  // Discretionary money this cycle = recurring surplus + one-off money received
+  // (a windfall funds real allocations, so leaving it out made real surplus look
+  // deeply negative when you set aside more than your recurring surplus).
+  const leftover0 = Math.max(0, surplus + (dashboard?.received ?? 0) - realAllocated);
   const obligation = plannedThisCycle ?? 0;
   const realSurplus = leftover0 - Math.min(obligation, leftover0);
 

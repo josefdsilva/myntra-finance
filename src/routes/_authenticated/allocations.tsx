@@ -129,6 +129,24 @@ function AllocationsPage() {
       return data ?? [];
     },
   });
+  // One-off money received this cycle (non-salary income logged in the window).
+  // It funds real allocations, so real surplus must count it as coming in.
+  const { data: receivedThisCycle } = useQuery({
+    enabled: !!householdId && !!cycleStartIso,
+    queryKey: ["alloc-received", householdId, cycleStartIso],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("expenses")
+        .select("amount")
+        .eq("household_id", householdId!)
+        .eq("kind", "income")
+        .eq("is_salary", false)
+        .gte("occurred_at", cycleStartIso!)
+        .lt("occurred_at", cycleEndIso!);
+      return (data ?? []).reduce((s, r) => s + Number(r.amount), 0);
+    },
+  });
+
   const { data: history } = useQuery({
     enabled: !!householdId,
     queryKey: ["bucket-allocations-history", householdId],
@@ -292,7 +310,10 @@ function AllocationsPage() {
     return s + d;
   }, 0);
   const realAllocated = totalConfirmedThisMonth + movementsNetIntoBuckets;
-  const realSurplus = surplus - realAllocated;
+  // Real surplus counts one-off money received this cycle as coming in — without
+  // it, setting aside more than the recurring surplus (using a windfall) shows a
+  // misleadingly large negative.
+  const realSurplus = surplus + (receivedThisCycle ?? 0) - realAllocated;
 
   // Contributions per project (confirmed allocations + net movements), excluding
   // the initial seed — the compare card adds the initial itself.
