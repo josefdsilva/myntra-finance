@@ -891,18 +891,13 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategorySelect
+            householdId={householdId}
+            value={category}
+            onChange={setCategory}
+            fallback={categoryOptions}
+          />
+
           <Input
             inputMode="decimal"
             placeholder="0.00"
