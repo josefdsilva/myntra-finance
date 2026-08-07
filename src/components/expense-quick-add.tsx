@@ -181,9 +181,7 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
     const arr = Array.from(list ?? []);
     setFiles(arr);
     // Auto-read the first image OR PDF invoice; the parser handles both.
-    const readable = arr.find(
-      (f) => f.type.startsWith("image/") || f.type === "application/pdf",
-    );
+    const readable = arr.find((f) => f.type.startsWith("image/") || f.type === "application/pdf");
     if (!readable) return;
     setReading(true);
     try {
@@ -329,7 +327,6 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
               onChange={applyCategory}
               fallback={DEFAULT_CATEGORIES}
             />
-
           </div>
           {kind === "expense" && (
             <div>
@@ -422,7 +419,11 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
                 disabled={reading}
                 onClick={() => fileRef.current?.click()}
               >
-                {reading ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}{" "}
+                {reading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Paperclip className="size-4" />
+                )}{" "}
                 {t("inv.attach")}
               </Button>
               {reading ? (
@@ -760,8 +761,7 @@ function PhotoForm({ householdId, onAdded }: { householdId: string; onAdded?: ()
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const isImg =
-      f.type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
+    const isImg = f.type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
     if (!isImg) return toast.error(t("expQuick.pickImage"));
     // Only guard against absurdly huge files; normal iPhone photos (incl. HEIC)
     // are downscaled + re-encoded to JPEG below rather than rejected.

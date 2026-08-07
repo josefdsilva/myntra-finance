@@ -1086,7 +1086,6 @@ export function IncomesSection({
     qc.invalidateQueries({ queryKey: ["allocations"] });
   }
   async function remove(id: string) {
-
     await del({ data: { id } });
     refetch();
     invalidateHouseholdData(qc);
@@ -1236,7 +1235,6 @@ export function FixedExpensesSection({
     if (categoryOptions.length && !categoryOptions.includes(category)) {
       applyCategory(categoryOptions[0]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryOptions, category]);
 
   async function add() {
@@ -1359,7 +1357,6 @@ export function FixedExpensesSection({
                     triggerClassName="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
                     ariaLabel={t("categoryMgr.title")}
                   />
-
 
                   <Select
                     value={resolveIntent(r)}

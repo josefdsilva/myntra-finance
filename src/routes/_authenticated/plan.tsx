@@ -864,7 +864,6 @@ export function PlanPanel({
                         }}
                         fallback={catOptions}
                       />
-
                     </div>
                     {resolveRow?.direction !== "income" && (
                       <div>
