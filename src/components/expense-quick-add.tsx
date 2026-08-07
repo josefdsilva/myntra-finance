@@ -42,6 +42,7 @@ function bufferToBase64(buf: ArrayBuffer): string {
 }
 
 import { useCategoryNames } from "@/hooks/use-categories";
+import { CategorySelect } from "@/components/category-select";
 import { LabelsInput } from "@/components/labels-input";
 import { useRecentLabels } from "@/hooks/use-labels";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
