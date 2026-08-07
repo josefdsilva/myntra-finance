@@ -1,7 +1,7 @@
 import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Trophy,
@@ -14,18 +14,43 @@ import {
   Target,
   Award,
   ArrowRight,
+  Pencil,
+  Trash2,
+  Plus,
+  ChevronUp,
+  ChevronDown,
   type LucideIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
 import { pageShellClass } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { money } from "@/lib/format";
 import { bucketBalancesFor, fetchMovements, type AccountMovement } from "@/lib/movements";
 import { listAchievements } from "@/lib/achievements.functions";
+import {
+  listStages,
+  ensureJourneySeed,
+  createStage,
+  updateStage,
+  deleteStage,
+  setStageOrder,
+  type JourneyStage,
+} from "@/lib/journey.functions";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, type MessageKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/journey")({
   head: () =>
@@ -49,10 +74,7 @@ type Bucket = {
   initial_balance: number | string;
 };
 
-type StageKey = "starter" | "debt" | "net3" | "net6" | "invest";
-type StageStatus = "done" | "active" | "locked";
-
-const STAGE_ICON: Record<StageKey, LucideIcon> = {
+const TEMPLATE_ICON: Record<string, LucideIcon> = {
   starter: Flag,
   debt: CreditCard,
   net3: ShieldCheck,
@@ -60,10 +82,20 @@ const STAGE_ICON: Record<StageKey, LucideIcon> = {
   invest: TrendingUp,
 };
 
+type Status = "done" | "active" | "locked";
+
 function JourneyPage() {
   const t = useT();
+  const qc = useQueryClient();
   const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
+
+  const listStagesFn = useServerFn(listStages);
+  const seedFn = useServerFn(ensureJourneySeed);
+  const createFn = useServerFn(createStage);
+  const updateFn = useServerFn(updateStage);
+  const deleteFn = useServerFn(deleteStage);
+  const reorderFn = useServerFn(setStageOrder);
   const listAchFn = useServerFn(listAchievements);
 
   const { data: hh } = useQuery({
@@ -72,7 +104,26 @@ function JourneyPage() {
   });
   const householdId = hh?.household?.id;
 
-  const { data } = useQuery({
+  const stagesQ = useQuery({
+    enabled: !!householdId,
+    queryKey: ["journey-stages", householdId],
+    queryFn: () => listStagesFn({ data: { household_id: householdId! } }),
+  });
+
+  // Seed the default spine the first time, then reload.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!householdId || seededRef.current) return;
+    if (stagesQ.data && stagesQ.data.length === 0) {
+      seededRef.current = true;
+      seedFn({ data: { household_id: householdId } })
+        .then(() => qc.invalidateQueries({ queryKey: ["journey-stages", householdId] }))
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [householdId, stagesQ.data]);
+
+  const { data: metricsData } = useQuery({
     enabled: !!householdId,
     queryKey: ["journey-data", householdId],
     queryFn: async () => {
@@ -108,65 +159,125 @@ function JourneyPage() {
     queryFn: () => listAchFn({ data: { household_id: householdId! } }),
   });
 
-  const derived = useMemo(() => {
-    if (!data) return null;
-    const essentials = Math.max(1, data.essentials);
+  const metrics = useMemo(() => {
+    if (!metricsData) return null;
+    const essentials = Math.max(1, metricsData.essentials);
     let emergencyBal = 0;
     let savingsBal = 0;
     let investBal = 0;
-    for (const b of data.buckets) {
-      const bal = data.balances[b.id] ?? 0;
+    for (const b of metricsData.buckets) {
+      const bal = metricsData.balances[b.id] ?? 0;
       if (b.kind === "investment") investBal += bal;
       else if (b.kind === "emergency") emergencyBal += bal;
       else savingsBal += bal;
     }
-    const hasEmergency = data.buckets.some((b) => b.kind === "emergency");
+    const hasEmergency = metricsData.buckets.some((b) => b.kind === "emergency");
     const liquidReserve = hasEmergency ? emergencyBal : emergencyBal + savingsBal;
-    const emergencyMonths = liquidReserve / essentials;
-    const dtiPct = data.income > 0 ? (data.debtMonthly / data.income) * 100 : 0;
-    const invested = investBal;
+    return {
+      emergency_months: liquidReserve / essentials,
+      dti_pct: metricsData.income > 0 ? (metricsData.debtMonthly / metricsData.income) * 100 : 0,
+      invested_amount: investBal,
+    } as Record<string, number>;
+  }, [metricsData]);
 
-    const specs: Array<{ key: StageKey; met: boolean; progress: number; value: string | null }> = [
-      { key: "starter", met: emergencyMonths >= 1, progress: emergencyMonths / 1, value: t("journey.months", { n: emergencyMonths.toFixed(1) }) },
-      {
-        key: "debt",
-        met: data.debtMonthly === 0 || dtiPct <= 15,
-        progress: data.debtMonthly === 0 ? 1 : Math.min(1, 15 / Math.max(dtiPct, 0.01)),
-        value: data.debtMonthly === 0 ? null : `${Math.round(dtiPct)}%`,
-      },
-      { key: "net3", met: emergencyMonths >= 3, progress: emergencyMonths / 3, value: t("journey.months", { n: emergencyMonths.toFixed(1) }) },
-      { key: "net6", met: emergencyMonths >= 6, progress: emergencyMonths / 6, value: t("journey.months", { n: emergencyMonths.toFixed(1) }) },
-      { key: "invest", met: invested > 0, progress: invested > 0 ? 1 : 0, value: money(invested) },
-    ];
-    const activeIndex = specs.findIndex((s) => !s.met);
-    const stages = specs.map((s, i) => ({
+  // Evaluate each persisted stage against the live metrics.
+  const evaluated = useMemo(() => {
+    const stages = stagesQ.data ?? [];
+    if (!stages.length) return null;
+    const m = metrics ?? { emergency_months: 0, dti_pct: 0, invested_amount: 0 };
+    const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+    const fmt = (key: string, cur: number) =>
+      key === "dti_pct"
+        ? `${Math.round(cur)}%`
+        : key === "invested_amount" || key === "net_worth"
+          ? money(cur)
+          : t("journey.months", { n: cur.toFixed(1) });
+
+    const evalOne = (s: JourneyStage): { complete: boolean; progress: number; value: string | null } => {
+      if (s.objective_type === "custom") {
+        return { complete: s.status === "done", progress: s.status === "done" ? 1 : 0, value: null };
+      }
+      if (s.objective_type === "project") {
+        const id = String((s.objective_config as { bucket_id?: string }).bucket_id ?? "");
+        const b = metricsData?.buckets.find((x) => x.id === id);
+        const bal = metricsData?.balances[id] ?? 0;
+        const target = Number(b?.target_value ?? 0);
+        if (!b || target <= 0) return { complete: false, progress: 0, value: null };
+        return {
+          complete: bal >= target - 0.01,
+          progress: clamp01(bal / target),
+          value: `${money(bal)} / ${money(target)}`,
+        };
+      }
+      const cfg = s.objective_config as { key?: string; op?: string; value?: number };
+      const key = String(cfg.key ?? "");
+      const op = cfg.op === "<=" ? "<=" : ">=";
+      const target = Number(cfg.value ?? 0);
+      const cur = m[key] ?? 0;
+      const complete = op === "<=" ? cur <= target : cur >= target;
+      const progress = op === "<=" ? (complete ? 1 : clamp01(target / Math.max(cur, 0.0001))) : clamp01(cur / Math.max(target, 0.0001));
+      return { complete, progress, value: fmt(key, cur) };
+    };
+
+    const withEval = stages.map((s) => {
+      const e = evalOne(s);
+      const displayTitle =
+        s.title ?? (s.template_key ? t(`journey.stage.${s.template_key}.title` as MessageKey) : "");
+      const displayObjective =
+        s.objective ?? (s.template_key ? t(`journey.stage.${s.template_key}.obj` as MessageKey) : "");
+      return { ...s, ...e, displayTitle, displayObjective };
+    });
+
+    const spine = withEval.filter((s) => !s.optional);
+    const side = withEval.filter((s) => s.optional);
+    const activeIndex = spine.findIndex((s) => !s.complete);
+    const spineNodes = spine.map((s, i) => ({
       ...s,
-      progress: Math.max(0, Math.min(1, s.progress)),
-      status: (activeIndex === -1 || i < activeIndex ? "done" : i === activeIndex ? "active" : "locked") as StageStatus,
+      status: (activeIndex === -1 || i < activeIndex ? "done" : i === activeIndex ? "active" : "locked") as Status,
     }));
-    const doneCount = stages.filter((s) => s.status === "done").length;
-    const activeKey: StageKey = activeIndex === -1 ? "invest" : specs[activeIndex].key;
+    const doneCount = spineNodes.filter((s) => s.status === "done").length;
+    const activeStage = spineNodes.find((s) => s.status === "active") ?? null;
+    const roleKey = activeStage?.template_key ?? "custom";
 
-    const sideQuests = data.buckets
+    // Auto side-quests from goal projects (not yet linked to a stage).
+    const autoQuests = (metricsData?.buckets ?? [])
       .filter((b) => b.target_type === "goal_by_date" && Number(b.target_value) > 0)
       .map((b) => {
-        const bal = data.balances[b.id] ?? 0;
+        const bal = metricsData?.balances[b.id] ?? 0;
         const target = Number(b.target_value);
-        return {
-          id: b.id,
-          name: b.name,
-          color: b.color,
-          balance: bal,
-          target,
-          pct: Math.min(100, Math.round((bal / target) * 100)),
-          reached: bal >= target - 0.01,
-        };
+        return { id: b.id, name: b.name, balance: bal, target, pct: Math.min(100, Math.round((bal / target) * 100)), reached: bal >= target - 0.01 };
       });
 
-    return { stages, doneCount, activeKey, sideQuests };
-  }, [data, t]);
+    return { all: withEval, spineNodes, side, doneCount, roleKey, autoQuests };
+  }, [stagesQ.data, metrics, metricsData, t]);
 
   const medals = achievements ?? [];
+  const [editing, setEditing] = useState(false);
+  const [dialog, setDialog] = useState<{ mode: "add" | "edit"; stage?: JourneyStage } | null>(null);
+
+  function refresh() {
+    qc.invalidateQueries({ queryKey: ["journey-stages", householdId] });
+  }
+  async function move(index: number, dir: -1 | 1) {
+    if (!householdId || !evaluated) return;
+    const arr = [...evaluated.all];
+    const j = index + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[index], arr[j]] = [arr[j], arr[index]];
+    await reorderFn({ data: { household_id: householdId, ids: arr.map((s) => s.id) } });
+    refresh();
+  }
+  async function toggleDone(s: JourneyStage) {
+    await updateFn({ data: { id: s.id, status: s.status === "done" ? "active" : "done" } });
+    refresh();
+  }
+  async function remove(s: JourneyStage) {
+    if (!window.confirm(t("journey.deleteConfirm"))) return;
+    await deleteFn({ data: { id: s.id } });
+    refresh();
+  }
+
+  const loading = !stagesQ.data || !evaluated;
 
   return (
     <div className={pageShellClass("3xl")}>
@@ -175,36 +286,100 @@ function JourneyPage() {
           <p className="text-sm text-muted-foreground">{t("journey.subtitle")}</p>
           <h1 className="font-display text-3xl md:text-4xl">{t("journey.heading")}</h1>
         </div>
-        {derived && (
-          <div className="text-right">
-            <p className="text-lg font-medium">
-              {t("journey.level", { n: derived.doneCount })} ·{" "}
-              <span className="text-primary">{t(`journey.role.${derived.activeKey}`)}</span>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t("journey.progress", { done: derived.doneCount, total: 5 })}
-            </p>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {evaluated && (
+            <div className="text-right">
+              <p className="text-lg font-medium">
+                {t("journey.level", { n: evaluated.doneCount })} ·{" "}
+                <span className="text-primary">{t(`journey.role.${evaluated.roleKey}` as MessageKey)}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("journey.progress", { done: evaluated.doneCount, total: evaluated.spineNodes.length })}
+              </p>
+            </div>
+          )}
+          <Button variant={editing ? "default" : "outline"} size="sm" onClick={() => setEditing((e) => !e)}>
+            <Pencil className="size-4" /> {editing ? t("journey.doneLabel") : t("journey.edit")}
+          </Button>
+        </div>
       </header>
 
-      {!derived ? (
+      {loading ? (
         <p className="text-sm text-muted-foreground">{t("journey.loading")}</p>
+      ) : editing ? (
+        /* ---- Edit mode: flat, reorderable list ---- */
+        <section className="space-y-2">
+          <p className="text-xs text-muted-foreground">{t("journey.editHint")}</p>
+          <ul className="divide-y rounded-lg border">
+            {evaluated.all.map((s, i) => (
+              <li key={s.id} className="flex items-center gap-2 px-3 py-2.5">
+                <div className="flex flex-col">
+                  <button
+                    type="button"
+                    aria-label={t("journey.moveUp")}
+                    disabled={i === 0}
+                    onClick={() => move(i, -1)}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  >
+                    <ChevronUp className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("journey.moveDown")}
+                    disabled={i === evaluated.all.length - 1}
+                    onClick={() => move(i, 1)}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  >
+                    <ChevronDown className="size-4" />
+                  </button>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium">{s.displayTitle}</span>
+                    {s.optional && (
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {t("journey.sideQuestBadge")}
+                      </span>
+                    )}
+                    {s.complete && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
+                  </div>
+                  {s.displayObjective && (
+                    <p className="truncate text-xs text-muted-foreground">{s.displayObjective}</p>
+                  )}
+                </div>
+                {s.objective_type === "custom" && (
+                  <Button variant="ghost" size="sm" onClick={() => toggleDone(s)}>
+                    <Check className={cn("size-4", s.status === "done" && "text-emerald-600")} />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" aria-label={t("journey.editStage")} onClick={() => setDialog({ mode: "edit", stage: s })}>
+                  <Pencil className="size-4" />
+                </Button>
+                <Button variant="ghost" size="icon" aria-label={t("journey.deleteStage")} onClick={() => remove(s)}>
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+          <Button variant="outline" size="sm" onClick={() => setDialog({ mode: "add" })}>
+            <Plus className="size-4" /> {t("journey.addStage")}
+          </Button>
+        </section>
       ) : (
+        /* ---- Read mode: the map ---- */
         <>
           <div className="flex flex-col">
-            {derived.stages.map((s, i) => {
-              const Icon = STAGE_ICON[s.key];
-              const last = i === derived.stages.length - 1;
-              const lineDone = s.status === "done";
+            {evaluated.spineNodes.map((s, i) => {
+              const Icon = s.template_key ? TEMPLATE_ICON[s.template_key] ?? Target : Target;
+              const last = i === evaluated.spineNodes.length - 1;
               return (
-                <div key={s.key} className="grid grid-cols-[40px_1fr] gap-3">
+                <div key={s.id} className="grid grid-cols-[40px_1fr] gap-3">
                   <div className="relative">
                     {!last && (
                       <span
                         className={cn(
                           "absolute left-[18px] top-0 -bottom-1 w-0.5",
-                          lineDone ? "bg-emerald-500/70" : "bg-border",
+                          s.status === "done" ? "bg-emerald-500/70" : "bg-border",
                         )}
                       />
                     )}
@@ -230,13 +405,13 @@ function JourneyPage() {
                     {s.status === "active" ? (
                       <div className="rounded-xl border-2 border-primary/40 bg-primary/5 px-3.5 py-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-primary">{t(`journey.stage.${s.key}.title`)}</span>
+                          <span className="font-medium text-primary">{s.displayTitle}</span>
                           <span className="shrink-0 rounded-full bg-card px-2 py-0.5 text-[11px] font-medium text-primary">
                             {t("journey.here")}
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-primary/90">
-                          {t(`journey.stage.${s.key}.obj`)}
+                          {s.displayObjective}
                           {s.value ? ` · ${s.value}` : ""}
                         </p>
                         <div className="mt-2 h-2 overflow-hidden rounded-full bg-card">
@@ -246,18 +421,13 @@ function JourneyPage() {
                     ) : (
                       <div>
                         <div className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "font-medium",
-                              s.status === "done" ? "text-foreground" : "text-muted-foreground",
-                            )}
-                          >
-                            {t(`journey.stage.${s.key}.title`)}
+                          <span className={cn("font-medium", s.status === "done" ? "text-foreground" : "text-muted-foreground")}>
+                            {s.displayTitle}
                           </span>
                           {s.status === "done" && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {s.status === "done" ? t("journey.doneLabel") : t(`journey.stage.${s.key}.obj`)}
+                          {s.status === "done" ? t("journey.doneLabel") : s.displayObjective}
                         </p>
                       </div>
                     )}
@@ -267,13 +437,25 @@ function JourneyPage() {
             })}
           </div>
 
-          {derived.sideQuests.length > 0 && (
+          {(evaluated.side.length > 0 || evaluated.autoQuests.length > 0) && (
             <section className="space-y-2">
               <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {t("journey.sideQuests")}
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
-                {derived.sideQuests.map((q) => (
+                {evaluated.side.map((s) => (
+                  <div key={s.id} className="rounded-lg border border-dashed border-border bg-card p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Target className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate font-medium">{s.displayTitle}</span>
+                        {s.complete && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
+                      </span>
+                    </div>
+                    {s.displayObjective && <p className="mt-1 text-xs text-muted-foreground">{s.displayObjective}</p>}
+                  </div>
+                ))}
+                {evaluated.autoQuests.map((q) => (
                   <div key={q.id} className="rounded-lg border border-dashed border-border bg-card p-3">
                     <div className="flex items-center justify-between gap-2">
                       <span className="flex min-w-0 items-center gap-2">
@@ -284,10 +466,7 @@ function JourneyPage() {
                       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{q.pct}%</span>
                     </div>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn("h-full", q.reached ? "bg-emerald-500" : "bg-primary")}
-                        style={{ width: `${q.pct}%` }}
-                      />
+                      <div className={cn("h-full", q.reached ? "bg-emerald-500" : "bg-primary")} style={{ width: `${q.pct}%` }} />
                     </div>
                     <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">
                       {money(q.balance)} / {money(q.target)}
@@ -299,19 +478,17 @@ function JourneyPage() {
           )}
 
           <section className="space-y-2 border-t pt-4">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t("journey.medals")}
-            </h2>
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("journey.medals")}</h2>
             {medals.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("journey.noMedals")}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {medals.map((m) => (
+                {medals.map((mm) => (
                   <span
-                    key={m.id}
+                    key={mm.id}
                     className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-700 dark:text-emerald-300"
                   >
-                    <Award className="size-3.5" /> {m.title}
+                    <Award className="size-3.5" /> {mm.title}
                   </span>
                 ))}
               </div>
@@ -327,6 +504,95 @@ function JourneyPage() {
           </div>
         </>
       )}
+
+      {dialog && householdId && (
+        <StageDialog
+          mode={dialog.mode}
+          stage={dialog.stage}
+          onClose={() => setDialog(null)}
+          onSaved={() => {
+            setDialog(null);
+            refresh();
+          }}
+          onCreate={(vals) => createFn({ data: { household_id: householdId, ...vals } })}
+          onUpdate={(id, vals) => updateFn({ data: { id, ...vals } })}
+        />
+      )}
     </div>
+  );
+}
+
+function StageDialog({
+  mode,
+  stage,
+  onClose,
+  onSaved,
+  onCreate,
+  onUpdate,
+}: {
+  mode: "add" | "edit";
+  stage?: JourneyStage;
+  onClose: () => void;
+  onSaved: () => void;
+  onCreate: (vals: { title: string; objective: string | null; optional: boolean }) => Promise<unknown>;
+  onUpdate: (id: string, vals: { title: string | null; objective: string | null; optional: boolean }) => Promise<unknown>;
+}) {
+  const t = useT();
+  const [title, setTitle] = useState(stage?.title ?? "");
+  const [objective, setObjective] = useState(stage?.objective ?? "");
+  const [optional, setOptional] = useState(stage?.optional ?? false);
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    const trimmed = title.trim();
+    if (!trimmed) {
+      toast.error(t("journey.needTitle"));
+      return;
+    }
+    setSaving(true);
+    try {
+      if (mode === "add") {
+        await onCreate({ title: trimmed, objective: objective.trim() || null, optional });
+      } else if (stage) {
+        await onUpdate(stage.id, { title: trimmed, objective: objective.trim() || null, optional });
+      }
+      onSaved();
+    } catch {
+      toast.error(t("journey.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{mode === "add" ? t("journey.newStage") : t("journey.editStage")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("journey.field.title")}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+          </div>
+          <div>
+            <Label>{t("journey.field.objective")}</Label>
+            <Textarea value={objective} onChange={(e) => setObjective(e.target.value)} rows={2} />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={optional} onChange={(e) => setOptional(e.target.checked)} className="size-4" />
+            {t("journey.field.optional")}
+          </label>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button onClick={save} disabled={saving}>
+            {t("journey.save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

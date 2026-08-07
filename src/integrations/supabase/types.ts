@@ -662,6 +662,65 @@ export type Database = {
           },
         ]
       }
+      journey_stages: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          objective: string | null
+          objective_config: Json
+          objective_type: string
+          optional: boolean
+          reached_at: string | null
+          sort_order: number
+          status: string
+          template_key: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          household_id: string
+          id?: string
+          objective?: string | null
+          objective_config?: Json
+          objective_type?: string
+          optional?: boolean
+          reached_at?: string | null
+          sort_order?: number
+          status?: string
+          template_key?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          objective?: string | null
+          objective_config?: Json
+          objective_type?: string
+          optional?: boolean
+          reached_at?: string | null
+          sort_order?: number
+          status?: string
+          template_key?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_stages_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_messages: {
         Row: {
           action_label: string | null
