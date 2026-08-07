@@ -1357,6 +1357,7 @@ export function FixedExpensesSection({
                     onChange={(v) => setRowCategory(r, v)}
                     fallback={categoryOptions}
                     triggerClassName="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                    ariaLabel={t("categoryMgr.title")}
                   />
 
 

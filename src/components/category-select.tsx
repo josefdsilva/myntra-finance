@@ -28,6 +28,7 @@ export function CategorySelect({
   fallback = [],
   className,
   triggerClassName,
+  ariaLabel,
   disabled,
 }: {
   householdId?: string;
@@ -37,6 +38,7 @@ export function CategorySelect({
   fallback?: string[];
   className?: string;
   triggerClassName?: string;
+  ariaLabel?: string;
   disabled?: boolean;
 }) {
   const t = useT();
@@ -127,7 +129,7 @@ export function CategorySelect({
         onChange(v);
       }}
     >
-      <SelectTrigger className={triggerClassName ?? className}>
+      <SelectTrigger className={triggerClassName ?? className} aria-label={ariaLabel}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
