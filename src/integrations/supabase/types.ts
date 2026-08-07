@@ -83,6 +83,56 @@ export type Database = {
           },
         ]
       }
+      achievements: {
+        Row: {
+          created_at: string
+          dedupe_key: string
+          detail: string | null
+          earned_at: string
+          household_id: string
+          id: string
+          kind: string
+          meta: Json
+          ref_id: string | null
+          ref_type: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key: string
+          detail?: string | null
+          earned_at?: string
+          household_id: string
+          id?: string
+          kind: string
+          meta?: Json
+          ref_id?: string | null
+          ref_type?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string
+          detail?: string | null
+          earned_at?: string
+          household_id?: string
+          id?: string
+          kind?: string
+          meta?: Json
+          ref_id?: string | null
+          ref_type?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_extraction_cache: {
         Row: {
           created_at: string
@@ -605,115 +655,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "coach_conversations_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      achievements: {
-        Row: {
-          created_at: string
-          dedupe_key: string
-          detail: string | null
-          earned_at: string
-          household_id: string
-          id: string
-          kind: string
-          meta: Json
-          ref_id: string | null
-          ref_type: string | null
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          dedupe_key: string
-          detail?: string | null
-          earned_at?: string
-          household_id: string
-          id?: string
-          kind: string
-          meta?: Json
-          ref_id?: string | null
-          ref_type?: string | null
-          title: string
-        }
-        Update: {
-          created_at?: string
-          dedupe_key?: string
-          detail?: string | null
-          earned_at?: string
-          household_id?: string
-          id?: string
-          kind?: string
-          meta?: Json
-          ref_id?: string | null
-          ref_type?: string | null
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "achievements_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      journey_stages: {
-        Row: {
-          created_at: string
-          created_by: string
-          household_id: string
-          id: string
-          objective: string | null
-          objective_config: Json
-          objective_type: string
-          optional: boolean
-          reached_at: string | null
-          sort_order: number
-          status: string
-          template_key: string | null
-          title: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string
-          household_id: string
-          id?: string
-          objective?: string | null
-          objective_config?: Json
-          objective_type?: string
-          optional?: boolean
-          reached_at?: string | null
-          sort_order?: number
-          status?: string
-          template_key?: string | null
-          title?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          household_id?: string
-          id?: string
-          objective?: string | null
-          objective_config?: Json
-          objective_type?: string
-          optional?: boolean
-          reached_at?: string | null
-          sort_order?: number
-          status?: string
-          template_key?: string | null
-          title?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "journey_stages_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
@@ -1597,6 +1538,65 @@ export type Database = {
             columns: ["settlement_id"]
             isOneToOne: false
             referencedRelation: "fixed_expense_settlements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_stages: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          objective: string | null
+          objective_config: Json
+          objective_type: string
+          optional: boolean
+          reached_at: string | null
+          sort_order: number
+          status: string
+          template_key: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          household_id: string
+          id?: string
+          objective?: string | null
+          objective_config?: Json
+          objective_type?: string
+          optional?: boolean
+          reached_at?: string | null
+          sort_order?: number
+          status?: string
+          template_key?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          objective?: string | null
+          objective_config?: Json
+          objective_type?: string
+          optional?: boolean
+          reached_at?: string | null
+          sort_order?: number
+          status?: string
+          template_key?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_stages_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
         ]
