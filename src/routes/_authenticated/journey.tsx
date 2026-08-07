@@ -201,8 +201,11 @@ function JourneyPage() {
   // Evaluate each persisted stage against the live metrics.
   const evaluated = useMemo(() => {
     const stages = stagesQ.data ?? [];
-    if (!stages.length) return null;
-    const m = metrics ?? { emergency_months: 0, dti_pct: 0, invested_amount: 0 };
+    // Require real metrics before evaluating — otherwise placeholder zeros make
+    // "under 15%" trivially true and briefly mark the debt stage complete, which
+    // the achievement recorder would lock in as a bogus medal.
+    if (!stages.length || !metrics) return null;
+    const m = metrics;
     const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
     const fmt = (key: string, cur: number) =>
       key === "dti_pct"
