@@ -9,7 +9,6 @@ import {
   CreditCard,
   ShieldCheck,
   TrendingUp,
-  Lock,
   Check,
   Target,
   Award,
@@ -103,6 +102,7 @@ function JourneyPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
+  const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
   const stagesQ = useQuery({
     enabled: !!householdId,
@@ -161,7 +161,9 @@ function JourneyPage() {
 
   const metrics = useMemo(() => {
     if (!metricsData) return null;
-    const essentials = Math.max(1, metricsData.essentials);
+    // Essentials denominator = baseline monthly outgoings, matching the coach /
+    // health-score "months of essential costs" (not just fixed + debt).
+    const essentials = Math.max(1, baseline || metricsData.essentials);
     let emergencyBal = 0;
     let savingsBal = 0;
     let investBal = 0;
@@ -178,7 +180,7 @@ function JourneyPage() {
       dti_pct: metricsData.income > 0 ? (metricsData.debtMonthly / metricsData.income) * 100 : 0,
       invested_amount: investBal,
     } as Record<string, number>;
-  }, [metricsData]);
+  }, [metricsData, baseline]);
 
   // Evaluate each persisted stage against the live metrics.
   const evaluated = useMemo(() => {
@@ -230,10 +232,14 @@ function JourneyPage() {
 
     const spine = withEval.filter((s) => !s.optional);
     const side = withEval.filter((s) => s.optional);
-    const activeIndex = spine.findIndex((s) => !s.complete);
+    // A stage is "done" whenever its own objective is met — even if an earlier
+    // spine stage isn't — so achieved milestones always show as achieved. The
+    // single "active" stage is the first still-incomplete one; the rest are
+    // upcoming (advisory order, not hard-locked).
+    const firstIncomplete = spine.findIndex((s) => !s.complete);
     const spineNodes = spine.map((s, i) => ({
       ...s,
-      status: (activeIndex === -1 || i < activeIndex ? "done" : i === activeIndex ? "active" : "locked") as Status,
+      status: (s.complete ? "done" : i === firstIncomplete ? "active" : "locked") as Status,
     }));
     const doneCount = spineNodes.filter((s) => s.status === "done").length;
     const activeStage = spineNodes.find((s) => s.status === "active") ?? null;
@@ -391,13 +397,7 @@ function JourneyPage() {
                         s.status === "locked" && "border bg-muted/40 text-muted-foreground",
                       )}
                     >
-                      {s.status === "done" ? (
-                        <Check className="size-4" />
-                      ) : s.status === "locked" ? (
-                        <Lock className="size-4" />
-                      ) : (
-                        <Icon className="size-4" />
-                      )}
+                      {s.status === "done" ? <Check className="size-4" /> : <Icon className="size-4" />}
                     </span>
                   </div>
 
