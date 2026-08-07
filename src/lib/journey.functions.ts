@@ -29,7 +29,7 @@ const DEFAULT_STAGES: Array<Pick<JourneyStage, "template_key" | "objective_type"
   { template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } },
   { template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } },
   { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 6 } },
-  { template_key: "invest", objective_type: "metric", objective_config: { key: "invested_amount", op: ">=", value: 0.01 } },
+  { template_key: "invest", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 3 } },
 ];
 
 const SELECT =

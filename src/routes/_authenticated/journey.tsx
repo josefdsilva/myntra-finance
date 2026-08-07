@@ -179,6 +179,9 @@ function JourneyPage() {
       emergency_months: liquidReserve / essentials,
       dti_pct: metricsData.income > 0 ? (metricsData.debtMonthly / metricsData.income) * 100 : 0,
       invested_amount: investBal,
+      // Invested measured in months of essential costs, so "long-term investing"
+      // is a meaningful, personalized target rather than "any amount > 0".
+      invested_months: investBal / essentials,
     } as Record<string, number>;
   }, [metricsData, baseline]);
 
@@ -420,15 +423,26 @@ function JourneyPage() {
                       </div>
                     ) : (
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-2">
                           <span className={cn("font-medium", s.status === "done" ? "text-foreground" : "text-muted-foreground")}>
                             {s.displayTitle}
                           </span>
-                          {s.status === "done" && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
+                          {s.status === "done" ? (
+                            <Trophy className="size-3.5 shrink-0 text-emerald-600" />
+                          ) : (
+                            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                              {Math.round(s.progress * 100)}%
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {s.status === "done" ? t("journey.doneLabel") : s.displayObjective}
                         </p>
+                        {s.status === "locked" && (
+                          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                            <div className="h-full bg-primary/50" style={{ width: `${Math.round(s.progress * 100)}%` }} />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
