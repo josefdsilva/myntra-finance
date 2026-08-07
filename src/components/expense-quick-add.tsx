@@ -322,18 +322,13 @@ function ManualForm({ householdId, onAdded }: { householdId: string; onAdded?: (
           </div>
           <div>
             <Label>{t("expQuick.categoryLabel")}</Label>
-            <Select value={category} onValueChange={applyCategory}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategorySelect
+              householdId={householdId}
+              value={category}
+              onChange={applyCategory}
+              fallback={DEFAULT_CATEGORIES}
+            />
+
           </div>
           {kind === "expense" && (
             <div>
