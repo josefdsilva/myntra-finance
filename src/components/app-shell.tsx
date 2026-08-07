@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
+  Map,
   Receipt,
   PiggyBank,
   Settings,
@@ -60,7 +61,10 @@ import {
 const NAV_SECTIONS = [
   {
     titleKey: null,
-    items: [{ to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard }],
+    items: [
+      { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+      { to: "/journey", labelKey: "nav.journey", icon: Map },
+    ],
   },
   {
     titleKey: "navSection.manage",
