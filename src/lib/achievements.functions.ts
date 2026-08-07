@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { JsonObject } from "@/lib/json";
 
 // Durable achievements — the immutable record of milestones a household has
 // earned. Written once, idempotently, at the moment a milestone is first hit, so
@@ -14,7 +15,7 @@ export type Achievement = {
   ref_id: string | null;
   title: string;
   detail: string | null;
-  meta: Record<string, unknown>;
+  meta: JsonObject;
   earned_at: string;
 };
 
