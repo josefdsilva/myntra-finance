@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateObject, generateText } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "@/lib/ai-gateway.server";
@@ -20,19 +20,7 @@ export type StageProposal = {
   rationale: string;
 };
 
-const Schema = z.object({
-  note: z.string(),
-  proposals: z.array(
-    z.object({
-      title: z.string(),
-      objective: z.string(),
-      optional: z.boolean(),
-      rationale: z.string(),
-    }),
-  ),
-});
-
-/** Tolerant JSON extraction for the text fallback (models sometimes wrap JSON in prose). */
+/** Tolerant JSON extraction — models sometimes wrap JSON in prose or code fences. */
 function extractJson(text: string): { note?: string; proposals?: StageProposal[] } | null {
   try {
     return JSON.parse(text);
@@ -158,34 +146,33 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       ? `User request: "${data.request.trim()}"\n\nFacts: ${JSON.stringify(facts)}\n\nCurrent stages: ${JSON.stringify(currentStages)}`
       : `Review this roadmap and suggest improvements or missing stages.\n\nFacts: ${JSON.stringify(facts)}\n\nCurrent stages: ${JSON.stringify(currentStages)}`;
 
+    // Use plain generateText (the same call the working coach chat uses) and ask
+    // strictly for JSON — the Lovable gateway rejects structured-output requests.
     try {
-      const apiKey = requireLovableApiKey();
-      const gateway = createLovableAiGatewayProvider(apiKey);
-      try {
-        const res = await generateObject({
-          model: gateway(MODEL),
-          abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-          schema: Schema,
-          system: SYSTEM,
-          prompt,
-        });
-        const obj = res.object as { note?: string; proposals?: StageProposal[] };
-        return { ok: true, note: obj.note ?? "", proposals: (obj.proposals ?? []).slice(0, 4) };
-      } catch {
-        // Some models/gateways reject structured output; ask again for plain JSON
-        // and parse tolerantly before giving up.
-        const res = await generateText({
-          model: gateway(MODEL),
-          abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-          system: `${SYSTEM}\n\nRespond ONLY with a JSON object of the form {"note": string, "proposals": [{"title": string, "objective": string, "optional": boolean, "rationale": string}]}. No prose, no code fences.`,
-          prompt,
-        });
-        const obj = extractJson(res.text);
-        if (obj && Array.isArray(obj.proposals)) {
-          return { ok: true, note: obj.note ?? "", proposals: obj.proposals.slice(0, 4) };
-        }
-        return { ok: false, note: "", proposals: [] as StageProposal[] };
-      }
+      const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
+      const res = await generateText({
+        model: gateway(MODEL),
+        abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+        system: `${SYSTEM}\n\nRespond ONLY with a JSON object of the form {"note": string, "proposals": [{"title": string, "objective": string, "optional": boolean, "rationale": string}]}. No prose, no code fences, no markdown.`,
+        prompt,
+      });
+      const obj = extractJson(res.text);
+      const raw: unknown[] = obj && Array.isArray(obj.proposals) ? (obj.proposals as unknown[]) : [];
+      const proposals: StageProposal[] = raw
+        .map((p) => {
+          const o = (p ?? {}) as Record<string, unknown>;
+          return {
+            title: String(o.title ?? "").trim(),
+            objective: String(o.objective ?? "").trim(),
+            optional: Boolean(o.optional),
+            rationale: String(o.rationale ?? "").trim(),
+          };
+        })
+        .filter((p) => p.title)
+        .slice(0, 4);
+      // A successful call that yields no usable proposals is a genuine "nothing to
+      // add", not an error — the UI shows the reassuring empty state.
+      return { ok: true, note: typeof obj?.note === "string" ? obj.note : "", proposals };
     } catch {
       return { ok: false, note: "", proposals: [] as StageProposal[] };
     }
