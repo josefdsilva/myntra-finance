@@ -121,6 +121,7 @@ function JourneyPage() {
   // Seed the default spine the first time, then reload.
   const seededRef = useRef(false);
   const recordedStagesRef = useRef<Set<string>>(new Set());
+  const recordedLevelsRef = useRef<Set<number>>(new Set());
   useEffect(() => {
     if (!householdId || seededRef.current) return;
     if (stagesQ.data && stagesQ.data.length === 0) {
@@ -295,6 +296,7 @@ function JourneyPage() {
   }, [stagesQ.data, metrics, metricsData, t]);
 
   const medals = achievements ?? [];
+  const [celebrate, setCelebrate] = useState<{ level: number; roleKey: string } | null>(null);
 
   // Persist a durable medal the first time a spine stage is complete, and
   // celebrate once. Idempotent server-side; deduped by template so re-personalizing
@@ -319,6 +321,28 @@ function JourneyPage() {
         .then((r) => {
           if (r?.created) {
             toast.success(t("journey.stageDoneToast", { name: s.displayTitle }));
+            qc.invalidateQueries({ queryKey: ["achievements", householdId] });
+          }
+        })
+        .catch(() => {});
+    }
+    // Level up = number of completed spine stages. Record a durable medal and
+    // celebrate once when a new level is reached.
+    const level = evaluated.doneCount;
+    if (level > 0 && !recordedLevelsRef.current.has(level)) {
+      recordedLevelsRef.current.add(level);
+      const roleKey = evaluated.roleKey;
+      recordFn({
+        data: {
+          household_id: householdId,
+          kind: "level_up",
+          dedupe_key: `level_up:${level}`,
+          title: t("journey.level", { n: level }),
+        },
+      })
+        .then((r) => {
+          if (r?.created) {
+            setCelebrate({ level, roleKey });
             qc.invalidateQueries({ queryKey: ["achievements", householdId] });
           }
         })
@@ -639,6 +663,29 @@ function JourneyPage() {
           onCreate={(vals) => createFn({ data: { household_id: householdId, ...vals } })}
           onUpdate={(id, vals) => updateFn({ data: { id, ...vals } })}
         />
+      )}
+
+      {celebrate && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setCelebrate(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center shadow-2xl animate-in fade-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+              <Trophy className="size-7" />
+            </div>
+            <h2 className="font-display text-2xl">{t("journey.levelUpTitle", { n: celebrate.level })}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("journey.levelUpBody", { role: t(`journey.role.${celebrate.roleKey}` as MessageKey) })}
+            </p>
+            <Button className="mt-4 w-full" onClick={() => setCelebrate(null)}>
+              {t("journey.celebrate.close")}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

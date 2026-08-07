@@ -617,6 +617,21 @@ export const ENTRIES = {
     de: "Alle Meilensteine erreicht!",
     fr: "Tous les jalons atteints !",
   },
+  "journey.levelUpTitle": {
+    en: "Level {n} reached!",
+    pt: "Nível {n} alcançado!",
+    es: "¡Nivel {n} alcanzado!",
+    de: "Level {n} erreicht!",
+    fr: "Niveau {n} atteint !",
+  },
+  "journey.levelUpBody": {
+    en: "You're now a {role}. Keep going.",
+    pt: "Agora és um(a) {role}. Continua.",
+    es: "Ahora eres {role}. Sigue así.",
+    de: "Du bist jetzt {role}. Weiter so.",
+    fr: "Vous êtes maintenant {role}. Continuez.",
+  },
+  "journey.celebrate.close": { en: "Keep going", pt: "Continuar", es: "Seguir", de: "Weiter", fr: "Continuer" },
   "journey.stageDoneToast": {
     en: "Milestone reached: {name}!",
     pt: "Marco alcançado: {name}!",
