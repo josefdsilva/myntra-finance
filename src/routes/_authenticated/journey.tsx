@@ -18,6 +18,7 @@ import {
   Plus,
   ChevronUp,
   ChevronDown,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +47,7 @@ import {
   updateStage,
   deleteStage,
   setStageOrder,
+  draftJourney,
   type JourneyStage,
 } from "@/lib/journey.functions";
 import { cn } from "@/lib/utils";
@@ -79,6 +81,7 @@ const TEMPLATE_ICON: Record<string, LucideIcon> = {
   net3: ShieldCheck,
   net6: ShieldCheck,
   invest: TrendingUp,
+  investDeep: TrendingUp,
 };
 
 type Status = "done" | "active" | "locked";
@@ -95,6 +98,7 @@ function JourneyPage() {
   const updateFn = useServerFn(updateStage);
   const deleteFn = useServerFn(deleteStage);
   const reorderFn = useServerFn(setStageOrder);
+  const draftFn = useServerFn(draftJourney);
   const listAchFn = useServerFn(listAchievements);
 
   const { data: hh } = useQuery({
@@ -257,7 +261,13 @@ function JourneyPage() {
         return { id: b.id, name: b.name, balance: bal, target, pct: Math.min(100, Math.round((bal / target) * 100)), reached: bal >= target - 0.01 };
       });
 
-    return { all: withEval, spineNodes, side, doneCount, roleKey, autoQuests };
+    // Every other project (ongoing contributions, no finish line) shown so
+    // nothing is invisible — investing, kids savings, etc.
+    const otherProjects = (metricsData?.buckets ?? [])
+      .filter((b) => b.target_type !== "goal_by_date" && (metricsData?.balances[b.id] ?? 0) > 0)
+      .map((b) => ({ id: b.id, name: b.name, balance: metricsData?.balances[b.id] ?? 0 }));
+
+    return { all: withEval, spineNodes, side, doneCount, roleKey, autoQuests, otherProjects };
   }, [stagesQ.data, metrics, metricsData, t]);
 
   const medals = achievements ?? [];
@@ -266,6 +276,13 @@ function JourneyPage() {
 
   function refresh() {
     qc.invalidateQueries({ queryKey: ["journey-stages", householdId] });
+  }
+  async function personalize() {
+    if (!householdId) return;
+    if (!window.confirm(t("journey.personalizeConfirm"))) return;
+    await draftFn({ data: { household_id: householdId } });
+    toast.success(t("journey.personalizedToast"));
+    refresh();
   }
   async function move(index: number, dir: -1 | 1) {
     if (!householdId || !evaluated) return;
@@ -307,6 +324,9 @@ function JourneyPage() {
               </p>
             </div>
           )}
+          <Button variant="outline" size="sm" onClick={personalize}>
+            <Sparkles className="size-4" /> {t("journey.personalize")}
+          </Button>
           <Button variant={editing ? "default" : "outline"} size="sm" onClick={() => setEditing((e) => !e)}>
             <Pencil className="size-4" /> {editing ? t("journey.doneLabel") : t("journey.edit")}
           </Button>
@@ -451,7 +471,9 @@ function JourneyPage() {
             })}
           </div>
 
-          {(evaluated.side.length > 0 || evaluated.autoQuests.length > 0) && (
+          {(evaluated.side.length > 0 ||
+            evaluated.autoQuests.length > 0 ||
+            evaluated.otherProjects.length > 0) && (
             <section className="space-y-2">
               <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {t("journey.sideQuests")}
@@ -485,6 +507,18 @@ function JourneyPage() {
                     <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">
                       {money(q.balance)} / {money(q.target)}
                     </p>
+                  </div>
+                ))}
+                {evaluated.otherProjects.map((p) => (
+                  <div key={p.id} className="rounded-lg border border-dashed border-border bg-card p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Target className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate font-medium">{p.name}</span>
+                      </span>
+                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{money(p.balance)}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{t("journey.ongoing")}</p>
                   </div>
                 ))}
               </div>

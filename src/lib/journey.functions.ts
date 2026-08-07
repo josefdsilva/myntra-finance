@@ -29,7 +29,8 @@ const DEFAULT_STAGES: Array<Pick<JourneyStage, "template_key" | "objective_type"
   { template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } },
   { template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } },
   { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 6 } },
-  { template_key: "invest", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 3 } },
+  { template_key: "invest", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 1 } },
+  { template_key: "investDeep", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 6 } },
 ];
 
 const SELECT =
@@ -147,6 +148,58 @@ export const deleteStage = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await context.supabase.from("journey_stages").delete().eq("id", data.id);
     return { ok: true };
+  });
+
+/**
+ * Coach drafts a personalized roadmap: the order of operations tailored to the
+ * household's situation (skips the debt stage when there's no debt). Rebuilds the
+ * seeded/coach spine and keeps any stages the user created themselves, appended
+ * after. Grounded and deterministic — no model call, no hallucination.
+ */
+export const draftJourney = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ household_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: debts } = await context.supabase
+      .from("debts")
+      .select("monthly_amount")
+      .eq("household_id", data.household_id);
+    const hasDebt = (debts ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0) > 0;
+    const specs = DEFAULT_STAGES.filter((d) => d.template_key !== "debt" || hasDebt);
+
+    // Replace the previous suggested spine (seed + earlier coach drafts); keep the
+    // user's own stages, re-numbered to follow the fresh spine.
+    await context.supabase
+      .from("journey_stages")
+      .delete()
+      .eq("household_id", data.household_id)
+      .in("created_by", ["seed", "coach"]);
+    const { data: userStages } = await context.supabase
+      .from("journey_stages")
+      .select("id")
+      .eq("household_id", data.household_id)
+      .order("sort_order", { ascending: true });
+
+    const coachRows = specs.map((d, i) => ({
+      household_id: data.household_id,
+      template_key: d.template_key,
+      objective_type: d.objective_type,
+      objective_config: d.objective_config as never,
+      sort_order: i,
+      created_by: "coach",
+    }));
+    await context.supabase.from("journey_stages").insert(coachRows as never);
+    await Promise.all(
+      (userStages ?? []).map((u, i) =>
+        context.supabase
+          .from("journey_stages")
+          .update({ sort_order: specs.length + i } as never)
+          .eq("id", u.id),
+      ),
+    );
+    return { ok: true, stages: specs.length };
   });
 
 /** Persist a new order — client sends the full ordered id list. */
