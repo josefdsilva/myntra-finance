@@ -1066,6 +1066,38 @@ export function LandingPage() {
             </Reveal>
           </section>
 
+          {/* Journey and targets */}
+          <section id="journey" className="border-t">
+            <div className="mx-auto max-w-6xl px-5 py-16">
+              <Reveal>
+                <h2 className="font-display text-3xl">A journey, not a spreadsheet.</h2>
+                <p className="mt-3 max-w-2xl text-muted-foreground">
+                  bynku turns your finances into levels you can actually finish. Each stage has one clear
+                  objective, you see how far along you are, and reaching it is recorded for good. Alongside
+                  it, targets track the numbers that decide your position — buffer, debt, savings rate —
+                  so progress is measured, not guessed.
+                </p>
+              </Reveal>
+              <div className="mt-8 grid gap-4 md:grid-cols-2">
+                <Reveal><JourneyMock /></Reveal>
+                <Reveal delay={60}><TargetsMock /></Reveal>
+              </div>
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                {[
+                  ["Levels you can finish", "Cover a month, clear costly debt, build three months of buffer."],
+                  ["One objective at a time", "No twenty-item to-do list — just the next thing that matters."],
+                  ["Targets that hold you honest", "Set a number and a date; bynku tracks it from your real data."],
+                ].map(([title, body], i) => (
+                  <Reveal key={title} delay={i * 50} className="rounded-2xl border bg-card p-5">
+                    <h3 className="font-medium">{title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          </section>
+
+
           {/* Unique creations */}
           <section id="features" className="border-t bg-muted/30">
             <div className="mx-auto max-w-6xl px-5 py-16">
