@@ -21,6 +21,9 @@ import {
   Receipt,
   Scale,
   Lightbulb,
+  Map as MapIcon,
+  Target,
+  Trophy,
   BellRing,
   CheckCircle2,
   Loader2,
@@ -477,7 +480,7 @@ function JourneyMock() {
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-sm">
       <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-        <Map className="size-3.5" /> Your journey
+        <MapIcon className="size-3.5" /> Your journey
       </span>
       <div className="mt-3 space-y-3">
         {stages.map(([level, title, state]) => (

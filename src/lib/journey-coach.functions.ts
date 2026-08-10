@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { JsonObject } from "@/lib/json";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "@/lib/ai-gateway.server";
 
 // The conversational coach for the Money Journey: given the household's real
@@ -37,7 +38,7 @@ export type StageProposal = {
   optional: boolean;
   rationale: string;
   objectiveType: "metric" | "project" | "custom";
-  objectiveConfig: Record<string, unknown>;
+  objectiveConfig: JsonObject;
 };
 
 /** Tolerant JSON extraction — models sometimes wrap JSON in prose or code fences. */
@@ -176,7 +177,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       title: string | null;
       optional: boolean;
       objective_type: string;
-      objective_config: Record<string, unknown>;
+      objective_config: JsonObject;
     }>;
 
     // Build the household's existing coverage so we can drop any proposal that
@@ -252,7 +253,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
             ? projList.find((x) => x.name.trim().toLowerCase() === projName && x.target > 0)
             : null;
           let objectiveType: "metric" | "project" | "custom" = "custom";
-          let objectiveConfig: Record<string, unknown> = {};
+          let objectiveConfig: JsonObject = {};
           if (proj) {
             objectiveType = "project";
             objectiveConfig = { bucket_id: proj.id };
