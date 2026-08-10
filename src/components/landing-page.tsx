@@ -468,7 +468,85 @@ function EstimatesMock() {
   );
 }
 
+function JourneyMock() {
+  const stages: [string, string, "done" | "active" | "next"][] = [
+    ["Level 1", "Cover one month of costs", "done"],
+    ["Level 2", "Clear the expensive debt", "active"],
+    ["Level 3", "Three months of buffer", "next"],
+  ];
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+        <Map className="size-3.5" /> Your journey
+      </span>
+      <div className="mt-3 space-y-3">
+        {stages.map(([level, title, state]) => (
+          <div key={level} className="flex items-start gap-2.5">
+            <span
+              className={cn(
+                "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px]",
+                state === "done" && "border-transparent text-white",
+                state === "active" && "border-primary text-primary",
+                state === "next" && "text-muted-foreground",
+              )}
+              style={state === "done" ? { background: ACCENT } : undefined}
+            >
+              {state === "done" ? <Check className="size-3" /> : state === "active" ? "→" : ""}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] text-muted-foreground">{level}</p>
+              <p className="truncate text-sm font-medium">{title}</p>
+              {state === "active" && (
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-full w-[62%] rounded-full bg-primary" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TargetsMock() {
+  const targets: [string, string, string, number][] = [
+    ["Emergency buffer", "3.0 months", "2.1 now", 70],
+    ["Debt to income", "under 25%", "31% now", 45],
+    ["Savings rate", "20%", "17% now", 85],
+  ];
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+        <Target className="size-3.5" /> Targets
+      </span>
+      <div className="mt-3 space-y-3">
+        {targets.map(([name, goal, now, pct]) => (
+          <div key={name}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="truncate text-sm font-medium">{name}</span>
+              <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                {now} · goal {goal}
+              </span>
+            </div>
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${pct}%`, background: pct >= 80 ? ACCENT : "var(--primary)" }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <Trophy className="size-3.5" style={{ color: ACCENT }} /> Reached targets stay on your record
+      </div>
+    </div>
+  );
+}
+
 function NetWorthMock() {
+
   const nw = [30, 34, 33, 39, 44, 50, 58, 66];
   const W = 240;
   const H = 70;
