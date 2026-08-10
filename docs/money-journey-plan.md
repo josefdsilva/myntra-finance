@@ -344,10 +344,33 @@ eventually"). This gives Projects and KPI Targets the same date-aware progress l
 4. **Legacy `custom` stages**: **auto-migrate where an obvious KPI/project match exists**;
    leave the rest as read-only legacy the user can delete.
 
-## Build order (starting now)
+## Build order
 
-- **(a)** `kpi_targets` migration + types + a shared **metric registry** (reads existing
-  engines) + read-only **KPI Targets tab** under "Save, Invest & Improve".
-- **(b)** Journey stage → KPI-target link, and "create a KPI target" from the Journey Edit
-  panel; migrate inline-threshold metric stages to `kpi_targets` rows.
-- **(c)** Coach degradation watch (N=2) + one-tap "add as target" loop.
+- **(a) — DONE.** `kpi_targets` migration + types + shared **metric registry** (`src/lib/metrics.ts`,
+  reads existing engines, never forks the maths) + **Grow** section (renamed Save & Invest)
+  with Projects and Targets tabs, full CRUD. Migration `20260810120000_kpi_targets.sql`.
+- **(b) — DONE.** Journey stage → KPI-target link. "Add a target" button in Journey edit mode
+  opens a picker of existing targets (excludes already-linked) and creates a linked metric
+  stage (`objective_config.kpi_target_id`). Journey now computes all seven metrics; an
+  unavailable metric shows 0% and never falsely completes (same guard as the medal fix).
+- **(c) — DONE.** Coach degradation watch (`degradationSignals` in `coach-signals.ts`, wired in
+  `coach-runner.server.ts`): watches emergency_months, dti_pct, spending_vs_plan; fires a warn
+  nudge when a metric worsens 2 consecutive cycles AND is in a concern zone; deduped once per
+  metric per cycle. The nudge links to `/journey?kpi=&op=&value=`, which opens a prefilled
+  confirm that creates a coach-authored KPI target + linked stage in one tap.
+
+## Follow-ups (not yet built)
+
+- **Snapshot the remaining four metrics per cycle** so the degradation watch can cover all
+  seven. Today only emergency_months, dti_pct and spending_vs_plan have per-cycle history in
+  `cycle_metrics`; `invested_months`, `invested_years`, `income_concentration` (and a clean
+  `total_income`) are computed live and discarded. Add them to the `metrics` JSONB (or new
+  columns) written at cycle close in `cycle-metrics.functions.ts`/`cycle-metrics.ts`, then
+  read them in the runner's series map. Note: builds history **going forward** only — a
+  two-cycle decline on the new metrics can't be detected until two more cycles close.
+- **Coach de-dup vs. KPI targets**: extend the coach's existing stage-dedup so it also skips
+  proposing a metric already covered by a linked KPI-target stage.
+- **Auto-migrate legacy `custom` stages** into KPI targets where an obvious match exists
+  (decided, not yet implemented).
+- **Time-value / trajectory indicator** for dated KPI targets and funded goals (the kids-fund
+  real-vs-nominal view), reusing the Fast Forward projection.

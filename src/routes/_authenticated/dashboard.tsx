@@ -680,7 +680,7 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      {householdId && <JourneySummaryCard householdId={householdId} />}
+      {householdId && hh?.household?.kind !== "business" && <JourneySummaryCard householdId={householdId} />}
 
       {householdId && <GoalsCard householdId={householdId} />}
 

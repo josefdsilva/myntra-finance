@@ -51,6 +51,21 @@ export const ENTRIES = {
     fr: "Objectifs",
   },
 
+  "journey.personalOnly": {
+    en: "The Journey is for personal spaces",
+    pt: "A Jornada é para espaços pessoais",
+    es: "El Recorrido es para espacios personales",
+    de: "Die Journey ist für persönliche Bereiche",
+    fr: "Le Parcours est réservé aux espaces personnels",
+  },
+  "journey.personalOnlyBody": {
+    en: "This roadmap follows a personal order of operations — safety net, debt, investing, life goals. Switch to a personal space to use it.",
+    pt: "Este roteiro segue uma ordem de operações pessoal — fundo de emergência, dívida, investimento, objetivos de vida. Mude para um espaço pessoal para o usar.",
+    es: "Este recorrido sigue un orden de operaciones personal — colchón de seguridad, deuda, inversión, metas de vida. Cambia a un espacio personal para usarlo.",
+    de: "Dieser Fahrplan folgt einer persönlichen Reihenfolge — Notgroschen, Schulden, Investieren, Lebensziele. Wechseln Sie zu einem persönlichen Bereich, um ihn zu nutzen.",
+    fr: "Ce parcours suit un ordre de priorités personnel — épargne de précaution, dette, investissement, projets de vie. Passez à un espace personnel pour l'utiliser.",
+  },
+
   // Journey ↔ KPI target linking
   "journey.addTarget": {
     en: "Add a target",

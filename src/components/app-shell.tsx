@@ -395,7 +395,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {t(section.titleKey)}
                 </p>
               )}
-              {section.items.map((item) => {
+              {section.items
+                // The Journey is a personal order-of-operations — hide it for business spaces.
+                .filter((item) => !(isBusiness && item.to === "/journey"))
+                .map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.to;
                 const override = isBusiness ? BUSINESS_LABELS[item.to] : undefined;
