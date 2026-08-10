@@ -1,94 +1,83 @@
-# Make bynku engaging in the first 10 minutes
+# Making bynku easy for a 62-year-old first-time user
 
-The signal that matters most: volunteer testers aren't coming back. That isn't a missing
-feature — it's that bynku asks for a lot of setup before it gives anything back, and once
-you're in there are 16 places to go and no single thing telling you what to do next.
+Grounded in one real tester (Portuguese, PT locale, wording itself is fine). She gets stuck in three
+places: finding things in the menu, understanding the words and numbers, and adding an expense or
+income. Plan only — nothing is built until you approve.
 
-So this plan is deliberately narrow: **give value before setup is finished, then give one
-next action and visible proof it worked.** Households and families only.
+## 1. Finding things: one short menu
 
-## The three moves
+Today the sidebar exposes ~16 destinations at the same level (Dashboard, Journey, Money in & out,
+Assets, Expenses, Save & Invest, Loans, Analysis, Fast forward, Cycle report, Snapshot, Wiki,
+Households, Capture, Statements, Settings). For a new user every item is an equally plausible guess.
 
-### 1. Value before setup ("first value in 60 seconds")
+Proposal: five primary items, everything else behind one "More" group.
 
-Today a tester must complete onboarding, then land on a dashboard of empty cards. Instead,
-the very first screen after sign-up asks for two numbers only — monthly money in, and rough
-monthly essentials — and immediately shows a real result: what's left each month, how many
-months of safety net that buys, and one thing to change. Everything else (projects, loans,
-categories, assets) becomes optional and prompted later, in context.
+```text
+Home            (dashboard)
+Money in & out  (income, bills, everyday spending)
+Save & Invest   (projects, goals)
+Loans
+More            Analysis · Fast forward · Cycle report · Snapshot · Journey · Assets ·
+                Statements · Households · Help · Settings
+```
 
-Anything still unknown shows as a soft, tappable gap ("add your loans to make this exact")
-rather than a blocker or an empty state.
+- The five primary items are the daily loop; the rest are things you visit occasionally.
+- No routes are removed or renamed — only how they are grouped in the sidebar.
+- "More" starts collapsed, and auto-expands when the current route lives inside it, so she is never
+  looking at a menu that doesn't contain the page she's on.
 
-### 2. One next action, everywhere
+## 2. Understanding the words and numbers
 
-Insight is currently spread across dashboard tips, the coach dock, the coach inbox, the
-setup checklist, and the journey page — five voices, no priority. Consolidate into a single
-prioritised "Do this next" card at the top of the dashboard:
+Adopt the plain-language naming already agreed in `docs/plain-language-redesign.md`, but only the
+cheap, low-risk half of it — the words, not an information-architecture reshuffle:
 
-- one action at a time, drawn from the existing tip/coach/journey signals through one
-  ranking function
-- plain sentence: what to do, why it matters, what it's worth
-- a button that goes straight to the screen where it's done, prefilled
-- when done, it confirms and reveals the next one
+- baseline → "How much I need" (keep the breakdown: bills + loans + everyday + cushion)
+- surplus / real surplus → "What's left"
+- allocate / allocations → "set aside" / Save & Invest
+- buckets → projects (finish the rename)
+- safety margin → keep, but always with a one-line plain explanation
+- avoid "owe/owed"; a borrowed-and-repaid thing is a Loan
 
-The other surfaces stay, but stop competing for the top of the page.
+Plus a small reusable "What's this?" control (an info button opening a short plain-Portuguese
+explanation and a link to the matching wiki entry), attached to exactly the numbers she meets first:
+How much I need, What's left, Safe to spend, and each project kind.
 
-### 3. Proof that it worked
+Every string goes through the existing i18n entries, so PT and the other locales stay in sync.
 
-Engagement needs a number that visibly moves. Add a "since you started" strip: what's
-changed in what's left, safety-net months, and total owed since the first cycle — plus the
-persisted medals already designed in the journey work, so recognition survives edits.
+## 3. Adding an expense or income: short form first
 
-Where the headline number would be wrong without owned things (a mortgage showing with no
-house behind it), show equity honestly and prompt to add the house rather than printing a
-misleading net worth.
+The quick-add form currently presents amount, category, need-level (Essential→Treat), date, an
+income/received toggle, note, and labels at once. Six of those are optional.
 
-### Plus: fewer words, less jargon
+Proposal: the form opens with three fields only — **amount, category, date (prefilled today)** — and
+a single "Add details" toggle that reveals need-level, note and labels. Saving with just the three
+fields already works today; this only changes what is visible by default.
 
-Apply the locked plain-language decisions to the surfaces above only — "what's left", "set
-aside", "projects", "how much do I need" — and put a one-tap explanation next to every
-number those screens show. No renaming spree elsewhere in this pass.
+- Same for the money-in path: amount, source, date.
+- Bigger tap targets and larger amount text on mobile, since that's the field she uses most.
+- The photo and voice capture paths stay exactly as they are.
 
-### Nav slimming
+## 4. Reading the screen
 
-16 sidebar entries is more than a new user can hold. Group the analysis/simulation screens
-(Analysis, Fast Forward, Cycle report, Snapshot) behind one "Insights" entry, and move
-Capture, Privacy and Wiki out of the primary list. No routes are deleted or moved — only
-how they're grouped in the sidebar.
+A light accessibility pass over the screens above, not a redesign: minimum 44×44 tap targets on
+primary buttons, no text below 14px in the daily-loop screens, and contrast checked against the
+existing tokens (no new colours, no hardcoded colour classes).
 
 ## Technical notes
 
-- New `src/components/next-action.tsx` plus `src/lib/next-action.ts`: a pure ranking
-  function that takes the signals `dashboard-tips.tsx`, `coach-signals.ts`,
-  `setup-checklist.tsx` and `journey.functions.ts` already produce and returns one ranked
-  action. No new financial maths — it reads existing engines only.
-- Reduce `dashboard-tips.tsx` (953 lines) to a "more tips" section below the fold; its rule
-  set is reused as an input to the ranking function.
-- New minimal first-run route (or a short-circuit at the top of the existing
-  `onboarding.tsx` flow) that collects income + essentials, writes them through the existing
-  income/fixed-expense server fns, and routes to the dashboard. The full wizard stays
-  reachable for anyone who wants it.
-- "Since you started" reads existing `cycle_metrics` snapshots and the first-cycle row —
-  no migration.
-- Persisted achievements: reuse `achievements.functions.ts` and the Phase 0 work already
-  described in `docs/money-journey-plan.md`.
-- Nav grouping is presentation-only inside `app-shell.tsx`.
-- i18n keys added for all five locales.
-- Also fix the current SSR hydration mismatch in `app-shell.tsx` while touching that file.
-- First, before any of the above: the build is currently broken. `journey-coach.functions.ts`
-  types `StageProposal.objectiveConfig` as `Record<string, unknown>`, which the server-fn
-  boundary rejects as non-serializable, and that cascades into `journey-coach.tsx`. Fix is the
-  same as last time — use the `JsonObject` type from `src/lib/json.ts`. I can't apply it in
-  plan mode.
+- Sidebar grouping: `src/components/app-shell.tsx` only. Route files untouched.
+- Renames: `src/lib/i18n-entries.ts` (all locales) plus the components rendering those labels —
+  dashboard, cashflow, allocations, settings, loans, wiki content.
+- "What's this?": one new small component, reused; content sourced from the existing wiki content
+  module so there is a single source of truth.
+- Quick-add: `src/components/expense-quick-add.tsx` — progressive disclosure of existing fields, no
+  change to the submit payload or any server function.
+- No database migrations, no business-logic changes, no new dependencies.
 
-## What this plan deliberately does not do
+## Explicitly out of scope
 
-Forwarding inbox / bank-alert capture, real estate indices, encryption, streaks, store
-wrap, SME work. All defensible later — none of them fix "testers don't come back".
-
-## How we'll know it worked
-
-A tester who signs up sees a real number about their own money before they finish setup,
-has exactly one thing to do next on every visit, and can see what changed since last time.
-That's the bar to judge this against.
+- The full information-architecture reshuffle (moving income/bills/goals out of Settings) — that
+  needs beta validation first.
+- A separate "simple mode" toggle. Two divergent surfaces double the maintenance and the users who
+  need the simple one are the least likely to find a toggle.
+- Removing any feature or route.
