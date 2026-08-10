@@ -50,6 +50,20 @@ export const ENTRIES = {
     de: "Ziele",
     fr: "Objectifs",
   },
+  "settings.privacyBody": {
+    en: "How bynku handles and protects your data.",
+    pt: "Como o bynku trata e protege os seus dados.",
+    es: "Cómo bynku gestiona y protege tus datos.",
+    de: "Wie bynku Ihre Daten verarbeitet und schützt.",
+    fr: "Comment bynku gère et protège vos données.",
+  },
+  "settings.privacyCta": {
+    en: "View privacy",
+    pt: "Ver privacidade",
+    es: "Ver privacidad",
+    de: "Datenschutz ansehen",
+    fr: "Voir la confidentialité",
+  },
 
   "journey.personalOnly": {
     en: "The Journey is for personal spaces",

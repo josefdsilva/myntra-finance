@@ -92,7 +92,7 @@ const TEMPLATE_ICON: Record<string, LucideIcon> = {
 
 type Status = "done" | "active" | "locked";
 
-function JourneyPage() {
+export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useT();
   const qc = useQueryClient();
   const activeHouseholdId = useActiveHouseholdId();
@@ -492,7 +492,7 @@ function JourneyPage() {
 
   if (isBusiness) {
     return (
-      <div className={pageShellClass("3xl")}>
+      <div className={embedded ? "space-y-6" : pageShellClass("3xl")}>
         <EmptyState
           icon={Flag}
           title={t("journey.personalOnly")}
@@ -503,7 +503,7 @@ function JourneyPage() {
   }
 
   return (
-    <div className={pageShellClass("3xl")}>
+    <div className={embedded ? "space-y-6" : pageShellClass("3xl")}>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">{t("journey.subtitle")}</p>

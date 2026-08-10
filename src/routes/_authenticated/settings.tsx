@@ -1,5 +1,5 @@
 import { pageMeta } from "@/lib/route-meta";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -118,6 +118,18 @@ function SettingsPage() {
             onClick={() => window.dispatchEvent(new CustomEvent(TOUR_OPEN_EVENT))}
           >
             <Sparkles className="size-4" /> {t("tour.settingsCta")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+          <div>
+            <p className="font-medium">{t("nav.privacy")}</p>
+            <p className="text-sm text-muted-foreground">{t("settings.privacyBody")}</p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link to="/privacy">{t("settings.privacyCta")}</Link>
           </Button>
         </CardContent>
       </Card>

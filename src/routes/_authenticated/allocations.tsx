@@ -16,6 +16,7 @@ import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { KpiTargetsTab } from "@/components/kpi-targets-tab";
+import { JourneyPage } from "@/routes/_authenticated/journey";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +74,8 @@ function AllocationsPage() {
   });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
+  // The Journey is personal-only, so it only appears as a tab for personal spaces.
+  const isBusiness = hh?.household?.kind === "business";
 
   const { data } = useQuery({
     enabled: !!householdId,
@@ -335,6 +338,7 @@ function AllocationsPage() {
         <TabsList>
           <TabsTrigger value="projects">{t("alloc.tab.projects")}</TabsTrigger>
           <TabsTrigger value="targets">{t("alloc.tab.targets")}</TabsTrigger>
+          {!isBusiness && <TabsTrigger value="journey">{t("nav.journey")}</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="projects" className="space-y-6">
@@ -568,6 +572,12 @@ function AllocationsPage() {
         <TabsContent value="targets">
           {householdId && <KpiTargetsTab householdId={householdId} />}
         </TabsContent>
+
+        {!isBusiness && (
+          <TabsContent value="journey">
+            <JourneyPage embedded />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

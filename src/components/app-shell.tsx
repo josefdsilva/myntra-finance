@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Map,
   Receipt,
   PiggyBank,
   Settings,
@@ -19,12 +18,10 @@ import {
   Sun,
   Moon,
   BookOpen,
-  ShieldCheck,
   Users,
   Check,
   ChevronsUpDown,
   Plus,
-  FileText,
   Sparkles,
   Building2,
   User,
@@ -63,7 +60,6 @@ const NAV_SECTIONS = [
     titleKey: null,
     items: [
       { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
-      { to: "/journey", labelKey: "nav.journey", icon: Map },
     ],
   },
   {
@@ -81,7 +77,6 @@ const NAV_SECTIONS = [
     items: [
       { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
       { to: "/fast-forward", labelKey: "nav.fastForward", icon: FastForward },
-      { to: "/cycle-report", labelKey: "nav.cycleReport", icon: FileText },
       { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
     ],
   },
@@ -89,7 +84,6 @@ const NAV_SECTIONS = [
     titleKey: "navSection.docs",
     items: [
       { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
-      { to: "/privacy", labelKey: "nav.privacy", icon: ShieldCheck },
     ],
   },
   {
@@ -395,10 +389,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {t(section.titleKey)}
                 </p>
               )}
-              {section.items
-                // The Journey is a personal order-of-operations — hide it for business spaces.
-                .filter((item) => !(isBusiness && item.to === "/journey"))
-                .map((item) => {
+              {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.to;
                 const override = isBusiness ? BUSINESS_LABELS[item.to] : undefined;
