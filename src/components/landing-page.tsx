@@ -556,6 +556,74 @@ function TipsMock() {
   );
 }
 
+function JourneyMock() {
+  const stages: [string, boolean][] = [
+    ["Know your numbers", true],
+    ["Cover the basics", true],
+    ["Build a buffer", false],
+    ["Clear expensive debt", false],
+    ["Grow what is left", false],
+  ];
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+        <MapIcon className="size-3.5" /> Your journey
+      </span>
+      <div className="mt-3 flex flex-col gap-3">
+        {stages.map(([label, done], i) => (
+          <div key={label} className="flex items-center gap-3">
+            <span
+              className={cn(
+                "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px]",
+                done ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              {done ? <Check className="size-3.5" /> : i + 1}
+            </span>
+            <span className={cn("flex-1 text-sm", !done && "text-muted-foreground")}>{label}</span>
+            {i === 2 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">now</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TargetsMock() {
+  const targets: [string, string, number][] = [
+    ["Emergency buffer", "1.8 of 3 months", 60],
+    ["Savings rate", "12% of 20%", 60],
+    ["Debt free by", "Mar 2027", 35],
+  ];
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+        <Target className="size-3.5" /> Targets
+      </span>
+      <div className="mt-3 flex flex-col gap-3.5">
+        {targets.map(([label, value, pct]) => (
+          <div key={label}>
+            <div className="flex items-baseline justify-between text-sm">
+              <span>{label}</span>
+              <span className="text-xs text-muted-foreground">{value}</span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Trophy className="size-3.5 text-primary" /> Milestones celebrated as you reach them
+      </p>
+    </div>
+  );
+}
+
+
+
 function CompareMock() {
   const rows: [string, number, number][] = [
     ["Savings rate", 72, 44],
