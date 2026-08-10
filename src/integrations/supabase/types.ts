@@ -1601,6 +1601,62 @@ export type Database = {
           },
         ]
       }
+      kpi_targets: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          metric_key: string
+          op: string
+          reached_at: string | null
+          sort_order: number
+          status: string
+          target_date: string | null
+          target_value: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          household_id: string
+          id?: string
+          metric_key: string
+          op?: string
+          reached_at?: string | null
+          sort_order?: number
+          status?: string
+          target_date?: string | null
+          target_value: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          metric_key?: string
+          op?: string
+          reached_at?: string | null
+          sort_order?: number
+          status?: string
+          target_date?: string | null
+          target_value?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_targets_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_rules: {
         Row: {
           category: string

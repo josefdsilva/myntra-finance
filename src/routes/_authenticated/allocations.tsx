@@ -14,6 +14,8 @@ import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { KpiTargetsTab } from "@/components/kpi-targets-tab";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -329,6 +331,14 @@ function AllocationsPage() {
         <p className="text-sm text-muted-foreground">{t("alloc.subtitle")}</p>
       </header>
 
+      <Tabs defaultValue="projects" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="projects">{t("alloc.tab.projects")}</TabsTrigger>
+          <TabsTrigger value="targets">{t("alloc.tab.targets")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="projects" className="space-y-6">
+
       {showCloseWarning && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 flex items-start gap-3">
           <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
@@ -553,6 +563,12 @@ function AllocationsPage() {
         ytdTotals={ytdTotals ?? {}}
         allTimeTotals={contributionsByBucket}
       />
+        </TabsContent>
+
+        <TabsContent value="targets">
+          {householdId && <KpiTargetsTab householdId={householdId} />}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

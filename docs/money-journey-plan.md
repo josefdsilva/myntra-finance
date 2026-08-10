@@ -241,3 +241,113 @@ hit), it needs only one small migration plus write-on-earn wiring, and every lat
 stages, levels, the visual map — is built on persisted achievements. Once it is in, Phase 1
 turns the existing projects into the first read-only roadmap without risking any of the
 established maths.
+
+---
+
+# Addendum — Two objective families: Projects and KPI Targets
+
+*(Product owner decisions, Aug 2026. This supersedes the single "objective" framing above:
+the roadmap now connects to two first-class entities, not one.)*
+
+## The core distinction: funded vs. measured
+
+The Journey has always modelled objectives three ways (`metric | project | custom`). We now
+promote that into two **user-visible, first-class entities** that both live in the (renamed)
+Save & Invest area and that any Journey stage links to:
+
+- **Projects (funded goals).** Exactly today's `buckets`: a pot with a balance you allocate
+  money into, a target €, an optional deadline, a `kind` (savings / investment / emergency).
+  Money flows in; progress = `bucketBalance()` ÷ target. **Unchanged** — none of the existing
+  allocation, net-worth, projection, or health maths moves.
+- **KPI Targets (measured goals).** A **new** lightweight entity: a chosen metric, an
+  operator, a target value, and an *optional* date. Nothing flows in; progress is **computed
+  live** from data bynku already holds. Examples: debt-to-income ≤ 15%, total monthly income
+  ≥ €X, income concentration ≤ 70%, invested ≥ N months, emergency ≥ 6 months.
+
+Why two entities and not one flattened table: a funded goal *accumulates money you set
+aside*; a KPI target is a *structural outcome measured from your whole picture*. Flattening
+them invites the nonsense of "allocate money to lower my DTI" and would entangle KPI logic
+with the bucket maths we must not disturb. Two entities, one umbrella, different affordances
+(a project shows balance + allocations; a KPI shows current value vs target + trend).
+
+## Decisions locked in
+
+1. **Two separate entities** — Projects (funded) and KPI Targets (measured). Confirmed.
+2. **Both live under a renamed Save & Invest, split into two tabs** — one tab for Projects,
+   one for KPI Targets. (Name TBD, e.g. "Goals & Targets" / "Save, Invest & Improve".)
+3. **Every Journey stage connects to exactly one entity** — a Project *or* a KPI Target.
+   `custom`/manual stages are retired in favour of "link it to a real, trackable goal"
+   (existing manual stages migrate or stay read-only legacy).
+4. **Reach objectives only — no "maintain" mode.** A KPI target is *reached once* and earns
+   a medal (like a project hitting its goal). We do **not** build maintain/streak semantics.
+5. **Degradation is the coach's job, not the target's.** Instead of a "maintain" state, the
+   coach **watches important KPIs and messages the user when one degrades.** A one-off dip is
+   noted but not escalated; only when a violation becomes **consistent** (persists across
+   cycles) does the coach recommend acting on it and offer to **add a Reach KPI Target to the
+   Journey** to fix it. This keeps discipline in the coaching layer, not in a nagging status.
+
+## Data model changes
+
+- **`kpi_targets`** (new, household-scoped, member RLS):
+  - `id`, `household_id`, `title`, `metric_key`, `op` (`>=` | `<=`), `target_value`,
+    `target_date` (nullable), `status` (`active | reached`), `reached_at` (nullable),
+    `created_by` (`user | coach`), `sort_order`, timestamps.
+  - `metric_key` registry (all read from **existing** engines — see invariants):
+    `dti_pct`, `total_income`, `income_concentration`, `spending_vs_plan`,
+    `emergency_months`, `invested_months`, `invested_years`, `net_worth`.
+- **`journey_stages`**: keep `objective_type` but the meaningful values become `project`
+  (`{ bucket_id }`) and `metric` (now `{ kpi_target_id }`, pointing at a real KPI Target row
+  rather than an inline threshold). Inline-threshold metric configs migrate into
+  `kpi_targets` rows. `custom` deprecated.
+- **`income_concentration`** is computable today (largest income row ÷ total) with no schema
+  change; a later per-source `kind` label makes it richer but is not required to ship.
+- **Reuse, don't fork:** every `metric_key` maps to the same computation the health score and
+  coach facts already use. A KPI target *reads*; it never recomputes. (Same invariant as the
+  rest of this doc — see "Maths and concepts we must preserve".)
+
+## KPI Target with an optional date = trajectory
+
+A dated KPI target unlocks the **time-value / trajectory indicator** (the same one designed
+for funded goals): "to reach total income €X by <date> you need +€Y/mo of new income," or for
+a savings goal, the nominal-vs-today's-money view. Undated targets are open-ended ("get here
+eventually"). This gives Projects and KPI Targets the same date-aware progress language.
+
+## Coach degradation watch (replaces "maintain")
+
+- On the existing on-open / cycle-close pass, compare each watched KPI to its recent history
+  (reuse `cycle_metrics` snapshots — DTI, badges, invested share already persist there).
+- **One-off vs consistent:** a single-cycle regression is recorded silently; a regression
+  that **persists ≥ N cycles** (start N=2) triggers a coach message: "your debt-to-income has
+  climbed for two cycles — want to make this a target on your Journey?"
+- The message offers a one-tap **"add as a Reach KPI Target"** that creates the row and links
+  a Journey stage — closing the loop from *observation* to *plan* without nagging.
+
+## Where this lands in the phases
+
+- **Projects tab** = today's Save & Invest UI, essentially as-is, under the renamed section.
+- **New work** concentrates in: the `kpi_targets` table + metric registry (Phase 1-ish), the
+  KPI Targets tab + CRUD + i18n (extends Phase 2), Journey stages linking to a KPI target
+  instead of an inline threshold (extends Phase 2), and the coach degradation watch (extends
+  the Phase 3/4 proactive-suggestion work).
+- **Ship order:** (a) `kpi_targets` model + read-only KPI tab reusing existing metrics;
+  (b) Journey stage → KPI-target link + creation from the Edit panel; (c) coach degradation
+  watch + "add as target" loop last, since it depends on both.
+
+## Decisions (settled, Aug 2026)
+
+1. **Section name**: **"Save, Invest & Improve"** — keeps the familiar Save & Invest and adds
+   "Improve" for KPIs. Two tabs inside: Projects and KPI Targets.
+2. **Metric registry v1**: **ship everything** — `dti_pct`, `emergency_months`,
+   `invested_months`, `invested_years`, `total_income`, `income_concentration`,
+   `spending_vs_plan`. (spending_vs_plan needs the most wiring; it lands last within v1.)
+3. **Degradation threshold N = 2** consecutive cycles of regression before the coach speaks up.
+4. **Legacy `custom` stages**: **auto-migrate where an obvious KPI/project match exists**;
+   leave the rest as read-only legacy the user can delete.
+
+## Build order (starting now)
+
+- **(a)** `kpi_targets` migration + types + a shared **metric registry** (reads existing
+  engines) + read-only **KPI Targets tab** under "Save, Invest & Improve".
+- **(b)** Journey stage → KPI-target link, and "create a KPI target" from the Journey Edit
+  panel; migrate inline-threshold metric stages to `kpi_targets` rows.
+- **(c)** Coach degradation watch (N=2) + one-tap "add as target" loop.
