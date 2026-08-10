@@ -76,6 +76,11 @@ how they're grouped in the sidebar.
 - Nav grouping is presentation-only inside `app-shell.tsx`.
 - i18n keys added for all five locales.
 - Also fix the current SSR hydration mismatch in `app-shell.tsx` while touching that file.
+- First, before any of the above: the build is currently broken. `journey-coach.functions.ts`
+  types `StageProposal.objectiveConfig` as `Record<string, unknown>`, which the server-fn
+  boundary rejects as non-serializable, and that cascades into `journey-coach.tsx`. Fix is the
+  same as last time — use the `JsonObject` type from `src/lib/json.ts`. I can't apply it in
+  plan mode.
 
 ## What this plan deliberately does not do
 
