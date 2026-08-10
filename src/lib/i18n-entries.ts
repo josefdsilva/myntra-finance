@@ -51,6 +51,36 @@ export const ENTRIES = {
     fr: "Objectifs",
   },
 
+  // Journey ↔ KPI target linking
+  "journey.addTarget": {
+    en: "Add a target",
+    pt: "Adicionar uma meta",
+    es: "Añadir una meta",
+    de: "Ziel hinzufügen",
+    fr: "Ajouter un objectif",
+  },
+  "journey.targetAdded": {
+    en: "Target added to your journey.",
+    pt: "Meta adicionada à sua jornada.",
+    es: "Meta añadida a tu recorrido.",
+    de: "Ziel zu Ihrer Journey hinzugefügt.",
+    fr: "Objectif ajouté à votre parcours.",
+  },
+  "journey.noTargets": {
+    en: "No targets to add yet. Create one in Grow → Targets, then add it here.",
+    pt: "Ainda não há metas para adicionar. Crie uma em Crescer → Metas e depois adicione-a aqui.",
+    es: "Aún no hay metas para añadir. Crea una en Crecer → Metas y luego añádela aquí.",
+    de: "Noch keine Ziele zum Hinzufügen. Erstellen Sie eines unter Wachsen → Ziele und fügen Sie es dann hier hinzu.",
+    fr: "Aucun objectif à ajouter pour l'instant. Créez-en un dans Croître → Objectifs, puis ajoutez-le ici.",
+  },
+  "journey.createTarget": {
+    en: "Create a target",
+    pt: "Criar uma meta",
+    es: "Crear una meta",
+    de: "Ziel erstellen",
+    fr: "Créer un objectif",
+  },
+
   // KPI Targets tab
   "kpi.title": {
     en: "KPI targets",

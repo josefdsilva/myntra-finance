@@ -51,6 +51,8 @@ import {
   type JourneyStage,
 } from "@/lib/journey.functions";
 import { JourneyCoach } from "@/components/journey-coach";
+import { listKpiTargets, type KpiTarget } from "@/lib/kpi-targets.functions";
+import { metricMeta, formatMetricValue, type MetricKey } from "@/lib/metrics";
 import { cn } from "@/lib/utils";
 import { useT, type MessageKey } from "@/lib/i18n";
 
@@ -104,6 +106,7 @@ function JourneyPage() {
   const draftFn = useServerFn(draftJourney);
   const listAchFn = useServerFn(listAchievements);
   const recordFn = useServerFn(recordAchievement);
+  const kpiTargetsFn = useServerFn(listKpiTargets);
 
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],
@@ -137,7 +140,7 @@ function JourneyPage() {
     enabled: !!householdId,
     queryKey: ["journey-data", householdId],
     queryFn: async () => {
-      const [{ data: buckets }, { data: allocs }, movements, { data: incomes }, { data: debts }, { data: fixed }] =
+      const [{ data: buckets }, { data: allocs }, movements, { data: incomes }, { data: debts }, { data: fixed }, { data: cyc }] =
         await Promise.all([
           supabase
             .from("buckets")
@@ -149,6 +152,13 @@ function JourneyPage() {
           supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
           supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
           supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
+          supabase
+            .from("cycle_metrics")
+            .select("spend_actual, planned_spend")
+            .eq("household_id", householdId!)
+            .order("cycle_end", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
       const bs = (buckets ?? []) as Bucket[];
       const balances = bucketBalancesFor(
@@ -156,10 +166,21 @@ function JourneyPage() {
         (allocs ?? []) as Array<{ bucket_id: string; amount: number | string }>,
         movements as AccountMovement[],
       );
-      const income = (incomes ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      const incomeArr = (incomes ?? []).map((r) => Number(r.monthly_amount) || 0);
+      const income = incomeArr.reduce((s, v) => s + v, 0);
+      const incomeMax = incomeArr.reduce((mx, v) => Math.max(mx, v), 0);
       const debtMonthly = (debts ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const fixedMonthly = (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
-      return { buckets: bs, balances, income, debtMonthly, essentials: fixedMonthly + debtMonthly };
+      return {
+        buckets: bs,
+        balances,
+        income,
+        incomeMax,
+        debtMonthly,
+        essentials: fixedMonthly + debtMonthly,
+        spendActual: cyc ? Number(cyc.spend_actual) : null,
+        plannedSpend: cyc?.planned_spend != null ? Number(cyc.planned_spend) : null,
+      };
     },
   });
 
@@ -167,6 +188,12 @@ function JourneyPage() {
     enabled: !!householdId,
     queryKey: ["achievements", householdId],
     queryFn: () => listAchFn({ data: { household_id: householdId! } }),
+  });
+
+  const { data: kpiTargets } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["kpi-targets", householdId],
+    queryFn: () => kpiTargetsFn({ data: { household_id: householdId! } }),
   });
 
   const metrics = useMemo(() => {
@@ -185,7 +212,7 @@ function JourneyPage() {
     }
     const hasEmergency = metricsData.buckets.some((b) => b.kind === "emergency");
     const liquidReserve = hasEmergency ? emergencyBal : emergencyBal + savingsBal;
-    return {
+    const out: Record<string, number> = {
       emergency_months: liquidReserve / essentials,
       dti_pct: metricsData.income > 0 ? (metricsData.debtMonthly / metricsData.income) * 100 : 0,
       invested_amount: investBal,
@@ -195,7 +222,17 @@ function JourneyPage() {
       // Years of essential costs covered by investments — anchors the financial
       // independence rung (~25× yearly costs).
       invested_years: investBal / (12 * essentials),
-    } as Record<string, number>;
+      total_income: metricsData.income,
+    };
+    // The extra KPI-target metrics — added ONLY when computable, so an
+    // unavailable metric stays undefined and never falsely completes a stage.
+    if (metricsData.income > 0) {
+      out.income_concentration = (metricsData.incomeMax / metricsData.income) * 100;
+    }
+    if (metricsData.spendActual != null && metricsData.plannedSpend != null && metricsData.plannedSpend > 0) {
+      out.spending_vs_plan = (metricsData.spendActual / metricsData.plannedSpend) * 100;
+    }
+    return out;
   }, [metricsData, baseline]);
 
   // Evaluate each persisted stage against the live metrics.
@@ -208,9 +245,9 @@ function JourneyPage() {
     const m = metrics;
     const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
     const fmt = (key: string, cur: number) =>
-      key === "dti_pct"
+      key === "dti_pct" || key === "income_concentration" || key === "spending_vs_plan"
         ? `${Math.round(cur)}%`
-        : key === "invested_amount" || key === "net_worth"
+        : key === "invested_amount" || key === "net_worth" || key === "total_income"
           ? money(cur)
           : key === "invested_years"
             ? t("journey.years", { n: cur.toFixed(1) })
@@ -236,7 +273,11 @@ function JourneyPage() {
       const key = String(cfg.key ?? "");
       const op = cfg.op === "<=" ? "<=" : ">=";
       const target = Number(cfg.value ?? 0);
-      const cur = m[key] ?? 0;
+      const raw = m[key];
+      // Metric not computable yet (e.g. no cycle closed for spending vs plan) —
+      // show 0% and never complete, so no bogus medal is minted.
+      if (raw === undefined) return { complete: false, progress: 0, value: null };
+      const cur = raw;
       const complete = op === "<=" ? cur <= target : cur >= target;
       const progress = op === "<=" ? (complete ? 1 : clamp01(target / Math.max(cur, 0.0001))) : clamp01(cur / Math.max(target, 0.0001));
       return { complete, progress, value: fmt(key, cur) };
@@ -356,9 +397,41 @@ function JourneyPage() {
   const [editing, setEditing] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
   const [dialog, setDialog] = useState<{ mode: "add" | "edit"; stage?: JourneyStage } | null>(null);
+  const [targetPicker, setTargetPicker] = useState(false);
 
   function refresh() {
     qc.invalidateQueries({ queryKey: ["journey-stages", householdId] });
+  }
+
+  // KPI targets already linked to a stage (by kpi_target_id in objective_config),
+  // so the picker only offers ones not yet on the journey.
+  const linkedTargetIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const s of stagesQ.data ?? []) {
+      const id = (s.objective_config as { kpi_target_id?: string })?.kpi_target_id;
+      if (id) ids.add(id);
+    }
+    return ids;
+  }, [stagesQ.data]);
+
+  async function addTargetAsStage(tg: KpiTarget) {
+    if (!householdId) return;
+    const meta = metricMeta(tg.metric_key);
+    const label = meta ? t(meta.labelKey) : tg.metric_key;
+    const valueStr = formatMetricValue(tg.metric_key as MetricKey, Number(tg.target_value), money);
+    await createFn({
+      data: {
+        household_id: householdId,
+        title: tg.title,
+        objective: `${label} ${tg.op} ${valueStr}`,
+        optional: true,
+        objective_type: "metric",
+        objective_config: { key: tg.metric_key, op: tg.op, value: Number(tg.target_value), kpi_target_id: tg.id },
+      },
+    });
+    setTargetPicker(false);
+    toast.success(t("journey.targetAdded"));
+    refresh();
   }
   async function personalize() {
     if (!householdId) return;
@@ -473,9 +546,14 @@ function JourneyPage() {
               </li>
             ))}
           </ul>
-          <Button variant="outline" size="sm" onClick={() => setDialog({ mode: "add" })}>
-            <Plus className="size-4" /> {t("journey.addStage")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setDialog({ mode: "add" })}>
+              <Plus className="size-4" /> {t("journey.addStage")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setTargetPicker(true)}>
+              <Target className="size-4" /> {t("journey.addTarget")}
+            </Button>
+          </div>
         </section>
       ) : (
         /* ---- Read mode: the map ---- */
@@ -670,6 +748,53 @@ function JourneyPage() {
           onUpdate={(id, vals) => updateFn({ data: { id, ...vals } })}
         />
       )}
+
+      <Dialog open={targetPicker} onOpenChange={setTargetPicker}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("journey.addTarget")}</DialogTitle>
+          </DialogHeader>
+          {(() => {
+            const available = (kpiTargets ?? []).filter((tg) => !linkedTargetIds.has(tg.id));
+            if (available.length === 0) {
+              return (
+                <div className="space-y-3 py-2 text-sm text-muted-foreground">
+                  <p>{t("journey.noTargets")}</p>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/allocations">
+                      {t("journey.createTarget")} <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                </div>
+              );
+            }
+            return (
+              <ul className="space-y-2">
+                {available.map((tg) => {
+                  const meta = metricMeta(tg.metric_key);
+                  const label = meta ? t(meta.labelKey) : tg.metric_key;
+                  const valueStr = formatMetricValue(tg.metric_key as MetricKey, Number(tg.target_value), money);
+                  const cur = metrics ? metrics[tg.metric_key] : undefined;
+                  return (
+                    <li key={tg.id} className="flex items-center justify-between gap-2 rounded-lg border p-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{tg.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {label} {tg.op} {valueStr}
+                          {cur !== undefined ? ` · ${t("kpi.now")} ${formatMetricValue(tg.metric_key as MetricKey, cur, money)}` : ""}
+                        </p>
+                      </div>
+                      <Button size="sm" onClick={() => addTargetAsStage(tg)}>
+                        <Plus className="size-4" /> {t("journey.addStage")}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {celebrate && (
         <div
