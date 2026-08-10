@@ -922,6 +922,8 @@ export function LandingPage() {
               <a href="#why" className="hover:text-foreground">Why bynku</a>
               <a href="#how" className="hover:text-foreground">How it works</a>
               <a href="#features" className="hover:text-foreground">Features</a>
+              <a href="#journey" className="hover:text-foreground">Journey</a>
+
               <a href="#pricing" className="hover:text-foreground">Pricing</a>
             </nav>
             <CtaRow />
