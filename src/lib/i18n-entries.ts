@@ -80,6 +80,20 @@ export const ENTRIES = {
     de: "Ziel erstellen",
     fr: "Créer un objectif",
   },
+  "journey.coachSuggestTitle": {
+    en: "The coach suggests a target",
+    pt: "O coach sugere uma meta",
+    es: "El coach sugiere una meta",
+    de: "Der Coach schlägt ein Ziel vor",
+    fr: "Le coach suggère un objectif",
+  },
+  "journey.coachSuggestBody": {
+    en: "Track {metric} {op} {value} on your journey and work it back to health?",
+    pt: "Acompanhar {metric} {op} {value} na sua jornada e recuperá-lo?",
+    es: "¿Seguir {metric} {op} {value} en tu recorrido y recuperarlo?",
+    de: "{metric} {op} {value} auf Ihrer Journey verfolgen und wieder in Ordnung bringen?",
+    fr: "Suivre {metric} {op} {value} sur votre parcours et le redresser ?",
+  },
 
   // KPI Targets tab
   "kpi.title": {

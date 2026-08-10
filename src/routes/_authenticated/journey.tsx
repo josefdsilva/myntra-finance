@@ -51,7 +51,7 @@ import {
   type JourneyStage,
 } from "@/lib/journey.functions";
 import { JourneyCoach } from "@/components/journey-coach";
-import { listKpiTargets, type KpiTarget } from "@/lib/kpi-targets.functions";
+import { listKpiTargets, createKpiTarget, type KpiTarget } from "@/lib/kpi-targets.functions";
 import { metricMeta, formatMetricValue, type MetricKey } from "@/lib/metrics";
 import { cn } from "@/lib/utils";
 import { useT, type MessageKey } from "@/lib/i18n";
@@ -107,6 +107,7 @@ function JourneyPage() {
   const listAchFn = useServerFn(listAchievements);
   const recordFn = useServerFn(recordAchievement);
   const kpiTargetsFn = useServerFn(listKpiTargets);
+  const createKpiFn = useServerFn(createKpiTarget);
 
   const { data: hh } = useQuery({
     queryKey: ["household", activeHouseholdId],
@@ -398,9 +399,48 @@ function JourneyPage() {
   const [coachOpen, setCoachOpen] = useState(false);
   const [dialog, setDialog] = useState<{ mode: "add" | "edit"; stage?: JourneyStage } | null>(null);
   const [targetPicker, setTargetPicker] = useState(false);
+  const [coachSuggest, setCoachSuggest] = useState<{ key: MetricKey; op: "<=" | ">="; value: number } | null>(null);
+
+  // The coach's degradation nudge links here with ?kpi=&op=&value= — open a
+  // prefilled confirmation to turn the slipping metric into a tracked target.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const key = sp.get("kpi");
+    if (!key || !metricMeta(key)) return;
+    const value = Number(sp.get("value"));
+    if (!Number.isFinite(value)) return;
+    const op = sp.get("op") === "<=" ? "<=" : ">=";
+    setCoachSuggest({ key: key as MetricKey, op, value });
+    // Clean the URL so a refresh doesn't re-open the suggestion.
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   function refresh() {
     qc.invalidateQueries({ queryKey: ["journey-stages", householdId] });
+  }
+
+  async function acceptCoachSuggestion() {
+    if (!householdId || !coachSuggest) return;
+    const meta = metricMeta(coachSuggest.key);
+    const label = meta ? t(meta.labelKey) : coachSuggest.key;
+    try {
+      const tg = await createKpiFn({
+        data: {
+          household_id: householdId,
+          title: label,
+          metric_key: coachSuggest.key,
+          op: coachSuggest.op,
+          target_value: coachSuggest.value,
+          created_by: "coach",
+        },
+      });
+      await addTargetAsStage(tg);
+      qc.invalidateQueries({ queryKey: ["kpi-targets", householdId] });
+      setCoachSuggest(null);
+    } catch {
+      toast.error(t("kpi.saveFailed"));
+    }
   }
 
   // KPI targets already linked to a stage (by kpi_target_id in objective_config),
@@ -793,6 +833,33 @@ function JourneyPage() {
               </ul>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!coachSuggest} onOpenChange={(o) => { if (!o) setCoachSuggest(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("journey.coachSuggestTitle")}</DialogTitle>
+          </DialogHeader>
+          {coachSuggest &&
+            (() => {
+              const meta = metricMeta(coachSuggest.key);
+              const label = meta ? t(meta.labelKey) : coachSuggest.key;
+              const valueStr = formatMetricValue(coachSuggest.key, coachSuggest.value, money);
+              return (
+                <p className="text-sm text-muted-foreground">
+                  {t("journey.coachSuggestBody", { metric: label, op: coachSuggest.op, value: valueStr })}
+                </p>
+              );
+            })()}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCoachSuggest(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={acceptCoachSuggestion} disabled={!householdId}>
+              {t("journey.addTarget")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

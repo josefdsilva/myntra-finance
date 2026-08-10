@@ -156,6 +156,12 @@ export type CycleMetric = {
   everyday_pool: number;
   everyday_spent: number;
   score_overall: number | null;
+  // Derived KPI values for the degradation watch (null/undefined when a cycle
+  // did not persist enough to compute them). Only these three have real
+  // per-cycle history today.
+  emergency_months?: number | null;
+  dti_pct?: number | null;
+  spending_vs_plan?: number | null;
 };
 
 /** A recap of the just-closed cycle plus the single most useful next action. */
@@ -243,6 +249,80 @@ export function milestoneSignals(p: { series: CycleMetric[] }): Signal[] {
     });
   }
 
+  return out;
+}
+
+// ---- KPI degradation watch -------------------------------------------------
+
+type WatchKey = "emergency_months" | "dti_pct" | "spending_vs_plan";
+
+/**
+ * Watch the KPIs that have real per-cycle history. When one slips the wrong way
+ * for two cycles running AND lands in a concerning zone (so a healthy wobble
+ * doesn't nag), suggest making it a Reach target on the journey. One message per
+ * metric per cycle (deduped by the latest cycle start).
+ */
+export function degradationSignals(p: { series: CycleMetric[] }): Signal[] {
+  const { series } = p;
+  const out: Signal[] = [];
+  if (series.length < 3) return out; // need two consecutive transitions
+  const latest = series[series.length - 1];
+
+  const watches: Array<{
+    key: WatchKey;
+    label: string;
+    higherIsWorse: boolean;
+    concern: (v: number) => boolean;
+    op: "<=" | ">=";
+    value: number;
+    fmt: (v: number) => string;
+  }> = [
+    {
+      key: "emergency_months",
+      label: "emergency buffer",
+      higherIsWorse: false,
+      concern: (v) => v < 3,
+      op: ">=",
+      value: 3,
+      fmt: (v) => `${v.toFixed(1)} months`,
+    },
+    {
+      key: "dti_pct",
+      label: "debt-to-income",
+      higherIsWorse: true,
+      concern: (v) => v > 20,
+      op: "<=",
+      value: 15,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "spending_vs_plan",
+      label: "spending vs plan",
+      higherIsWorse: true,
+      concern: (v) => v > 100,
+      op: "<=",
+      value: 100,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+  ];
+
+  for (const w of watches) {
+    const vals = series.slice(-3).map((c) => c[w.key]);
+    if (vals.some((v) => v == null)) continue;
+    const [a, b, c] = vals as number[];
+    const worsened = w.higherIsWorse ? c > b && b > a : c < b && b < a;
+    if (!worsened || !w.concern(c)) continue;
+    out.push({
+      kind: "kpi_degrading",
+      severity: "warn",
+      title: `Your ${w.label} is slipping`,
+      body: `It has moved the wrong way two cycles running (now ${w.fmt(c)}). Want to make it a target on your journey and turn it around?`,
+      actionLabel: "Add a target",
+      actionUrl: `/journey?kpi=${w.key}&op=${encodeURIComponent(w.op)}&value=${w.value}`,
+      data: { metric_key: w.key, op: w.op, value: w.value },
+      dedupeKey: `kpi_degrading:${w.key}:${latest.cycle_start}`,
+    });
+  }
   return out;
 }
 

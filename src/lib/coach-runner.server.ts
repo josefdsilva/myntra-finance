@@ -6,6 +6,7 @@ import {
   costReminderSignals,
   recapSignal,
   milestoneSignals,
+  degradationSignals,
   moneyFormatter,
   type PlanRow,
   type CycleMetric,
@@ -107,22 +108,31 @@ export async function runCoachForHousehold(
   const { data: cmRows } = await admin
     .from("cycle_metrics")
     .select(
-      "cycle_start, cycle_end, income_actual, spend_actual, surplus_actual, everyday_pool, everyday_spent, score_overall",
+      "cycle_start, cycle_end, income_actual, spend_actual, surplus_actual, everyday_pool, everyday_spent, score_overall, debt_total, planned_spend, metrics",
     )
     .eq("household_id", hh.id)
     .order("cycle_start", { ascending: false })
     .limit(12);
   const series: CycleMetric[] = ((cmRows as Array<Record<string, unknown>> | null) ?? [])
-    .map((r) => ({
-      cycle_start: String(r.cycle_start),
-      cycle_end: String(r.cycle_end),
-      income_actual: Number(r.income_actual) || 0,
-      spend_actual: Number(r.spend_actual) || 0,
-      surplus_actual: Number(r.surplus_actual) || 0,
-      everyday_pool: Number(r.everyday_pool) || 0,
-      everyday_spent: Number(r.everyday_spent) || 0,
-      score_overall: r.score_overall == null ? null : Number(r.score_overall),
-    }))
+    .map((r) => {
+      const mo = (r.metrics ?? {}) as Record<string, unknown>;
+      const spendActual = Number(r.spend_actual) || 0;
+      const plannedSpend = Number(r.planned_spend) || 0;
+      return {
+        cycle_start: String(r.cycle_start),
+        cycle_end: String(r.cycle_end),
+        income_actual: Number(r.income_actual) || 0,
+        spend_actual: spendActual,
+        surplus_actual: Number(r.surplus_actual) || 0,
+        everyday_pool: Number(r.everyday_pool) || 0,
+        everyday_spent: Number(r.everyday_spent) || 0,
+        score_overall: r.score_overall == null ? null : Number(r.score_overall),
+        // Derived KPI values for the degradation watch (see coach-signals.ts).
+        emergency_months: mo.monthsOfEmergency == null ? null : Number(mo.monthsOfEmergency),
+        dti_pct: mo.debtRatio == null ? null : Number(mo.debtRatio) * 100,
+        spending_vs_plan: plannedSpend > 0 ? (spendActual / plannedSpend) * 100 : null,
+      };
+    })
     .reverse();
 
   if (series.length > 0) {
@@ -138,6 +148,9 @@ export async function runCoachForHousehold(
       await emit(recapSignal({ latest, prev, money }), latest.cycle_start);
     }
     for (const s of milestoneSignals({ series })) {
+      await emit(s, latest.cycle_start);
+    }
+    for (const s of degradationSignals({ series })) {
       await emit(s, latest.cycle_start);
     }
   }
