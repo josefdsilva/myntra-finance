@@ -931,7 +931,9 @@ export function LandingPage() {
             <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
               <a href="#why" className="hover:text-foreground">Why bynku</a>
               <a href="#how" className="hover:text-foreground">How it works</a>
+              <a href="#journey" className="hover:text-foreground">Journey</a>
               <a href="#features" className="hover:text-foreground">Features</a>
+
               <a href="#pricing" className="hover:text-foreground">Pricing</a>
             </nav>
             <CtaRow />
