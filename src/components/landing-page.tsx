@@ -471,85 +471,7 @@ function EstimatesMock() {
   );
 }
 
-function JourneyMock() {
-  const stages: [string, string, "done" | "active" | "next"][] = [
-    ["Level 1", "Cover one month of costs", "done"],
-    ["Level 2", "Clear the expensive debt", "active"],
-    ["Level 3", "Three months of buffer", "next"],
-  ];
-  return (
-    <div className="rounded-2xl border bg-card p-5 shadow-sm">
-      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-        <MapIcon className="size-3.5" /> Your journey
-      </span>
-      <div className="mt-3 space-y-3">
-        {stages.map(([level, title, state]) => (
-          <div key={level} className="flex items-start gap-2.5">
-            <span
-              className={cn(
-                "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px]",
-                state === "done" && "border-transparent text-white",
-                state === "active" && "border-primary text-primary",
-                state === "next" && "text-muted-foreground",
-              )}
-              style={state === "done" ? { background: ACCENT } : undefined}
-            >
-              {state === "done" ? <Check className="size-3" /> : state === "active" ? "→" : ""}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-muted-foreground">{level}</p>
-              <p className="truncate text-sm font-medium">{title}</p>
-              {state === "active" && (
-                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-[62%] rounded-full bg-primary" />
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TargetsMock() {
-  const targets: [string, string, string, number][] = [
-    ["Emergency buffer", "3.0 months", "2.1 now", 70],
-    ["Debt to income", "under 25%", "31% now", 45],
-    ["Savings rate", "20%", "17% now", 85],
-  ];
-  return (
-    <div className="rounded-2xl border bg-card p-5 shadow-sm">
-      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-        <Target className="size-3.5" /> Targets
-      </span>
-      <div className="mt-3 space-y-3">
-        {targets.map(([name, goal, now, pct]) => (
-          <div key={name}>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-sm font-medium">{name}</span>
-              <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                {now} · goal {goal}
-              </span>
-            </div>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full"
-                style={{ width: `${pct}%`, background: pct >= 80 ? ACCENT : "var(--primary)" }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <Trophy className="size-3.5" style={{ color: ACCENT }} /> Reached targets stay on your record
-      </div>
-    </div>
-  );
-}
-
 function NetWorthMock() {
-
   const nw = [30, 34, 33, 39, 44, 50, 58, 66];
   const W = 240;
   const H = 70;
@@ -636,6 +558,74 @@ function TipsMock() {
     </div>
   );
 }
+
+function JourneyMock() {
+  const stages: [string, boolean][] = [
+    ["Know your numbers", true],
+    ["Cover the basics", true],
+    ["Build a buffer", false],
+    ["Clear expensive debt", false],
+    ["Grow what is left", false],
+  ];
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+        <MapIcon className="size-3.5" /> Your journey
+      </span>
+      <div className="mt-3 flex flex-col gap-3">
+        {stages.map(([label, done], i) => (
+          <div key={label} className="flex items-center gap-3">
+            <span
+              className={cn(
+                "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px]",
+                done ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              {done ? <Check className="size-3.5" /> : i + 1}
+            </span>
+            <span className={cn("flex-1 text-sm", !done && "text-muted-foreground")}>{label}</span>
+            {i === 2 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">now</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TargetsMock() {
+  const targets: [string, string, number][] = [
+    ["Emergency buffer", "1.8 of 3 months", 60],
+    ["Savings rate", "12% of 20%", 60],
+    ["Debt free by", "Mar 2027", 35],
+  ];
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+        <Target className="size-3.5" /> Targets
+      </span>
+      <div className="mt-3 flex flex-col gap-3.5">
+        {targets.map(([label, value, pct]) => (
+          <div key={label}>
+            <div className="flex items-baseline justify-between text-sm">
+              <span>{label}</span>
+              <span className="text-xs text-muted-foreground">{value}</span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Trophy className="size-3.5 text-primary" /> Milestones celebrated as you reach them
+      </p>
+    </div>
+  );
+}
+
+
 
 function CompareMock() {
   const rows: [string, number, number][] = [
@@ -931,8 +921,8 @@ export function LandingPage() {
             <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
               <a href="#why" className="hover:text-foreground">Why bynku</a>
               <a href="#how" className="hover:text-foreground">How it works</a>
-              <a href="#journey" className="hover:text-foreground">Journey</a>
               <a href="#features" className="hover:text-foreground">Features</a>
+              <a href="#journey" className="hover:text-foreground">Journey</a>
 
               <a href="#pricing" className="hover:text-foreground">Pricing</a>
             </nav>
@@ -1066,40 +1056,37 @@ export function LandingPage() {
             </Reveal>
           </section>
 
+          {/* Unique creations */}
           {/* Journey and targets */}
-          <section id="journey" className="border-t">
-            <div className="mx-auto max-w-6xl px-5 py-16">
-              <Reveal>
-                <h2 className="font-display text-3xl">A journey, not a spreadsheet.</h2>
-                <p className="mt-3 max-w-2xl text-muted-foreground">
-                  bynku turns your finances into levels you can actually finish. Each stage has one clear
-                  objective, you see how far along you are, and reaching it is recorded for good. Alongside
-                  it, targets track the numbers that decide your position — buffer, debt, savings rate —
-                  so progress is measured, not guessed.
-                </p>
-              </Reveal>
-              <div className="mt-8 grid gap-4 md:grid-cols-2">
-                <Reveal><JourneyMock /></Reveal>
-                <Reveal delay={60}><TargetsMock /></Reveal>
-              </div>
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                {[
-                  ["Levels you can finish", "Cover a month, clear costly debt, build three months of buffer."],
-                  ["One objective at a time", "No twenty-item to-do list — just the next thing that matters."],
-                  ["Targets that hold you honest", "Set a number and a date; bynku tracks it from your real data."],
-                ].map(([title, body], i) => (
-                  <Reveal key={title} delay={i * 50} className="rounded-2xl border bg-card p-5">
-                    <h3 className="font-medium">{title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-                  </Reveal>
-                ))}
-              </div>
+          <section id="journey" className="mx-auto max-w-6xl px-5 py-16">
+            <Reveal>
+              <h2 className="font-display text-3xl">A journey, not a spreadsheet.</h2>
+              <p className="mt-3 max-w-2xl text-muted-foreground">
+                bynku turns your finances into clear stages with targets you can actually hit. You always
+                know where you are, what comes next, and why it matters.
+              </p>
+            </Reveal>
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <Reveal><JourneyMock /></Reveal>
+              <Reveal delay={60}><TargetsMock /></Reveal>
+            </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              {[
+                ["One next step", "No long to-do list. The journey shows the single stage that matters now."],
+                ["Targets that track themselves", "Buffer months, savings rate and payoff dates update from your real numbers."],
+                ["Progress you can feel", "Stages complete, milestones celebrate, and the story of your money moves forward."],
+              ].map(([title, body], i) => (
+                <Reveal key={title} delay={i * 50} className="rounded-2xl border bg-card p-5">
+                  <h3 className="font-medium">{title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+                </Reveal>
+              ))}
             </div>
           </section>
 
-
           {/* Unique creations */}
           <section id="features" className="border-t bg-muted/30">
+
             <div className="mx-auto max-w-6xl px-5 py-16">
               <Reveal>
                 <h2 className="font-display text-3xl">Things you will not find elsewhere.</h2>

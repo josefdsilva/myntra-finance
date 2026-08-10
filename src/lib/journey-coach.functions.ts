@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { JsonObject } from "@/lib/json";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "@/lib/ai-gateway.server";
+import type { JsonObject } from "@/lib/json";
 
 // The conversational coach for the Money Journey: given the household's real
 // position and current roadmap, it proposes concrete stages the user can accept
@@ -166,7 +166,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
     // For matching a coach-referenced project name back to a real bucket id.
     const projList = bs.map((b) => ({ id: b.id, name: b.name, target: Number(b.target_value) || 0 }));
 
-    const describeMeasure = (type: string, cfg: Record<string, unknown>): string =>
+    const describeMeasure = (type: string, cfg: JsonObject): string =>
       type === "metric"
         ? `${String(cfg.key ?? "")} ${cfg.op ?? ">="} ${cfg.value ?? ""}`.trim()
         : type === "project"
@@ -188,7 +188,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
     const existingProjects = new Set<string>();
     const existingMetrics = new Map<string, Array<{ op: string; value: number }>>();
     for (const s of existingStages) {
-      const cfg = (s.objective_config ?? {}) as Record<string, unknown>;
+      const cfg = (s.objective_config ?? {}) as JsonObject;
       const title = s.title ?? s.template_key ?? "";
       if (title) existingTitles.add(norm(title));
       if (s.objective_type === "project") {
@@ -222,7 +222,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
 
     const currentStages = existingStages.map((s) => ({
       name: s.title ?? s.template_key ?? "stage",
-      measure: describeMeasure(s.objective_type, (s.objective_config ?? {}) as Record<string, unknown>),
+      measure: describeMeasure(s.objective_type, (s.objective_config ?? {}) as JsonObject),
       optional: s.optional,
     }));
 
@@ -244,8 +244,8 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       const raw: unknown[] = obj && Array.isArray(obj.proposals) ? (obj.proposals as unknown[]) : [];
       const proposals: StageProposal[] = raw
         .map((p) => {
-          const o = (p ?? {}) as Record<string, unknown>;
-          const measure = (o.measure ?? {}) as Record<string, unknown>;
+          const o = (p ?? {}) as JsonObject;
+          const measure = (o.measure ?? {}) as JsonObject;
           // Bind a real objective when the coach referenced a metric or an
           // existing project — that's what makes progress track automatically.
           const projName = measure.project != null ? String(measure.project).trim().toLowerCase() : "";
