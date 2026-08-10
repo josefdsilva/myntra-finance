@@ -3,6 +3,7 @@ import { generateText } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider, requireLovableApiKey } from "@/lib/ai-gateway.server";
+import type { JsonObject } from "@/lib/json";
 
 // The conversational coach for the Money Journey: given the household's real
 // position and current roadmap, it proposes concrete stages the user can accept
