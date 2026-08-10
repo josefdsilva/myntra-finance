@@ -19,6 +19,12 @@ function localDateStr(d: Date): string {
 
 export type SnapshotSource = "close" | "cron" | "backfill";
 
+// For the registry-consistent index snapshot recorded each cycle (see the
+// `kpi` block below) — kept in sync with src/lib/metrics.ts.
+const MORTGAGE_DEBT_KINDS = new Set(["mortgage", "property"]);
+const HOUSING_CATEGORY_NAMES = new Set(["housing", "rent"]);
+const INVESTED_ASSET_KINDS = new Set(["stocks", "bonds", "fund"]);
+
 /**
  * Gather one closed cycle's metrics and upsert the row. Pure DB + math, no
  * server-fn wrapper, so it can be reused by the rollover action and the daily
@@ -61,7 +67,7 @@ export async function snapshotCycleCore(
     { data: plansRows },
   ] = await Promise.all([
     sb.from("incomes").select("monthly_amount").eq("household_id", householdId),
-    sb.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+    sb.from("fixed_expenses").select("category, monthly_amount").eq("household_id", householdId),
     sb.from("debts").select("monthly_amount").eq("household_id", householdId),
     sb.from("buckets").select("id, kind, target_value, initial_balance").eq("household_id", householdId),
     sb.from("bucket_allocations").select("bucket_id, amount, period").eq("household_id", householdId),
@@ -195,6 +201,40 @@ export async function snapshotCycleCore(
   const reserve = bucketsTotal + Math.max(0, liquidAssets);
   const runwayMonths = monthlyOutgoings > 0 ? reserve / monthlyOutgoings : 0;
 
+  // Registry-consistent components for the per-cycle index snapshot (mirrors
+  // the formulas in src/lib/metrics.ts computeMetrics).
+  const essentialsReg = Math.max(1, baseline || fixedTotal);
+  let emgBalReg = 0;
+  let savBalReg = 0;
+  let invBalReg = 0;
+  for (const b of bucketList) {
+    const v = balances[b.id] ?? 0;
+    if (b.kind === "investment") invBalReg += v;
+    else if (b.kind === "emergency") emgBalReg += v;
+    else savBalReg += v;
+  }
+  const hasEmergencyReg = bucketList.some((b) => b.kind === "emergency");
+  const liquidReserveReg = hasEmergencyReg ? emgBalReg : emgBalReg + savBalReg;
+  const maxIncome = incomeSources.length ? Math.max(...incomeSources) : 0;
+  const totalAssetsReg = assetsTotal + bucketsTotal;
+  const investedAssetsTableReg = (assetsRows ?? [])
+    .filter((a) => INVESTED_ASSET_KINDS.has(a.kind))
+    .reduce((s, a) => s + Number(a.current_value), 0);
+  const investedRegNumerator = investedFromBuckets + investedAssetsTableReg;
+  const debtRowsFull = (debtRows ?? []) as Debt[];
+  const mortgageMonthly = debtRowsFull.reduce(
+    (s, d) => s + (MORTGAGE_DEBT_KINDS.has(d.kind) ? Number(d.monthly_amount) || 0 : 0),
+    0,
+  );
+  const nonMortgageMonthly = debtRowsFull.reduce(
+    (s, d) => s + (MORTGAGE_DEBT_KINDS.has(d.kind) ? 0 : Number(d.monthly_amount) || 0),
+    0,
+  );
+  const housingExpenses = (fixed ?? []).reduce((s, r) => {
+    const cat = r.category ? String(r.category).trim().toLowerCase() : "";
+    return s + (HOUSING_CATEGORY_NAMES.has(cat) ? Number(r.monthly_amount) || 0 : 0);
+  }, 0);
+
   const row: CycleMetricsRow = isBusiness
     ? computeCycleMetrics({
         kind: "business",
@@ -267,6 +307,27 @@ export async function snapshotCycleCore(
         baselineAtClose: baseline,
         scoreable,
       });
+
+  // Record every registry index this cycle so the coach can trend them and flag
+  // sustained degradation. savings_rate reuses the health-computed rate (matching
+  // what the live registry reads), the rest mirror metrics.ts exactly.
+  const savingsRatePct = row.metrics.savingsRate != null ? Number(row.metrics.savingsRate) * 100 : null;
+  (row.metrics as Record<string, unknown>).kpi = {
+    emergency_months: liquidReserveReg / essentialsReg,
+    dti_pct: income > 0 ? (debtMonthly / income) * 100 : 0,
+    invested_months: invBalReg / essentialsReg,
+    invested_years: invBalReg / (12 * essentialsReg),
+    total_income: income,
+    income_concentration: income > 0 ? (maxIncome / income) * 100 : null,
+    spending_vs_plan: plannedSpend > 0 ? (variableSpent / plannedSpend) * 100 : null,
+    savings_rate: savingsRatePct,
+    essential_expenses_ratio: income > 0 ? (essentialsReg / income) * 100 : null,
+    housing_cost_ratio: income > 0 ? ((mortgageMonthly + housingExpenses) / income) * 100 : null,
+    non_mortgage_debt_service: income > 0 ? (nonMortgageMonthly / income) * 100 : null,
+    net_worth: netWorth,
+    debt_to_asset: totalAssetsReg > 0 ? (debtRemaining / totalAssetsReg) * 100 : null,
+    investment_assets_ratio: totalAssetsReg > 0 ? (investedRegNumerator / totalAssetsReg) * 100 : null,
+  };
 
   const { error } = await sb.from("cycle_metrics").upsert(
     {

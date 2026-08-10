@@ -116,6 +116,8 @@ export async function runCoachForHousehold(
   const series: CycleMetric[] = ((cmRows as Array<Record<string, unknown>> | null) ?? [])
     .map((r) => {
       const mo = (r.metrics ?? {}) as Record<string, unknown>;
+      const kpi = (mo.kpi ?? {}) as Record<string, unknown>;
+      const num = (v: unknown): number | null => (v == null ? null : Number(v));
       const spendActual = Number(r.spend_actual) || 0;
       const plannedSpend = Number(r.planned_spend) || 0;
       return {
@@ -127,10 +129,17 @@ export async function runCoachForHousehold(
         everyday_pool: Number(r.everyday_pool) || 0,
         everyday_spent: Number(r.everyday_spent) || 0,
         score_overall: r.score_overall == null ? null : Number(r.score_overall),
-        // Derived KPI values for the degradation watch (see coach-signals.ts).
-        emergency_months: mo.monthsOfEmergency == null ? null : Number(mo.monthsOfEmergency),
-        dti_pct: mo.debtRatio == null ? null : Number(mo.debtRatio) * 100,
-        spending_vs_plan: plannedSpend > 0 ? (spendActual / plannedSpend) * 100 : null,
+        // Prefer the recorded per-cycle index snapshot (metrics.kpi); fall back to
+        // the older fields so pre-snapshot rows still trend the original metrics.
+        emergency_months: num(kpi.emergency_months) ?? (mo.monthsOfEmergency == null ? null : Number(mo.monthsOfEmergency)),
+        dti_pct: num(kpi.dti_pct) ?? (mo.debtRatio == null ? null : Number(mo.debtRatio) * 100),
+        spending_vs_plan: num(kpi.spending_vs_plan) ?? (plannedSpend > 0 ? (spendActual / plannedSpend) * 100 : null),
+        savings_rate: num(kpi.savings_rate) ?? (mo.savingsRate == null ? null : Number(mo.savingsRate) * 100),
+        essential_expenses_ratio: num(kpi.essential_expenses_ratio),
+        housing_cost_ratio: num(kpi.housing_cost_ratio),
+        non_mortgage_debt_service: num(kpi.non_mortgage_debt_service),
+        debt_to_asset: num(kpi.debt_to_asset),
+        income_concentration: num(kpi.income_concentration),
       };
     })
     .reverse();

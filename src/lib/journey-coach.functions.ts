@@ -165,19 +165,6 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
     // For matching a coach-referenced project name back to a real bucket id.
     const projList = bs.map((b) => ({ id: b.id, name: b.name, target: Number(b.target_value) || 0 }));
 
-    // Signature of a measurable objective, used to drop proposals that duplicate
-    // a stage the household already has.
-    const sig = (type: string, cfg: Record<string, unknown>): string | null => {
-      if (type === "metric") {
-        const key = String(cfg.key ?? "");
-        return key ? `metric:${key}:${cfg.op === "<=" ? "<=" : ">="}:${Number(cfg.value ?? 0)}` : null;
-      }
-      if (type === "project") {
-        const b = String(cfg.bucket_id ?? "");
-        return b ? `project:${b}` : null;
-      }
-      return null;
-    };
     const describeMeasure = (type: string, cfg: Record<string, unknown>): string =>
       type === "metric"
         ? `${String(cfg.key ?? "")} ${cfg.op ?? ">="} ${cfg.value ?? ""}`.trim()
@@ -191,11 +178,47 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       objective_type: string;
       objective_config: Record<string, unknown>;
     }>;
-    const existingSigs = new Set<string>();
+
+    // Build the household's existing coverage so we can drop any proposal that
+    // duplicates a stage already on the roadmap — by title, by project, or by a
+    // metric already targeted in the same direction at an equal-or-tougher level.
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+    const existingTitles = new Set<string>();
+    const existingProjects = new Set<string>();
+    const existingMetrics = new Map<string, Array<{ op: string; value: number }>>();
     for (const s of existingStages) {
-      const sg = sig(s.objective_type, (s.objective_config ?? {}) as Record<string, unknown>);
-      if (sg) existingSigs.add(sg);
+      const cfg = (s.objective_config ?? {}) as Record<string, unknown>;
+      const title = s.title ?? s.template_key ?? "";
+      if (title) existingTitles.add(norm(title));
+      if (s.objective_type === "project") {
+        const b = String(cfg.bucket_id ?? "");
+        if (b) existingProjects.add(b);
+      } else if (s.objective_type === "metric") {
+        const key = String(cfg.key ?? "");
+        if (key) {
+          const arr = existingMetrics.get(key) ?? [];
+          arr.push({ op: cfg.op === "<=" ? "<=" : ">=", value: Number(cfg.value ?? 0) });
+          existingMetrics.set(key, arr);
+        }
+      }
     }
+    const isDuplicate = (p: StageProposal): boolean => {
+      if (p.title && existingTitles.has(norm(p.title))) return true;
+      const cfg = p.objectiveConfig;
+      if (p.objectiveType === "project") return existingProjects.has(String(cfg.bucket_id ?? ""));
+      if (p.objectiveType === "metric") {
+        const key = String(cfg.key ?? "");
+        const op = cfg.op === "<=" ? "<=" : ">=";
+        const value = Number(cfg.value ?? 0);
+        const existing = existingMetrics.get(key);
+        if (!existing) return false;
+        // Duplicate = same metric, same direction, existing target already
+        // equal-or-more-ambitious. A strictly tougher rung is allowed through.
+        return existing.some((e) => e.op === op && (op === ">=" ? e.value >= value : e.value <= value));
+      }
+      return false;
+    };
+
     const currentStages = existingStages.map((s) => ({
       name: s.title ?? s.template_key ?? "stage",
       measure: describeMeasure(s.objective_type, (s.objective_config ?? {}) as Record<string, unknown>),
@@ -251,10 +274,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
         })
         .filter((p) => p.title)
         // Drop anything that duplicates a stage the household already has.
-        .filter((p) => {
-          const sg = sig(p.objectiveType, p.objectiveConfig);
-          return !(sg && existingSigs.has(sg));
-        })
+        .filter((p) => !isDuplicate(p))
         .slice(0, 4);
       // A successful call that yields no usable proposals is a genuine "nothing to
       // add", not an error — the UI shows the reassuring empty state.

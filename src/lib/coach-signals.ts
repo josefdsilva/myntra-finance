@@ -157,11 +157,17 @@ export type CycleMetric = {
   everyday_spent: number;
   score_overall: number | null;
   // Derived KPI values for the degradation watch (null/undefined when a cycle
-  // did not persist enough to compute them). Only these three have real
-  // per-cycle history today.
+  // did not persist enough to compute them). The first three have history on
+  // older rows too; the rest accrue history from the per-cycle index snapshot.
   emergency_months?: number | null;
   dti_pct?: number | null;
   spending_vs_plan?: number | null;
+  savings_rate?: number | null;
+  essential_expenses_ratio?: number | null;
+  housing_cost_ratio?: number | null;
+  non_mortgage_debt_service?: number | null;
+  debt_to_asset?: number | null;
+  income_concentration?: number | null;
 };
 
 /** A recap of the just-closed cycle plus the single most useful next action. */
@@ -254,7 +260,16 @@ export function milestoneSignals(p: { series: CycleMetric[] }): Signal[] {
 
 // ---- KPI degradation watch -------------------------------------------------
 
-type WatchKey = "emergency_months" | "dti_pct" | "spending_vs_plan";
+type WatchKey =
+  | "emergency_months"
+  | "dti_pct"
+  | "spending_vs_plan"
+  | "savings_rate"
+  | "essential_expenses_ratio"
+  | "housing_cost_ratio"
+  | "non_mortgage_debt_service"
+  | "debt_to_asset"
+  | "income_concentration";
 
 /**
  * Watch the KPIs that have real per-cycle history. When one slips the wrong way
@@ -302,6 +317,60 @@ export function degradationSignals(p: { series: CycleMetric[] }): Signal[] {
       concern: (v) => v > 100,
       op: "<=",
       value: 100,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "savings_rate",
+      label: "savings rate",
+      higherIsWorse: false,
+      concern: (v) => v < 10,
+      op: ">=",
+      value: 15,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "essential_expenses_ratio",
+      label: "essential-expenses ratio",
+      higherIsWorse: true,
+      concern: (v) => v > 70,
+      op: "<=",
+      value: 70,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "housing_cost_ratio",
+      label: "housing costs",
+      higherIsWorse: true,
+      concern: (v) => v > 30,
+      op: "<=",
+      value: 30,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "non_mortgage_debt_service",
+      label: "consumer-debt payments",
+      higherIsWorse: true,
+      concern: (v) => v > 15,
+      op: "<=",
+      value: 15,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "debt_to_asset",
+      label: "debt-to-asset ratio",
+      higherIsWorse: true,
+      concern: (v) => v > 50,
+      op: "<=",
+      value: 40,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "income_concentration",
+      label: "income concentration",
+      higherIsWorse: true,
+      concern: (v) => v > 80,
+      op: "<=",
+      value: 80,
       fmt: (v) => `${Math.round(v)}%`,
     },
   ];

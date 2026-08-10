@@ -53,7 +53,7 @@ import {
 } from "@/lib/journey.functions";
 import { JourneyCoach } from "@/components/journey-coach";
 import { listKpiTargets, createKpiTarget, type KpiTarget } from "@/lib/kpi-targets.functions";
-import { metricMeta, formatMetricValue, computeMetrics, fetchMetricInputs, type MetricKey } from "@/lib/metrics";
+import { metricMeta, formatMetricValue, isTargetMet, computeMetrics, fetchMetricInputs, type MetricKey } from "@/lib/metrics";
 import { cn } from "@/lib/utils";
 import { useT, type MessageKey } from "@/lib/i18n";
 
@@ -432,17 +432,32 @@ function JourneyPage() {
     if (!householdId) return;
     const meta = metricMeta(tg.metric_key);
     const label = meta ? t(meta.labelKey) : tg.metric_key;
-    const valueStr = formatMetricValue(tg.metric_key as MetricKey, Number(tg.target_value), money);
-    await createFn({
+    const target = Number(tg.target_value);
+    const valueStr = formatMetricValue(tg.metric_key as MetricKey, target, money);
+    // Priority: a target already met is a maintained win, so it rides alongside;
+    // one still open needs attention, so it belongs on the main spine.
+    const cur = metrics ? metrics[tg.metric_key] : null;
+    const met = isTargetMet(tg.op, cur ?? null, target);
+    const res = await createFn({
       data: {
         household_id: householdId,
         title: tg.title,
         objective: `${label} ${tg.op} ${valueStr}`,
-        optional: true,
+        optional: met,
         objective_type: "metric",
-        objective_config: { key: tg.metric_key, op: tg.op, value: Number(tg.target_value), kpi_target_id: tg.id },
+        objective_config: { key: tg.metric_key, op: tg.op, value: target, kpi_target_id: tg.id },
       },
     });
+    // Put an unmet spine target right after the current active stage so it's next
+    // up, instead of buried at the end of the roadmap.
+    const newId = (res as { id: string | null } | null)?.id ?? null;
+    if (newId && !met && evaluated) {
+      const activeId = evaluated.spineNodes.find((s) => s.status === "active")?.id;
+      const order = evaluated.all.map((s) => s.id).filter((id) => id !== newId);
+      const at = activeId ? order.indexOf(activeId) + 1 : order.length;
+      order.splice(at, 0, newId);
+      await reorderFn({ data: { household_id: householdId, ids: order } });
+    }
     setTargetPicker(false);
     toast.success(t("journey.targetAdded"));
     refresh();
