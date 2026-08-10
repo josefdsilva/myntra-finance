@@ -1057,7 +1057,36 @@ export function LandingPage() {
           </section>
 
           {/* Unique creations */}
+          {/* Journey and targets */}
+          <section id="journey" className="mx-auto max-w-6xl px-5 py-16">
+            <Reveal>
+              <h2 className="font-display text-3xl">A journey, not a spreadsheet.</h2>
+              <p className="mt-3 max-w-2xl text-muted-foreground">
+                bynku turns your finances into clear stages with targets you can actually hit. You always
+                know where you are, what comes next, and why it matters.
+              </p>
+            </Reveal>
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <Reveal><JourneyMock /></Reveal>
+              <Reveal delay={60}><TargetsMock /></Reveal>
+            </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              {[
+                ["One next step", "No long to-do list. The journey shows the single stage that matters now."],
+                ["Targets that track themselves", "Buffer months, savings rate and payoff dates update from your real numbers."],
+                ["Progress you can feel", "Stages complete, milestones celebrate, and the story of your money moves forward."],
+              ].map(([title, body], i) => (
+                <Reveal key={title} delay={i * 50} className="rounded-2xl border bg-card p-5">
+                  <h3 className="font-medium">{title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+                </Reveal>
+              ))}
+            </div>
+          </section>
+
+          {/* Unique creations */}
           <section id="features" className="border-t bg-muted/30">
+
             <div className="mx-auto max-w-6xl px-5 py-16">
               <Reveal>
                 <h2 className="font-display text-3xl">Things you will not find elsewhere.</h2>
