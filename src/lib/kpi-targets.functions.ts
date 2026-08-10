@@ -28,6 +28,13 @@ const METRIC_KEYS = [
   "total_income",
   "income_concentration",
   "spending_vs_plan",
+  "savings_rate",
+  "essential_expenses_ratio",
+  "housing_cost_ratio",
+  "non_mortgage_debt_service",
+  "net_worth",
+  "debt_to_asset",
+  "investment_assets_ratio",
 ] as const;
 
 const SELECT =

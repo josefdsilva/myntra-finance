@@ -53,7 +53,7 @@ import {
 } from "@/lib/journey.functions";
 import { JourneyCoach } from "@/components/journey-coach";
 import { listKpiTargets, createKpiTarget, type KpiTarget } from "@/lib/kpi-targets.functions";
-import { metricMeta, formatMetricValue, type MetricKey } from "@/lib/metrics";
+import { metricMeta, formatMetricValue, computeMetrics, fetchMetricInputs, type MetricKey } from "@/lib/metrics";
 import { cn } from "@/lib/utils";
 import { useT, type MessageKey } from "@/lib/i18n";
 
@@ -115,7 +115,6 @@ function JourneyPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
-  const baseline = Number(hh?.household?.baseline_budget ?? 0);
   // The Journey is a personal order-of-operations — business spaces don't get it.
   const isBusiness = hh?.household?.kind === "business";
 
@@ -200,44 +199,17 @@ function JourneyPage() {
     queryFn: () => kpiTargetsFn({ data: { household_id: householdId! } }),
   });
 
-  const metrics = useMemo(() => {
-    if (!metricsData) return null;
-    // Essentials denominator = baseline monthly outgoings, matching the coach /
-    // health-score "months of essential costs" (not just fixed + debt).
-    const essentials = Math.max(1, baseline || metricsData.essentials);
-    let emergencyBal = 0;
-    let savingsBal = 0;
-    let investBal = 0;
-    for (const b of metricsData.buckets) {
-      const bal = metricsData.balances[b.id] ?? 0;
-      if (b.kind === "investment") investBal += bal;
-      else if (b.kind === "emergency") emergencyBal += bal;
-      else savingsBal += bal;
-    }
-    const hasEmergency = metricsData.buckets.some((b) => b.kind === "emergency");
-    const liquidReserve = hasEmergency ? emergencyBal : emergencyBal + savingsBal;
-    const out: Record<string, number> = {
-      emergency_months: liquidReserve / essentials,
-      dti_pct: metricsData.income > 0 ? (metricsData.debtMonthly / metricsData.income) * 100 : 0,
-      invested_amount: investBal,
-      // Invested measured in months of essential costs, so "long-term investing"
-      // is a meaningful, personalized target rather than "any amount > 0".
-      invested_months: investBal / essentials,
-      // Years of essential costs covered by investments — anchors the financial
-      // independence rung (~25× yearly costs).
-      invested_years: investBal / (12 * essentials),
-      total_income: metricsData.income,
-    };
-    // The extra KPI-target metrics — added ONLY when computable, so an
-    // unavailable metric stays undefined and never falsely completes a stage.
-    if (metricsData.income > 0) {
-      out.income_concentration = (metricsData.incomeMax / metricsData.income) * 100;
-    }
-    if (metricsData.spendActual != null && metricsData.plannedSpend != null && metricsData.plannedSpend > 0) {
-      out.spending_vs_plan = (metricsData.spendActual / metricsData.plannedSpend) * 100;
-    }
-    return out;
-  }, [metricsData, baseline]);
+  // All metric values come from the shared registry (shared cache key with the
+  // Grow → Targets tab), so the journey knows every metric a target can track.
+  const { data: registryMetrics } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["kpi-metrics", householdId],
+    queryFn: async () => computeMetrics(await fetchMetricInputs(householdId!)),
+  });
+
+  // Sourced from the shared registry — no separate copy of the formulas here.
+  // Values may be null when a metric isn't computable yet.
+  const metrics = (registryMetrics ?? null) as Record<string, number | null> | null;
 
   // Evaluate each persisted stage against the live metrics.
   const evaluated = useMemo(() => {
@@ -248,14 +220,13 @@ function JourneyPage() {
     if (!stages.length || !metrics) return null;
     const m = metrics;
     const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
-    const fmt = (key: string, cur: number) =>
-      key === "dti_pct" || key === "income_concentration" || key === "spending_vs_plan"
-        ? `${Math.round(cur)}%`
-        : key === "invested_amount" || key === "net_worth" || key === "total_income"
-          ? money(cur)
-          : key === "invested_years"
-            ? t("journey.years", { n: cur.toFixed(1) })
-            : t("journey.months", { n: cur.toFixed(1) });
+    const fmt = (key: string, cur: number) => {
+      const f = metricMeta(key)?.format;
+      if (f === "currency" || key === "invested_amount") return money(cur);
+      if (f === "pct") return `${Math.round(cur)}%`;
+      if (f === "years") return t("journey.years", { n: cur.toFixed(1) });
+      return t("journey.months", { n: cur.toFixed(1) });
+    };
 
     const evalOne = (s: JourneyStage): { complete: boolean; progress: number; value: string | null } => {
       if (s.objective_type === "custom") {
@@ -280,7 +251,7 @@ function JourneyPage() {
       const raw = m[key];
       // Metric not computable yet (e.g. no cycle closed for spending vs plan) —
       // show 0% and never complete, so no bogus medal is minted.
-      if (raw === undefined) return { complete: false, progress: 0, value: null };
+      if (raw == null) return { complete: false, progress: 0, value: null };
       const cur = raw;
       const complete = op === "<=" ? cur <= target : cur >= target;
       const progress = op === "<=" ? (complete ? 1 : clamp01(target / Math.max(cur, 0.0001))) : clamp01(cur / Math.max(target, 0.0001));

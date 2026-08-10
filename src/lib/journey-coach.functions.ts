@@ -14,7 +14,22 @@ const MODEL = "google/gemini-3-flash-preview";
 const TIMEOUT_MS = 30_000;
 
 // Metrics the coach may bind a stage to (must match the client-side evaluator).
-const METRIC_KEYS = new Set(["emergency_months", "dti_pct", "invested_months", "invested_years"]);
+const METRIC_KEYS = new Set([
+  "emergency_months",
+  "dti_pct",
+  "invested_months",
+  "invested_years",
+  "total_income",
+  "income_concentration",
+  "spending_vs_plan",
+  "savings_rate",
+  "essential_expenses_ratio",
+  "housing_cost_ratio",
+  "non_mortgage_debt_service",
+  "net_worth",
+  "debt_to_asset",
+  "investment_assets_ratio",
+]);
 
 export type StageProposal = {
   title: string;
@@ -49,7 +64,8 @@ Propose between 1 and 4 concrete stages, grounded ONLY in the facts provided. Ea
 - objective: one plain-language line describing the goal
 - optional: true if it's a side-quest that runs alongside without blocking the main path (e.g. a house deposit), false if it belongs on the main spine
 - rationale: one short line on why it matters now, referencing the facts
-- measure: attach this whenever the stage can be tracked against the facts, so its progress updates automatically. Use ONE of: {"metric": one of "emergency_months","dti_pct","invested_months","invested_years", "op": ">=" or "<=", "value": number} OR {"project": "<the EXACT name of an existing project>"} to track that project's balance toward its target. If it genuinely can't be measured, set measure to null and it becomes a manual milestone.
+- measure: attach this whenever the stage can be tracked against the facts, so its progress updates automatically. Use ONE of: {"metric": one of "emergency_months","dti_pct","invested_months","invested_years","total_income","income_concentration","spending_vs_plan","savings_rate","essential_expenses_ratio","housing_cost_ratio","non_mortgage_debt_service","net_worth","debt_to_asset","investment_assets_ratio", "op": ">=" or "<=", "value": number} OR {"project": "<the EXACT name of an existing project>"} to track that project's balance toward its target. If it genuinely can't be measured, set measure to null and it becomes a manual milestone.
+  Sensible reference thresholds (percent values, months, or currency as appropriate): savings_rate >= 15 (10–20% is common), housing_cost_ratio <= 30, essential_expenses_ratio <= 70, dti_pct <= 36, non_mortgage_debt_service <= 15, emergency_months >= 3 then 6, income_concentration <= 70, investment_assets_ratio rising over time. Only propose a metric you can ground in the facts or in sound general guidance.
 
 Follow the sound order of operations: emergency fund first, then reduce expensive debt, then invest for the long term, then life goals. CRITICAL: never propose a stage that duplicates or overlaps one already in "Current stages" — check BOTH the name and the measure. If a stage already targets emergency_months >= 6, do NOT propose another six-month safety net; if a project is already tracked, do not propose it again. Do not invent numbers that aren't derivable from the facts. This is educational information, not regulated financial advice — never tell them to buy a specific product. If the user gives a request, honour it while staying grounded. Keep everything concise.`;
 
@@ -88,6 +104,7 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
 
     const baseline = Number(hh.data?.baseline_budget ?? 0);
     const income = (incomes.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+    const maxIncome = (incomes.data ?? []).reduce((mx, r) => Math.max(mx, Number(r.monthly_amount) || 0), 0);
     const debtMonthly = (debts.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
     const fixedMonthly = (fixed.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
     const essentials = Math.max(1, baseline || fixedMonthly + debtMonthly);
@@ -134,6 +151,9 @@ export const proposeJourneyStages = createServerFn({ method: "POST" })
       emergencyMonths: Math.round((liquidReserve / essentials) * 10) / 10,
       debtToIncomePct: income > 0 ? Math.round((debtMonthly / income) * 100) : 0,
       investedMonths: Math.round((investBal / essentials) * 10) / 10,
+      investedYears: Math.round((investBal / (12 * essentials)) * 10) / 10,
+      essentialExpensesRatioPct: income > 0 ? Math.round((essentials / income) * 100) : null,
+      incomeConcentrationPct: income > 0 ? Math.round((maxIncome / income) * 100) : null,
       projects: bs.map((b) => ({
         name: b.name,
         kind: b.kind,

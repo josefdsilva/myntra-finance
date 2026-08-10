@@ -7,6 +7,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { bucketBalancesFor, fetchMovements, type AccountMovement } from "@/lib/movements";
+import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import type { MessageKey } from "@/lib/i18n";
 
 export type MetricKey =
@@ -16,7 +17,19 @@ export type MetricKey =
   | "invested_years"
   | "total_income"
   | "income_concentration"
-  | "spending_vs_plan";
+  | "spending_vs_plan"
+  | "savings_rate"
+  | "essential_expenses_ratio"
+  | "housing_cost_ratio"
+  | "non_mortgage_debt_service"
+  | "net_worth"
+  | "debt_to_asset"
+  | "investment_assets_ratio";
+
+/** Debt kinds treated as a mortgage / house loan (vs. consumer debt). */
+export const MORTGAGE_KINDS = new Set(["mortgage", "property"]);
+/** Expense categories counted as housing (case-insensitive). */
+export const HOUSING_CATEGORIES = new Set(["housing", "rent"]);
 
 /** null = not enough data to compute this metric yet (UI shows "—"). */
 export type MetricValue = number | null;
@@ -42,6 +55,13 @@ export const METRICS: MetricMeta[] = [
   { key: "total_income", labelKey: "kpi.metric.total_income", descKey: "kpi.metric.total_income.desc", format: "currency", betterWhen: "higher", defaultOp: ">=" },
   { key: "income_concentration", labelKey: "kpi.metric.income_concentration", descKey: "kpi.metric.income_concentration.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
   { key: "spending_vs_plan", labelKey: "kpi.metric.spending_vs_plan", descKey: "kpi.metric.spending_vs_plan.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
+  { key: "savings_rate", labelKey: "kpi.metric.savings_rate", descKey: "kpi.metric.savings_rate.desc", format: "pct", betterWhen: "higher", defaultOp: ">=" },
+  { key: "essential_expenses_ratio", labelKey: "kpi.metric.essential_expenses_ratio", descKey: "kpi.metric.essential_expenses_ratio.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
+  { key: "housing_cost_ratio", labelKey: "kpi.metric.housing_cost_ratio", descKey: "kpi.metric.housing_cost_ratio.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
+  { key: "non_mortgage_debt_service", labelKey: "kpi.metric.non_mortgage_debt_service", descKey: "kpi.metric.non_mortgage_debt_service.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
+  { key: "net_worth", labelKey: "kpi.metric.net_worth", descKey: "kpi.metric.net_worth.desc", format: "currency", betterWhen: "higher", defaultOp: ">=" },
+  { key: "debt_to_asset", labelKey: "kpi.metric.debt_to_asset", descKey: "kpi.metric.debt_to_asset.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
+  { key: "investment_assets_ratio", labelKey: "kpi.metric.investment_assets_ratio", descKey: "kpi.metric.investment_assets_ratio.desc", format: "pct", betterWhen: "higher", defaultOp: ">=" },
 ];
 
 const BY_KEY: Record<string, MetricMeta> = Object.fromEntries(METRICS.map((m) => [m.key, m]));
@@ -62,21 +82,30 @@ export type MetricInputs = {
   /** Latest cycle snapshot for spending vs plan (null if none closed yet). */
   spendActual: number | null;
   plannedSpend: number | null;
+  /** Realized savings rate (fraction 0..1) from the latest closed cycle. */
+  savingsRate: number | null;
+  /** Full debt rows — for live remaining principal and mortgage/consumer split. */
+  debts: Debt[];
+  /** Balance-sheet assets (excludes untracked bank cash, per net-worth-card). */
+  assets: Array<{ current_value: number; kind: string; liquidity: string | null; bucket_id: string | null }>;
+  /** Fixed expenses with their (free-form) category — for the housing ratio. */
+  fixedExpenses: Array<{ category: string | null; amount: number }>;
 };
 
 /** Fetch everything the registry needs, client-side, mirroring the journey page. */
 export async function fetchMetricInputs(householdId: string): Promise<MetricInputs> {
-  const [hh, bucketsRes, allocsRes, movements, incomesRes, debtsRes, fixedRes, cmRes] = await Promise.all([
+  const [hh, bucketsRes, allocsRes, movements, incomesRes, debtsRes, fixedRes, assetsRes, cmRes] = await Promise.all([
     supabase.from("households").select("baseline_budget").eq("id", householdId).maybeSingle(),
     supabase.from("buckets").select("id, kind, initial_balance").eq("household_id", householdId),
     supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId),
     fetchMovements(householdId),
     supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
-    supabase.from("debts").select("monthly_amount").eq("household_id", householdId),
-    supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId),
+    supabase.from("debts").select("*").eq("household_id", householdId),
+    supabase.from("fixed_expenses").select("category, monthly_amount").eq("household_id", householdId),
+    supabase.from("assets").select("current_value, kind, liquidity, bucket_id").eq("household_id", householdId),
     supabase
       .from("cycle_metrics")
-      .select("spend_actual, planned_spend")
+      .select("spend_actual, planned_spend, metrics")
       .eq("household_id", householdId)
       .order("cycle_end", { ascending: false })
       .limit(1)
@@ -90,8 +119,20 @@ export async function fetchMetricInputs(householdId: string): Promise<MetricInpu
     movements as AccountMovement[],
   );
   const incomes = ((incomesRes.data ?? []) as Array<{ monthly_amount: number | string }>).map((r) => Number(r.monthly_amount) || 0);
-  const debtMonthly = ((debtsRes.data ?? []) as Array<{ monthly_amount: number | string }>).reduce((s, r) => s + (Number(r.monthly_amount) || 0), 0);
-  const fixedMonthly = ((fixedRes.data ?? []) as Array<{ monthly_amount: number | string }>).reduce((s, r) => s + (Number(r.monthly_amount) || 0), 0);
+  const debts = (debtsRes.data ?? []) as Debt[];
+  const debtMonthly = debts.reduce((s, r) => s + (Number(r.monthly_amount) || 0), 0);
+  const fixedExpenses = ((fixedRes.data ?? []) as Array<{ category: string | null; monthly_amount: number | string }>).map((r) => ({
+    category: r.category,
+    amount: Number(r.monthly_amount) || 0,
+  }));
+  const fixedMonthly = fixedExpenses.reduce((s, r) => s + r.amount, 0);
+  const assets = ((assetsRes.data ?? []) as Array<{ current_value: number | string; kind: string; liquidity: string | null; bucket_id: string | null }>).map((a) => ({
+    current_value: Number(a.current_value) || 0,
+    kind: a.kind,
+    liquidity: a.liquidity,
+    bucket_id: a.bucket_id,
+  }));
+  const cmMetrics = (cmRes.data?.metrics ?? null) as { savingsRate?: number } | null;
 
   return {
     baseline: Number(hh.data?.baseline_budget ?? 0),
@@ -102,6 +143,10 @@ export async function fetchMetricInputs(householdId: string): Promise<MetricInpu
     fixedMonthly,
     spendActual: cmRes.data ? Number(cmRes.data.spend_actual) : null,
     plannedSpend: cmRes.data?.planned_spend != null ? Number(cmRes.data.planned_spend) : null,
+    savingsRate: cmMetrics?.savingsRate != null ? Number(cmMetrics.savingsRate) : null,
+    debts,
+    assets,
+    fixedExpenses,
   };
 }
 
@@ -129,6 +174,33 @@ export function computeMetrics(inp: MetricInputs): Record<MetricKey, MetricValue
       ? (inp.spendActual / inp.plannedSpend) * 100
       : null;
 
+  // ---- Balance sheet (mirrors net-worth-card's double-count guard) ----
+  // Buckets linked from an asset are represented by that asset, so exclude them
+  // from the bucket-savings sum to avoid counting the money twice.
+  const linkedBucketIds = new Set(inp.assets.map((a) => a.bucket_id).filter((x): x is string => !!x));
+  const bucketSavings = inp.buckets.reduce((s, b) => s + (linkedBucketIds.has(b.id) ? 0 : (inp.balances[b.id] ?? 0)), 0);
+  const assetsTotal = inp.assets.reduce((s, a) => s + a.current_value, 0);
+  const totalAssets = assetsTotal + bucketSavings;
+  const debtRemaining = inp.debts.reduce((s, d) => s + (debtLiveSchedule(d).remaining || 0), 0);
+  const netWorth = assetsTotal + bucketSavings - debtRemaining;
+
+  // Invested assets = non-linked investment buckets + market-type assets.
+  const investedBuckets = inp.buckets.reduce(
+    (s, b) => s + (b.kind === "investment" && !linkedBucketIds.has(b.id) ? (inp.balances[b.id] ?? 0) : 0),
+    0,
+  );
+  const investedAssetKinds = new Set(["stocks", "bonds", "fund"]);
+  const investedAssetsTable = inp.assets.reduce((s, a) => s + (investedAssetKinds.has(a.kind) ? a.current_value : 0), 0);
+  const investedAssets = investedBuckets + investedAssetsTable;
+
+  // ---- Debt split (mortgage vs. consumer) + housing ----
+  const mortgageMonthly = inp.debts.reduce((s, d) => s + (MORTGAGE_KINDS.has(d.kind) ? Number(d.monthly_amount) || 0 : 0), 0);
+  const nonMortgageMonthly = inp.debts.reduce((s, d) => s + (MORTGAGE_KINDS.has(d.kind) ? 0 : Number(d.monthly_amount) || 0), 0);
+  const housingExpenses = inp.fixedExpenses.reduce(
+    (s, e) => s + (e.category && HOUSING_CATEGORIES.has(e.category.trim().toLowerCase()) ? e.amount : 0),
+    0,
+  );
+
   return {
     emergency_months: liquidReserve / essentials,
     dti_pct: totalIncome > 0 ? (inp.debtMonthly / totalIncome) * 100 : 0,
@@ -137,6 +209,13 @@ export function computeMetrics(inp: MetricInputs): Record<MetricKey, MetricValue
     total_income: totalIncome,
     income_concentration: totalIncome > 0 ? (largestIncome / totalIncome) * 100 : null,
     spending_vs_plan: spendingVsPlan,
+    savings_rate: inp.savingsRate != null ? inp.savingsRate * 100 : null,
+    essential_expenses_ratio: totalIncome > 0 ? (essentials / totalIncome) * 100 : null,
+    housing_cost_ratio: totalIncome > 0 ? ((mortgageMonthly + housingExpenses) / totalIncome) * 100 : null,
+    non_mortgage_debt_service: totalIncome > 0 ? (nonMortgageMonthly / totalIncome) * 100 : null,
+    net_worth: netWorth,
+    debt_to_asset: totalAssets > 0 ? (debtRemaining / totalAssets) * 100 : null,
+    investment_assets_ratio: totalAssets > 0 ? (investedAssets / totalAssets) * 100 : null,
   };
 }
 
