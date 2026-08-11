@@ -123,6 +123,24 @@ export const ENTRIES = {
     de: "{metric} {op} {value} auf Ihrer Journey verfolgen und wieder in Ordnung bringen?",
     fr: "Suivre {metric} {op} {value} sur votre parcours et le redresser ?",
   },
+  "journey.origin.target": { en: "Target", pt: "Meta", es: "Meta", de: "Ziel", fr: "Objectif" },
+  "journey.origin.project": { en: "Project", pt: "Projeto", es: "Proyecto", de: "Projekt", fr: "Projet" },
+  "journey.origin.coach": { en: "Coach", pt: "Coach", es: "Coach", de: "Coach", fr: "Coach" },
+  "journey.origin.milestone": {
+    en: "Milestone",
+    pt: "Marco",
+    es: "Hito",
+    de: "Meilenstein",
+    fr: "Étape",
+  },
+  "journey.projectDesc": {
+    en: "A savings project you're funding.",
+    pt: "Um projeto de poupança que está a financiar.",
+    es: "Un proyecto de ahorro que estás financiando.",
+    de: "Ein Sparprojekt, das Sie finanzieren.",
+    fr: "Un projet d'épargne que vous financez.",
+  },
+  "journey.goalShort": { en: "goal", pt: "meta", es: "meta", de: "Ziel", fr: "but" },
 
   // KPI Targets tab
   "kpi.title": {

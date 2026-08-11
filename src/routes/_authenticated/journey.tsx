@@ -685,35 +685,69 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
                 {t("journey.sideQuests")}
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
-                {evaluated.side.map((s) => (
-                  <div key={s.id} className="rounded-lg border border-dashed border-border bg-card p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <Target className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate font-medium">{s.displayTitle}</span>
-                        {s.complete && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
-                      </span>
-                      {s.objective_type !== "custom" && (
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                          {Math.round(s.progress * 100)}%
+                {evaluated.side.map((s) => {
+                  const cfg = s.objective_config as {
+                    key?: string;
+                    op?: string;
+                    value?: number;
+                    kpi_target_id?: string;
+                  };
+                  const isMetric = s.objective_type === "metric";
+                  const meta = isMetric ? metricMeta(cfg.key ?? "") : undefined;
+                  // Where this side-quest came from, so the card explains itself.
+                  const origin = cfg.kpi_target_id
+                    ? "target"
+                    : s.objective_type === "project"
+                      ? "project"
+                      : s.created_by === "coach"
+                        ? "coach"
+                        : "milestone";
+                  const op = cfg.op === "<=" ? "≤" : "≥";
+                  const targetStr =
+                    isMetric && cfg.value != null
+                      ? formatMetricValue(cfg.key as MetricKey, Number(cfg.value), money)
+                      : "";
+                  const whatText = meta
+                    ? t(meta.descKey)
+                    : s.objective_type === "project"
+                      ? t("journey.projectDesc")
+                      : s.displayObjective || null;
+                  return (
+                    <div key={s.id} className="rounded-lg border border-dashed border-border bg-card p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Target className="size-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate font-medium">{s.displayTitle}</span>
+                          {s.complete && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
+                          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                            {t(`journey.origin.${origin}` as MessageKey)}
+                          </span>
                         </span>
-                      )}
-                    </div>
-                    {s.objective_type !== "custom" && (
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={cn("h-full", s.complete ? "bg-emerald-500" : "bg-primary")}
-                          style={{ width: `${Math.round(s.progress * 100)}%` }}
-                        />
+                        {s.objective_type !== "custom" && (
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {Math.round(s.progress * 100)}%
+                          </span>
+                        )}
                       </div>
-                    )}
-                    {s.value ? (
-                      <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">{s.value}</p>
-                    ) : s.displayObjective ? (
-                      <p className="mt-1 text-xs text-muted-foreground">{s.displayObjective}</p>
-                    ) : null}
-                  </div>
-                ))}
+                      {whatText && <p className="mt-1 text-xs text-muted-foreground">{whatText}</p>}
+                      {s.objective_type !== "custom" && (
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn("h-full", s.complete ? "bg-emerald-500" : "bg-primary")}
+                            style={{ width: `${Math.round(s.progress * 100)}%` }}
+                          />
+                        </div>
+                      )}
+                      {isMetric ? (
+                        <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">
+                          {t("kpi.now")} {s.value ?? "—"} · {t("journey.goalShort")} {op} {targetStr}
+                        </p>
+                      ) : s.value ? (
+                        <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">{s.value}</p>
+                      ) : null}
+                    </div>
+                  );
+                })}
                 {evaluated.autoQuests.map((q) => (
                   <div key={q.id} className="rounded-lg border border-dashed border-border bg-card p-3">
                     <div className="flex items-center justify-between gap-2">
@@ -721,14 +755,18 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
                         <Target className="size-4 shrink-0 text-muted-foreground" />
                         <span className="truncate font-medium">{q.name}</span>
                         {q.reached && <Trophy className="size-3.5 shrink-0 text-emerald-600" />}
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {t("journey.origin.project")}
+                        </span>
                       </span>
                       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{q.pct}%</span>
                     </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{t("journey.projectDesc")}</p>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
                       <div className={cn("h-full", q.reached ? "bg-emerald-500" : "bg-primary")} style={{ width: `${q.pct}%` }} />
                     </div>
                     <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">
-                      {money(q.balance)} / {money(q.target)}
+                      {t("kpi.now")} {money(q.balance)} · {t("journey.goalShort")} {money(q.target)}
                     </p>
                   </div>
                 ))}
@@ -738,6 +776,9 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
                       <span className="flex min-w-0 items-center gap-2">
                         <Target className="size-4 shrink-0 text-muted-foreground" />
                         <span className="truncate font-medium">{p.name}</span>
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {t("journey.origin.project")}
+                        </span>
                       </span>
                       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{money(p.balance)}</span>
                     </div>
