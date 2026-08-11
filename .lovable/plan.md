@@ -1,83 +1,80 @@
-# Making bynku easy for a 62-year-old first-time user
+# Engagement plan: the first 30 days after signup
 
-Grounded in one real tester (Portuguese, PT locale, wording itself is fine). She gets stuck in three
-places: finding things in the menu, understanding the words and numbers, and adding an expense or
-income. Plan only — nothing is built until you approve.
+bynku already has the pieces (journey, coach, achievements, cycle metrics, push, weekly digest). What's
+missing is a loop that makes a user come back on a random Tuesday. This plan wires the existing pieces
+into one habit: **one small action per visit, visible progress every week.**
 
-## 1. Finding things: one short menu
+## 1. Day 0-1: reach "first useful number" fast
 
-Today the sidebar exposes ~16 destinations at the same level (Dashboard, Journey, Money in & out,
-Assets, Expenses, Save & Invest, Loans, Analysis, Fast forward, Cycle report, Snapshot, Wiki,
-Households, Capture, Statements, Settings). For a new user every item is an equally plausible guess.
+The activation moment is seeing a real "What's left" figure, not finishing setup.
 
-Proposal: five primary items, everything else behind one "More" group.
+- Onboarding ends by showing the number it just computed, with one next action attached.
+- Setup checklist becomes 3 steps, not a list of everything: income, fixed costs, first expense. The
+  rest moves into the coach as later nudges.
+- Skip-friendly: any missing input renders as an inline "add this to sharpen the number" chip on the
+  dashboard instead of blocking.
 
-```text
-Home            (dashboard)
-Money in & out  (income, bills, everyday spending)
-Save & Invest   (projects, goals)
-Loans
-More            Analysis · Fast forward · Cycle report · Snapshot · Journey · Assets ·
-                Statements · Households · Help · Settings
-```
+## 2. Every visit: exactly one next action
 
-- The five primary items are the daily loop; the rest are things you visit occasionally.
-- No routes are removed or renamed — only how they are grouped in the sidebar.
-- "More" starts collapsed, and auto-expands when the current route lives inside it, so she is never
-  looking at a menu that doesn't contain the page she's on.
+- A single "Today" card at the top of the dashboard: one action, one tap, dismissable. Sourced from the
+  existing coach signals, ranked so only the highest-value one shows.
+- Rules of the ranking: overspend risk > missing data that breaks a number > an unallocated surplus >
+  a stalled project > a journey stage one step from done > nothing (show a calm "you're on track").
+- Never more than one; the tips list stays below as secondary.
 
-## 2. Understanding the words and numbers
+## 3. Weekly rhythm: the cycle review
 
-Adopt the plain-language naming already agreed in `docs/plain-language-redesign.md`, but only the
-cheap, low-risk half of it — the words, not an information-architecture reshuffle:
+- A short cycle-end review screen (3 screens max): what you spent vs estimate, what you set aside,
+  one thing to change next cycle. Ends with a single confirm that rolls estimates forward.
+- Tie the weekly digest email/push to it: the digest becomes the invitation to the review, not a
+  standalone report.
+- Log each completed review as a streak; the streak is the one number we celebrate.
 
-- baseline → "How much I need" (keep the breakdown: bills + loans + everyday + cushion)
-- surplus / real surplus → "What's left"
-- allocate / allocations → "set aside" / Save & Invest
-- buckets → projects (finish the rename)
-- safety margin → keep, but always with a one-line plain explanation
-- avoid "owe/owed"; a borrowed-and-repaid thing is a Loan
+## 4. Proof of progress
 
-Plus a small reusable "What's this?" control (an info button opening a short plain-Portuguese
-explanation and a link to the matching wiki entry), attached to exactly the numbers she meets first:
-How much I need, What's left, Safe to spend, and each project kind.
+- A compact "since you started" strip: cycles reviewed, money set aside, debt reduced, journey level.
+  Numbers only from data already computed (cycle_metrics, allocations, debts, journey).
+- Achievements fire on real milestones (first full cycle, first €500 set aside, first loan overpayment,
+  3-cycle streak) and are surfaced in the coach inbox plus a small toast, never a modal.
+- The shareable snapshot is offered right after a milestone — that is when someone actually wants to
+  share it.
 
-Every string goes through the existing i18n entries, so PT and the other locales stay in sync.
+## 5. Bringing people back (notifications that earn their place)
 
-## 3. Adding an expense or income: short form first
+- Three push/email moments only: cycle start (plan), mid-cycle (drift warning, only if drifting),
+  cycle end (review). Everything else stays in-app.
+- Every notification names a number and links to one screen. If we can't name a number, we don't send.
+- Quiet by default for anything else; existing notification prefs stay authoritative.
 
-The quick-add form currently presents amount, category, need-level (Essential→Treat), date, an
-income/received toggle, note, and labels at once. Six of those are optional.
+## 6. Reduce the cost of logging
 
-Proposal: the form opens with three fields only — **amount, category, date (prefilled today)** — and
-a single "Add details" toggle that reveals need-level, note and labels. Saving with just the three
-fields already works today; this only changes what is visible by default.
+Engagement dies on data entry, so the daily loop has to be cheap:
 
-- Same for the money-in path: amount, source, date.
-- Bigger tap targets and larger amount text on mobile, since that's the field she uses most.
-- The photo and voice capture paths stay exactly as they are.
+- Quick-add opens with three fields (amount, category, date) and an "Add details" toggle.
+- Recurring-expense settlement becomes one tap from the dashboard ("Rent paid?") instead of a form.
+- Photo/voice capture surfaced on the dashboard, not only inside the expenses page.
 
-## 4. Reading the screen
+## Sequencing
 
-A light accessibility pass over the screens above, not a redesign: minimum 44×44 tap targets on
-primary buttons, no text below 14px in the daily-loop screens, and contrast checked against the
-existing tokens (no new colours, no hardcoded colour classes).
+1. Today card + ranking (highest impact, uses existing signals)
+2. Quick-add slimming + one-tap settlement
+3. Cycle review screen + streak
+4. Progress strip + milestone achievements
+5. Notification trimming to the three moments
 
 ## Technical notes
 
-- Sidebar grouping: `src/components/app-shell.tsx` only. Route files untouched.
-- Renames: `src/lib/i18n-entries.ts` (all locales) plus the components rendering those labels —
-  dashboard, cashflow, allocations, settings, loans, wiki content.
-- "What's this?": one new small component, reused; content sourced from the existing wiki content
-  module so there is a single source of truth.
-- Quick-add: `src/components/expense-quick-add.tsx` — progressive disclosure of existing fields, no
-  change to the submit payload or any server function.
-- No database migrations, no business-logic changes, no new dependencies.
+- Today card: new small component on `dashboard.tsx`, ranking function next to `src/lib/coach-signals.ts`
+  (pure, unit-testable). No new tables.
+- Streak + review completion: one new table (`cycle_reviews`: household_id, cycle_start, completed_at)
+  with GRANTs and household-scoped RLS.
+- Milestones reuse `src/lib/achievements.functions.ts`; add the new kinds there.
+- Notification trimming happens in `src/lib/coach-runner.server.ts` (which nudges set `push`/`email`),
+  not in new endpoints.
+- All copy goes through `src/lib/i18n-entries.ts` for every locale.
 
-## Explicitly out of scope
+## Out of scope
 
-- The full information-architecture reshuffle (moving income/bills/goals out of Settings) — that
-  needs beta validation first.
-- A separate "simple mode" toggle. Two divergent surfaces double the maintenance and the users who
-  need the simple one are the least likely to find a toggle.
-- Removing any feature or route.
+- Gamification for its own sake (points, badges walls, leaderboards).
+- Any daily-streak mechanic that punishes a missed day; the cycle is the unit, not the day.
+- New AI surfaces — this plan spends no extra credits per user.
