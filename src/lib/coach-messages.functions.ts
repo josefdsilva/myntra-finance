@@ -28,6 +28,9 @@ export const listCoachMessages = createServerFn({ method: "GET" })
         "id, kind, severity, title, body, action_label, action_url, cycle_start, read_at, created_at",
       )
       .eq("household_id", data.household_id)
+      // Only proactive nudges belong in the bell — chat turns live in the
+      // conversation and always carry a conversation_id.
+      .is("conversation_id", null)
       // dismissed_at is a temporary cast until types.ts is regenerated.
       .is("dismissed_at" as never, null)
       .order("created_at", { ascending: false })
@@ -46,6 +49,7 @@ export const unreadCoachCount = createServerFn({ method: "GET" })
       .from("coach_messages")
       .select("id", { count: "exact", head: true })
       .eq("household_id", data.household_id)
+      .is("conversation_id", null)
       .is("dismissed_at" as never, null)
       .is("read_at", null);
     return { count: count ?? 0 };
@@ -73,6 +77,7 @@ export const markAllCoachRead = createServerFn({ method: "POST" })
       .from("coach_messages")
       .update({ read_at: new Date().toISOString() })
       .eq("household_id", data.household_id)
+      .is("conversation_id", null)
       .is("read_at", null);
     return { ok: true };
   });
