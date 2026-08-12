@@ -1356,6 +1356,7 @@ export type Database = {
           cycle_mode: string
           employees: number
           id: string
+          is_synthetic: boolean
           kind: string
           margin_pct: number
           name: string
@@ -1383,6 +1384,7 @@ export type Database = {
           cycle_mode?: string
           employees?: number
           id?: string
+          is_synthetic?: boolean
           kind?: string
           margin_pct?: number
           name?: string
@@ -1410,6 +1412,7 @@ export type Database = {
           cycle_mode?: string
           employees?: number
           id?: string
+          is_synthetic?: boolean
           kind?: string
           margin_pct?: number
           name?: string
@@ -1940,6 +1943,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          is_synthetic: boolean
           tour_seen_at: string | null
           updated_at: string
           user_id: string
@@ -1948,6 +1952,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          is_synthetic?: boolean
           tour_seen_at?: string | null
           updated_at?: string
           user_id: string
@@ -1956,6 +1961,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          is_synthetic?: boolean
           tour_seen_at?: string | null
           updated_at?: string
           user_id?: string
@@ -2026,6 +2032,53 @@ export type Database = {
           reason?: string
         }
         Relationships: []
+      }
+      synthetic_personas: {
+        Row: {
+          created_at: string
+          email: string
+          household_id: string | null
+          id: string
+          key: string
+          label: string
+          profile: Json
+          seeded_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          household_id?: string | null
+          id?: string
+          key: string
+          label: string
+          profile?: Json
+          seeded_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          household_id?: string | null
+          id?: string
+          key?: string
+          label?: string
+          profile?: Json
+          seeded_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synthetic_personas_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       variable_estimates: {
         Row: {
