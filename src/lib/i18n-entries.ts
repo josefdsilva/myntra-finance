@@ -142,6 +142,94 @@ export const ENTRIES = {
   },
   "journey.goalShort": { en: "goal", pt: "meta", es: "meta", de: "Ziel", fr: "but" },
 
+  // Dashboard tips: confirm estimates + close the gap
+  "tips.verifyEstimates.title": {
+    en: "Confirm your estimated numbers",
+    pt: "Confirme os seus números estimados",
+    es: "Confirma tus cifras estimadas",
+    de: "Bestätigen Sie Ihre geschätzten Zahlen",
+    fr: "Confirmez vos chiffres estimés",
+  },
+  "tips.verifyEstimates.detail": {
+    en: "Some costs and income are still estimates from national averages. Confirm them so your plan reflects your real life, not a typical household.",
+    pt: "Alguns custos e rendimentos ainda são estimativas de médias nacionais. Confirme-os para que o seu plano reflita a sua vida real, não um agregado típico.",
+    es: "Algunos costes e ingresos aún son estimaciones de medias nacionales. Confírmalos para que tu plan refleje tu vida real, no un hogar típico.",
+    de: "Einige Kosten und Einnahmen sind noch Schätzungen aus nationalen Durchschnittswerten. Bestätigen Sie sie, damit Ihr Plan Ihr echtes Leben abbildet, nicht einen typischen Haushalt.",
+    fr: "Certains coûts et revenus sont encore des estimations issues de moyennes nationales. Confirmez-les pour que votre plan reflète votre vraie vie, pas un ménage type.",
+  },
+  "tips.verifyEstimates.chat": {
+    en: "Which of my estimated costs should I confirm first to make my plan accurate?",
+    pt: "Quais dos meus custos estimados devo confirmar primeiro para tornar o meu plano exato?",
+    es: "¿Cuáles de mis costes estimados debería confirmar primero para que mi plan sea exacto?",
+    de: "Welche meiner geschätzten Kosten sollte ich zuerst bestätigen, damit mein Plan genau ist?",
+    fr: "Lesquels de mes coûts estimés devrais-je confirmer en premier pour rendre mon plan exact ?",
+  },
+  "tips.closeGap.title": {
+    en: "Little room to save",
+    pt: "Pouca margem para poupar",
+    es: "Poco margen para ahorrar",
+    de: "Wenig Spielraum zum Sparen",
+    fr: "Peu de marge pour épargner",
+  },
+  "tips.closeGap.detail": {
+    en: "After your costs, only {surplus} of {income} is left to save. Closing the gap means earning a little more or trimming costs.",
+    pt: "Depois dos seus custos, sobram apenas {surplus} de {income} para poupar. Fechar esta lacuna significa ganhar um pouco mais ou reduzir custos.",
+    es: "Después de tus costes, solo quedan {surplus} de {income} para ahorrar. Cerrar la brecha significa ganar un poco más o recortar costes.",
+    de: "Nach Ihren Kosten bleiben nur {surplus} von {income} zum Sparen. Die Lücke schließen Sie, indem Sie etwas mehr verdienen oder Kosten senken.",
+    fr: "Après vos coûts, il ne reste que {surplus} sur {income} à épargner. Combler l'écart, c'est gagner un peu plus ou réduire les coûts.",
+  },
+  "tips.closeGap.chat": {
+    en: "My budget leaves very little to save. Where can I realistically cut costs or add income to build a bigger gap?",
+    pt: "O meu orçamento deixa muito pouco para poupar. Onde posso realisticamente cortar custos ou aumentar o rendimento para criar uma maior folga?",
+    es: "Mi presupuesto deja muy poco para ahorrar. ¿Dónde puedo recortar costes de forma realista o añadir ingresos para crear un mayor margen?",
+    de: "Mein Budget lässt kaum etwas zum Sparen. Wo kann ich realistisch Kosten senken oder Einnahmen erhöhen, um mehr Spielraum zu schaffen?",
+    fr: "Mon budget laisse très peu à épargner. Où puis-je réduire des coûts de façon réaliste ou ajouter des revenus pour dégager une plus grande marge ?",
+  },
+
+  // Setup checklist: debt, assets, confirm estimates
+  "setup.item.debt": {
+    en: "Add your debts",
+    pt: "Adiciona as tuas dívidas",
+    es: "Añade tus deudas",
+    de: "Schulden hinzufügen",
+    fr: "Ajoutez vos dettes",
+  },
+  "setup.item.debtHint": {
+    en: "Loans and cards — to see payoff plans",
+    pt: "Empréstimos e cartões — para ver planos de amortização",
+    es: "Préstamos y tarjetas — para ver planes de amortización",
+    de: "Kredite und Karten — für Tilgungspläne",
+    fr: "Prêts et cartes — pour voir des plans de remboursement",
+  },
+  "setup.item.assets": {
+    en: "Add what you own",
+    pt: "Adiciona o que possuis",
+    es: "Añade lo que posees",
+    de: "Besitz hinzufügen",
+    fr: "Ajoutez ce que vous possédez",
+  },
+  "setup.item.assetsHint": {
+    en: "Property, savings, investments — for net worth",
+    pt: "Imóveis, poupanças, investimentos — para o património",
+    es: "Inmuebles, ahorros, inversiones — para el patrimonio",
+    de: "Immobilien, Ersparnisse, Investitionen — für das Nettovermögen",
+    fr: "Biens, épargne, placements — pour la valeur nette",
+  },
+  "setup.item.confirmEstimates": {
+    en: "Confirm your estimated costs",
+    pt: "Confirma os custos estimados",
+    es: "Confirma tus costes estimados",
+    de: "Geschätzte Kosten bestätigen",
+    fr: "Confirmez vos coûts estimés",
+  },
+  "setup.item.confirmEstimatesHint": {
+    en: "Replace national averages with your real numbers",
+    pt: "Substitui as médias nacionais pelos teus números reais",
+    es: "Sustituye las medias nacionales por tus cifras reales",
+    de: "Nationale Durchschnitte durch Ihre echten Zahlen ersetzen",
+    fr: "Remplacez les moyennes nationales par vos vrais chiffres",
+  },
+
   // KPI Targets tab
   "kpi.title": {
     en: "KPI targets",

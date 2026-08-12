@@ -131,6 +131,8 @@ export function DashboardTips({
         { data: plans },
         { data: assets },
         { data: recentExpenses },
+        { count: estFixed },
+        { count: estVar },
       ] = await Promise.all([
         qc.fetchQuery(bucketsQuery(householdId)),
         qc.fetchQuery(incomesQuery(householdId)),
@@ -167,6 +169,16 @@ export function DashboardTips({
           .eq("household_id", householdId)
           .eq("kind", "expense")
           .gte("occurred_at", since),
+        supabase
+          .from("fixed_expenses")
+          .select("id", { count: "exact", head: true })
+          .eq("household_id", householdId)
+          .eq("is_estimated", true),
+        supabase
+          .from("variable_estimates")
+          .select("id", { count: "exact", head: true })
+          .eq("household_id", householdId)
+          .eq("is_estimated", true),
       ]);
       const allTimeTotals: Record<string, number> = {};
       for (const r of allTimeAllocations ?? []) {
@@ -193,6 +205,7 @@ export function DashboardTips({
           category: string | null;
           intent: string | null;
         }>,
+        estimatedCount: (estFixed ?? 0) + (estVar ?? 0),
       };
     },
   });
@@ -200,6 +213,30 @@ export function DashboardTips({
   if (!data) return null;
 
   const tips: Tip[] = [];
+
+  // ---- Estimates still to confirm (surface first for a fresh preset) ----
+  if (data.estimatedCount > 0) {
+    tips.push({
+      id: "verify-estimates",
+      severity: "warning",
+      title: t("tips.verifyEstimates.title"),
+      detail: t("tips.verifyEstimates.detail"),
+      cta: { label: t("tips.cta.reviewEstimates"), to: "/cashflow" },
+      chatPrompt: t("tips.verifyEstimates.chat"),
+    });
+  }
+
+  // ---- Too little room to save (softer than a negative surplus) ----
+  if (income > 0 && surplus > 0 && surplus < income * 0.05) {
+    tips.push({
+      id: "close-gap",
+      severity: "warning",
+      title: t("tips.closeGap.title"),
+      detail: t("tips.closeGap.detail", { surplus: money(surplus), income: money(income) }),
+      cta: { label: t("tips.cta.reviewBaseline"), to: "/settings" },
+      chatPrompt: t("tips.closeGap.chat"),
+    });
+  }
 
   // ---- Setup gaps (critical) ----
   if (baseline <= 0) {

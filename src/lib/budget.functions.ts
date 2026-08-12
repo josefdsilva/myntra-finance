@@ -383,6 +383,7 @@ export const upsertFixedExpense = createServerFn({ method: "POST" })
         native_amount: z.number().min(0).optional(),
         cadence: z.enum(CADENCES).optional(),
         intent: z.enum(["essential", "important", "nice_to_have", "treat"]).optional().nullable(),
+        is_estimated: z.boolean().optional(),
       })
       .refine((d) => d.monthly_amount != null || d.native_amount != null, {
         message: "amount required",
@@ -438,6 +439,7 @@ export const upsertVariableEstimate = createServerFn({ method: "POST" })
         label: z.string().min(1).max(80),
         category: z.string().max(50).optional().nullable(),
         monthly_amount: z.number().min(0),
+        is_estimated: z.boolean().optional(),
       })
       .parse(input),
   )

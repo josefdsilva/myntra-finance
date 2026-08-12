@@ -196,6 +196,44 @@ function quintileCategoryShares(
   return out;
 }
 
+export type CategorySpendEstimate = {
+  quintile: 1 | 2 | 3 | 4 | 5;
+  expectedMonthlySpend: number;
+  /** Expected EUR/month per benchmark category (quintile-adjusted, renormalised). */
+  byCategory: Record<string, number>;
+};
+
+/**
+ * Expected monthly spend split per benchmark category for a same-size,
+ * same-income-band household — the basis for onboarding cost estimates. Reuses
+ * the same quintile + Engel-gradient logic as the analysis comparison, so a
+ * preset and the later "how you compare" screen agree. Null when the country
+ * has no bundled benchmark.
+ */
+export function expectedCategorySpend(params: {
+  country: string | null | undefined;
+  adults: number;
+  children: number;
+  monthlyIncome: number;
+}): CategorySpendEstimate | null {
+  const bench = getCountryBenchmark(params.country);
+  if (!bench) return null;
+  const factor = equivalenceFactor(params.adults, params.children);
+  const annualEq = (Math.max(0, params.monthlyIncome) / factor) * 12;
+  const pct = percentileFromDeciles(annualEq, bench.incomeDecilesAnnualEquivalised as Deciles);
+  const quintile = quintileFromPercentile(pct);
+  const uplift = bench.priceUpliftSinceSurvey ?? 1;
+  const meanPerAE = (bench.avgMonthlyHouseholdExpenditure / bench.avgHouseholdEquivFactor) * uplift;
+  const qMult = (bench.quintileExpenditureMultipliers as Record<string, number>)[`q${quintile}`] ?? 1;
+  const expectedMonthlySpend = Math.round(meanPerAE * qMult * factor);
+  const shares = quintileCategoryShares(bench.categoryShares as Record<string, number>, quintile);
+  const byCategory: Record<string, number> = {};
+  for (const [cat, share] of Object.entries(shares)) {
+    byCategory[cat] = Math.round((share / 100) * expectedMonthlySpend);
+  }
+  return { quintile, expectedMonthlySpend, byCategory };
+}
+
 export type BenchmarkCategory = {
   category: string;
   userMonthly: number;

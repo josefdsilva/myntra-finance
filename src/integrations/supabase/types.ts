@@ -1223,6 +1223,7 @@ export type Database = {
           household_id: string
           id: string
           intent: string | null
+          is_estimated: boolean
           label: string
           monthly_amount: number
           native_amount: number | null
@@ -1235,6 +1236,7 @@ export type Database = {
           household_id: string
           id?: string
           intent?: string | null
+          is_estimated?: boolean
           label: string
           monthly_amount?: number
           native_amount?: number | null
@@ -1247,6 +1249,7 @@ export type Database = {
           household_id?: string
           id?: string
           intent?: string | null
+          is_estimated?: boolean
           label?: string
           monthly_amount?: number
           native_amount?: number | null
@@ -2030,6 +2033,7 @@ export type Database = {
           created_at: string
           household_id: string
           id: string
+          is_estimated: boolean
           label: string
           monthly_amount: number
           updated_at: string
@@ -2039,6 +2043,7 @@ export type Database = {
           created_at?: string
           household_id: string
           id?: string
+          is_estimated?: boolean
           label: string
           monthly_amount?: number
           updated_at?: string
@@ -2048,6 +2053,7 @@ export type Database = {
           created_at?: string
           household_id?: string
           id?: string
+          is_estimated?: boolean
           label?: string
           monthly_amount?: number
           updated_at?: string

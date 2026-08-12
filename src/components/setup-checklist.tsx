@@ -13,7 +13,7 @@ type Hh = {
   age_band?: string | null;
 } | null;
 
-type SetupRoute = "/cashflow" | "/allocations" | "/settings";
+type SetupRoute = "/cashflow" | "/allocations" | "/settings" | "/loans" | "/assets";
 type Item = {
   key: string;
   done: boolean;
@@ -52,17 +52,34 @@ export function SetupChecklist({
   const { data: counts } = useQuery({
     queryKey: ["setup-counts", householdId],
     queryFn: async () => {
-      const tables = ["incomes", "fixed_expenses", "variable_estimates", "buckets"] as const;
-      const res = await Promise.all(
-        tables.map((tb) =>
-          supabase.from(tb).select("id", { count: "exact", head: true }).eq("household_id", householdId),
+      const tables = ["incomes", "fixed_expenses", "variable_estimates", "buckets", "debts", "assets"] as const;
+      const [res, ests] = await Promise.all([
+        Promise.all(
+          tables.map((tb) =>
+            supabase.from(tb).select("id", { count: "exact", head: true }).eq("household_id", householdId),
+          ),
         ),
-      );
+        Promise.all([
+          supabase
+            .from("fixed_expenses")
+            .select("id", { count: "exact", head: true })
+            .eq("household_id", householdId)
+            .eq("is_estimated", true),
+          supabase
+            .from("variable_estimates")
+            .select("id", { count: "exact", head: true })
+            .eq("household_id", householdId)
+            .eq("is_estimated", true),
+        ]),
+      ]);
       return {
         incomes: res[0].count ?? 0,
         fixed: res[1].count ?? 0,
         variable: res[2].count ?? 0,
         buckets: res[3].count ?? 0,
+        debts: res[4].count ?? 0,
+        assets: res[5].count ?? 0,
+        estimated: (ests[0].count ?? 0) + (ests[1].count ?? 0),
       };
     },
   });
@@ -94,6 +111,32 @@ export function SetupChecklist({
       to: "/allocations",
       label: "setup.item.projects",
     },
+    {
+      key: "debt",
+      done: counts.debts > 0,
+      to: "/loans",
+      label: "setup.item.debt",
+      hint: "setup.item.debtHint",
+    },
+    {
+      key: "assets",
+      done: counts.assets > 0,
+      to: "/assets",
+      label: "setup.item.assets",
+      hint: "setup.item.assetsHint",
+    },
+    // Only while benchmark estimates are still unconfirmed.
+    ...(counts.estimated > 0
+      ? ([
+          {
+            key: "confirmEstimates",
+            done: false,
+            to: "/cashflow",
+            label: "setup.item.confirmEstimates",
+            hint: "setup.item.confirmEstimatesHint",
+          },
+        ] as Item[])
+      : []),
     ...(isBusiness
       ? ([
           {
