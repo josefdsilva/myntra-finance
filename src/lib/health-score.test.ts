@@ -1,6 +1,30 @@
 // Run with: bun test src/lib/health-score.test.ts
 import { test, expect } from "bun:test";
-import { computeHealth, type ScoreInputs } from "./health-score";
+import { computeHealth, projectFundedFraction, type ScoreInputs } from "./health-score";
+
+test("projectFundedFraction: a future-dated long-term goal reads as on-plan, not ~0%", () => {
+  const now = new Date("2026-01-01");
+  const goal = [
+    { id: "kid", target_type: "goal_by_date", target_value: 30000, target_deadline: "2040-01-01" },
+  ];
+  // Naive balance/target would be 500/30000 ≈ 0.017; on-plan future goal → 1.
+  expect(projectFundedFraction(goal, { kid: 500 }, now)).toBe(1);
+});
+
+test("projectFundedFraction: an overdue, unmet goal is marked down", () => {
+  const now = new Date("2026-01-01");
+  const goal = [
+    { id: "kid", target_type: "goal_by_date", target_value: 30000, target_deadline: "2020-01-01" },
+  ];
+  expect(projectFundedFraction(goal, { kid: 15000 }, now)).toBe(0.5);
+});
+
+test("projectFundedFraction: recurring target compares balance to target", () => {
+  const rows = [{ id: "a", target_type: "fixed_monthly", target_value: 120 }];
+  expect(projectFundedFraction(rows, { a: 120 })).toBe(1);
+  expect(projectFundedFraction(rows, { a: 60 })).toBe(0.5);
+  expect(projectFundedFraction([], {})).toBeNull();
+});
 
 const base: ScoreInputs = {
   income: 3000,

@@ -97,6 +97,43 @@ function clamp(n: number, lo = 0, hi = 100): number {
   return Math.max(lo, Math.min(hi, n));
 }
 
+/**
+ * Funding-consistency fraction [0..1] across projects that carry a target, or
+ * null when none do. A `goal_by_date` project whose deadline is still in the
+ * future counts as "on plan" (fraction 1), so adding a realistic long-term goal
+ * never drags the score BELOW simply having no goal at all — the perverse result
+ * of the old balance ÷ final-target rule, which read a €500-toward-€30k-by-2040
+ * goal as ~2% funded. Only an overdue, still-unmet goal is marked down by how
+ * far it fell short. Recurring targets (fixed monthly/yearly, % of surplus) keep
+ * comparing balance to the target directly.
+ */
+export function projectFundedFraction(
+  buckets: Array<{
+    id: string;
+    target_type?: string | null;
+    target_value: number | string;
+    target_deadline?: string | null;
+  }>,
+  balances: Record<string, number>,
+  now: Date = new Date(),
+): number | null {
+  const targeted = buckets.filter((b) => Number(b.target_value) > 0);
+  if (!targeted.length) return null;
+  const nowMs = now.getTime();
+  let sum = 0;
+  for (const b of targeted) {
+    const bal = Math.max(0, balances[b.id] ?? 0);
+    const target = Math.max(1, Number(b.target_value));
+    if (b.target_type === "goal_by_date" && b.target_deadline) {
+      const overdue = new Date(b.target_deadline).getTime() < nowMs;
+      sum += bal >= target || !overdue ? 1 : Math.min(1, bal / target);
+    } else {
+      sum += Math.min(1, bal / target);
+    }
+  }
+  return sum / targeted.length;
+}
+
 export function computeHealth(input: ScoreInputs): HealthResult {
   const {
     income,

@@ -33,7 +33,12 @@ import {
 import { bucketBalancesFor, type AccountMovement } from "@/lib/movements";
 import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
-import { computeHealth, computeBusinessHealth, type Badge as BadgeKind } from "@/lib/health-score";
+import {
+  computeHealth,
+  computeBusinessHealth,
+  projectFundedFraction,
+  type Badge as BadgeKind,
+} from "@/lib/health-score";
 import { getCountryBenchmark, percentileFromDeciles } from "@/lib/benchmarks";
 import { defaultIntentForCategory } from "@/lib/intent";
 import { pageShellClass } from "@/components/page-shell";
@@ -192,17 +197,13 @@ function SnapshotPage() {
         .reduce((s, b) => s + Math.max(0, balances[b.id] ?? 0), 0);
       const investedAmount = investedFromBuckets + Math.max(0, liquidAssets);
 
-      // Funding consistency: average funded fraction across projects with a target.
-      const targeted = buckets.filter(
-        (b) => !linkedBucketIds.has(b.id) && Number(b.target_value) > 0,
+      // Funding consistency: average funded fraction across projects with a
+      // target. Goal-by-date projects are scored on-pace (glide to the deadline),
+      // so a long-term goal within reach doesn't read as ~0% funded.
+      const fundedFraction = projectFundedFraction(
+        buckets.filter((b) => !linkedBucketIds.has(b.id)),
+        balances,
       );
-      const fundedFraction =
-        targeted.length > 0
-          ? targeted.reduce(
-              (s, b) => s + Math.min(1, Math.max(0, balances[b.id] ?? 0) / Number(b.target_value)),
-              0,
-            ) / targeted.length
-          : null;
 
       // Income percentile vs the country's equivalised-income deciles — leak-free
       // (only the relative position is used). OECD-modified equivalence scale.

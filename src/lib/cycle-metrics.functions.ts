@@ -9,6 +9,7 @@ import { getCountryBenchmark, percentileFromDeciles } from "@/lib/benchmarks";
 import { plansInWindow, type Plan } from "@/lib/plan";
 import { resolveClosedCycles } from "@/lib/cycle-bounds";
 import { computeCycleMetrics, type CycleMetricsRow } from "@/lib/cycle-metrics";
+import { projectFundedFraction } from "@/lib/health-score";
 import { LIQUID_ASSET_KINDS } from "@/lib/finance-helpers";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -69,7 +70,10 @@ export async function snapshotCycleCore(
     sb.from("incomes").select("monthly_amount").eq("household_id", householdId),
     sb.from("fixed_expenses").select("category, monthly_amount").eq("household_id", householdId),
     sb.from("debts").select("monthly_amount").eq("household_id", householdId),
-    sb.from("buckets").select("id, kind, target_value, initial_balance").eq("household_id", householdId),
+    sb
+      .from("buckets")
+      .select("id, kind, target_type, target_value, target_deadline, initial_balance")
+      .eq("household_id", householdId),
     sb.from("bucket_allocations").select("bucket_id, amount, period").eq("household_id", householdId),
     sb.from("account_movements").select("*").eq("household_id", householdId),
     sb
@@ -154,14 +158,14 @@ export async function snapshotCycleCore(
     .reduce((s, b) => s + Math.max(0, balances[b.id] ?? 0), 0);
   const investedAmount = investedFromBuckets + Math.max(0, liquidAssets);
 
-  const targeted = bucketList.filter((b) => !linkedBucketIds.has(b.id) && Number(b.target_value) > 0);
-  const fundedFraction =
-    targeted.length > 0
-      ? targeted.reduce(
-          (s, b) => s + Math.min(1, Math.max(0, balances[b.id] ?? 0) / Number(b.target_value)),
-          0,
-        ) / targeted.length
-      : null;
+  // Funding consistency — goal-by-date projects scored on-pace (glide to the
+  // deadline as of this cycle's end), so a long-term goal within reach doesn't
+  // read as ~0% funded and drag the score down.
+  const fundedFraction = projectFundedFraction(
+    bucketList.filter((b) => !linkedBucketIds.has(b.id)),
+    balances,
+    end,
+  );
 
   const adults = Math.max(1, Number(hh?.adults ?? 1));
   const children = Math.max(0, Number(hh?.children ?? 0));
