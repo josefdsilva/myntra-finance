@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Sparkles,
   LayoutDashboard,
-  Wallet,
-  Home,
+  ArrowLeftRight,
+  Gem,
   Receipt,
   PiggyBank,
-  CalendarClock,
+  Landmark,
   BarChart3,
+  ScanLine,
+  Settings,
   ArrowLeft,
   ArrowRight,
   X,
@@ -22,17 +25,30 @@ import { useT, type MessageKey } from "@/lib/i18n";
 /** Fired from anywhere (e.g. Settings) to replay the tour on demand. */
 export const TOUR_OPEN_EVENT = "tour:open";
 
-type Slide = { icon: LucideIcon; titleKey: MessageKey; bodyKey: MessageKey };
+type TourRoute =
+  | "/dashboard"
+  | "/cashflow"
+  | "/assets"
+  | "/expenses"
+  | "/allocations"
+  | "/loans"
+  | "/analysis"
+  | "/share"
+  | "/settings";
+
+type Slide = { icon: LucideIcon; titleKey: MessageKey; bodyKey: MessageKey; to?: TourRoute };
 
 const SLIDES: Slide[] = [
   { icon: Sparkles, titleKey: "tour.s1.title", bodyKey: "tour.s1.body" },
-  { icon: LayoutDashboard, titleKey: "tour.s2.title", bodyKey: "tour.s2.body" },
-  { icon: Wallet, titleKey: "tour.s3.title", bodyKey: "tour.s3.body" },
-  { icon: Home, titleKey: "tour.s4.title", bodyKey: "tour.s4.body" },
-  { icon: Receipt, titleKey: "tour.s5.title", bodyKey: "tour.s5.body" },
-  { icon: PiggyBank, titleKey: "tour.s6.title", bodyKey: "tour.s6.body" },
-  { icon: CalendarClock, titleKey: "tour.s7.title", bodyKey: "tour.s7.body" },
-  { icon: BarChart3, titleKey: "tour.s8.title", bodyKey: "tour.s8.body" },
+  { icon: LayoutDashboard, titleKey: "tour.s2.title", bodyKey: "tour.s2.body", to: "/dashboard" },
+  { icon: ArrowLeftRight, titleKey: "tour.s3.title", bodyKey: "tour.s3.body", to: "/cashflow" },
+  { icon: Gem, titleKey: "tour.s4.title", bodyKey: "tour.s4.body", to: "/assets" },
+  { icon: Receipt, titleKey: "tour.s5.title", bodyKey: "tour.s5.body", to: "/expenses" },
+  { icon: PiggyBank, titleKey: "tour.s6.title", bodyKey: "tour.s6.body", to: "/allocations" },
+  { icon: Landmark, titleKey: "tour.s7.title", bodyKey: "tour.s7.body", to: "/loans" },
+  { icon: BarChart3, titleKey: "tour.s8.title", bodyKey: "tour.s8.body", to: "/analysis" },
+  { icon: ScanLine, titleKey: "tour.s9.title", bodyKey: "tour.s9.body", to: "/share" },
+  { icon: Settings, titleKey: "tour.s10.title", bodyKey: "tour.s10.body", to: "/settings" },
 ];
 
 /**
@@ -44,8 +60,13 @@ const SLIDES: Slide[] = [
 export function AppTour() {
   const t = useT();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(0);
+  // Guided = replayed from Settings → walk the real screens. Auto-open (first
+  // run, possibly over the setup wizard) stays put so it can't yank a new user
+  // off onboarding.
+  const [guided, setGuided] = useState(false);
   const autoHandled = useRef(false);
 
   const { data } = useQuery({
@@ -69,20 +90,30 @@ export function AppTour() {
     if (autoHandled.current || !data) return;
     autoHandled.current = true;
     if (data.uid && data.seenAt == null) {
+      setGuided(false);
       setIdx(0);
       setOpen(true);
     }
   }, [data]);
 
-  // Replay on demand (Settings button dispatches this).
+  // Replay on demand (Settings button dispatches this) → guided walk-through.
   useEffect(() => {
     const handler = () => {
+      setGuided(true);
       setIdx(0);
       setOpen(true);
     };
     window.addEventListener(TOUR_OPEN_EVENT, handler);
     return () => window.removeEventListener(TOUR_OPEN_EVENT, handler);
   }, []);
+
+  // In guided mode, open the actual screen behind the card as the user steps.
+  useEffect(() => {
+    if (!open || !guided) return;
+    const to = SLIDES[idx]?.to;
+    if (to) navigate({ to });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, open, guided]);
 
   async function finish() {
     setOpen(false);
@@ -108,7 +139,7 @@ export function AppTour() {
   const isLast = idx === SLIDES.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/95 p-5 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/20 p-4 sm:p-6">
       <div className="relative w-full max-w-md rounded-2xl border bg-card p-6 shadow-xl">
         <button
           type="button"
