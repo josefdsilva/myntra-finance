@@ -395,6 +395,61 @@ export function degradationSignals(p: { series: CycleMetric[] }): Signal[] {
   return out;
 }
 
+// ---- Finish-setup nudges ---------------------------------------------------
+
+/**
+ * One proactive "finish setting up" nudge — the single most important gap, or
+ * none. Deduped by a stable key so it posts once and goes quiet when the gap
+ * closes (or the user dismisses it). Ordered by impact: income first, then fixed
+ * costs, then confirming benchmark estimates.
+ */
+export function setupGapSignals(p: {
+  hasIncome: boolean;
+  hasFixed: boolean;
+  hasEstimates: boolean;
+}): Signal[] {
+  if (!p.hasIncome) {
+    return [
+      {
+        kind: "setup_income",
+        severity: "warn",
+        title: "Add your income to get started",
+        body: "bynku can't work out your safe-to-spend until it knows what comes in — it only takes a minute.",
+        actionLabel: "Add income",
+        actionUrl: "/cashflow",
+        dedupeKey: "setup_gap:income",
+      },
+    ];
+  }
+  if (!p.hasFixed) {
+    return [
+      {
+        kind: "setup_fixed",
+        severity: "info",
+        title: "Add your fixed costs",
+        body: "Rent, bills and subscriptions are reserved from your income each cycle. Add them so your plan is accurate.",
+        actionLabel: "Add fixed costs",
+        actionUrl: "/cashflow",
+        dedupeKey: "setup_gap:fixed",
+      },
+    ];
+  }
+  if (p.hasEstimates) {
+    return [
+      {
+        kind: "setup_estimates",
+        severity: "info",
+        title: "Confirm your estimated costs",
+        body: "Some of your costs are still national-average estimates. Confirm them so your plan reflects your real life.",
+        actionLabel: "Review costs",
+        actionUrl: "/cashflow",
+        dedupeKey: "setup_gap:estimates",
+      },
+    ];
+  }
+  return [];
+}
+
 export function costReminderSignals(p: {
   plans: PlanRow[];
   now: Date;

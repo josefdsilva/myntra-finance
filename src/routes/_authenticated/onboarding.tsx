@@ -340,7 +340,7 @@ function Wizard({
         <div className="flex-1">
           {key === "welcome" && (
             <div>
-              <Welcome isBusiness={isBusiness} />
+              <Welcome isBusiness={isBusiness} householdId={householdId} />
               <button
                 type="button"
                 onClick={() => setChat(true)}
@@ -577,7 +577,7 @@ function MarginStep({ margin, setMargin }: { margin: number; setMargin: (n: numb
   );
 }
 
-function Welcome({ isBusiness }: { isBusiness: boolean }) {
+function Welcome({ isBusiness, householdId }: { isBusiness: boolean; householdId: string }) {
   const t = useT();
   return (
     <div className="space-y-4 pt-6">
@@ -590,7 +590,22 @@ function Welcome({ isBusiness }: { isBusiness: boolean }) {
       <p className="text-muted-foreground">
         {t(isBusiness ? "ob.welcome.bodyBiz" : "ob.welcome.body")}
       </p>
-      <StepInfo body={t("ob.welcome.statementNote")} />
+      <StatementFastLane householdId={householdId} />
+    </div>
+  );
+}
+
+// The bank-statement fast lane, promoted plainly: upload instead of typing, and
+// confirm everything before it's saved.
+function StatementFastLane({ householdId }: { householdId: string }) {
+  const t = useT();
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+      <p className="text-sm font-medium">{t("ob.statement.title")}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{t("ob.statement.body")}</p>
+      <div className="mt-3">
+        <StatementImportButton householdId={householdId} />
+      </div>
     </div>
   );
 }
@@ -1127,6 +1142,9 @@ function PresetStep({
     <div>
       <StepHead icon={Sparkles} title={t("ob.preset.title")} subtitle={t("ob.preset.subtitle")} />
       <StepInfo body={t("ob.preset.info")} />
+      <div className="mb-5">
+        <StatementFastLane householdId={householdId} />
+      </div>
 
       <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {t("ob.preset.fixedHead")}

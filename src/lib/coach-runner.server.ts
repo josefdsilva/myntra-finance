@@ -7,6 +7,7 @@ import {
   recapSignal,
   milestoneSignals,
   degradationSignals,
+  setupGapSignals,
   moneyFormatter,
   type PlanRow,
   type CycleMetric,
@@ -74,6 +75,30 @@ export async function runCoachForHousehold(
   // be for a cycle strictly before the current one, so we never announce a close
   // that has not happened yet).
   const facts = await gatherCycleFacts(admin, hh, now);
+
+  // Proactive "finish setup" nudge — one at a time, deduped, until the gap
+  // closes. Reads the same tables the dashboard checklist counts.
+  const [incCount, fixCount, estFix, estVar] = await Promise.all([
+    admin.from("incomes").select("id", { count: "exact", head: true }).eq("household_id", hh.id),
+    admin.from("fixed_expenses").select("id", { count: "exact", head: true }).eq("household_id", hh.id),
+    admin
+      .from("fixed_expenses")
+      .select("id", { count: "exact", head: true })
+      .eq("household_id", hh.id)
+      .eq("is_estimated", true),
+    admin
+      .from("variable_estimates")
+      .select("id", { count: "exact", head: true })
+      .eq("household_id", hh.id)
+      .eq("is_estimated", true),
+  ]);
+  for (const s of setupGapSignals({
+    hasIncome: (incCount.count ?? 0) > 0,
+    hasFixed: (fixCount.count ?? 0) > 0,
+    hasEstimates: (estFix.count ?? 0) + (estVar.count ?? 0) > 0,
+  })) {
+    await emit(s);
+  }
 
   if (baseline > 0) {
     for (const s of driftSignals({

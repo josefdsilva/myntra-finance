@@ -364,6 +364,20 @@ export const ENTRIES = {
   "ob.cat.travel": { en: "Travel", pt: "Viagens", es: "Viajes", de: "Reisen", fr: "Voyages" },
   "ob.cat.gifts": { en: "Gifts", pt: "Presentes", es: "Regalos", de: "Geschenke", fr: "Cadeaux" },
   "ob.cat.other": { en: "Other", pt: "Outros", es: "Otros", de: "Sonstiges", fr: "Autres" },
+  "ob.statement.title": {
+    en: "Prefer not to type?",
+    pt: "Prefere não escrever?",
+    es: "¿Prefieres no escribir?",
+    de: "Lieber nicht tippen?",
+    fr: "Vous préférez ne pas saisir ?",
+  },
+  "ob.statement.body": {
+    en: "Upload 3–6 months of bank statements (PDF or CSV) and bynku works out your income, fixed costs and everyday spending. You confirm everything before it's saved.",
+    pt: "Carregue 3–6 meses de extratos bancários (PDF ou CSV) e o bynku calcula o seu rendimento, custos fixos e gastos do dia a dia. Confirma tudo antes de guardar.",
+    es: "Sube 3–6 meses de extractos bancarios (PDF o CSV) y bynku calcula tus ingresos, costes fijos y gasto diario. Confirmas todo antes de guardar.",
+    de: "Laden Sie 3–6 Monate Kontoauszüge (PDF oder CSV) hoch, und bynku ermittelt Einkommen, Fixkosten und Alltagsausgaben. Sie bestätigen alles vor dem Speichern.",
+    fr: "Téléversez 3 à 6 mois de relevés bancaires (PDF ou CSV) et bynku calcule vos revenus, charges fixes et dépenses courantes. Vous confirmez tout avant l'enregistrement.",
+  },
 
   // KPI Targets tab
   "kpi.title": {

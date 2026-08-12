@@ -23,6 +23,8 @@ import {
   listCoachConversations,
   COACH_REPLAY_TURNS,
 } from "@/lib/coach.functions";
+import { getOrCreateHousehold } from "@/lib/household.functions";
+import { CoachOnboarding } from "@/components/coach-onboarding";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { useLocale } from "@/lib/i18n";
 import { AiNotice } from "@/components/ai-badge";
@@ -57,8 +59,18 @@ export function CoachDock() {
   const createFn = useServerFn(createCoachConversation);
   const deleteFn = useServerFn(deleteCoachConversation);
   const chatFn = useServerFn(chatInConversation);
+  const fetchHh = useServerFn(getOrCreateHousehold);
+
+  // Household kind drives the setup flow's framing; reuses the shared cache key.
+  const { data: hh } = useQuery({
+    enabled: !!householdId,
+    queryKey: ["household", householdId],
+    queryFn: () => fetchHh({ data: householdId ? { household_id: householdId } : {} }),
+  });
+  const isBusiness = hh?.household?.kind === "business";
 
   const [open, setOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
   const [convId, setConvId] = useState<string | null>(null);
   const [pending, setPending] = useState<Msg[]>([]); // optimistic user + streaming placeholder
   const [input, setInput] = useState("");
@@ -339,6 +351,15 @@ export function CoachDock() {
 
         {/* Composer */}
         <div className="p-3 border-t space-y-2">
+          {householdId && (
+            <button
+              type="button"
+              onClick={() => setSetupOpen(true)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              <Sparkles className="size-3.5" /> Help me finish setting up
+            </button>
+          )}
           <label className="flex items-center gap-2 text-xs text-muted-foreground select-none cursor-pointer">
             <input
               type="checkbox"
@@ -393,6 +414,15 @@ export function CoachDock() {
           </div>
         </div>
       </aside>
+
+      {setupOpen && householdId && (
+        <CoachOnboarding
+          householdId={householdId}
+          isBusiness={isBusiness}
+          onSwitchToForms={() => setSetupOpen(false)}
+          onDone={() => setSetupOpen(false)}
+        />
+      )}
     </>
   );
 }
