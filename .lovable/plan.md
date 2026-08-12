@@ -68,3 +68,6 @@ The statement path already exists but is easy to miss. It gets promoted:
 - `src/components/setup-checklist.tsx` gains items for debt, assets and "confirm your estimated costs".
 - `src/components/coach-onboarding.tsx`: script trimmed to the three topics plus preset confirmation.
 - All new copy goes through `src/lib/i18n.tsx` for the existing five locales.
+- Coach setup mode: reuse `extractSetupItems` from `src/lib/onboarding-chat.functions.ts` inside `src/components/coach-dock.tsx` / `coach-panel.tsx`, so the same extraction powers the wizard chat and the always-on coach.
+- Setup nudges: add a gap check to `src/lib/coach-runner.server.ts` writing deduped `coach_messages` rows (existing `dedupe_key`), with an inline reply that routes through the same extract-and-confirm path.
+- Statement fast lane: link to the existing `/statement-import` flow from the wizard, checklist and coach; no changes to its parsing logic.
