@@ -29,9 +29,31 @@ An estimated number that silently pretends to be real is worse than no number. S
 - Confirming a row (edit or tick) clears the estimate tag; the checklist item completes when no estimates remain.
 - The analysis/benchmark screens already explain the data source; the estimate chip links to that explanation.
 
-## Coach-assisted setup
+## Everything is skippable
 
-Kept, but shortened to the same three questions plus the preset confirmation, so both paths reach the dashboard in the same number of moves. The "use forms instead" escape stays.
+Every step, including the three questions and the preset screen, has a visible "Skip for now" (and a "Finish later" on the header that closes the wizard). Skipping never blocks the dashboard:
+
+- Skipping the preset screen writes nothing — the space starts empty and the dashboard shows what it can.
+- Whatever was skipped becomes an item in the dashboard checklist, so nothing is lost.
+- The wizard can be reopened any time from Settings ("Run setup again"), resuming where it stopped.
+
+## The coach helps with setup at any time, not just in the wizard
+
+The coach becomes the permanent guided-setup path, not a one-off onboarding mode:
+
+- The existing coach dock gains a "Help me finish setting up" entry that runs the same topic script as the wizard (income, fixed, variable, debt, projects), extracting rows the user confirms before anything is written. Available forever, for a space that is fully set up or barely started.
+- The coach can also be asked in free text ("add my rent, 700 a month") and will propose rows to confirm on any screen.
+- Proactive nudges: the daily coach run checks the same gaps the checklist tracks and, when something important is missing (no income, no fixed costs, costs still estimates, no cycle set), posts one coach message the user can answer inline — the reply feeds straight into the same extraction-and-confirm flow. Rate-limited to one setup nudge at a time, deduped, and silenced once the gap closes or the user dismisses it.
+
+## Bank statement as the fast lane, stated plainly
+
+The statement path already exists but is easy to miss. It gets promoted:
+
+- On the welcome step and on the preset step: "Prefer not to type? Upload 3–6 months of bank statements (PDF or CSV) and bynku will work out your income, fixed costs and variable costs for you." with a direct button into the statement import flow.
+- Same call-out on the dashboard checklist and inside the coach's setup script.
+- The import result lands in the same confirm-before-save review the presets use, so the three paths (type it, estimate it, import it) converge on one screen.
+- The copy states the limits honestly: it reads what's in the file, categorises with AI, and the user confirms everything before it is saved.
+
 
 ## Resuming and existing users
 
