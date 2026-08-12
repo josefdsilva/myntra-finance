@@ -1,80 +1,48 @@
-# Engagement plan: the first 30 days after signup
+# Faster setup: 3 questions, then a real number
 
-bynku already has the pieces (journey, coach, achievements, cycle metrics, push, weekly digest). What's
-missing is a loop that makes a user come back on a random Tuesday. This plan wires the existing pieces
-into one habit: **one small action per visit, visible progress every week.**
+Today the wizard walks up to 11 screens (country, cycle, household, categories, income, fixed, variable, margin, debt, assets, projects, plans) before anyone sees a dashboard. That is where new users stall. The coach-assisted chat stays available, but it is still the same long script.
 
-## 1. Day 0-1: reach "first useful number" fast
+The recommendation combines your second and third ideas, plus one addition: **estimate first, correct later**. Ask only what cannot be guessed, guess the rest from the country benchmark data already bundled in the app, and land on the dashboard where every guessed number is visibly marked and one tap away from being fixed.
 
-The activation moment is seeing a real "What's left" figure, not finishing setup.
+## The new flow (personal space)
 
-- Onboarding ends by showing the number it just computed, with one next action attached.
-- Setup checklist becomes 3 steps, not a list of everything: income, fixed costs, first expense. The
-  rest moves into the coach as later nudges.
-- Skip-friendly: any missing input renders as an inline "add this to sharpen the number" chip on the
-  dashboard instead of blocking.
+1. **Where and who** — country, adults, children, age band. One screen.
+2. **What comes in** — one amount: total monthly money in (plus an optional "add another" for a second income). One screen.
+3. **When your cycle starts** — payday-anchored or fixed day of the month. One screen.
+4. **Here is your starting plan** — generated, not asked:
+   - Estimated monthly fixed costs and variable costs, split per category, derived from the bundled benchmark data (`avgMonthlyHouseholdExpenditure`, `categoryShares`, `quintileExpenditureMultipliers`, equivalence factor for the household size, and the income quintile implied by step 2).
+   - A suggested savings margin instead of the slider.
+   - Shown as an editable list: each row has the amount, the category and a "estimated" tag. The user can edit, delete or accept all.
+   - Two buttons: **Use these and continue** or **I'll enter my own** (drops into today's income/fixed/variable steps).
+5. Finish → dashboard, with the first useful numbers already populated.
 
-## 2. Every visit: exactly one next action
+Debt, assets, projects and plans leave the wizard entirely. They become checklist items on the dashboard (the existing `SetupChecklist`), so nobody is blocked by them.
 
-- A single "Today" card at the top of the dashboard: one action, one tap, dismissable. Sourced from the
-  existing coach signals, ranked so only the highest-value one shows.
-- Rules of the ranking: overspend risk > missing data that breaks a number > an unallocated surplus >
-  a stalled project > a journey stage one step from done > nothing (show a calm "you're on track").
-- Never more than one; the tips list stays below as secondary.
+Business spaces keep the same shape: where/sector/employees → money in → fiscal cycle → generated cost preset from the business benchmark data.
 
-## 3. Weekly rhythm: the cycle review
+## Making the estimates honest
 
-- A short cycle-end review screen (3 screens max): what you spent vs estimate, what you set aside,
-  one thing to change next cycle. Ends with a single confirm that rolls estimates forward.
-- Tie the weekly digest email/push to it: the digest becomes the invitation to the review, not a
-  standalone report.
-- Log each completed review as a streak; the streak is the one number we celebrate.
+An estimated number that silently pretends to be real is worse than no number. So:
 
-## 4. Proof of progress
+- Every preset-created row is tagged as an estimate (a `source`/note marker on the row) and rendered with a subtle "estimated" chip in Money In & Out.
+- The dashboard shows one line: "Some costs are still estimates from national averages — confirm them to sharpen your plan," linking to Money In & Out.
+- Confirming a row (edit or tick) clears the estimate tag; the checklist item completes when no estimates remain.
+- The analysis/benchmark screens already explain the data source; the estimate chip links to that explanation.
 
-- A compact "since you started" strip: cycles reviewed, money set aside, debt reduced, journey level.
-  Numbers only from data already computed (cycle_metrics, allocations, debts, journey).
-- Achievements fire on real milestones (first full cycle, first €500 set aside, first loan overpayment,
-  3-cycle streak) and are surfaced in the coach inbox plus a small toast, never a modal.
-- The shareable snapshot is offered right after a milestone — that is when someone actually wants to
-  share it.
+## Coach-assisted setup
 
-## 5. Bringing people back (notifications that earn their place)
+Kept, but shortened to the same three questions plus the preset confirmation, so both paths reach the dashboard in the same number of moves. The "use forms instead" escape stays.
 
-- Three push/email moments only: cycle start (plan), mid-cycle (drift warning, only if drifting),
-  cycle end (review). Everything else stays in-app.
-- Every notification names a number and links to one screen. If we can't name a number, we don't send.
-- Quiet by default for anything else; existing notification prefs stay authoritative.
+## Resuming and existing users
 
-## 6. Reduce the cost of logging
-
-Engagement dies on data entry, so the daily loop has to be cheap:
-
-- Quick-add opens with three fields (amount, category, date) and an "Add details" toggle.
-- Recurring-expense settlement becomes one tap from the dashboard ("Rent paid?") instead of a form.
-- Photo/voice capture surfaced on the dashboard, not only inside the expenses page.
-
-## Sequencing
-
-1. Today card + ranking (highest impact, uses existing signals)
-2. Quick-add slimming + one-tap settlement
-3. Cycle review screen + streak
-4. Progress strip + milestone achievements
-5. Notification trimming to the three moments
+- The saved step position keeps working; anyone mid-way through the old wizard is mapped to the nearest new step.
+- Already-onboarded spaces are untouched — no retroactive estimates.
 
 ## Technical notes
 
-- Today card: new small component on `dashboard.tsx`, ranking function next to `src/lib/coach-signals.ts`
-  (pure, unit-testable). No new tables.
-- Streak + review completion: one new table (`cycle_reviews`: household_id, cycle_start, completed_at)
-  with GRANTs and household-scoped RLS.
-- Milestones reuse `src/lib/achievements.functions.ts`; add the new kinds there.
-- Notification trimming happens in `src/lib/coach-runner.server.ts` (which nudges set `push`/`email`),
-  not in new endpoints.
-- All copy goes through `src/lib/i18n-entries.ts` for every locale.
-
-## Out of scope
-
-- Gamification for its own sake (points, badges walls, leaderboards).
-- Any daily-streak mechanic that punishes a missed day; the cycle is the unit, not the day.
-- New AI surfaces — this plan spends no extra credits per user.
+- New `src/lib/setup-presets.ts`: pure function taking `{ country, adults, children, monthlyIncome, isBusiness }` and returning suggested fixed rows, variable rows and a margin, built from `src/lib/benchmarks/*.json` via the existing helpers (`equivalenceFactor`, `percentileFromDeciles`, `quintileFromPercentile`, `getCountryBenchmark`). Unit-tested like the other `src/lib/*.test.ts` files.
+- `src/routes/_authenticated/onboarding.tsx`: reduce `STEPS` to `welcome → whereWho → income → cycle → preset`, move `DebtStep`/`AssetsStep`/`ProjectsStep`/`PlansStep` out of the wizard (components stay, reused by their own pages).
+- Preset rows are written through the existing `upsertFixedExpense` / `upsertVariableEstimate` server functions on confirmation — no new tables. The estimate marker uses a note/intent field on those rows, so no migration is needed unless we want a dedicated flag (decide during build).
+- `src/components/setup-checklist.tsx` gains items for debt, assets and "confirm your estimated costs".
+- `src/components/coach-onboarding.tsx`: script trimmed to the three topics plus preset confirmation.
+- All new copy goes through `src/lib/i18n.tsx` for the existing five locales.
