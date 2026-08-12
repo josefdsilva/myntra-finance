@@ -12,8 +12,8 @@
 import { expectedCategorySpend, getCountryBenchmark } from "./benchmarks";
 import { defaultIntentForCategory, type IntentLevel } from "./intent";
 
-export type PresetFixedRow = { category: string; monthly_amount: number; intent: IntentLevel };
-export type PresetVariableRow = { category: string; monthly_amount: number };
+export type PresetFixedRow = { category: string; monthly_amount: number; intent: IntentLevel; estimated: boolean };
+export type PresetVariableRow = { category: string; monthly_amount: number; estimated: boolean };
 
 export type SetupPreset = {
   fixed: PresetFixedRow[];
@@ -89,9 +89,16 @@ export function buildSetupPresets(params: {
       value = Math.max(0, Math.round(params.housingMonthly));
     }
     if (FIXED_CATEGORIES.has(category)) {
-      fixed.push({ category, monthly_amount: value, intent: defaultIntentForCategory(category) });
+      // A housing figure the user actually typed is not an estimate.
+      const userGiven = category === "housing" && params.housingMonthly != null;
+      fixed.push({
+        category,
+        monthly_amount: value,
+        intent: defaultIntentForCategory(category),
+        estimated: !userGiven,
+      });
     } else {
-      variable.push({ category, monthly_amount: value });
+      variable.push({ category, monthly_amount: value, estimated: true });
     }
   }
 

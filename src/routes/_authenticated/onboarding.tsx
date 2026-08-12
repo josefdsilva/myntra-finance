@@ -1,6 +1,6 @@
 import { pageMeta } from "@/lib/route-meta";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +39,7 @@ import { AGE_BANDS } from "@/lib/benchmarks";
 import { groupSectors, NACE_SECTIONS } from "@/lib/business-benchmarks";
 import { debtKindOptions, type DebtKind } from "@/lib/debt-kinds";
 import { useCategories, useCategoryMutations } from "@/hooks/use-categories";
+import { buildSetupPresets } from "@/lib/setup-presets";
 
 import {
   Plus,
@@ -88,20 +89,29 @@ const COUNTRIES = [
 
 const STEPS = [
   "welcome",
+  "whereWho",
   "country",
-  "cycle",
   "business",
-  "household",
-  "categories",
   "income",
+  "cycle",
+  "preset",
   "fixed",
   "variable",
   "margin",
+  // Deferred to the dashboard checklist — these editors stay defined (and are
+  // still referenced in the render switch so they keep compiling and can be
+  // reached from the preset's "enter my own" path), but are filtered out of the
+  // default flow so nobody is blocked by them.
+  "categories",
   "debt",
   "assets",
   "projects",
   "plans",
+  "household",
 ] as const;
+
+// Steps no longer part of the guided flow (moved to the dashboard checklist).
+const DEFERRED_STEPS = new Set(["categories", "debt", "assets", "projects", "plans", "household"]);
 
 function OnboardingPage() {
   const activeHouseholdId = useActiveHouseholdId();
@@ -159,19 +169,21 @@ function Wizard({
   const [advisorEmail, setAdvisorEmail] = useState("");
   const [margin, setMargin] = useState(initialMargin);
   const [cycleMode, setCycleMode] = useState<"event" | "time">("event");
+  const [housing, setHousing] = useState("");
 
   const isBusiness = kind === "business";
   // A business space skips the household (adults/children) demographics step but
   // gets a fiscal-cycle step and an "about your business" step (sector, employees,
   // advisor) that power the benchmarks and accountant handoff; personal spaces are
   // the reverse (their cycle is payday-driven, so there's nothing to configure).
-  const steps = STEPS.filter(
-    (s) =>
-      (s !== "household" || !isBusiness) &&
-      // The cycle step now shows for both: businesses set a fiscal period,
-      // personal spaces choose payday-anchored vs a fixed day of the month.
-      (s !== "business" || isBusiness),
-  );
+  const steps = STEPS.filter((s) => {
+    if (DEFERRED_STEPS.has(s)) return false;
+    // Personal-only: combined where/who step and the generated starting plan.
+    if (s === "whereWho" || s === "preset") return !isBusiness;
+    // Business-only: standalone country + "about your business".
+    if (s === "country" || s === "business") return isBusiness;
+    return true; // welcome, income, cycle, fixed, variable, margin
+  });
   const key = steps[Math.min(step, steps.length - 1)];
   const isLast = step === steps.length - 1;
 
@@ -199,6 +211,23 @@ function Wizard({
     setBusy(true);
     try {
       if (key === "country") await updateHh({ data: { household_id: householdId, country } });
+      if (key === "whereWho")
+        await updateHh({
+          data: {
+            household_id: householdId,
+            country,
+            adults,
+            children,
+            age_band: (ageBand || null) as
+              | "under35"
+              | "35_44"
+              | "45_54"
+              | "55_64"
+              | "65_74"
+              | "75plus"
+              | null,
+          },
+        });
       if (key === "cycle") {
         if (isBusiness) {
           await updateHh({
@@ -324,6 +353,29 @@ function Wizard({
           {key === "country" && (
             <CountryStep country={country} setCountry={setCountry} isBusiness={isBusiness} />
           )}
+          {key === "whereWho" && (
+            <WhereWhoStep
+              country={country}
+              setCountry={setCountry}
+              adults={adults}
+              setAdults={setAdults}
+              children={children}
+              setChildren={setChildren}
+              ageBand={ageBand}
+              setAgeBand={setAgeBand}
+            />
+          )}
+          {key === "preset" && (
+            <PresetStep
+              householdId={householdId}
+              country={country}
+              adults={adults}
+              children={children}
+              housing={housing}
+              onEnterOwn={() => setStep((s) => s + 1)}
+              onFinish={finish}
+            />
+          )}
           {key === "cycle" && (
             <CycleStep
               isBusiness={isBusiness}
@@ -358,7 +410,14 @@ function Wizard({
           {key === "categories" && (
             <CategoriesStep householdId={householdId} isBusiness={isBusiness} />
           )}
-          {key === "income" && <IncomeStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "income" && (
+            <IncomeStep
+              householdId={householdId}
+              isBusiness={isBusiness}
+              housing={housing}
+              setHousing={setHousing}
+            />
+          )}
           {key === "fixed" && <FixedStep householdId={householdId} />}
           {key === "variable" && <VariableStep householdId={householdId} isBusiness={isBusiness} />}
           {key === "margin" && <MarginStep margin={margin} setMargin={setMargin} />}
@@ -372,17 +431,19 @@ function Wizard({
           <Button variant="ghost" onClick={back} disabled={step === 0 || busy}>
             {t("ob.back")}
           </Button>
-          <div className="flex items-center gap-2">
-            {key !== "welcome" && (
-              <Button variant="ghost" onClick={skip} disabled={busy}>
-                {t("ob.skip")}
+          {key !== "preset" && (
+            <div className="flex items-center gap-2">
+              {key !== "welcome" && (
+                <Button variant="ghost" onClick={skip} disabled={busy}>
+                  {t("ob.skip")}
+                </Button>
+              )}
+              <Button onClick={next} disabled={busy}>
+                {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+                {key === "welcome" ? t("ob.getStarted") : isLast ? t("ob.finish") : t("ob.continue")}
               </Button>
-            )}
-            <Button onClick={next} disabled={busy}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {key === "welcome" ? t("ob.getStarted") : isLast ? t("ob.finish") : t("ob.continue")}
-            </Button>
-          </div>
+            </div>
+          )}
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">{t("ob.skipHint")}</p>
@@ -806,6 +867,305 @@ function HouseholdStep({
   );
 }
 
+// Combined "where & who" step — country + household size + age band in one.
+function WhereWhoStep({
+  country,
+  setCountry,
+  adults,
+  setAdults,
+  children,
+  setChildren,
+  ageBand,
+  setAgeBand,
+}: {
+  country: string;
+  setCountry: (v: string) => void;
+  adults: number;
+  setAdults: (v: number) => void;
+  children: number;
+  setChildren: (v: number) => void;
+  ageBand: string;
+  setAgeBand: (v: string) => void;
+}) {
+  const t = useT();
+  return (
+    <div>
+      <StepHead icon={Users} title={t("ob.whereWho.title")} subtitle={t("ob.whereWho.subtitle")} />
+      <div className="space-y-4">
+        <div>
+          <Label>{t("ob.country.title")}</Label>
+          <Select value={country} onValueChange={setCountry}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {COUNTRIES.map(([code, name]) => (
+                <SelectItem key={code} value={code}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Stepper label={t("ob.household.adults")} value={adults} setValue={setAdults} min={1} />
+        <Stepper label={t("ob.household.children")} value={children} setValue={setChildren} min={0} />
+        <div>
+          <Label>{t("hh.ageBand")}</Label>
+          <Select value={ageBand || "none"} onValueChange={(v) => setAgeBand(v === "none" ? "" : v)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">{t("hh.ageBandNone")}</SelectItem>
+              {AGE_BANDS.map((b) => (
+                <SelectItem key={b} value={b}>
+                  {t(`hh.ageBand.${b}` as MessageKey)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-muted-foreground">{t("hh.ageBandHint")}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type PresetEditRow = {
+  key: string;
+  kind: "fixed" | "variable";
+  category: string;
+  amount: string;
+  intent?: "essential" | "important" | "nice_to_have" | "treat";
+  estimated: boolean;
+};
+
+// The generated "here's your starting plan" step: a benchmark-derived, editable
+// budget the user accepts or swaps for manual entry. Rows are written flagged as
+// estimates (except a housing figure the user typed).
+function PresetStep({
+  householdId,
+  country,
+  adults,
+  children,
+  housing,
+  onEnterOwn,
+  onFinish,
+}: {
+  householdId: string;
+  country: string;
+  adults: number;
+  children: number;
+  housing: string;
+  onEnterOwn: () => void;
+  onFinish: () => void;
+}) {
+  const t = useT();
+  const incomesQ = useList("incomes", householdId);
+  const incomes = incomesQ.data ?? [];
+  const monthlyIncome = incomes.reduce((s, r) => s + Number(r.monthly_amount || 0), 0);
+  const addFixed = useServerFn(upsertFixedExpense);
+  const addVariable = useServerFn(upsertVariableEstimate);
+  const setHh = useServerFn(updateHousehold);
+
+  const preset = useMemo(
+    () =>
+      buildSetupPresets({
+        country,
+        adults,
+        children,
+        monthlyIncome,
+        housingMonthly: housing ? parseFloat(housing) : null,
+      }),
+    [country, adults, children, monthlyIncome, housing],
+  );
+
+  const [rows, setRows] = useState<PresetEditRow[]>([]);
+  const [marginPct, setMarginPct] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const seededRef = useRef(false);
+
+  useEffect(() => {
+    if (seededRef.current || !preset.estimated) return;
+    seededRef.current = true;
+    setRows([
+      ...preset.fixed.map((r) => ({
+        key: `f-${r.category}`,
+        kind: "fixed" as const,
+        category: r.category,
+        amount: String(r.monthly_amount),
+        intent: r.intent,
+        estimated: r.estimated,
+      })),
+      ...preset.variable.map((r) => ({
+        key: `v-${r.category}`,
+        kind: "variable" as const,
+        category: r.category,
+        amount: String(r.monthly_amount),
+        estimated: r.estimated,
+      })),
+    ]);
+    setMarginPct(preset.marginPct);
+  }, [preset]);
+
+  const catLabel = (c: string) => t(`ob.cat.${c}` as MessageKey);
+  const setAmount = (key: string, v: string) =>
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, amount: v } : r)));
+  const remove = (key: string) => setRows((rs) => rs.filter((r) => r.key !== key));
+
+  async function useThese() {
+    setBusy(true);
+    try {
+      for (const r of rows) {
+        const amt = parseFloat(r.amount) || 0;
+        if (amt <= 0) continue;
+        if (r.kind === "fixed") {
+          await addFixed({
+            data: {
+              household_id: householdId,
+              label: catLabel(r.category),
+              category: r.category,
+              monthly_amount: amt,
+              intent: r.intent,
+              is_estimated: r.estimated,
+            },
+          });
+        } else {
+          await addVariable({
+            data: {
+              household_id: householdId,
+              label: catLabel(r.category),
+              category: r.category,
+              monthly_amount: amt,
+              is_estimated: r.estimated,
+            },
+          });
+        }
+      }
+      await setHh({ data: { household_id: householdId, margin_pct: marginPct } });
+      onFinish();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function enterOwn() {
+    setBusy(true);
+    try {
+      const h = housing ? parseFloat(housing) : 0;
+      if (h > 0) {
+        await addFixed({
+          data: {
+            household_id: householdId,
+            label: catLabel("housing"),
+            category: "housing",
+            monthly_amount: h,
+            intent: "essential",
+            is_estimated: false,
+          },
+        });
+      }
+      onEnterOwn();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (incomesQ.isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // No benchmark for this country (or no income entered) — go straight to manual.
+  if (!preset.estimated) {
+    return (
+      <div>
+        <StepHead icon={Sparkles} title={t("ob.preset.title")} subtitle={t("ob.preset.subtitleManual")} />
+        <StepInfo body={t("ob.preset.manualInfo")} />
+        <Button onClick={enterOwn} disabled={busy} className="w-full">
+          {busy ? <Loader2 className="size-4 animate-spin" /> : null} {t("ob.preset.enterOwn")}
+        </Button>
+      </div>
+    );
+  }
+
+  const fixedRows = rows.filter((r) => r.kind === "fixed");
+  const variableRows = rows.filter((r) => r.kind === "variable");
+  const fixedTotal = fixedRows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const variableTotal = variableRows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const marginAmt = Math.round((monthlyIncome * marginPct) / 100);
+
+  const renderRow = (r: PresetEditRow) => (
+    <li key={r.key} className="flex items-center gap-2 px-3 py-2">
+      <span className="min-w-0 flex-1 truncate text-sm">{catLabel(r.category)}</span>
+      {r.estimated && (
+        <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          {t("ob.preset.estimated")}
+        </span>
+      )}
+      <Input
+        className="w-24"
+        inputMode="decimal"
+        value={r.amount}
+        onChange={(e) => setAmount(r.key, e.target.value)}
+      />
+      <button
+        type="button"
+        aria-label={t("common.delete")}
+        onClick={() => remove(r.key)}
+        className="text-muted-foreground transition-colors hover:text-destructive"
+      >
+        <X className="size-4" />
+      </button>
+    </li>
+  );
+
+  return (
+    <div>
+      <StepHead icon={Sparkles} title={t("ob.preset.title")} subtitle={t("ob.preset.subtitle")} />
+      <StepInfo body={t("ob.preset.info")} />
+
+      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {t("ob.preset.fixedHead")}
+      </p>
+      <ul className="divide-y rounded-xl border">{fixedRows.map(renderRow)}</ul>
+
+      <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {t("ob.preset.variableHead")}
+      </p>
+      <ul className="divide-y rounded-xl border">{variableRows.map(renderRow)}</ul>
+
+      <div className="mt-4 space-y-1 rounded-xl border bg-muted/30 p-3 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t("ob.preset.fixedTotal")}</span>
+          <span className="tabular-nums font-medium">{money(fixedTotal)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t("ob.preset.variableTotal")}</span>
+          <span className="tabular-nums font-medium">{money(variableTotal)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t("ob.preset.marginLine", { pct: String(marginPct) })}</span>
+          <span className="tabular-nums font-medium">{money(marginAmt)}</span>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-2">
+        <Button onClick={useThese} disabled={busy}>
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{" "}
+          {t("ob.preset.useThese")}
+        </Button>
+        <Button variant="ghost" onClick={enterOwn} disabled={busy}>
+          {t("ob.preset.enterOwn")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ---- Entry-list steps -----------------------------------------------------
 
 function EntryList({
@@ -860,7 +1220,17 @@ function useList(
   });
 }
 
-function IncomeStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
+function IncomeStep({
+  householdId,
+  isBusiness,
+  housing,
+  setHousing,
+}: {
+  householdId: string;
+  isBusiness: boolean;
+  housing?: string;
+  setHousing?: (v: string) => void;
+}) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -923,6 +1293,20 @@ function IncomeStep({ householdId, isBusiness }: { householdId: string; isBusine
         </Button>
       </div>
       <EntryList items={items} />
+      {!isBusiness && setHousing && (
+        <div className="mt-6">
+          <Label htmlFor="ob-housing">{t("ob.income.housingLabel")}</Label>
+          <Input
+            id="ob-housing"
+            className="mt-1 w-40"
+            inputMode="decimal"
+            placeholder={t("ob.amountPh", { sym })}
+            value={housing ?? ""}
+            onChange={(e) => setHousing(e.target.value)}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">{t("ob.income.housingHint")}</p>
+        </div>
+      )}
     </div>
   );
 }
