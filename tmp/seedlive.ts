@@ -1,0 +1,13 @@
+import { createClient } from "@supabase/supabase-js";
+import { seedPersona, wipePersonaData } from "../src/lib/personas.server";
+const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+process.env.PERSONA_PASSWORD ||= "TestPersona!2026";
+const res = await seedPersona(admin as never, "pt-pensioner");
+console.log("seeded", res);
+const { data: hh } = await admin.from("households").select("name,is_synthetic,margin_pct,baseline_budget,country").eq("id", res.householdId).single();
+console.log(hh);
+const { count } = await admin.from("expenses").select("id", { count: "exact", head: true }).eq("household_id", res.householdId);
+console.log("expenses", count);
+await wipePersonaData(admin as never, "pt-pensioner");
+const { data: after } = await admin.from("households").select("id").eq("id", res.householdId);
+console.log("after wipe households:", after);
