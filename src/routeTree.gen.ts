@@ -9,61 +9,53 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as AuthenticatedAllocationsRouteImport } from './routes/_authenticated/allocations'
-import { Route as AuthenticatedAnalysisRouteImport } from './routes/_authenticated/analysis'
-import { Route as AuthenticatedAssetsRouteImport } from './routes/_authenticated/assets'
-import { Route as AuthenticatedCashflowRouteImport } from './routes/_authenticated/cashflow'
-import { Route as AuthenticatedCycleReportRouteImport } from './routes/_authenticated/cycle-report'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
-import { Route as AuthenticatedFastForwardRouteImport } from './routes/_authenticated/fast-forward'
-import { Route as AuthenticatedHandoffRouteImport } from './routes/_authenticated/handoff'
-import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
-import { Route as AuthenticatedJobChangeRouteImport } from './routes/_authenticated/job-change'
-import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
-import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
-import { Route as AuthenticatedMoneyInRouteImport } from './routes/_authenticated/money-in'
-import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
-import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
-import { Route as AuthenticatedRetirementRouteImport } from './routes/_authenticated/retirement'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
-import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticated/snapshot'
-import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
-import { Route as AuthenticatedStatementsRouteImport } from './routes/_authenticated/statements'
-import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as ApiPublicBenchmarksVersionRouteImport } from './routes/api/public/benchmarks-version'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
+import { Route as AuthenticatedStatementsRouteImport } from './routes/_authenticated/statements'
+import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
+import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticated/snapshot'
+import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedRetirementRouteImport } from './routes/_authenticated/retirement'
+import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
+import { Route as AuthenticatedPersonasRouteImport } from './routes/_authenticated/personas'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedMoneyInRouteImport } from './routes/_authenticated/money-in'
+import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
+import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
+import { Route as AuthenticatedJobChangeRouteImport } from './routes/_authenticated/job-change'
+import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
+import { Route as AuthenticatedHandoffRouteImport } from './routes/_authenticated/handoff'
+import { Route as AuthenticatedFastForwardRouteImport } from './routes/_authenticated/fast-forward'
+import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCycleReportRouteImport } from './routes/_authenticated/cycle-report'
+import { Route as AuthenticatedCashflowRouteImport } from './routes/_authenticated/cashflow'
+import { Route as AuthenticatedAssetsRouteImport } from './routes/_authenticated/assets'
+import { Route as AuthenticatedAnalysisRouteImport } from './routes/_authenticated/analysis'
+import { Route as AuthenticatedAllocationsRouteImport } from './routes/_authenticated/allocations'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
-import { Route as ApiPublicHooksCoachBusinessDailyRouteImport } from './routes/api/public/hooks/coach-business-daily'
-import { Route as ApiPublicHooksCoachDailyRouteImport } from './routes/api/public/hooks/coach-daily'
-import { Route as ApiPublicHooksCycleStartRouteImport } from './routes/api/public/hooks/cycle-start'
-import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/public/hooks/weekly-digest'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as ApiPublicBenchmarksVersionRouteImport } from './routes/api/public/benchmarks-version'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/public/hooks/weekly-digest'
+import { Route as ApiPublicHooksCycleStartRouteImport } from './routes/api/public/hooks/cycle-start'
+import { Route as ApiPublicHooksCoachDailyRouteImport } from './routes/api/public/hooks/coach-daily'
+import { Route as ApiPublicHooksCoachBusinessDailyRouteImport } from './routes/api/public/hooks/coach-business-daily'
+import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -71,112 +63,38 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAllocationsRoute =
-  AuthenticatedAllocationsRouteImport.update({
-    id: '/allocations',
-    path: '/allocations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAnalysisRoute = AuthenticatedAnalysisRouteImport.update({
-  id: '/analysis',
-  path: '/analysis',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
+  id: '/wiki',
+  path: '/wiki',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAssetsRoute = AuthenticatedAssetsRouteImport.update({
-  id: '/assets',
-  path: '/assets',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCashflowRoute = AuthenticatedCashflowRouteImport.update({
-  id: '/cashflow',
-  path: '/cashflow',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCycleReportRoute =
-  AuthenticatedCycleReportRouteImport.update({
-    id: '/cycle-report',
-    path: '/cycle-report',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
-  id: '/expenses',
-  path: '/expenses',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFastForwardRoute =
-  AuthenticatedFastForwardRouteImport.update({
-    id: '/fast-forward',
-    path: '/fast-forward',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedHandoffRoute = AuthenticatedHandoffRouteImport.update({
-  id: '/handoff',
-  path: '/handoff',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedHouseholdsRoute = AuthenticatedHouseholdsRouteImport.update({
-  id: '/households',
-  path: '/households',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedJobChangeRoute = AuthenticatedJobChangeRouteImport.update({
-  id: '/job-change',
-  path: '/job-change',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedJourneyRoute = AuthenticatedJourneyRouteImport.update({
-  id: '/journey',
-  path: '/journey',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
-  id: '/loans',
-  path: '/loans',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMoneyInRoute = AuthenticatedMoneyInRouteImport.update({
-  id: '/money-in',
-  path: '/money-in',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRetirementRoute = AuthenticatedRetirementRouteImport.update({
-  id: '/retirement',
-  path: '/retirement',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedShareRoute = AuthenticatedShareRouteImport.update({
-  id: '/share',
-  path: '/share',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSnapshotRoute = AuthenticatedSnapshotRouteImport.update({
-  id: '/snapshot',
-  path: '/snapshot',
+const AuthenticatedStatementsRoute = AuthenticatedStatementsRouteImport.update({
+  id: '/statements',
+  path: '/statements',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStatementImportRoute =
@@ -185,24 +103,117 @@ const AuthenticatedStatementImportRoute =
     path: '/statement-import',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedStatementsRoute = AuthenticatedStatementsRouteImport.update({
-  id: '/statements',
-  path: '/statements',
+const AuthenticatedSnapshotRoute = AuthenticatedSnapshotRouteImport.update({
+  id: '/snapshot',
+  path: '/snapshot',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
-  id: '/wiki',
-  path: '/wiki',
+const AuthenticatedShareRoute = AuthenticatedShareRouteImport.update({
+  id: '/share',
+  path: '/share',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const InviteTokenRoute = InviteTokenRouteImport.update({
-  id: '/invite/$token',
-  path: '/invite/$token',
+const AuthenticatedRetirementRoute = AuthenticatedRetirementRouteImport.update({
+  id: '/retirement',
+  path: '/retirement',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPersonasRoute = AuthenticatedPersonasRouteImport.update({
+  id: '/personas',
+  path: '/personas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMoneyInRoute = AuthenticatedMoneyInRouteImport.update({
+  id: '/money-in',
+  path: '/money-in',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
+  id: '/loans',
+  path: '/loans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJourneyRoute = AuthenticatedJourneyRouteImport.update({
+  id: '/journey',
+  path: '/journey',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJobChangeRoute = AuthenticatedJobChangeRouteImport.update({
+  id: '/job-change',
+  path: '/job-change',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHouseholdsRoute = AuthenticatedHouseholdsRouteImport.update({
+  id: '/households',
+  path: '/households',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHandoffRoute = AuthenticatedHandoffRouteImport.update({
+  id: '/handoff',
+  path: '/handoff',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFastForwardRoute =
+  AuthenticatedFastForwardRouteImport.update({
+    id: '/fast-forward',
+    path: '/fast-forward',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCycleReportRoute =
+  AuthenticatedCycleReportRouteImport.update({
+    id: '/cycle-report',
+    path: '/cycle-report',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCashflowRoute = AuthenticatedCashflowRouteImport.update({
+  id: '/cashflow',
+  path: '/cashflow',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAssetsRoute = AuthenticatedAssetsRouteImport.update({
+  id: '/assets',
+  path: '/assets',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAnalysisRoute = AuthenticatedAnalysisRouteImport.update({
+  id: '/analysis',
+  path: '/analysis',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAllocationsRoute =
+  AuthenticatedAllocationsRouteImport.update({
+    id: '/allocations',
+    path: '/allocations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBenchmarksVersionRoute =
@@ -211,55 +222,10 @@ const ApiPublicBenchmarksVersionRoute =
     path: '/api/public/benchmarks-version',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksBudgetAlertsRoute =
-  ApiPublicHooksBudgetAlertsRouteImport.update({
-    id: '/api/public/hooks/budget-alerts',
-    path: '/api/public/hooks/budget-alerts',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksCoachBusinessDailyRoute =
-  ApiPublicHooksCoachBusinessDailyRouteImport.update({
-    id: '/api/public/hooks/coach-business-daily',
-    path: '/api/public/hooks/coach-business-daily',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksCoachDailyRoute =
-  ApiPublicHooksCoachDailyRouteImport.update({
-    id: '/api/public/hooks/coach-daily',
-    path: '/api/public/hooks/coach-daily',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksCycleStartRoute =
-  ApiPublicHooksCycleStartRouteImport.update({
-    id: '/api/public/hooks/cycle-start',
-    path: '/api/public/hooks/cycle-start',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksWeeklyDigestRoute =
-  ApiPublicHooksWeeklyDigestRouteImport.update({
-    id: '/api/public/hooks/weekly-digest',
-    path: '/api/public/hooks/weekly-digest',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailTransactionalPreviewRoute =
@@ -268,10 +234,50 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksWeeklyDigestRoute =
+  ApiPublicHooksWeeklyDigestRouteImport.update({
+    id: '/api/public/hooks/weekly-digest',
+    path: '/api/public/hooks/weekly-digest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCycleStartRoute =
+  ApiPublicHooksCycleStartRouteImport.update({
+    id: '/api/public/hooks/cycle-start',
+    path: '/api/public/hooks/cycle-start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCoachDailyRoute =
+  ApiPublicHooksCoachDailyRouteImport.update({
+    id: '/api/public/hooks/coach-daily',
+    path: '/api/public/hooks/coach-daily',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCoachBusinessDailyRoute =
+  ApiPublicHooksCoachBusinessDailyRouteImport.update({
+    id: '/api/public/hooks/coach-business-daily',
+    path: '/api/public/hooks/coach-business-daily',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBudgetAlertsRoute =
+  ApiPublicHooksBudgetAlertsRouteImport.update({
+    id: '/api/public/hooks/budget-alerts',
+    path: '/api/public/hooks/budget-alerts',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/loans': typeof AuthenticatedLoansRoute
   '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/personas': typeof AuthenticatedPersonasRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/retirement': typeof AuthenticatedRetirementRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/loans': typeof AuthenticatedLoansRoute
   '/money-in': typeof AuthenticatedMoneyInRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/personas': typeof AuthenticatedPersonasRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/retirement': typeof AuthenticatedRetirementRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/_authenticated/loans': typeof AuthenticatedLoansRoute
   '/_authenticated/money-in': typeof AuthenticatedMoneyInRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/personas': typeof AuthenticatedPersonasRoute
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/retirement': typeof AuthenticatedRetirementRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/loans'
     | '/money-in'
     | '/onboarding'
+    | '/personas'
     | '/plan'
     | '/retirement'
     | '/settings'
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
     | '/loans'
     | '/money-in'
     | '/onboarding'
+    | '/personas'
     | '/plan'
     | '/retirement'
     | '/settings'
@@ -515,6 +526,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loans'
     | '/_authenticated/money-in'
     | '/_authenticated/onboarding'
+    | '/_authenticated/personas'
     | '/_authenticated/plan'
     | '/_authenticated/retirement'
     | '/_authenticated/settings'
@@ -563,25 +575,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -591,179 +589,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/allocations': {
-      id: '/_authenticated/allocations'
-      path: '/allocations'
-      fullPath: '/allocations'
-      preLoaderRoute: typeof AuthenticatedAllocationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/analysis': {
-      id: '/_authenticated/analysis'
-      path: '/analysis'
-      fullPath: '/analysis'
-      preLoaderRoute: typeof AuthenticatedAnalysisRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/assets': {
-      id: '/_authenticated/assets'
-      path: '/assets'
-      fullPath: '/assets'
-      preLoaderRoute: typeof AuthenticatedAssetsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/cashflow': {
-      id: '/_authenticated/cashflow'
-      path: '/cashflow'
-      fullPath: '/cashflow'
-      preLoaderRoute: typeof AuthenticatedCashflowRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/cycle-report': {
-      id: '/_authenticated/cycle-report'
-      path: '/cycle-report'
-      fullPath: '/cycle-report'
-      preLoaderRoute: typeof AuthenticatedCycleReportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/expenses': {
-      id: '/_authenticated/expenses'
-      path: '/expenses'
-      fullPath: '/expenses'
-      preLoaderRoute: typeof AuthenticatedExpensesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/fast-forward': {
-      id: '/_authenticated/fast-forward'
-      path: '/fast-forward'
-      fullPath: '/fast-forward'
-      preLoaderRoute: typeof AuthenticatedFastForwardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/handoff': {
-      id: '/_authenticated/handoff'
-      path: '/handoff'
-      fullPath: '/handoff'
-      preLoaderRoute: typeof AuthenticatedHandoffRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/households': {
-      id: '/_authenticated/households'
-      path: '/households'
-      fullPath: '/households'
-      preLoaderRoute: typeof AuthenticatedHouseholdsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/job-change': {
-      id: '/_authenticated/job-change'
-      path: '/job-change'
-      fullPath: '/job-change'
-      preLoaderRoute: typeof AuthenticatedJobChangeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/journey': {
-      id: '/_authenticated/journey'
-      path: '/journey'
-      fullPath: '/journey'
-      preLoaderRoute: typeof AuthenticatedJourneyRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/loans': {
-      id: '/_authenticated/loans'
-      path: '/loans'
-      fullPath: '/loans'
-      preLoaderRoute: typeof AuthenticatedLoansRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/money-in': {
-      id: '/_authenticated/money-in'
-      path: '/money-in'
-      fullPath: '/money-in'
-      preLoaderRoute: typeof AuthenticatedMoneyInRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/onboarding': {
-      id: '/_authenticated/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/plan': {
-      id: '/_authenticated/plan'
-      path: '/plan'
-      fullPath: '/plan'
-      preLoaderRoute: typeof AuthenticatedPlanRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/retirement': {
-      id: '/_authenticated/retirement'
-      path: '/retirement'
-      fullPath: '/retirement'
-      preLoaderRoute: typeof AuthenticatedRetirementRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/share': {
-      id: '/_authenticated/share'
-      path: '/share'
-      fullPath: '/share'
-      preLoaderRoute: typeof AuthenticatedShareRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/snapshot': {
-      id: '/_authenticated/snapshot'
-      path: '/snapshot'
-      fullPath: '/snapshot'
-      preLoaderRoute: typeof AuthenticatedSnapshotRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/statement-import': {
-      id: '/_authenticated/statement-import'
-      path: '/statement-import'
-      fullPath: '/statement-import'
-      preLoaderRoute: typeof AuthenticatedStatementImportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/statements': {
-      id: '/_authenticated/statements'
-      path: '/statements'
-      fullPath: '/statements'
-      preLoaderRoute: typeof AuthenticatedStatementsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/wiki': {
-      id: '/_authenticated/wiki'
-      path: '/wiki'
-      fullPath: '/wiki'
-      preLoaderRoute: typeof AuthenticatedWikiRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -773,12 +617,180 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/benchmarks-version': {
-      id: '/api/public/benchmarks-version'
-      path: '/api/public/benchmarks-version'
-      fullPath: '/api/public/benchmarks-version'
-      preLoaderRoute: typeof ApiPublicBenchmarksVersionRouteImport
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/wiki': {
+      id: '/_authenticated/wiki'
+      path: '/wiki'
+      fullPath: '/wiki'
+      preLoaderRoute: typeof AuthenticatedWikiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/statements': {
+      id: '/_authenticated/statements'
+      path: '/statements'
+      fullPath: '/statements'
+      preLoaderRoute: typeof AuthenticatedStatementsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/statement-import': {
+      id: '/_authenticated/statement-import'
+      path: '/statement-import'
+      fullPath: '/statement-import'
+      preLoaderRoute: typeof AuthenticatedStatementImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/snapshot': {
+      id: '/_authenticated/snapshot'
+      path: '/snapshot'
+      fullPath: '/snapshot'
+      preLoaderRoute: typeof AuthenticatedSnapshotRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/share': {
+      id: '/_authenticated/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof AuthenticatedShareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/retirement': {
+      id: '/_authenticated/retirement'
+      path: '/retirement'
+      fullPath: '/retirement'
+      preLoaderRoute: typeof AuthenticatedRetirementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plan': {
+      id: '/_authenticated/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof AuthenticatedPlanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/personas': {
+      id: '/_authenticated/personas'
+      path: '/personas'
+      fullPath: '/personas'
+      preLoaderRoute: typeof AuthenticatedPersonasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/money-in': {
+      id: '/_authenticated/money-in'
+      path: '/money-in'
+      fullPath: '/money-in'
+      preLoaderRoute: typeof AuthenticatedMoneyInRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans': {
+      id: '/_authenticated/loans'
+      path: '/loans'
+      fullPath: '/loans'
+      preLoaderRoute: typeof AuthenticatedLoansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/journey': {
+      id: '/_authenticated/journey'
+      path: '/journey'
+      fullPath: '/journey'
+      preLoaderRoute: typeof AuthenticatedJourneyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/job-change': {
+      id: '/_authenticated/job-change'
+      path: '/job-change'
+      fullPath: '/job-change'
+      preLoaderRoute: typeof AuthenticatedJobChangeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/households': {
+      id: '/_authenticated/households'
+      path: '/households'
+      fullPath: '/households'
+      preLoaderRoute: typeof AuthenticatedHouseholdsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/handoff': {
+      id: '/_authenticated/handoff'
+      path: '/handoff'
+      fullPath: '/handoff'
+      preLoaderRoute: typeof AuthenticatedHandoffRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fast-forward': {
+      id: '/_authenticated/fast-forward'
+      path: '/fast-forward'
+      fullPath: '/fast-forward'
+      preLoaderRoute: typeof AuthenticatedFastForwardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/expenses': {
+      id: '/_authenticated/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof AuthenticatedExpensesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cycle-report': {
+      id: '/_authenticated/cycle-report'
+      path: '/cycle-report'
+      fullPath: '/cycle-report'
+      preLoaderRoute: typeof AuthenticatedCycleReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cashflow': {
+      id: '/_authenticated/cashflow'
+      path: '/cashflow'
+      fullPath: '/cashflow'
+      preLoaderRoute: typeof AuthenticatedCashflowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assets': {
+      id: '/_authenticated/assets'
+      path: '/assets'
+      fullPath: '/assets'
+      preLoaderRoute: typeof AuthenticatedAssetsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/analysis': {
+      id: '/_authenticated/analysis'
+      path: '/analysis'
+      fullPath: '/analysis'
+      preLoaderRoute: typeof AuthenticatedAnalysisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/allocations': {
+      id: '/_authenticated/allocations'
+      path: '/allocations'
+      fullPath: '/allocations'
+      preLoaderRoute: typeof AuthenticatedAllocationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
@@ -787,60 +799,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/budget-alerts': {
-      id: '/api/public/hooks/budget-alerts'
-      path: '/api/public/hooks/budget-alerts'
-      fullPath: '/api/public/hooks/budget-alerts'
-      preLoaderRoute: typeof ApiPublicHooksBudgetAlertsRouteImport
+    '/api/public/benchmarks-version': {
+      id: '/api/public/benchmarks-version'
+      path: '/api/public/benchmarks-version'
+      fullPath: '/api/public/benchmarks-version'
+      preLoaderRoute: typeof ApiPublicBenchmarksVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/coach-business-daily': {
-      id: '/api/public/hooks/coach-business-daily'
-      path: '/api/public/hooks/coach-business-daily'
-      fullPath: '/api/public/hooks/coach-business-daily'
-      preLoaderRoute: typeof ApiPublicHooksCoachBusinessDailyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/coach-daily': {
-      id: '/api/public/hooks/coach-daily'
-      path: '/api/public/hooks/coach-daily'
-      fullPath: '/api/public/hooks/coach-daily'
-      preLoaderRoute: typeof ApiPublicHooksCoachDailyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/cycle-start': {
-      id: '/api/public/hooks/cycle-start'
-      path: '/api/public/hooks/cycle-start'
-      fullPath: '/api/public/hooks/cycle-start'
-      preLoaderRoute: typeof ApiPublicHooksCycleStartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/weekly-digest': {
-      id: '/api/public/hooks/weekly-digest'
-      path: '/api/public/hooks/weekly-digest'
-      fullPath: '/api/public/hooks/weekly-digest'
-      preLoaderRoute: typeof ApiPublicHooksWeeklyDigestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/transactional/preview': {
@@ -850,11 +820,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/weekly-digest': {
+      id: '/api/public/hooks/weekly-digest'
+      path: '/api/public/hooks/weekly-digest'
+      fullPath: '/api/public/hooks/weekly-digest'
+      preLoaderRoute: typeof ApiPublicHooksWeeklyDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/cycle-start': {
+      id: '/api/public/hooks/cycle-start'
+      path: '/api/public/hooks/cycle-start'
+      fullPath: '/api/public/hooks/cycle-start'
+      preLoaderRoute: typeof ApiPublicHooksCycleStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/coach-daily': {
+      id: '/api/public/hooks/coach-daily'
+      path: '/api/public/hooks/coach-daily'
+      fullPath: '/api/public/hooks/coach-daily'
+      preLoaderRoute: typeof ApiPublicHooksCoachDailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/coach-business-daily': {
+      id: '/api/public/hooks/coach-business-daily'
+      path: '/api/public/hooks/coach-business-daily'
+      fullPath: '/api/public/hooks/coach-business-daily'
+      preLoaderRoute: typeof ApiPublicHooksCoachBusinessDailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/budget-alerts': {
+      id: '/api/public/hooks/budget-alerts'
+      path: '/api/public/hooks/budget-alerts'
+      fullPath: '/api/public/hooks/budget-alerts'
+      preLoaderRoute: typeof ApiPublicHooksBudgetAlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -876,6 +895,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
   AuthenticatedMoneyInRoute: typeof AuthenticatedMoneyInRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPersonasRoute: typeof AuthenticatedPersonasRoute
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedRetirementRoute: typeof AuthenticatedRetirementRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -902,6 +922,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLoansRoute: AuthenticatedLoansRoute,
   AuthenticatedMoneyInRoute: AuthenticatedMoneyInRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPersonasRoute: AuthenticatedPersonasRoute,
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedRetirementRoute: AuthenticatedRetirementRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,

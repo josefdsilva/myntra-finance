@@ -60,7 +60,7 @@ function PersonasPage() {
 
   if (error) {
     return (
-      <main className={pageShellClass}>
+      <main className={pageShellClass()}>
         <h1 className="text-2xl font-semibold">Test personas</h1>
         <p className="mt-2 text-sm text-muted-foreground">{(error as Error).message}</p>
       </main>
@@ -70,7 +70,7 @@ function PersonasPage() {
   const personas = data?.personas ?? [];
 
   return (
-    <main className={pageShellClass}>
+    <main className={pageShellClass()}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold">
