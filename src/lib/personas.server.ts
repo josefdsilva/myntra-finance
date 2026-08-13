@@ -19,10 +19,16 @@ import {
   personaMonthlyIncome,
   type PersonaDef,
 } from "./personas";
-import {
-  DEFAULT_CATEGORIES_BUSINESS,
-  DEFAULT_CATEGORIES_PERSONAL,
-} from "./household.functions.shared";
+
+// Kept in step with household.functions.ts (starter category sets).
+const DEFAULT_CATEGORIES_PERSONAL = [
+  "groceries", "dining", "transport", "fuel", "utilities", "housing", "health",
+  "subscriptions", "shopping", "clothing", "entertainment", "kids", "insurance", "other",
+];
+const DEFAULT_CATEGORIES_BUSINESS = [
+  "supplies", "materials", "software", "marketing", "travel", "utilities", "rent",
+  "payroll", "professional_services", "fees", "taxes", "other",
+];
 
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
