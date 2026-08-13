@@ -325,6 +325,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
+      {hh?.household?.is_synthetic && (
+        <div className="fixed inset-x-0 top-0 z-50 bg-amber-500 px-3 py-1 text-center text-xs font-medium text-amber-950 print:hidden">
+          Synthetic test persona — this space contains generated data, not real finances.
+        </div>
+      )}
       {/* Top bar mobile */}
       <header className="pwa-safe-top md:hidden flex items-center justify-between p-4 border-b bg-card print:hidden">
         <Link to="/" className="flex items-center gap-2">
