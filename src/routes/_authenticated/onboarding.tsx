@@ -162,7 +162,7 @@ function Wizard({
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [ageBand, setAgeBand] = useState<string>("");
-  const [cycleLen, setCycleLen] = useState<Cycle>("quarterly");
+  const [cycleLen, setCycleLen] = useState<Cycle>(kind === "business" ? "quarterly" : "monthly");
   const [fiscalStart, setFiscalStart] = useState("");
   const [sector, setSector] = useState("");
   const [employees, setEmployees] = useState("");
@@ -244,7 +244,7 @@ function Wizard({
             data: {
               household_id: householdId,
               cycle_mode: "time",
-              cycle: "monthly",
+              cycle: cycleLen,
               cycle_anchor_date: fiscalStart || null,
             },
           });
@@ -254,7 +254,7 @@ function Wizard({
             data: {
               household_id: householdId,
               cycle_mode: "event",
-              cycle: "monthly",
+              cycle: cycleLen,
               cycle_anchor_date: null,
             },
           });
@@ -715,6 +715,22 @@ function CycleStep({
           <span className="font-medium">{t("ob.cycle.dateTitle")}</span>
           <span className="text-xs text-muted-foreground">{t("ob.cycle.dateBody")}</span>
         </button>
+      </div>
+      <div className="mt-4">
+        <Label>{t("ob.cycle.lengthLabel")}</Label>
+        <Select value={cycleLen} onValueChange={(v) => setCycleLen(v as Cycle)}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CYCLES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {t(`cadence.${c}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-1 text-xs text-muted-foreground">{t("ob.cycle.lengthHint")}</p>
       </div>
       {cycleMode === "time" && (
         <div className="mt-4">

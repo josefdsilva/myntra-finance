@@ -378,6 +378,13 @@ export const ENTRIES = {
     de: "Laden Sie 3–6 Monate Kontoauszüge (PDF oder CSV) hoch, und bynku ermittelt Einkommen, Fixkosten und Alltagsausgaben. Sie bestätigen alles vor dem Speichern.",
     fr: "Téléversez 3 à 6 mois de relevés bancaires (PDF ou CSV) et bynku calcule vos revenus, charges fixes et dépenses courantes. Vous confirmez tout avant l'enregistrement.",
   },
+  "ob.cycle.lengthHint": {
+    en: "How often your budget resets — weekly, monthly, quarterly or yearly.",
+    pt: "Com que frequência o seu orçamento reinicia — semanal, mensal, trimestral ou anual.",
+    es: "Con qué frecuencia se reinicia tu presupuesto: semanal, mensual, trimestral o anual.",
+    de: "Wie oft sich Ihr Budget zurücksetzt — wöchentlich, monatlich, vierteljährlich oder jährlich.",
+    fr: "À quelle fréquence votre budget se réinitialise — hebdomadaire, mensuel, trimestriel ou annuel.",
+  },
 
   // KPI Targets tab
   "kpi.title": {
