@@ -19,6 +19,7 @@ import {
   personaMonthlyIncome,
   type PersonaDef,
 } from "./personas";
+import { liquidityForKind } from "./assets.functions";
 
 // Kept in step with household.functions.ts (starter category sets).
 const DEFAULT_CATEGORIES_PERSONAL = [
