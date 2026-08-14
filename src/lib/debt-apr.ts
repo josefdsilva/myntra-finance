@@ -3,9 +3,14 @@
 // (b) which loan to attack first, so that logic lives here once instead of being
 // re-derived (and drifting) in two places.
 
-/** At/above this APR a debt is "expensive" — credit-card territory, well above a
- *  typical secured/mortgage rate. Shared by the debt tip and the journey rung. */
-export const HIGH_APR_PCT = 15;
+/** At/above this APR a debt is worth prioritising over cheaper ones — catches
+ *  personal/car loans (9–12%) as well as cards, while leaving typical secured /
+ *  mortgage rates (~3–5%) alone. Drives the journey rung and the warning tip. */
+export const PRIORITY_APR_PCT = 8;
+
+/** At/above this APR the debt is genuinely painful (credit-card territory) and
+ *  the dashboard tip is raised to a critical shout rather than a warning. */
+export const HIGH_APR_PCT = 11;
 
 type RateFields = {
   deduced_rate_pct?: number | string | null;
@@ -46,17 +51,20 @@ export type PriceyDebt<T> = {
 
 /**
  * The single most expensive debt worth attacking: highest APR, with a real
- * balance, at or above the high-interest line. Returns null when none qualifies.
- * Also reports whether that same loan is the smallest balance among all debts.
+ * balance, at or above `threshold` (defaults to the priority line). Returns null
+ * when none qualifies. Callers decide severity from the returned `apr` (>=
+ * HIGH_APR_PCT ⇒ critical, otherwise a warning). Also reports whether that same
+ * loan is the smallest balance among all debts.
  */
-export function priciestHighAprDebt<T extends RateFields & BalanceFields>(
+export function priciestClearableDebt<T extends RateFields & BalanceFields>(
   debts: T[],
+  threshold: number = PRIORITY_APR_PCT,
 ): PriceyDebt<T> | null {
   const withBalance = debts.filter((d) => debtBalance(d) > 0);
   let best: { debt: T; apr: number; balance: number } | null = null;
   for (const d of withBalance) {
     const apr = aprOf(d);
-    if (apr < HIGH_APR_PCT) continue;
+    if (apr < threshold) continue;
     const balance = debtBalance(d);
     if (!best || apr > best.apr) best = { debt: d, apr, balance };
   }

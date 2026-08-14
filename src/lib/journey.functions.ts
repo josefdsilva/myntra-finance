@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { JsonObject } from "@/lib/json";
-import { priciestHighAprDebt, debtBalance } from "@/lib/debt-apr";
+import { priciestClearableDebt, debtBalance } from "@/lib/debt-apr";
 
 // Money Journey stages — user- and coach-authored roadmap milestones. Objectives
 // are evaluated live on the client against numbers the app already computes; this
@@ -252,7 +252,7 @@ export const draftJourney = createServerFn({ method: "POST" })
       principal_remaining: number | string | null;
       starting_principal: number | string | null;
     }>;
-    const pricey = priciestHighAprDebt(debtRows);
+    const pricey = priciestClearableDebt(debtRows);
     // A household that can barely save should first free up room by trimming
     // non-essential spending — asking it to build a safety net it can't fund is
     // demoralizing. This becomes the very first rung when money is tight.

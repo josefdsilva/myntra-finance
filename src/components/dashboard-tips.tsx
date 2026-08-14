@@ -18,13 +18,13 @@ import { liquidityForKind } from "@/lib/assets.functions";
 import { resolveIntent, summariseIntent } from "@/lib/intent";
 import { expectedCategorySpend } from "@/lib/benchmarks";
 import { findSavings } from "@/lib/savings-finder";
-import { priciestHighAprDebt } from "@/lib/debt-apr";
+import { priciestClearableDebt, HIGH_APR_PCT } from "@/lib/debt-apr";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
 import { useT, type MessageKey } from "@/lib/i18n";
 import {
   AlertTriangle,
   AlertOctagon,
-  CreditCard,
+  Landmark,
   Info,
   CheckCircle2,
   ArrowRight,
@@ -385,19 +385,21 @@ export function DashboardTips({
     });
   }
 
-  // ---- Expensive debt (critical): the one loan bleeding the most per euro ----
-  // Rui's case — a 17.5% card next to an 8.9% car loan — should be shouted, not
+  // ---- Expensive debt: the one loan bleeding the most per euro ----
+  // Rui's case — a 17.5% card next to an 8.9% car loan — should be surfaced, not
   // hidden in Loans. We name the specific loan and tell him to attack it first;
   // when it's also the smallest balance, avalanche and snowball agree, so the
-  // advice is unambiguous.
+  // advice is unambiguous. A painful rate (>= HIGH_APR_PCT, credit-card
+  // territory) is a critical shout; a merely expensive one (>= PRIORITY_APR_PCT,
+  // e.g. a 9–12% personal loan) is a warning — still worth clearing next.
   if (!isBusiness) {
-    const pricey = priciestHighAprDebt(data.debtsDetail);
+    const pricey = priciestClearableDebt(data.debtsDetail);
     if (pricey) {
       const label = pricey.debt.label ?? t("tips.expensiveDebt.fallbackLabel");
       tips.push({
         id: "expensive-debt",
-        severity: "critical",
-        icon: <CreditCard className="size-4" />,
+        severity: pricey.apr >= HIGH_APR_PCT ? "critical" : "warning",
+        icon: <Landmark className="size-4" />,
         title: t("tips.expensiveDebt.title", { label }),
         detail: pricey.isSmallestBalance
           ? t("tips.expensiveDebt.detailSmallest", {
