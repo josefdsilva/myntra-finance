@@ -1207,19 +1207,24 @@ export function DashboardTips({ householdId }: { householdId: string }) {
 }
 
 /**
- * App-wide entry point: a bell + badge in the shell header (on every page) that
- * opens a compact panel of the same issues. Mirrors the coach inbox pattern, and
- * shares the hook's dismissal so hiding here also hides on the dashboard card.
+ * App-wide entry point to the same issues the dashboard card shows, sharing the
+ * hook's dismissal so hiding here also hides on the card. Two triggers:
+ *  - `variant="bell"` — a bell + badge (mobile top bar).
+ *  - `variant="nav"`  — a full-width "Needs attention · N" row for the sidebar
+ *    nav; renders nothing when there's nothing to flag, so it only appears when
+ *    it has something to say.
  */
 export function IssuesBell({
   householdId,
   align = "right",
+  variant = "bell",
 }: {
   householdId: string | null;
   /** Which edge the panel anchors to. "right" opens leftward (wide headers);
       "left" opens rightward (use inside the narrow left sidebar so it doesn't
       run off-screen). */
   align?: "left" | "right";
+  variant?: "bell" | "nav";
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -1244,27 +1249,54 @@ export function IssuesBell({
   const { criticals, primary, overflow, urgentCount, dismiss } = issues;
   const active = [...criticals, ...primary, ...overflow];
   const count = active.length;
+  // The nav row is a contextual entry: show it only when there's something to
+  // flag, so it never sits there saying "0".
+  if (variant === "nav" && count === 0) return null;
 
   return (
     <div ref={wrapRef} className="relative">
-      <button
-        type="button"
-        aria-label={t("tips.bell.aria")}
-        onClick={() => setOpen((s) => !s)}
-        className="relative inline-flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-      >
-        <AlertTriangle className="size-5" />
-        {count > 0 && (
+      {variant === "nav" ? (
+        <button
+          type="button"
+          onClick={() => setOpen((s) => !s)}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+            urgentCount > 0
+              ? "border border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive/10"
+              : "border border-amber-500/40 bg-amber-500/5 text-amber-700 hover:bg-amber-500/10 dark:text-amber-400",
+          )}
+        >
+          <AlertTriangle className="size-4 shrink-0" />
+          <span className="flex-1 truncate">{t("tips.attention.title")}</span>
           <span
             className={cn(
-              "absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-4 text-white",
+              "flex min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold leading-5 text-white",
               urgentCount > 0 ? "bg-destructive" : "bg-amber-500",
             )}
           >
             {count > 9 ? "9+" : count}
           </span>
-        )}
-      </button>
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-label={t("tips.bell.aria")}
+          onClick={() => setOpen((s) => !s)}
+          className="relative inline-flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <AlertTriangle className="size-5" />
+          {count > 0 && (
+            <span
+              className={cn(
+                "absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-4 text-white",
+                urgentCount > 0 ? "bg-destructive" : "bg-amber-500",
+              )}
+            >
+              {count > 9 ? "9+" : count}
+            </span>
+          )}
+        </button>
+      )}
 
       {open && (
         <div
