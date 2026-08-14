@@ -35,6 +35,7 @@ const METRIC_KEYS = [
   "net_worth",
   "debt_to_asset",
   "investment_assets_ratio",
+  "non_essential_ratio",
 ] as const;
 
 const SELECT =

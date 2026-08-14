@@ -733,6 +733,7 @@ function Dashboard() {
           children={Number(hh?.household?.children ?? 0)}
           ageBand={hh?.household?.age_band ?? null}
           marginPct={Number(hh?.household?.margin_pct ?? 10)}
+          cycle={hh?.household?.cycle ?? null}
         />
       )}
 

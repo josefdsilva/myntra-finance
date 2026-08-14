@@ -177,7 +177,7 @@ export const draftJourney = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const hid = data.household_id;
-    const [hh, buckets, allocs, moves, debts, fixed] = await Promise.all([
+    const [hh, buckets, allocs, moves, debts, fixed, incomes] = await Promise.all([
       context.supabase.from("households").select("baseline_budget").eq("id", hid).maybeSingle(),
       context.supabase
         .from("buckets")
@@ -191,9 +191,11 @@ export const draftJourney = createServerFn({ method: "POST" })
         .eq("household_id", hid),
       context.supabase.from("debts").select("monthly_amount").eq("household_id", hid),
       context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
+      context.supabase.from("incomes").select("monthly_amount").eq("household_id", hid),
     ]);
 
     const baseline = Number(hh.data?.baseline_budget ?? 0);
+    const income = (incomes.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
     const debtMonthly = (debts.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
     const fixedMonthly = (fixed.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
     const essentials = Math.max(1, baseline || fixedMonthly + debtMonthly);
@@ -231,10 +233,16 @@ export const draftJourney = createServerFn({ method: "POST" })
     const hasEmergency = bs.some((b) => b.kind === "emergency");
     const emergencyMonths = (hasEmergency ? emergencyBal : emergencyBal + savingsBal) / essentials;
     const hasDebt = debtMonthly > 0;
+    // A household that can barely save should first free up room by trimming
+    // non-essential spending — asking it to build a safety net it can't fund is
+    // demoralizing. This becomes the very first rung when money is tight.
+    const tight = income > 0 && income - essentials < income * 0.1;
 
-    const specs: DraftSpec[] = [
-      { template_key: "starter", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 1 } },
-    ];
+    const specs: DraftSpec[] = [];
+    if (tight) {
+      specs.push({ template_key: "freeUp", objective_type: "metric", objective_config: { key: "non_essential_ratio", op: "<=", value: 25 } });
+    }
+    specs.push({ template_key: "starter", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 1 } });
     if (hasDebt)
       specs.push({ template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } });
     specs.push(

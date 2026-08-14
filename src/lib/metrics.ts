@@ -24,7 +24,8 @@ export type MetricKey =
   | "non_mortgage_debt_service"
   | "net_worth"
   | "debt_to_asset"
-  | "investment_assets_ratio";
+  | "investment_assets_ratio"
+  | "non_essential_ratio";
 
 /** Debt kinds treated as a mortgage / house loan (vs. consumer debt). */
 export const MORTGAGE_KINDS = new Set(["mortgage", "property"]);
@@ -62,6 +63,7 @@ export const METRICS: MetricMeta[] = [
   { key: "net_worth", labelKey: "kpi.metric.net_worth", descKey: "kpi.metric.net_worth.desc", format: "currency", betterWhen: "higher", defaultOp: ">=" },
   { key: "debt_to_asset", labelKey: "kpi.metric.debt_to_asset", descKey: "kpi.metric.debt_to_asset.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
   { key: "investment_assets_ratio", labelKey: "kpi.metric.investment_assets_ratio", descKey: "kpi.metric.investment_assets_ratio.desc", format: "pct", betterWhen: "higher", defaultOp: ">=" },
+  { key: "non_essential_ratio", labelKey: "kpi.metric.non_essential_ratio", descKey: "kpi.metric.non_essential_ratio.desc", format: "pct", betterWhen: "lower", defaultOp: "<=" },
 ];
 
 const BY_KEY: Record<string, MetricMeta> = Object.fromEntries(METRICS.map((m) => [m.key, m]));
@@ -84,6 +86,8 @@ export type MetricInputs = {
   plannedSpend: number | null;
   /** Realized savings rate (fraction 0..1) from the latest closed cycle. */
   savingsRate: number | null;
+  /** Non-essential (nice-to-have + treat) share of spend (0..1), latest cycle. */
+  superfluousShare: number | null;
   /** Full debt rows — for live remaining principal and mortgage/consumer split. */
   debts: Debt[];
   /** Balance-sheet assets (excludes untracked bank cash, per net-worth-card). */
@@ -105,7 +109,7 @@ export async function fetchMetricInputs(householdId: string): Promise<MetricInpu
     supabase.from("assets").select("current_value, kind, liquidity, bucket_id").eq("household_id", householdId),
     supabase
       .from("cycle_metrics")
-      .select("spend_actual, planned_spend, metrics")
+      .select("spend_actual, planned_spend, superfluous_share, metrics")
       .eq("household_id", householdId)
       .order("cycle_end", { ascending: false })
       .limit(1)
@@ -144,6 +148,7 @@ export async function fetchMetricInputs(householdId: string): Promise<MetricInpu
     spendActual: cmRes.data ? Number(cmRes.data.spend_actual) : null,
     plannedSpend: cmRes.data?.planned_spend != null ? Number(cmRes.data.planned_spend) : null,
     savingsRate: cmMetrics?.savingsRate != null ? Number(cmMetrics.savingsRate) : null,
+    superfluousShare: cmRes.data?.superfluous_share != null ? Number(cmRes.data.superfluous_share) : null,
     debts,
     assets,
     fixedExpenses,
@@ -216,6 +221,7 @@ export function computeMetrics(inp: MetricInputs): Record<MetricKey, MetricValue
     net_worth: netWorth,
     debt_to_asset: totalAssets > 0 ? (debtRemaining / totalAssets) * 100 : null,
     investment_assets_ratio: totalAssets > 0 ? (investedAssets / totalAssets) * 100 : null,
+    non_essential_ratio: inp.superfluousShare != null ? inp.superfluousShare * 100 : null,
   };
 }
 

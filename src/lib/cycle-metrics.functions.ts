@@ -331,6 +331,7 @@ export async function snapshotCycleCore(
     net_worth: netWorth,
     debt_to_asset: totalAssetsReg > 0 ? (debtRemaining / totalAssetsReg) * 100 : null,
     investment_assets_ratio: totalAssetsReg > 0 ? (investedRegNumerator / totalAssetsReg) * 100 : null,
+    non_essential_ratio: superfluousShare != null ? superfluousShare * 100 : null,
   };
 
   const { error } = await sb.from("cycle_metrics").upsert(

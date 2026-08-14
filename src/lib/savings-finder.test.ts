@@ -30,18 +30,19 @@ test("comfortable surplus never surfaces the finder", () => {
   expect(r.surface).toBe(false);
 });
 
-test("over-peer categories suggest closing half the gap, ranked", () => {
+test("discretionary categories suggest a third, ranked by size", () => {
   const r = findSavings({
     income: 2000,
     surplus: 0,
     marginPct: 10,
-    categoryOver: [
-      { category: "groceries", overMonthly: 80 },
-      { category: "subscriptions", overMonthly: 20 },
+    // Caller passes only discretionary categories (never essentials).
+    categoryCuts: [
+      { category: "shopping", monthly: 117 },
+      { category: "subscriptions", monthly: 86 },
     ],
     nonEssentialMonthly: 0,
   });
-  expect(r.spending[0]).toEqual({ kind: "category", category: "groceries", monthlyEur: 40 });
+  expect(r.spending[0]).toEqual({ kind: "category", category: "shopping", monthlyEur: 39 });
   expect(r.spending.some((s) => s.kind === "category" && s.category === "subscriptions")).toBe(true);
 });
 

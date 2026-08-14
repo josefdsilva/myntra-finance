@@ -40,9 +40,16 @@ export function findSavings(inp: {
   ageBand?: string | null;
   /** 1..5 income quintile vs peers (from the benchmark), or null if unknown. */
   incomeQuintile?: number | null;
-  /** Categories spending above the peer benchmark: EUR/month over. */
-  categoryOver?: Array<{ category: string; overMonthly: number }>;
-  /** Monthly non-essential (nice-to-have + treat) spend. */
+  /**
+   * Discretionary (non-essential) categories to trim, with actual EUR/month.
+   * The CALLER filters out essentials (housing, kids, groceries, health,
+   * utilities, transport…) so we never suggest cutting things a family can't or
+   * shouldn't. Ranked by size, since the biggest discretionary lines are the
+   * easiest wins.
+   */
+  categoryCuts?: Array<{ category: string; monthly: number }>;
+  /** Aggregate non-essential (nice-to-have + treat) spend — used by the compact
+   *  dashboard tip when there's no per-category breakdown. */
   nonEssentialMonthly?: number;
 }): SavingsResult {
   const income = Math.max(0, inp.income);
@@ -55,14 +62,14 @@ export function findSavings(inp: {
   const surface = income > 0 && gapEur > 0 && surplus < income * 0.1;
 
   const spending: SavingsOpportunity[] = [];
-  for (const c of inp.categoryOver ?? []) {
-    // Suggest closing HALF the gap to peers — realistic, not "spend like nobody".
-    const room = Math.round(c.overMonthly / 2);
+  for (const c of inp.categoryCuts ?? []) {
+    // A third of a discretionary line is an achievable trim — never all of it.
+    const room = Math.round(c.monthly / 3);
     if (room >= 5) spending.push({ kind: "category", category: c.category, monthlyEur: room });
   }
+  // Fall back to a single aggregate when no per-category breakdown was supplied.
   const nonEss = inp.nonEssentialMonthly ?? 0;
-  if (nonEss > 15) {
-    // A third of non-essentials is an achievable trim without touching essentials.
+  if (spending.length === 0 && nonEss > 15) {
     spending.push({ kind: "non_essential", monthlyEur: Math.round(nonEss / 3) });
   }
   spending.sort((a, b) => b.monthlyEur - a.monthlyEur);

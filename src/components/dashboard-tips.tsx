@@ -18,6 +18,7 @@ import { liquidityForKind } from "@/lib/assets.functions";
 import { resolveIntent, summariseIntent } from "@/lib/intent";
 import { expectedCategorySpend } from "@/lib/benchmarks";
 import { findSavings } from "@/lib/savings-finder";
+import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
 import { useT, type MessageKey } from "@/lib/i18n";
 import {
   AlertTriangle,
@@ -58,6 +59,7 @@ type Props = {
   children?: number;
   ageBand?: string | null;
   marginPct?: number;
+  cycle?: string | null;
 };
 
 const EMERGENCY_HINTS = ["emergency", "buffer", "safety", "rainy", "reserve"];
@@ -80,6 +82,7 @@ export function DashboardTips({
   children = 0,
   ageBand,
   marginPct = 10,
+  cycle,
 }: Props) {
   const t = useT();
   // For business spaces, household-framed tips (surplus, savings rate, income
@@ -260,17 +263,22 @@ export function DashboardTips({
     incomeQuintile: est?.quintile ?? null,
     nonEssentialMonthly,
   });
+  // Figures are monthly (benchmark-based); express them in the household's cycle.
+  const cyclePeriod = cycleForSpace({ cycle: cycle ?? null });
+  const per = t(`period.per.${cyclePeriod}` as MessageKey);
+  const cyc = (m: number) => money(perCycleFromMonthly(m, cyclePeriod));
   if (savings.surface && savings.spending.length > 0) {
     tips.push({
       id: "where-to-save",
       severity: "warning",
       title: t("tips.whereToSave.title"),
       detail: t("tips.whereToSave.detail", {
-        gap: money(savings.gapEur),
-        amount: money(savings.spending[0].monthlyEur),
+        gap: cyc(savings.gapEur),
+        amount: cyc(savings.spending[0].monthlyEur),
+        per,
       }),
       cta: { label: t("tips.cta.whereToSave"), to: "/analysis" },
-      chatPrompt: t("tips.whereToSave.chat", { gap: money(savings.gapEur) }),
+      chatPrompt: t("tips.whereToSave.chat", { gap: cyc(savings.gapEur), per }),
     });
   }
   if (savings.surface && savings.income.length > 0) {
