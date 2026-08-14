@@ -313,26 +313,64 @@ export async function seedPersona(admin: Admin, key: string) {
     );
   }
 
+  const debtIdByLabel = new Map<string, string>();
   if (p.debts.length) {
-    await admin.from("debts").insert(
-      p.debts.map((d, i) => ({
-        household_id: household.id,
-        label: d.label,
-        kind: d.kind,
-        monthly_amount: d.monthly_amount,
-        principal_remaining: d.principal_remaining,
-        starting_principal: d.principal_remaining,
-        taeg_pct: d.taeg_pct,
-        maturity_date: new Date(
-          Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + d.months_left, 1),
-        )
-          .toISOString()
-          .slice(0, 10),
-        note: SYNTHETIC_LABEL,
-        sort_order: i,
-      })),
-    );
+    const { data: debtRows } = await admin
+      .from("debts")
+      .insert(
+        p.debts.map((d, i) => ({
+          household_id: household.id,
+          label: d.label,
+          kind: d.kind,
+          monthly_amount: d.monthly_amount,
+          principal_remaining: d.principal_remaining,
+          starting_principal: d.principal_remaining,
+          taeg_pct: d.taeg_pct,
+          maturity_date: new Date(
+            Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + d.months_left, 1),
+          )
+            .toISOString()
+            .slice(0, 10),
+          note: SYNTHETIC_LABEL,
+          sort_order: i,
+        })),
+      )
+      .select("id, label");
+    for (const r of debtRows ?? []) debtIdByLabel.set(r.label, r.id);
   }
+
+  // Things the persona owns. Assets tied to a debt (home ↔ mortgage, car ↔
+  // loan) are linked so net worth and payoff views line up.
+  if (p.assets.length) {
+    const monthsAgo = (n: number) =>
+      new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() - n, 1))
+        .toISOString()
+        .slice(0, 10);
+    const { error: aErr } = await admin.from("assets").insert(
+      p.assets.map((a) => {
+        const straightLine = a.useful_life_months != null;
+        const acquiredOn = a.acquired_months_ago != null ? monthsAgo(a.acquired_months_ago) : null;
+        return {
+          household_id: household.id,
+          created_by: userId,
+          name: a.name,
+          kind: a.kind,
+          current_value: a.current_value,
+          acquired_value: a.acquired_value ?? null,
+          acquired_on: acquiredOn,
+          liquidity: liquidityForKind(a.kind),
+          debt_id: a.debtLabel ? (debtIdByLabel.get(a.debtLabel) ?? null) : null,
+          note: a.note ?? SYNTHETIC_LABEL,
+          depreciation_method: straightLine ? "straight_line" : "none",
+          useful_life_months: a.useful_life_months ?? null,
+          salvage_value: a.salvage_value ?? 0,
+          depreciation_start: straightLine ? acquiredOn : null,
+        };
+      }),
+    );
+    if (aErr) throw aErr;
+  }
+
 
   // Expense + income history.
   const salaryIncomeId = (incomeRows ?? []).find((r) => r.type === "salary")?.id ?? null;
