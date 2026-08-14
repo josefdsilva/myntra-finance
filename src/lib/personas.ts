@@ -26,6 +26,21 @@ export type PersonaDebt = {
   months_left: number;
 };
 
+export type PersonaAsset = {
+  name: string;
+  kind: "cash" | "property" | "land" | "vehicle" | "stocks" | "bonds" | "fund" | "business" | "other";
+  current_value: number;
+  acquired_value?: number;
+  /** Months ago the asset was acquired (kept relative so re-seeds stay fresh). */
+  acquired_months_ago?: number;
+  /** Links the asset to one of the persona's debts, by debt label. */
+  debtLabel?: string;
+  note?: string;
+  /** Business assets only: straight-line depreciation over this many months. */
+  useful_life_months?: number;
+  salvage_value?: number;
+};
+
 export type PersonaDef = {
   key: string;
   /** persona1@bynku.app style login. */
@@ -46,6 +61,8 @@ export type PersonaDef = {
   sector?: string | null;
   incomes: PersonaIncome[];
   debts: PersonaDebt[];
+  /** Things the household owns (home, car, savings account, portfolio…). */
+  assets: PersonaAsset[];
   /** Extra fixed costs on top of the benchmark preset (labelled, real-looking). */
   extraFixed?: Array<{ label: string; category: string; monthly_amount: number }>;
   /** Real housing cost, overrides the benchmark housing estimate. */
@@ -103,6 +120,10 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.12,
     historyMonths: 4,
     bucketSeed: { emergency: 380, investment: 0, savings: 120 },
+    assets: [
+      { name: "Family car", kind: "vehicle", current_value: 8200, acquired_value: 13500, acquired_months_ago: 34, debtLabel: "Car loan" },
+      { name: "Current account", kind: "cash", current_value: 410 },
+    ],
     cycleMode: "event",
   },
   {
@@ -125,6 +146,10 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 0.95,
     historyMonths: 4,
     bucketSeed: { emergency: 2400, investment: 0, savings: 300 },
+    assets: [
+      { name: "Apartment (owned)", kind: "property", current_value: 118000, acquired_value: 42000, acquired_months_ago: 300 },
+      { name: "Savings account", kind: "cash", current_value: 2400 },
+    ],
     cycleMode: "time",
   },
   {
@@ -162,6 +187,11 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.0,
     historyMonths: 5,
     bucketSeed: { emergency: 6200, investment: 4100, savings: 900 },
+    assets: [
+      { name: "Family home", kind: "property", current_value: 268000, acquired_value: 215000, acquired_months_ago: 102, debtLabel: "Mortgage" },
+      { name: "Car", kind: "vehicle", current_value: 11500, acquired_value: 22000, acquired_months_ago: 60 },
+      { name: "Index fund", kind: "fund", current_value: 14800 },
+    ],
     cycleMode: "event",
   },
   {
@@ -188,6 +218,13 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.05,
     historyMonths: 5,
     bucketSeed: { emergency: 24000, investment: 96000, savings: 8000 },
+    assets: [
+      { name: "Rented-out apartment", kind: "property", current_value: 420000, acquired_value: 310000, acquired_months_ago: 120 },
+      { name: "Share portfolio", kind: "stocks", current_value: 186000 },
+      { name: "Bond ladder", kind: "bonds", current_value: 64000 },
+      { name: "Company car (private)", kind: "vehicle", current_value: 38000, acquired_value: 58000, acquired_months_ago: 26 },
+      { name: "Current account", kind: "cash", current_value: 21500 },
+    ],
     cycleMode: "event",
   },
   {
@@ -222,6 +259,10 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.08,
     historyMonths: 4,
     bucketSeed: { emergency: 640, investment: 0, savings: 0 },
+    assets: [
+      { name: "Small car", kind: "vehicle", current_value: 4300, acquired_value: 9000, acquired_months_ago: 52 },
+      { name: "Livret A", kind: "cash", current_value: 640 },
+    ],
     cycleMode: "event",
   },
   {
@@ -253,6 +294,11 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.15,
     historyMonths: 4,
     bucketSeed: { emergency: 3100, investment: 5400, savings: 450 },
+    assets: [
+      { name: "Broker account (ETFs)", kind: "fund", current_value: 5400 },
+      { name: "Savings account", kind: "cash", current_value: 3100 },
+      { name: "E-bike", kind: "other", current_value: 900, acquired_value: 1600, acquired_months_ago: 22 },
+    ],
     cycleMode: "event",
   },
   {
@@ -288,6 +334,11 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.1,
     historyMonths: 5,
     bucketSeed: { emergency: 2900, investment: 700, savings: 400 },
+    assets: [
+      { name: "Family house", kind: "property", current_value: 165000, acquired_value: 120000, acquired_months_ago: 190, debtLabel: "Mortgage" },
+      { name: "Van", kind: "vehicle", current_value: 6800, acquired_value: 17000, acquired_months_ago: 84 },
+      { name: "Postal savings", kind: "cash", current_value: 2900 },
+    ],
     cycleMode: "event",
   },
   {
@@ -323,6 +374,10 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.05,
     historyMonths: 4,
     bucketSeed: { emergency: 900, investment: 0, savings: 150 },
+    assets: [
+      { name: "Car", kind: "vehicle", current_value: 5600, acquired_value: 11000, acquired_months_ago: 48 },
+      { name: "Savings account", kind: "cash", current_value: 900 },
+    ],
     cycleMode: "event",
   },
   {
@@ -370,6 +425,12 @@ export const PERSONAS: PersonaDef[] = [
     spendBias: 1.06,
     historyMonths: 5,
     bucketSeed: { emergency: 12000, investment: 4000, savings: 6000 },
+    assets: [
+      { name: "Workshop lift & tooling", kind: "business", current_value: 21000, acquired_value: 32000, acquired_months_ago: 20, useful_life_months: 96, salvage_value: 2000, debtLabel: "Equipment lease" },
+      { name: "Service van", kind: "vehicle", current_value: 13500, acquired_value: 24000, acquired_months_ago: 30, useful_life_months: 72, salvage_value: 1500 },
+      { name: "Diagnostics computer", kind: "business", current_value: 3200, acquired_value: 5800, acquired_months_ago: 14, useful_life_months: 48, salvage_value: 300 },
+      { name: "Business account", kind: "cash", current_value: 12800 },
+    ],
     cycleMode: "time",
   },
 ];
