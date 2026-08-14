@@ -168,6 +168,7 @@ export type CycleMetric = {
   non_mortgage_debt_service?: number | null;
   debt_to_asset?: number | null;
   income_concentration?: number | null;
+  non_essential_ratio?: number | null;
 };
 
 /** A recap of the just-closed cycle plus the single most useful next action. */
@@ -269,7 +270,8 @@ type WatchKey =
   | "housing_cost_ratio"
   | "non_mortgage_debt_service"
   | "debt_to_asset"
-  | "income_concentration";
+  | "income_concentration"
+  | "non_essential_ratio";
 
 /**
  * Watch the KPIs that have real per-cycle history. When one slips the wrong way
@@ -371,6 +373,15 @@ export function degradationSignals(p: { series: CycleMetric[] }): Signal[] {
       concern: (v) => v > 80,
       op: "<=",
       value: 80,
+      fmt: (v) => `${Math.round(v)}%`,
+    },
+    {
+      key: "non_essential_ratio",
+      label: "non-essential spending",
+      higherIsWorse: true,
+      concern: (v) => v > 30,
+      op: "<=",
+      value: 25,
       fmt: (v) => `${Math.round(v)}%`,
     },
   ];

@@ -165,6 +165,7 @@ export async function runCoachForHousehold(
         non_mortgage_debt_service: num(kpi.non_mortgage_debt_service),
         debt_to_asset: num(kpi.debt_to_asset),
         income_concentration: num(kpi.income_concentration),
+        non_essential_ratio: num(kpi.non_essential_ratio),
       };
     })
     .reverse();
