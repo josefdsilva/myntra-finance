@@ -728,6 +728,11 @@ function Dashboard() {
           netSpent={netSpent}
           daysLeft={daysLeft}
           avgDaily7={avgDaily7}
+          country={hh?.household?.country ?? null}
+          adults={Number(hh?.household?.adults ?? 1)}
+          children={Number(hh?.household?.children ?? 0)}
+          ageBand={hh?.household?.age_band ?? null}
+          marginPct={Number(hh?.household?.margin_pct ?? 10)}
         />
       )}
 

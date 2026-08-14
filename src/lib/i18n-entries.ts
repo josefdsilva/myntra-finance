@@ -185,6 +185,49 @@ export const ENTRIES = {
     de: "Mein Budget lässt kaum etwas zum Sparen. Wo kann ich realistisch Kosten senken oder Einnahmen erhöhen, um mehr Spielraum zu schaffen?",
     fr: "Mon budget laisse très peu à épargner. Où puis-je réduire des coûts de façon réaliste ou ajouter des revenus pour dégager une plus grande marge ?",
   },
+  "tips.cta.whereToSave": { en: "See where", pt: "Ver onde", es: "Ver dónde", de: "Wo ansehen", fr: "Voir où" },
+  "tips.whereToSave.title": {
+    en: "Where you could find room",
+    pt: "Onde pode encontrar margem",
+    es: "Dónde puedes encontrar margen",
+    de: "Wo Sie Spielraum finden könnten",
+    fr: "Où trouver de la marge",
+  },
+  "tips.whereToSave.detail": {
+    en: "You're about {gap} short of a comfortable cushion. Trimming non-essential spending could free roughly {amount} a month — Analysis shows exactly where.",
+    pt: "Falta-lhe cerca de {gap} para uma folga confortável. Reduzir gastos não essenciais poderia libertar cerca de {amount} por mês — a Análise mostra exatamente onde.",
+    es: "Te faltan unos {gap} para un colchón cómodo. Recortar gastos no esenciales podría liberar unos {amount} al mes — Análisis muestra exactamente dónde.",
+    de: "Ihnen fehlen etwa {gap} für ein komfortables Polster. Weniger nicht-essenzielle Ausgaben könnten rund {amount} pro Monat frei machen — die Analyse zeigt genau wo.",
+    fr: "Il vous manque environ {gap} pour un matelas confortable. Réduire les dépenses non essentielles pourrait libérer près de {amount} par mois — l'Analyse montre exactement où.",
+  },
+  "tips.whereToSave.chat": {
+    en: "My budget is tight. Where can I realistically cut back to free up about {gap} a month?",
+    pt: "O meu orçamento está apertado. Onde posso cortar de forma realista para libertar cerca de {gap} por mês?",
+    es: "Mi presupuesto está ajustado. ¿Dónde puedo recortar de forma realista para liberar unos {gap} al mes?",
+    de: "Mein Budget ist knapp. Wo kann ich realistisch kürzen, um etwa {gap} pro Monat frei zu machen?",
+    fr: "Mon budget est serré. Où puis-je réduire de façon réaliste pour libérer environ {gap} par mois ?",
+  },
+  "tips.incomeRoom.title": {
+    en: "Another way to build room",
+    pt: "Outra forma de criar margem",
+    es: "Otra forma de crear margen",
+    de: "Ein anderer Weg zu mehr Spielraum",
+    fr: "Une autre façon de dégager de la marge",
+  },
+  "tips.incomeRoom.detail": {
+    en: "If cutting back isn't the path, your income looks modest for your area — a better-paid role for the same hours could be worth exploring. The coach can talk it through.",
+    pt: "Se cortar não é o caminho, o seu rendimento parece modesto para a sua região — um cargo mais bem pago pelas mesmas horas pode valer a pena explorar. O coach pode conversar sobre isso.",
+    es: "Si recortar no es el camino, tus ingresos parecen modestos para tu zona — un puesto mejor pagado por las mismas horas podría valer la pena explorar. El coach puede comentarlo.",
+    de: "Wenn Kürzen nicht der Weg ist: Ihr Einkommen wirkt für Ihre Region eher bescheiden — eine besser bezahlte Stelle bei gleichen Stunden könnte sich lohnen. Der Coach bespricht das gern.",
+    fr: "Si réduire n'est pas la solution, votre revenu semble modeste pour votre région — un poste mieux rémunéré pour les mêmes heures pourrait valoir la peine. Le coach peut en discuter.",
+  },
+  "tips.incomeRoom.chat": {
+    en: "My budget is tight and I'd rather not cut further. What realistic options do I have to increase my income — for example a better-paid role for similar hours?",
+    pt: "O meu orçamento está apertado e prefiro não cortar mais. Que opções realistas tenho para aumentar o rendimento — por exemplo um cargo mais bem pago com horas semelhantes?",
+    es: "Mi presupuesto está ajustado y prefiero no recortar más. ¿Qué opciones realistas tengo para aumentar mis ingresos — por ejemplo un puesto mejor pagado con horas similares?",
+    de: "Mein Budget ist knapp und ich möchte nicht weiter kürzen. Welche realistischen Möglichkeiten habe ich, mein Einkommen zu erhöhen — etwa eine besser bezahlte Stelle bei ähnlichen Stunden?",
+    fr: "Mon budget est serré et je préfère ne pas réduire davantage. Quelles options réalistes ai-je pour augmenter mon revenu — par exemple un poste mieux payé pour des heures similaires ?",
+  },
 
   // Setup checklist: debt, assets, confirm estimates
   "setup.item.debt": {

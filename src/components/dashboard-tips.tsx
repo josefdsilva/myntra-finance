@@ -16,6 +16,8 @@ import { money } from "@/lib/format";
 import { buildForecast, monthKey, type Plan } from "@/lib/plan";
 import { liquidityForKind } from "@/lib/assets.functions";
 import { resolveIntent, summariseIntent } from "@/lib/intent";
+import { expectedCategorySpend } from "@/lib/benchmarks";
+import { findSavings } from "@/lib/savings-finder";
 import { useT, type MessageKey } from "@/lib/i18n";
 import {
   AlertTriangle,
@@ -50,6 +52,12 @@ type Props = {
   netSpent: number;
   daysLeft: number;
   avgDaily7: number;
+  // For the tight-budget "where's the room" tips.
+  country?: string | null;
+  adults?: number;
+  children?: number;
+  ageBand?: string | null;
+  marginPct?: number;
 };
 
 const EMERGENCY_HINTS = ["emergency", "buffer", "safety", "rainy", "reserve"];
@@ -67,6 +75,11 @@ export function DashboardTips({
   netSpent,
   daysLeft,
   avgDaily7,
+  country,
+  adults = 1,
+  children = 0,
+  ageBand,
+  marginPct = 10,
 }: Props) {
   const t = useT();
   // For business spaces, household-framed tips (surplus, savings rate, income
@@ -226,8 +239,55 @@ export function DashboardTips({
     });
   }
 
-  // ---- Too little room to save (softer than a negative surplus) ----
-  if (income > 0 && surplus > 0 && surplus < income * 0.05) {
+  // ---- Where's the room — only when it's genuinely tight (never for a
+  // comfortable surplus). Answers "what do I change?", not "what's left?". ----
+  const nonEssentialMonthly =
+    (data.recentExpenses.reduce((s, r) => {
+      const level = resolveIntent({ intent: r.intent, category: r.category });
+      return level === "nice_to_have" || level === "treat" ? s + Number(r.amount || 0) : s;
+    }, 0) *
+      30) /
+    45;
+  const est =
+    income > 0 && country
+      ? expectedCategorySpend({ country, adults, children, monthlyIncome: income })
+      : null;
+  const savings = findSavings({
+    income,
+    surplus,
+    marginPct,
+    ageBand,
+    incomeQuintile: est?.quintile ?? null,
+    nonEssentialMonthly,
+  });
+  if (savings.surface && savings.spending.length > 0) {
+    tips.push({
+      id: "where-to-save",
+      severity: "warning",
+      title: t("tips.whereToSave.title"),
+      detail: t("tips.whereToSave.detail", {
+        gap: money(savings.gapEur),
+        amount: money(savings.spending[0].monthlyEur),
+      }),
+      cta: { label: t("tips.cta.whereToSave"), to: "/analysis" },
+      chatPrompt: t("tips.whereToSave.chat", { gap: money(savings.gapEur) }),
+    });
+  }
+  if (savings.surface && savings.income.length > 0) {
+    // Dignified, under-55 only: a better-paid role for the same hours. Deeper
+    // moves (part-time, relocation, sell-and-rent) are left to the coach chat.
+    tips.push({
+      id: "income-room",
+      severity: "info",
+      title: t("tips.incomeRoom.title"),
+      detail: t("tips.incomeRoom.detail"),
+      chatPrompt: t("tips.incomeRoom.chat"),
+    });
+  }
+
+  // ---- Too little room to save — the plain version, only when the richer
+  // "where's the room" tip above didn't fire. ----
+  if (!savings.surface && income > 0 && surplus > 0 && surplus < income * 0.05) {
     tips.push({
       id: "close-gap",
       severity: "warning",
