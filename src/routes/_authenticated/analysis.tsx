@@ -44,6 +44,7 @@ import { cycleFor, cycleConfigForSpace, buildTimeCycles } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
 import { BenchmarksCard } from "@/components/benchmarks-card";
 import { BusinessBenchmarksCard } from "@/components/business-benchmarks-card";
+import { WhereToSaveCard } from "@/components/where-to-save-card";
 import { pageShellClass } from "@/components/page-shell";
 import { EmptyState } from "@/components/empty-state";
 import { LineChart } from "lucide-react";
@@ -837,6 +838,16 @@ function AnalysisPage() {
             byCategory.map((c) => [c.name, c.value / cycleCount]),
           )}
           progress={windowProgress}
+        />
+      )}
+
+      {householdId && !isBiz && cycleCount > 0 && (
+        <WhereToSaveCard
+          householdId={householdId}
+          monthlyIncome={cycleData?.monthlyIncome ?? 0}
+          monthlySpend={totalSpend / cycleCount}
+          spendByCategory={Object.fromEntries(byCategory.map((c) => [c.name, c.value / cycleCount]))}
+          surplus={cycleData?.surplus ?? 0}
         />
       )}
 

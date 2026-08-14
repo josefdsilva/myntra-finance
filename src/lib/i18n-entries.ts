@@ -228,6 +228,35 @@ export const ENTRIES = {
     de: "Mein Budget ist knapp und ich möchte nicht weiter kürzen. Welche realistischen Möglichkeiten habe ich, mein Einkommen zu erhöhen — etwa eine besser bezahlte Stelle bei ähnlichen Stunden?",
     fr: "Mon budget est serré et je préfère ne pas réduire davantage. Quelles options réalistes ai-je pour augmenter mon revenu — par exemple un poste mieux payé pour des heures similaires ?",
   },
+  "ana.save.title": { en: "Where to save", pt: "Onde poupar", es: "Dónde ahorrar", de: "Wo sparen", fr: "Où économiser" },
+  "ana.save.intro": {
+    en: "You're about {gap} short of a comfortable cushion. These are the spots where you spend more than families like yours — trimming part of each adds up.",
+    pt: "Falta-lhe cerca de {gap} para uma folga confortável. Estes são os pontos onde gasta mais do que agregados como o seu — reduzir parte de cada um vai somando.",
+    es: "Te faltan unos {gap} para un colchón cómodo. Estos son los puntos donde gastas más que hogares como el tuyo — recortar parte de cada uno suma.",
+    de: "Ihnen fehlen etwa {gap} für ein komfortables Polster. Das sind die Bereiche, in denen Sie mehr ausgeben als Haushalte wie Ihrer — jede Teilkürzung summiert sich.",
+    fr: "Il vous manque environ {gap} pour un matelas confortable. Voici les postes où vous dépensez plus que des ménages comme le vôtre — réduire une partie de chacun s'additionne.",
+  },
+  "ana.save.trim": {
+    en: "Trim ~{amount}/mo",
+    pt: "Reduzir ~{amount}/mês",
+    es: "Recortar ~{amount}/mes",
+    de: "~{amount}/Mon. kürzen",
+    fr: "Réduire ~{amount}/mois",
+  },
+  "ana.save.detail": {
+    en: "You spend {user}, vs {benchmark} for a similar family.",
+    pt: "Gasta {user}, face a {benchmark} de um agregado semelhante.",
+    es: "Gastas {user}, frente a {benchmark} de una familia similar.",
+    de: "Sie geben {user} aus, gegenüber {benchmark} bei einer ähnlichen Familie.",
+    fr: "Vous dépensez {user}, contre {benchmark} pour une famille similaire.",
+  },
+  "ana.save.footer": {
+    en: "Small, steady trims are the goal — not going without.",
+    pt: "O objetivo são cortes pequenos e constantes — não passar privações.",
+    es: "El objetivo son recortes pequeños y constantes — no privarte.",
+    de: "Ziel sind kleine, stetige Kürzungen — kein Verzicht.",
+    fr: "L'objectif : de petites réductions régulières — pas de privation.",
+  },
 
   // Setup checklist: debt, assets, confirm estimates
   "setup.item.debt": {
