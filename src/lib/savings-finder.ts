@@ -57,9 +57,12 @@ export function findSavings(inp: {
   const target = income * (Math.max(0, inp.marginPct) / 100);
   const gapEur = Math.max(0, Math.round(target - surplus));
 
-  // Relevant only when it's actually tight: a real gap to a healthy cushion AND
-  // a slim current surplus. A comfortable household never sees this.
-  const surface = income > 0 && gapEur > 0 && surplus < income * 0.1;
+  // Relevant only when it's actually tight AND there is genuinely room to trim:
+  // a real gap to a healthy cushion, some positive surplus, but a slim one. When
+  // the baseline already eats all income (surplus == 0) this is NOT the message —
+  // the "no surplus / unsustainable" issue owns that state, so "you're €X short
+  // of a cushion, trim here" must not also fire and contradict it.
+  const surface = income > 0 && surplus > 0 && gapEur > 0 && surplus < income * 0.1;
 
   const spending: SavingsOpportunity[] = [];
   for (const c of inp.categoryCuts ?? []) {

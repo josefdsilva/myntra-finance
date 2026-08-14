@@ -18,20 +18,40 @@ import { liquidityForKind } from "@/lib/assets.functions";
 import { resolveIntent, summariseIntent } from "@/lib/intent";
 import { expectedCategorySpend } from "@/lib/benchmarks";
 import { findSavings } from "@/lib/savings-finder";
+import { priciestHighAprDebt } from "@/lib/debt-apr";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
 import { useT, type MessageKey } from "@/lib/i18n";
 import {
   AlertTriangle,
+  AlertOctagon,
+  CreditCard,
   Info,
-  Lightbulb,
   CheckCircle2,
   ArrowRight,
   MessageSquare,
   X,
   Undo2,
+  ChevronDown,
 } from "lucide-react";
 
 type Severity = "critical" | "warning" | "info" | "success";
+
+// Every tip belongs to one theme. Among the NON-critical tips we keep only the
+// single strongest tip per theme, so the old clusters (four reserve tips, three
+// estimate tips, several savings tips) collapse into one line each instead of
+// stacking. Criticals are never deduped or hidden.
+type Theme =
+  | "sustainability"
+  | "debt"
+  | "savings"
+  | "reserve"
+  | "allocation"
+  | "estimates"
+  | "planning"
+  | "concentration"
+  | "assets"
+  | "tagging"
+  | "setup";
 
 type Tip = {
   id: string;
@@ -41,7 +61,49 @@ type Tip = {
   cta?: { label: string; to: string };
   /** Prefilled question to send to the AI coach when the user clicks "Chat". */
   chatPrompt?: string;
+  icon?: React.ReactNode;
 };
+
+// id → theme. Prefix match handles the per-bucket/per-plan dynamic ids
+// (goal-*, plan-*). Anything unlisted falls back to its own id (never deduped
+// against another theme).
+const THEME_BY_ID: Record<string, Theme> = {
+  "negative-surplus": "sustainability",
+  "close-gap": "sustainability",
+  "low-savings-rate": "sustainability",
+  overpace: "sustainability",
+  "expensive-debt": "debt",
+  "where-to-save": "savings",
+  "income-room": "savings",
+  "high-treat-share": "savings",
+  "discretionary-heavy": "savings",
+  "treats-vs-reserve": "savings",
+  "no-emergency-bucket": "reserve",
+  "over-investing": "reserve",
+  "under-investing": "reserve",
+  "illiquid-heavy": "reserve",
+  "over-allocated": "allocation",
+  "unallocated-surplus": "allocation",
+  "confirm-allocations": "allocation",
+  "verify-estimates": "estimates",
+  "estimates-too-low": "estimates",
+  "estimates-too-high": "estimates",
+  "no-variable-estimates": "estimates",
+  "no-fixed": "estimates",
+  "single-income-source": "concentration",
+  "income-concentration": "concentration",
+  "no-assets": "assets",
+  "stale-assets": "assets",
+  "untagged-intent": "tagging",
+  "no-baseline": "setup",
+  "no-income": "setup",
+  "no-buckets": "setup",
+};
+function themeOf(id: string): string {
+  if (THEME_BY_ID[id]) return THEME_BY_ID[id];
+  if (id.startsWith("goal-") || id.startsWith("plan-")) return "planning";
+  return id;
+}
 
 type Props = {
   householdId: string;
@@ -99,6 +161,7 @@ export function DashboardTips({
   const storageKey = `dashboard-tips-dismissed:${householdId}:${period}`;
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
   const [showDismissed, setShowDismissed] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     try {
@@ -149,6 +212,7 @@ export function DashboardTips({
         { data: recentExpenses },
         { count: estFixed },
         { count: estVar },
+        { data: debtsDetail },
       ] = await Promise.all([
         qc.fetchQuery(bucketsQuery(householdId)),
         qc.fetchQuery(incomesQuery(householdId)),
@@ -195,6 +259,12 @@ export function DashboardTips({
           .select("id", { count: "exact", head: true })
           .eq("household_id", householdId)
           .eq("is_estimated", true),
+        supabase
+          .from("debts")
+          .select(
+            "id, label, taeg_pct, tan_pct, deduced_rate_pct, principal_remaining, starting_principal",
+          )
+          .eq("household_id", householdId),
       ]);
       const allTimeTotals: Record<string, number> = {};
       for (const r of allTimeAllocations ?? []) {
@@ -222,6 +292,15 @@ export function DashboardTips({
           intent: string | null;
         }>,
         estimatedCount: (estFixed ?? 0) + (estVar ?? 0),
+        debtsDetail: (debtsDetail ?? []) as Array<{
+          id: string;
+          label: string | null;
+          taeg_pct: number | string | null;
+          tan_pct: number | string | null;
+          deduced_rate_pct: number | string | null;
+          principal_remaining: number | string | null;
+          starting_principal: number | string | null;
+        }>,
       };
     },
   });
@@ -304,6 +383,37 @@ export function DashboardTips({
       cta: { label: t("tips.cta.reviewBaseline"), to: "/settings" },
       chatPrompt: t("tips.closeGap.chat"),
     });
+  }
+
+  // ---- Expensive debt (critical): the one loan bleeding the most per euro ----
+  // Rui's case — a 17.5% card next to an 8.9% car loan — should be shouted, not
+  // hidden in Loans. We name the specific loan and tell him to attack it first;
+  // when it's also the smallest balance, avalanche and snowball agree, so the
+  // advice is unambiguous.
+  if (!isBusiness) {
+    const pricey = priciestHighAprDebt(data.debtsDetail);
+    if (pricey) {
+      const label = pricey.debt.label ?? t("tips.expensiveDebt.fallbackLabel");
+      tips.push({
+        id: "expensive-debt",
+        severity: "critical",
+        icon: <CreditCard className="size-4" />,
+        title: t("tips.expensiveDebt.title", { label }),
+        detail: pricey.isSmallestBalance
+          ? t("tips.expensiveDebt.detailSmallest", {
+              label,
+              apr: pricey.apr.toFixed(1),
+              balance: money(pricey.balance),
+            })
+          : t("tips.expensiveDebt.detail", {
+              label,
+              apr: pricey.apr.toFixed(1),
+              balance: money(pricey.balance),
+            }),
+        cta: { label: t("tips.cta.payoffPlan"), to: "/loans" },
+        chatPrompt: t("tips.expensiveDebt.chat", { label, apr: pricey.apr.toFixed(1) }),
+      });
+    }
   }
 
   // ---- Setup gaps (critical) ----
@@ -884,17 +994,38 @@ export function DashboardTips({
   }
 
 
+  // ---- Prioritise + de-duplicate ----
+  // Order of operations: keep every critical (never hidden), then dedupe the
+  // remaining tips to the single strongest one per theme (so the reserve /
+  // estimates / savings / planning clusters collapse to one line each), then cap
+  // the non-criticals — the top few show, the rest wait behind "show more".
   const rank: Record<Severity, number> = { critical: 0, warning: 1, info: 2, success: 3 };
-  tips.sort((a, b) => rank[a.severity] - rank[b.severity]);
+  const bySeverity = (a: Tip, b: Tip) => rank[a.severity] - rank[b.severity];
 
-  const active = tips.filter((t) => !dismissed.has(t.id));
-  const hidden = tips.filter((t) => dismissed.has(t.id));
+  const visible = tips.filter((tp) => !dismissed.has(tp.id));
+  const hidden = tips.filter((tp) => dismissed.has(tp.id));
+
+  const criticals = visible.filter((tp) => tp.severity === "critical").sort(bySeverity);
+  const seenTheme = new Set<string>();
+  const deduped: Tip[] = [];
+  for (const tp of visible.filter((tp) => tp.severity !== "critical").sort(bySeverity)) {
+    const th = themeOf(tp.id);
+    if (seenTheme.has(th)) continue;
+    seenTheme.add(th);
+    deduped.push(tp);
+  }
+
+  const NON_CRITICAL_CAP = 3;
+  const primary = deduped.slice(0, NON_CRITICAL_CAP);
+  const overflow = deduped.slice(NON_CRITICAL_CAP);
+  const shown = [...criticals, ...primary];
+  const urgentCount = criticals.length;
 
   function openChat(prompt: string) {
     window.dispatchEvent(new CustomEvent("coach:open", { detail: { prompt } }));
   }
 
-  if (!active.length) {
+  if (!shown.length && !overflow.length) {
     return (
       <Card className="border-emerald-500/30 bg-emerald-500/5">
         <CardContent className="pt-6 flex items-start gap-3">
@@ -933,20 +1064,41 @@ export function DashboardTips({
   }
 
   return (
-    <Card>
+    <Card className={urgentCount > 0 ? "border-destructive/30" : undefined}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Lightbulb className="size-5" /> {t("tips.title")}
-          <span className="text-xs font-normal text-muted-foreground">({active.length})</span>
+          <AlertOctagon
+            className={`size-5 ${urgentCount > 0 ? "text-destructive" : "text-amber-500"}`}
+          />
+          {t("tips.attention.title")}
+          {urgentCount > 0 && (
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+              {t("tips.attention.urgent", { count: urgentCount })}
+            </span>
+          )}
         </CardTitle>
         <CardDescription>
           {t("tips.description", { chat: t("tips.chatButton"), dismiss: t("tips.dismissButton") })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        {active.map((tip) => (
+        {shown.map((tip) => (
           <TipRow key={tip.id} tip={tip} onDismiss={() => dismiss(tip.id)} onChat={openChat} />
         ))}
+        {overflow.length > 0 &&
+          (showMore ? (
+            overflow.map((tip) => (
+              <TipRow key={tip.id} tip={tip} onDismiss={() => dismiss(tip.id)} onChat={openChat} />
+            ))
+          ) : (
+            <Button
+              variant="ghost"
+              className="w-full justify-center text-xs text-muted-foreground"
+              onClick={() => setShowMore(true)}
+            >
+              <ChevronDown className="size-3" /> {t("tips.showMoreLower", { count: overflow.length })}
+            </Button>
+          ))}
         {hidden.length > 0 && (
           <div className="pt-2 flex justify-end">
             <Button size="sm" variant="ghost" onClick={() => setShowDismissed((s) => !s)}>
@@ -990,8 +1142,8 @@ function TipRow({
     { border: string; bg: string; icon: React.ReactNode; iconWrap: string }
   > = {
     critical: {
-      border: "border-destructive/40",
-      bg: "bg-destructive/5",
+      border: "border-destructive/60",
+      bg: "bg-destructive/10",
       icon: <AlertTriangle className="size-4" />,
       iconWrap: "text-destructive",
     },
@@ -1015,13 +1167,16 @@ function TipRow({
     },
   };
   const s = styles[tip.severity];
+  const prominent = tip.severity === "critical";
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg border ${s.border} ${s.bg} p-3 ${dismissed ? "opacity-60" : ""}`}
+      className={`flex items-start gap-3 rounded-lg border ${s.border} ${s.bg} ${prominent ? "p-3.5" : "p-3"} ${dismissed ? "opacity-60" : ""}`}
     >
-      <div className={`mt-0.5 shrink-0 ${s.iconWrap}`}>{s.icon}</div>
+      <div className={`mt-0.5 shrink-0 ${s.iconWrap}`}>{tip.icon ?? s.icon}</div>
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm">{tip.title}</p>
+        <p className={`font-medium ${prominent ? "text-[15px] text-destructive" : "text-sm"}`}>
+          {tip.title}
+        </p>
         {tip.detail && <p className="text-xs text-muted-foreground mt-0.5">{tip.detail}</p>}
         <div className="mt-2 flex flex-wrap gap-1.5">
           {tip.cta && !dismissed && (

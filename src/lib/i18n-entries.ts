@@ -1143,6 +1143,27 @@ export const ENTRIES = {
     de: "Schulden-Einkommens-Quote unter 15% bringen",
     fr: "Ramener la dette/revenu sous 15%",
   },
+  "journey.stage.clearDebt.title": {
+    en: "Clear your priciest debt",
+    pt: "Liquidar a sua dívida mais cara",
+    es: "Liquidar tu deuda más cara",
+    de: "Deine teuerste Schuld tilgen",
+    fr: "Solder votre dette la plus chère",
+  },
+  "journey.stage.clearDebt.obj": {
+    en: "Pay this high-interest loan down to zero",
+    pt: "Pagar este empréstimo de juro alto até zero",
+    es: "Pagar este préstamo de interés alto hasta cero",
+    de: "Diesen Hochzins-Kredit auf null zurückzahlen",
+    fr: "Rembourser ce prêt à taux élevé jusqu'à zéro",
+  },
+  "journey.debtRemaining": {
+    en: "{amount} left",
+    pt: "faltam {amount}",
+    es: "quedan {amount}",
+    de: "noch {amount}",
+    fr: "reste {amount}",
+  },
   "journey.stage.net3.title": {
     en: "Safety net · 3 months",
     pt: "Rede de segurança · 3 meses",

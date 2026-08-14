@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { JsonObject } from "@/lib/json";
+import { priciestHighAprDebt, debtBalance } from "@/lib/debt-apr";
 
 // Money Journey stages — user- and coach-authored roadmap milestones. Objectives
 // are evaluated live on the client against numbers the app already computes; this
@@ -189,7 +190,12 @@ export const draftJourney = createServerFn({ method: "POST" })
         .from("account_movements")
         .select("amount, to_type, from_type, to_id, from_id")
         .eq("household_id", hid),
-      context.supabase.from("debts").select("monthly_amount").eq("household_id", hid),
+      context.supabase
+        .from("debts")
+        .select(
+          "id, label, monthly_amount, taeg_pct, tan_pct, deduced_rate_pct, principal_remaining, starting_principal",
+        )
+        .eq("household_id", hid),
       context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       context.supabase.from("incomes").select("monthly_amount").eq("household_id", hid),
     ]);
@@ -233,6 +239,20 @@ export const draftJourney = createServerFn({ method: "POST" })
     const hasEmergency = bs.some((b) => b.kind === "emergency");
     const emergencyMonths = (hasEmergency ? emergencyBal : emergencyBal + savingsBal) / essentials;
     const hasDebt = debtMonthly > 0;
+    // When one loan is genuinely expensive (high APR, real balance), the debt
+    // rung names it and tracks it to zero — "Clear your credit card" instead of
+    // the abstract "get debt-to-income under 15%". Shared threshold/ranking with
+    // the dashboard's expensive-debt tip so the two never disagree.
+    const debtRows = (debts.data ?? []) as Array<{
+      id: string;
+      label: string | null;
+      taeg_pct: number | string | null;
+      tan_pct: number | string | null;
+      deduced_rate_pct: number | string | null;
+      principal_remaining: number | string | null;
+      starting_principal: number | string | null;
+    }>;
+    const pricey = priciestHighAprDebt(debtRows);
     // A household that can barely save should first free up room by trimming
     // non-essential spending — asking it to build a safety net it can't fund is
     // demoralizing. This becomes the very first rung when money is tight.
@@ -243,8 +263,16 @@ export const draftJourney = createServerFn({ method: "POST" })
       specs.push({ template_key: "freeUp", objective_type: "metric", objective_config: { key: "non_essential_ratio", op: "<=", value: 25 } });
     }
     specs.push({ template_key: "starter", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 1 } });
-    if (hasDebt)
+    if (pricey) {
+      specs.push({
+        template_key: "clearDebt",
+        title: pricey.debt.label ?? null,
+        objective_type: "project",
+        objective_config: { debt_id: pricey.debt.id },
+      });
+    } else if (hasDebt) {
       specs.push({ template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } });
+    }
     specs.push(
       { template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } },
       { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 6 } },
@@ -340,7 +368,10 @@ export const journeySummary = createServerFn({ method: "GET" })
         .select("amount, to_type, from_type, to_id, from_id")
         .eq("household_id", hid),
       context.supabase.from("incomes").select("monthly_amount").eq("household_id", hid),
-      context.supabase.from("debts").select("monthly_amount").eq("household_id", hid),
+      context.supabase
+        .from("debts")
+        .select("id, monthly_amount, principal_remaining, starting_principal")
+        .eq("household_id", hid),
       context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       context.supabase
         .from("journey_stages")
@@ -365,6 +396,18 @@ export const journeySummary = createServerFn({ method: "GET" })
     const debtMonthly = (debts.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
     const fixedMonthly = (fixed.data ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
     const essentials = Math.max(1, baseline || fixedMonthly + debtMonthly);
+    // Remaining/starting principal per debt, for any "clear this loan" stage.
+    const debtById: Record<string, { remaining: number; starting: number }> = {};
+    for (const d of (debts.data ?? []) as Array<{
+      id: string;
+      principal_remaining: number | string | null;
+      starting_principal: number | string | null;
+    }>) {
+      debtById[d.id] = {
+        remaining: debtBalance(d),
+        starting: Number(d.starting_principal ?? d.principal_remaining ?? 0),
+      };
+    }
 
     const bs = (buckets.data ?? []) as Array<{
       id: string;
@@ -409,7 +452,14 @@ export const journeySummary = createServerFn({ method: "GET" })
       if (s.objective_type === "custom")
         return { complete: s.status === "done", progress: s.status === "done" ? 1 : 0 };
       if (s.objective_type === "project") {
-        const id = String((s.objective_config as { bucket_id?: string }).bucket_id ?? "");
+        const cfg = s.objective_config as { bucket_id?: string; debt_id?: string };
+        // "Clear this loan" — progress by principal paid down; complete at zero.
+        if (cfg.debt_id) {
+          const d = debtById[String(cfg.debt_id)];
+          if (!d || d.starting <= 0) return { complete: false, progress: 0 };
+          return { complete: d.remaining <= 0.01, progress: clamp01((d.starting - d.remaining) / d.starting) };
+        }
+        const id = String(cfg.bucket_id ?? "");
         const b = bs.find((x) => x.id === id);
         const cur = bal[id] ?? 0;
         const target = Number(b?.target_value ?? 0);

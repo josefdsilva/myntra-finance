@@ -153,7 +153,10 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
           supabase.from("bucket_allocations").select("bucket_id, amount").eq("household_id", householdId!),
           fetchMovements(householdId!),
           supabase.from("incomes").select("monthly_amount").eq("household_id", householdId!),
-          supabase.from("debts").select("monthly_amount").eq("household_id", householdId!),
+          supabase
+            .from("debts")
+            .select("id, label, monthly_amount, principal_remaining, starting_principal")
+            .eq("household_id", householdId!),
           supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", householdId!),
           supabase
             .from("cycle_metrics")
@@ -174,9 +177,22 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
       const incomeMax = incomeArr.reduce((mx, v) => Math.max(mx, v), 0);
       const debtMonthly = (debts ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
       const fixedMonthly = (fixed ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
+      // Remaining/starting principal per debt, for any "clear this loan" stage.
+      const debtsById: Record<string, { remaining: number; starting: number }> = {};
+      for (const d of (debts ?? []) as Array<{
+        id: string;
+        principal_remaining: number | string | null;
+        starting_principal: number | string | null;
+      }>) {
+        debtsById[d.id] = {
+          remaining: Number(d.principal_remaining ?? d.starting_principal ?? 0),
+          starting: Number(d.starting_principal ?? d.principal_remaining ?? 0),
+        };
+      }
       return {
         buckets: bs,
         balances,
+        debtsById,
         income,
         incomeMax,
         debtMonthly,
@@ -233,7 +249,18 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
         return { complete: s.status === "done", progress: s.status === "done" ? 1 : 0, value: null };
       }
       if (s.objective_type === "project") {
-        const id = String((s.objective_config as { bucket_id?: string }).bucket_id ?? "");
+        const cfg = s.objective_config as { bucket_id?: string; debt_id?: string };
+        // "Clear this loan" — progress by principal paid down; complete at zero.
+        if (cfg.debt_id) {
+          const d = metricsData?.debtsById?.[String(cfg.debt_id)];
+          if (!d || d.starting <= 0) return { complete: false, progress: 0, value: null };
+          return {
+            complete: d.remaining <= 0.01,
+            progress: clamp01((d.starting - d.remaining) / d.starting),
+            value: t("journey.debtRemaining", { amount: money(d.remaining) }),
+          };
+        }
+        const id = String(cfg.bucket_id ?? "");
         const b = metricsData?.buckets.find((x) => x.id === id);
         const bal = metricsData?.balances[id] ?? 0;
         const target = Number(b?.target_value ?? 0);

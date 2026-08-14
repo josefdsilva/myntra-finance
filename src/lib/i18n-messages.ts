@@ -698,6 +698,18 @@ const en = {
     "Baseline ({baseline}) meets or exceeds income ({income}). Nothing is being saved — this is unsustainable.",
   "tips.negativeSurplus.chat":
     "My baseline budget leaves me with no surplus each month. Where should I look first to bring spending down?",
+  "tips.expensiveDebt.title": "{label} is your most expensive debt",
+  "tips.expensiveDebt.detail":
+    "At {apr}% APR, {label} ({balance} left) costs you the most per euro. Put any spare payment here first — before lower-rate loans.",
+  "tips.expensiveDebt.detailSmallest":
+    "At {apr}% APR, {label} ({balance} left) costs you the most per euro — and it's also your smallest balance, so clearing it first is both the cheapest and the fastest win.",
+  "tips.expensiveDebt.chat":
+    "I have {label} at {apr}% APR alongside cheaper loans. How should I prioritise paying it off, and would overpaying it be worth it?",
+  "tips.expensiveDebt.fallbackLabel": "your loan",
+  "tips.cta.payoffPlan": "Payoff plan",
+  "tips.attention.title": "Needs your attention",
+  "tips.attention.urgent": "{count} urgent",
+  "tips.showMoreLower": "Show {count} more (lower priority)",
   "tips.overAllocated.title": "Project targets exceed surplus by {excess}",
   "tips.overAllocated.detail":
     "Your monthly bucket targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
@@ -2222,6 +2234,18 @@ const pt: Record<BaseKey, string> = {
     "A base ({baseline}) iguala ou excede o rendimento ({income}). Não está a ser poupado nada — isto é insustentável.",
   "tips.negativeSurplus.chat":
     "O meu orçamento base não me deixa qualquer excedente todos os meses. Onde devo procurar primeiro para reduzir despesas?",
+  "tips.expensiveDebt.title": "{label} é a sua dívida mais cara",
+  "tips.expensiveDebt.detail":
+    "A {apr}% TAEG, {label} (faltam {balance}) é a que mais lhe custa por euro. Ponha aqui qualquer pagamento extra primeiro — antes dos empréstimos de juro mais baixo.",
+  "tips.expensiveDebt.detailSmallest":
+    "A {apr}% TAEG, {label} (faltam {balance}) é a que mais lhe custa por euro — e é também o seu menor saldo, por isso liquidá-la primeiro é a vitória mais barata e mais rápida.",
+  "tips.expensiveDebt.chat":
+    "Tenho {label} a {apr}% TAEG a par de empréstimos mais baratos. Como devo priorizar o seu pagamento e valeria a pena amortizá-la?",
+  "tips.expensiveDebt.fallbackLabel": "o seu empréstimo",
+  "tips.cta.payoffPlan": "Plano de pagamento",
+  "tips.attention.title": "Precisa da sua atenção",
+  "tips.attention.urgent": "{count} urgente(s)",
+  "tips.showMoreLower": "Ver mais {count} (menor prioridade)",
   "tips.overAllocated.title": "Os objetivos dos baldes excedem o excedente em {excess}",
   "tips.overAllocated.detail":
     "Os objetivos mensais dos baldes somam mais do que o seu excedente. Reequilibre os objetivos ou aumente a folga na base.",
@@ -3739,6 +3763,18 @@ const es: Record<BaseKey, string> = {
     "La base ({baseline}) iguala o excede el ingreso ({income}). No se está ahorrando nada — esto es insostenible.",
   "tips.negativeSurplus.chat":
     "Mi presupuesto base no me deja ningún excedente cada mes. ¿Dónde debo buscar primero para reducir gastos?",
+  "tips.expensiveDebt.title": "{label} es tu deuda más cara",
+  "tips.expensiveDebt.detail":
+    "Al {apr}% TAE, {label} (quedan {balance}) es la que más te cuesta por euro. Destina aquí cualquier pago extra primero, antes que a préstamos de menor interés.",
+  "tips.expensiveDebt.detailSmallest":
+    "Al {apr}% TAE, {label} (quedan {balance}) es la que más te cuesta por euro — y además es tu menor saldo, así que liquidarla primero es la victoria más barata y rápida.",
+  "tips.expensiveDebt.chat":
+    "Tengo {label} al {apr}% TAE junto a préstamos más baratos. ¿Cómo debería priorizar su pago y merecería la pena amortizarla?",
+  "tips.expensiveDebt.fallbackLabel": "tu préstamo",
+  "tips.cta.payoffPlan": "Plan de pago",
+  "tips.attention.title": "Requiere tu atención",
+  "tips.attention.urgent": "{count} urgente(s)",
+  "tips.showMoreLower": "Ver {count} más (menor prioridad)",
   "tips.overAllocated.title": "Las metas de los cubos superan el excedente en {excess}",
   "tips.overAllocated.detail":
     "Las metas mensuales de los cubos suman más que su excedente. Reequilibre las metas o aumente su margen de base.",
@@ -5261,6 +5297,18 @@ const de: Record<BaseKey, string> = {
     "Das Grundbudget ({baseline}) erreicht oder übersteigt das Einkommen ({income}). Es wird nichts gespart — das ist nicht nachhaltig.",
   "tips.negativeSurplus.chat":
     "Mein Grundbudget lässt mir jeden Monat keinen Überschuss. Wo sollte ich zuerst ansetzen, um die Ausgaben zu senken?",
+  "tips.expensiveDebt.title": "{label} ist deine teuerste Schuld",
+  "tips.expensiveDebt.detail":
+    "Mit {apr}% effektivem Jahreszins kostet dich {label} (noch {balance}) am meisten pro Euro. Setze jede zusätzliche Zahlung zuerst hier ein — vor Krediten mit niedrigerem Zins.",
+  "tips.expensiveDebt.detailSmallest":
+    "Mit {apr}% effektivem Jahreszins kostet dich {label} (noch {balance}) am meisten pro Euro — und es ist zugleich dein kleinster Saldo, also ist es zuerst zu tilgen der günstigste und schnellste Gewinn.",
+  "tips.expensiveDebt.chat":
+    "Ich habe {label} mit {apr}% effektivem Jahreszins neben günstigeren Krediten. Wie sollte ich die Rückzahlung priorisieren, und würde sich eine Sondertilgung lohnen?",
+  "tips.expensiveDebt.fallbackLabel": "dein Kredit",
+  "tips.cta.payoffPlan": "Tilgungsplan",
+  "tips.attention.title": "Braucht deine Aufmerksamkeit",
+  "tips.attention.urgent": "{count} dringend",
+  "tips.showMoreLower": "{count} weitere anzeigen (geringere Priorität)",
   "tips.overAllocated.title": "Die Topfziele übersteigen den Überschuss um {excess}",
   "tips.overAllocated.detail":
     "Ihre monatlichen Topfziele summieren sich auf mehr als Ihren Überschuss. Balancieren Sie die Ziele neu aus oder vergrößern Sie Ihre Grundbudget-Lücke.",
@@ -6788,6 +6836,18 @@ const fr: Record<BaseKey, string> = {
     "La base ({baseline}) atteint ou dépasse le revenu ({income}). Rien n'est épargné — ce n'est pas viable.",
   "tips.negativeSurplus.chat":
     "Mon budget de base ne me laisse aucun excédent chaque mois. Où devrais-je regarder en premier pour réduire les dépenses ?",
+  "tips.expensiveDebt.title": "{label} est votre dette la plus chère",
+  "tips.expensiveDebt.detail":
+    "À {apr}% TAEG, {label} (reste {balance}) vous coûte le plus par euro. Affectez-y tout paiement supplémentaire en priorité — avant les prêts à taux plus bas.",
+  "tips.expensiveDebt.detailSmallest":
+    "À {apr}% TAEG, {label} (reste {balance}) vous coûte le plus par euro — et c'est aussi votre plus petit solde, donc la solder en premier est le gain le moins cher et le plus rapide.",
+  "tips.expensiveDebt.chat":
+    "J'ai {label} à {apr}% TAEG à côté de prêts moins chers. Comment devrais-je prioriser son remboursement, et un remboursement anticipé en vaudrait-il la peine ?",
+  "tips.expensiveDebt.fallbackLabel": "votre prêt",
+  "tips.cta.payoffPlan": "Plan de remboursement",
+  "tips.attention.title": "Requiert votre attention",
+  "tips.attention.urgent": "{count} urgent(s)",
+  "tips.showMoreLower": "Voir {count} de plus (priorité moindre)",
   "tips.overAllocated.title": "Les objectifs des paniers dépassent l'excédent de {excess}",
   "tips.overAllocated.detail":
     "Vos objectifs mensuels de paniers dépassent votre excédent. Rééquilibrez les objectifs ou augmentez votre marge de base.",

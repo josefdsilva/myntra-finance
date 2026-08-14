@@ -709,14 +709,9 @@ function Dashboard() {
         <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
 
-      {householdId && hh?.household?.kind === "business" && (
-        <RunwayReceivablesCard householdId={householdId} />
-      )}
-
-      {householdId && <NetWorthCard householdId={householdId} />}
-
-      {householdId && <MomentumCard householdId={householdId} />}
-
+      {/* Issues & tips sit high on the page — above net worth / momentum — so the
+          things that need attention (an unsustainable baseline, an expensive
+          debt) reach the eye immediately rather than after a long scroll. */}
       {householdId && (
         <DashboardTips
           householdId={householdId}
@@ -736,6 +731,14 @@ function Dashboard() {
           cycle={hh?.household?.cycle ?? null}
         />
       )}
+
+      {householdId && hh?.household?.kind === "business" && (
+        <RunwayReceivablesCard householdId={householdId} />
+      )}
+
+      {householdId && <NetWorthCard householdId={householdId} />}
+
+      {householdId && <MomentumCard householdId={householdId} />}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
