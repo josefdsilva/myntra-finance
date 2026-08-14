@@ -710,6 +710,9 @@ const en = {
   "tips.attention.title": "Needs your attention",
   "tips.attention.urgent": "{count} urgent",
   "tips.showMoreLower": "Show {count} more (lower priority)",
+  "tips.bell.aria": "Open issues and tips",
+  "tips.bell.empty": "You're all caught up — no issues right now.",
+  "tips.bell.openFull": "Open the full list",
   "tips.overAllocated.title": "Project targets exceed surplus by {excess}",
   "tips.overAllocated.detail":
     "Your monthly bucket targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
@@ -2246,6 +2249,9 @@ const pt: Record<BaseKey, string> = {
   "tips.attention.title": "Precisa da sua atenção",
   "tips.attention.urgent": "{count} urgente(s)",
   "tips.showMoreLower": "Ver mais {count} (menor prioridade)",
+  "tips.bell.aria": "Abrir problemas e dicas",
+  "tips.bell.empty": "Está tudo em dia — nenhum problema de momento.",
+  "tips.bell.openFull": "Abrir a lista completa",
   "tips.overAllocated.title": "Os objetivos dos baldes excedem o excedente em {excess}",
   "tips.overAllocated.detail":
     "Os objetivos mensais dos baldes somam mais do que o seu excedente. Reequilibre os objetivos ou aumente a folga na base.",
@@ -3775,6 +3781,9 @@ const es: Record<BaseKey, string> = {
   "tips.attention.title": "Requiere tu atención",
   "tips.attention.urgent": "{count} urgente(s)",
   "tips.showMoreLower": "Ver {count} más (menor prioridad)",
+  "tips.bell.aria": "Abrir problemas y consejos",
+  "tips.bell.empty": "Todo al día — ningún problema ahora mismo.",
+  "tips.bell.openFull": "Abrir la lista completa",
   "tips.overAllocated.title": "Las metas de los cubos superan el excedente en {excess}",
   "tips.overAllocated.detail":
     "Las metas mensuales de los cubos suman más que su excedente. Reequilibre las metas o aumente su margen de base.",
@@ -5309,6 +5318,9 @@ const de: Record<BaseKey, string> = {
   "tips.attention.title": "Braucht deine Aufmerksamkeit",
   "tips.attention.urgent": "{count} dringend",
   "tips.showMoreLower": "{count} weitere anzeigen (geringere Priorität)",
+  "tips.bell.aria": "Hinweise und Tipps öffnen",
+  "tips.bell.empty": "Alles erledigt — aktuell keine Hinweise.",
+  "tips.bell.openFull": "Vollständige Liste öffnen",
   "tips.overAllocated.title": "Die Topfziele übersteigen den Überschuss um {excess}",
   "tips.overAllocated.detail":
     "Ihre monatlichen Topfziele summieren sich auf mehr als Ihren Überschuss. Balancieren Sie die Ziele neu aus oder vergrößern Sie Ihre Grundbudget-Lücke.",
@@ -6848,6 +6860,9 @@ const fr: Record<BaseKey, string> = {
   "tips.attention.title": "Requiert votre attention",
   "tips.attention.urgent": "{count} urgent(s)",
   "tips.showMoreLower": "Voir {count} de plus (priorité moindre)",
+  "tips.bell.aria": "Ouvrir les problèmes et conseils",
+  "tips.bell.empty": "Tout est à jour — aucun problème pour le moment.",
+  "tips.bell.openFull": "Ouvrir la liste complète",
   "tips.overAllocated.title": "Les objectifs des paniers dépassent l'excédent de {excess}",
   "tips.overAllocated.detail":
     "Vos objectifs mensuels de paniers dépassent votre excédent. Rééquilibrez les objectifs ou augmentez votre marge de base.",

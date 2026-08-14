@@ -250,7 +250,6 @@ function Dashboard() {
   // NOT offset by money that came in — a windfall must never silently refill the
   // everyday budget.
   const everydaySpent = Math.max(0, spent - projectPaid);
-  const netSpent = everydaySpent; // downstream (tips) reads this as everyday spend
 
   // --- Your spending plan (what's safe, and why) ---
   const freeThisCycle = income - fixedTotal; // = everyday budget + spare
@@ -712,25 +711,7 @@ function Dashboard() {
       {/* Issues & tips sit high on the page — above net worth / momentum — so the
           things that need attention (an unsustainable baseline, an expensive
           debt) reach the eye immediately rather than after a long scroll. */}
-      {householdId && (
-        <DashboardTips
-          householdId={householdId}
-          isBusiness={hh?.household?.kind === "business"}
-          baseline={baseline}
-          income={income}
-          surplus={surplus}
-          variablePool={variablePool}
-          netSpent={netSpent}
-          daysLeft={daysLeft}
-          avgDaily7={avgDaily7}
-          country={hh?.household?.country ?? null}
-          adults={Number(hh?.household?.adults ?? 1)}
-          children={Number(hh?.household?.children ?? 0)}
-          ageBand={hh?.household?.age_band ?? null}
-          marginPct={Number(hh?.household?.margin_pct ?? 10)}
-          cycle={hh?.household?.cycle ?? null}
-        />
-      )}
+      {householdId && <DashboardTips householdId={householdId} />}
 
       {householdId && hh?.household?.kind === "business" && (
         <RunwayReceivablesCard householdId={householdId} />

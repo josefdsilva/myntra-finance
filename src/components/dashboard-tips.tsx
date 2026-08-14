@@ -1,8 +1,11 @@
 import type * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { issueFacts } from "@/lib/issue-facts.functions";
 import {
   bucketsQuery,
   incomesQuery,
@@ -105,95 +108,119 @@ function themeOf(id: string): string {
   return id;
 }
 
-type Props = {
-  householdId: string;
-  isBusiness?: boolean;
-  baseline: number;
-  income: number;
-  surplus: number;
-  variablePool: number;
-  netSpent: number;
-  daysLeft: number;
-  avgDaily7: number;
-  // For the tight-budget "where's the room" tips.
-  country?: string | null;
-  adults?: number;
-  children?: number;
-  ageBand?: string | null;
-  marginPct?: number;
-  cycle?: string | null;
-};
+// Dismissal keys are stabilised so a tip whose id embeds volatile data (the
+// shortfall month, or which variant a goal is currently in) can't re-appear
+// under a new id once dismissed. Per-bucket goal tips keep their bucket id so
+// dismissing goal A doesn't hide goal B.
+function dismissKeyOf(id: string): string {
+  const g = id.match(/^goal-(?:close|unrealistic|too-easy)-(.+)$/);
+  if (g) return `goal:${g[1]}`;
+  if (id.startsWith("plan-shortfall-")) return "plan-shortfall";
+  return id;
+}
 
 const EMERGENCY_HINTS = ["emergency", "buffer", "safety", "rainy", "reserve"];
 
 const monthLabel = (ym: string) =>
   new Date(`${ym}-01T00:00:00`).toLocaleDateString(undefined, { month: "short", year: "numeric" });
 
-export function DashboardTips({
-  householdId,
-  isBusiness = false,
-  baseline,
-  income,
-  surplus,
-  variablePool,
-  netSpent,
-  daysLeft,
-  avgDaily7,
-  country,
-  adults = 1,
-  children = 0,
-  ageBand,
-  marginPct = 10,
-  cycle,
-}: Props) {
+export type IssuesResult = {
+  loading: boolean;
+  isBusiness: boolean;
+  criticals: Tip[];
+  primary: Tip[];
+  overflow: Tip[];
+  hidden: Tip[];
+  urgentCount: number;
+  totalActive: number;
+  totalTips: number;
+  dismiss: (id: string) => void;
+  restore: (id: string) => void;
+};
+
+/**
+ * Single source of the household's live "issues & tips": fetches canonical cycle
+ * facts + the supporting rows, builds the prioritised, de-duplicated list, and
+ * owns dismissal. Consumed by BOTH the dashboard card and the app-wide issues
+ * bell, so the two always agree. Dismissal is read straight from localStorage
+ * each render (no flash), keyed by the payday cycle rather than the calendar
+ * month (so it doesn't silently reset), and broadcast across instances.
+ */
+export function useHouseholdIssues(householdId: string): IssuesResult {
   const t = useT();
+  const qc = useQueryClient();
+  const now = new Date();
+  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+
+  const factsFn = useServerFn(issueFacts);
+  const { data: facts } = useQuery({
+    queryKey: ["issue-facts", householdId],
+    queryFn: async () => {
+      try {
+        return await factsFn({ data: { household_id: householdId } });
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!householdId,
+    retry: false,
+  });
+  const isBusiness = facts?.isBusiness ?? false;
   // For business spaces, household-framed tips (surplus, savings rate, income
   // concentration, emergency fund, plan shortfall) swap to a `.biz` copy variant
   // that speaks in cashflow/runway/revenue terms instead.
   const bt = (key: string, vars?: Record<string, string | number>) =>
     t((isBusiness ? `${key}.biz` : key) as MessageKey, vars);
-  const qc = useQueryClient();
-  const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  
 
-  // Dismissed tips are stored per household+period in localStorage.
-  const storageKey = `dashboard-tips-dismissed:${householdId}:${period}`;
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
-  const [showDismissed, setShowDismissed] = useState(false);
-  const [showMore, setShowMore] = useState(false);
-
+  // Dismissal: cycle-aligned storage key, read from localStorage on every render
+  // (so there's no flash of already-dismissed tips before an effect loads them),
+  // and synced across component instances via a window event.
+  const cycleKey = facts?.cycleKey ?? null;
+  const storageKey = cycleKey ? `issues-dismissed:${householdId}:${cycleKey}` : null;
+  const [, bumpDismissed] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
+    const on = () => bumpDismissed();
+    window.addEventListener("issues:changed", on);
+    window.addEventListener("storage", on);
+    return () => {
+      window.removeEventListener("issues:changed", on);
+      window.removeEventListener("storage", on);
+    };
+  }, []);
+  const readSet = (key: string): Set<string> => {
     try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) setDismissed(new Set(JSON.parse(raw)));
-      else setDismissed(new Set());
+      const raw = localStorage.getItem(key);
+      return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
     } catch {
-      setDismissed(new Set());
+      return new Set();
     }
-  }, [storageKey]);
-
-  function persist(next: Set<string>) {
-    setDismissed(new Set(next));
+  };
+  const dismissedSet = storageKey ? readSet(storageKey) : new Set<string>();
+  const writeSet = (s: Set<string>) => {
+    if (!storageKey) return;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(s)));
     } catch {
       /* ignore */
     }
-  }
+    window.dispatchEvent(new Event("issues:changed"));
+  };
   function dismiss(id: string) {
-    const next = new Set(dismissed);
-    next.add(id);
-    persist(next);
+    if (!storageKey) return;
+    const s = readSet(storageKey);
+    s.add(dismissKeyOf(id));
+    writeSet(s);
   }
   function restore(id: string) {
-    const next = new Set(dismissed);
-    next.delete(id);
-    persist(next);
+    if (!storageKey) return;
+    const s = readSet(storageKey);
+    s.delete(dismissKeyOf(id));
+    writeSet(s);
   }
 
   const { data } = useQuery({
     queryKey: ["dashboard-tips", householdId, period],
+    enabled: !!householdId,
     queryFn: async () => {
       // Base tables come from the shared cache (already fetched by the Dashboard
       // on this screen); only the allocation/expense counts are tips-specific.
@@ -305,7 +332,28 @@ export function DashboardTips({
     },
   });
 
-  if (!data) return null;
+  const emptyResult: IssuesResult = {
+    loading: true,
+    isBusiness,
+    criticals: [],
+    primary: [],
+    overflow: [],
+    hidden: [],
+    urgentCount: 0,
+    totalActive: 0,
+    totalTips: 0,
+    dismiss,
+    restore,
+  };
+  if (!data || !facts) return emptyResult;
+
+  const { baseline, income, surplus, variablePool, netSpent, daysLeft, avgDaily7 } = facts;
+  const country = facts.country;
+  const adults = facts.adults;
+  const children = facts.children;
+  const ageBand = facts.ageBand;
+  const marginPct = facts.marginPct;
+  const cycle = facts.cycle;
 
   const tips: Tip[] = [];
 
@@ -1004,8 +1052,9 @@ export function DashboardTips({
   const rank: Record<Severity, number> = { critical: 0, warning: 1, info: 2, success: 3 };
   const bySeverity = (a: Tip, b: Tip) => rank[a.severity] - rank[b.severity];
 
-  const visible = tips.filter((tp) => !dismissed.has(tp.id));
-  const hidden = tips.filter((tp) => dismissed.has(tp.id));
+  const isHidden = (tp: Tip) => dismissedSet.has(dismissKeyOf(tp.id));
+  const visible = tips.filter((tp) => !isHidden(tp));
+  const hidden = tips.filter(isHidden);
 
   const criticals = visible.filter((tp) => tp.severity === "critical").sort(bySeverity);
   const seenTheme = new Set<string>();
@@ -1020,12 +1069,39 @@ export function DashboardTips({
   const NON_CRITICAL_CAP = 3;
   const primary = deduped.slice(0, NON_CRITICAL_CAP);
   const overflow = deduped.slice(NON_CRITICAL_CAP);
-  const shown = [...criticals, ...primary];
-  const urgentCount = criticals.length;
 
-  function openChat(prompt: string) {
-    window.dispatchEvent(new CustomEvent("coach:open", { detail: { prompt } }));
-  }
+  return {
+    loading: false,
+    isBusiness,
+    criticals,
+    primary,
+    overflow,
+    hidden,
+    urgentCount: criticals.length,
+    totalActive: criticals.length + deduped.length,
+    totalTips: tips.length,
+    dismiss,
+    restore,
+  };
+}
+
+// Both surfaces route a tip's "Chat" button to the app-wide coach dock.
+function openIssuesChat(prompt: string) {
+  window.dispatchEvent(new CustomEvent("coach:open", { detail: { prompt } }));
+}
+
+/**
+ * The dashboard "issues & tips" card — the full, inline view. Uses the shared
+ * hook, so it shows exactly what the app-wide bell shows.
+ */
+export function DashboardTips({ householdId }: { householdId: string }) {
+  const t = useT();
+  const [showMore, setShowMore] = useState(false);
+  const [showDismissed, setShowDismissed] = useState(false);
+  const issues = useHouseholdIssues(householdId);
+  if (issues.loading) return null;
+  const { criticals, primary, overflow, hidden, urgentCount, totalTips, dismiss, restore } = issues;
+  const shown = [...criticals, ...primary];
 
   if (!shown.length && !overflow.length) {
     return (
@@ -1034,10 +1110,10 @@ export function DashboardTips({
           <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-medium">
-              {tips.length === 0 ? t("tips.allGood") : t("tips.allAcknowledged")}
+              {totalTips === 0 ? t("tips.allGood") : t("tips.allAcknowledged")}
             </p>
             <p className="text-sm text-muted-foreground">
-              {tips.length === 0
+              {totalTips === 0
                 ? t("tips.healthyBody")
                 : t("tips.dismissedUntilNext", { count: hidden.length })}
             </p>
@@ -1056,7 +1132,7 @@ export function DashboardTips({
                 tip={tip}
                 dismissed
                 onRestore={() => restore(tip.id)}
-                onChat={openChat}
+                onChat={openIssuesChat}
               />
             ))}
           </CardContent>
@@ -1085,12 +1161,17 @@ export function DashboardTips({
       </CardHeader>
       <CardContent className="space-y-2">
         {shown.map((tip) => (
-          <TipRow key={tip.id} tip={tip} onDismiss={() => dismiss(tip.id)} onChat={openChat} />
+          <TipRow key={tip.id} tip={tip} onDismiss={() => dismiss(tip.id)} onChat={openIssuesChat} />
         ))}
         {overflow.length > 0 &&
           (showMore ? (
             overflow.map((tip) => (
-              <TipRow key={tip.id} tip={tip} onDismiss={() => dismiss(tip.id)} onChat={openChat} />
+              <TipRow
+                key={tip.id}
+                tip={tip}
+                onDismiss={() => dismiss(tip.id)}
+                onChat={openIssuesChat}
+              />
             ))
           ) : (
             <Button
@@ -1117,11 +1198,112 @@ export function DashboardTips({
               tip={tip}
               dismissed
               onRestore={() => restore(tip.id)}
-              onChat={openChat}
+              onChat={openIssuesChat}
             />
           ))}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * App-wide entry point: a bell + badge in the shell header (on every page) that
+ * opens a compact panel of the same issues. Mirrors the coach inbox pattern, and
+ * shares the hook's dismissal so hiding here also hides on the dashboard card.
+ */
+export function IssuesBell({ householdId }: { householdId: string | null }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const issues = useHouseholdIssues(householdId ?? "");
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  if (!householdId) return null;
+  const { criticals, primary, overflow, urgentCount, dismiss } = issues;
+  const active = [...criticals, ...primary, ...overflow];
+  const count = active.length;
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        type="button"
+        aria-label={t("tips.bell.aria")}
+        onClick={() => setOpen((s) => !s)}
+        className="relative inline-flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+      >
+        <AlertTriangle className="size-5" />
+        {count > 0 && (
+          <span
+            className={cn(
+              "absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-4 text-white",
+              urgentCount > 0 ? "bg-destructive" : "bg-amber-500",
+            )}
+          >
+            {count > 9 ? "9+" : count}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div
+          className={cn(
+            "fixed inset-x-3 top-[4.5rem] z-50 w-auto overflow-hidden rounded-xl border bg-card shadow-2xl",
+            "md:absolute md:inset-x-auto md:top-full md:mt-2 md:right-0 md:w-[min(92vw,24rem)]",
+          )}
+        >
+          <div className="flex items-center gap-2 border-b px-4 py-2.5 text-sm font-medium">
+            <AlertOctagon
+              className={`size-4 ${urgentCount > 0 ? "text-destructive" : "text-amber-500"}`}
+            />
+            {t("tips.attention.title")}
+            {urgentCount > 0 && (
+              <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                {t("tips.attention.urgent", { count: urgentCount })}
+              </span>
+            )}
+          </div>
+          <div className="max-h-[70vh] space-y-2 overflow-y-auto p-3">
+            {count === 0 ? (
+              <div className="px-2 py-10 text-center text-sm text-muted-foreground">
+                <CheckCircle2 className="mx-auto mb-2 size-6 text-emerald-600 opacity-70" />
+                {t("tips.bell.empty")}
+              </div>
+            ) : (
+              <>
+                {active.map((tip) => (
+                  <TipRow
+                    key={tip.id}
+                    tip={tip}
+                    onDismiss={() => dismiss(tip.id)}
+                    onChat={openIssuesChat}
+                  />
+                ))}
+                <a
+                  href="/"
+                  onClick={() => setOpen(false)}
+                  className="block pt-1 text-center text-xs font-medium text-primary hover:underline"
+                >
+                  {t("tips.bell.openFull")}
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
