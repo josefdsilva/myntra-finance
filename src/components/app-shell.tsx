@@ -268,7 +268,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1 text-left group rounded-md px-1 -mx-1 hover:bg-muted/60 transition-colors"
+          className="flex min-w-0 items-center gap-1 text-left group rounded-md px-1 -mx-1 hover:bg-muted/60 transition-colors"
           aria-label="Switch household"
         >
           <div className="min-w-0">
@@ -381,10 +381,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           open ? "block border-b bg-card" : "hidden md:flex",
         )}
       >
-        <div className="hidden md:flex items-center gap-2 p-5 border-b">
-          <img src={appIcon.url} alt="bynku household budget logo" className="size-9 rounded-xl" />
-          {HouseholdSwitcher}
-          <div className="ml-auto flex items-center">
+        <div className="hidden md:flex items-center gap-2 p-5 border-b min-w-0">
+          <img
+            src={appIcon.url}
+            alt="bynku household budget logo"
+            className="size-9 shrink-0 rounded-xl"
+          />
+          <div className="min-w-0 flex-1">{HouseholdSwitcher}</div>
+          <div className="shrink-0 flex items-center">
             <IssuesBell householdId={resolvedId} align="left" />
             <CoachInbox householdId={resolvedId} align="left" />
           </div>
