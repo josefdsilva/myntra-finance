@@ -1211,7 +1211,16 @@ export function DashboardTips({ householdId }: { householdId: string }) {
  * opens a compact panel of the same issues. Mirrors the coach inbox pattern, and
  * shares the hook's dismissal so hiding here also hides on the dashboard card.
  */
-export function IssuesBell({ householdId }: { householdId: string | null }) {
+export function IssuesBell({
+  householdId,
+  align = "right",
+}: {
+  householdId: string | null;
+  /** Which edge the panel anchors to. "right" opens leftward (wide headers);
+      "left" opens rightward (use inside the narrow left sidebar so it doesn't
+      run off-screen). */
+  align?: "left" | "right";
+}) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -1261,7 +1270,8 @@ export function IssuesBell({ householdId }: { householdId: string | null }) {
         <div
           className={cn(
             "fixed inset-x-3 top-[4.5rem] z-50 w-auto overflow-hidden rounded-xl border bg-card shadow-2xl",
-            "md:absolute md:inset-x-auto md:top-full md:mt-2 md:right-0 md:w-[min(92vw,24rem)]",
+            "md:absolute md:inset-x-auto md:top-full md:mt-2 md:w-[min(92vw,24rem)]",
+            align === "right" ? "md:right-0" : "md:left-0",
           )}
         >
           <div className="flex items-center gap-2 border-b px-4 py-2.5 text-sm font-medium">
