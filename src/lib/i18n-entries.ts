@@ -258,6 +258,13 @@ export const ENTRIES = {
     de: "Ihnen fehlen etwa {gap} für ein komfortables Polster. Das sind die Bereiche, in denen Sie mehr ausgeben als Haushalte wie Ihrer — jede Teilkürzung summiert sich.",
     fr: "Il vous manque environ {gap} pour un matelas confortable. Voici les postes où vous dépensez plus que des ménages comme le vôtre — réduire une partie de chacun s'additionne.",
   },
+  "ana.save.introDeficit": {
+    en: "Your plan runs about {deficit} over your income. Start here — these non-essential spots are where you can claw it back without touching essentials.",
+    pt: "O seu plano gasta cerca de {deficit} acima do rendimento. Comece por aqui — estes pontos não essenciais são onde pode recuperar sem tocar no essencial.",
+    es: "Tu plan gasta unos {deficit} por encima de tus ingresos. Empieza aquí — estos puntos no esenciales son donde puedes recuperarlo sin tocar lo esencial.",
+    de: "Ihr Plan liegt etwa {deficit} über Ihrem Einkommen. Beginnen Sie hier — an diesen nicht-essenziellen Stellen holen Sie es zurück, ohne Essenzielles anzutasten.",
+    fr: "Votre plan dépasse votre revenu d'environ {deficit}. Commencez ici — ces postes non essentiels sont là où vous pouvez le récupérer sans toucher à l'essentiel.",
+  },
   "ana.save.trim": {
     en: "Trim ~{amount} {per}",
     pt: "Reduzir ~{amount} {per}",
