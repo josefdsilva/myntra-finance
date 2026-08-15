@@ -42,7 +42,7 @@ export function WhereToSaveCard({
     queryFn: async () => {
       const { data } = await supabase
         .from("households")
-        .select("country, adults, children, kind, age_band, margin_pct, cycle")
+        .select("country, adults, children, kind, age_band, margin_pct, cycle, baseline_budget")
         .eq("id", householdId)
         .maybeSingle();
       return data;
@@ -101,6 +101,11 @@ export function WhereToSaveCard({
   }
   const categoryCuts = Object.entries(catSpend).map(([category, monthly]) => ({ category, monthly }));
 
+  // Underwater = baseline exceeds income. Passing the overspend lets this card
+  // render (and read as break-even) for the households that most need it.
+  const baseline = Number(hh?.baseline_budget ?? 0);
+  const deficit = Math.max(0, baseline - monthlyIncome);
+
   const savings = findSavings({
     income: monthlyIncome,
     surplus,
@@ -108,6 +113,7 @@ export function WhereToSaveCard({
     ageBand,
     incomeQuintile: comp?.incomeQuintile ?? null,
     categoryCuts,
+    deficit,
   });
 
   if (!savings.surface || savings.spending.length === 0) return null;
@@ -123,7 +129,11 @@ export function WhereToSaveCard({
         <CardTitle className="flex items-center gap-2">
           <TrendingDown className="size-4 text-primary" /> {t("ana.save.title")}
         </CardTitle>
-        <CardDescription>{t("ana.save.intro", { gap: cyc(savings.gapEur) })}</CardDescription>
+        <CardDescription>
+          {savings.mode === "breakeven"
+            ? t("ana.save.introDeficit", { deficit: cyc(savings.deficitEur) })
+            : t("ana.save.intro", { gap: cyc(savings.gapEur) })}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="space-y-2">

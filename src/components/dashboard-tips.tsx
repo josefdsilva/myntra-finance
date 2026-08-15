@@ -402,7 +402,7 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     const breakeven = savings.mode === "breakeven";
     tips.push({
       id: "where-to-save",
-      severity: breakeven ? "critical" : "warning",
+      severity: "warning",
       title: breakeven ? t("tips.whereToSave.titleDeficit") : t("tips.whereToSave.title"),
       detail: breakeven
         ? t("tips.whereToSave.detailDeficit", {

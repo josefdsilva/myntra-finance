@@ -186,6 +186,7 @@ export const ENTRIES = {
     fr: "Mon budget laisse très peu à épargner. Où puis-je réduire des coûts de façon réaliste ou ajouter des revenus pour dégager une plus grande marge ?",
   },
   "tips.cta.whereToSave": { en: "See where", pt: "Ver onde", es: "Ver dónde", de: "Wo ansehen", fr: "Voir où" },
+  "tips.cta.whereToCut": { en: "See where to cut", pt: "Ver onde cortar", es: "Ver dónde recortar", de: "Wo kürzen", fr: "Où couper" },
   "tips.whereToSave.title": {
     en: "Where you could find room",
     pt: "Onde pode encontrar margem",
@@ -206,6 +207,27 @@ export const ENTRIES = {
     es: "Mi presupuesto está ajustado. ¿Dónde puedo recortar de forma realista para liberar unos {gap} {per}?",
     de: "Mein Budget ist knapp. Wo kann ich realistisch kürzen, um etwa {gap} {per} frei zu machen?",
     fr: "Mon budget est serré. Où puis-je réduire de façon réaliste pour libérer environ {gap} {per} ?",
+  },
+  "tips.whereToSave.titleDeficit": {
+    en: "Where to cut to get back in the black",
+    pt: "Onde cortar para voltar aos positivos",
+    es: "Dónde recortar para volver a números negros",
+    de: "Wo kürzen, um wieder ins Plus zu kommen",
+    fr: "Où couper pour repasser dans le vert",
+  },
+  "tips.whereToSave.detailDeficit": {
+    en: "Your plan runs about {deficit} {per} over your income. Trimming non-essential spending could claw back roughly {amount} {per} — Analysis shows exactly where to cut.",
+    pt: "O seu plano gasta cerca de {deficit} {per} acima do rendimento. Reduzir gastos não essenciais poderia recuperar cerca de {amount} {per} — a Análise mostra exatamente onde cortar.",
+    es: "Tu plan gasta unos {deficit} {per} por encima de tus ingresos. Recortar gastos no esenciales podría recuperar unos {amount} {per} — Análisis muestra exactamente dónde recortar.",
+    de: "Ihr Plan liegt etwa {deficit} {per} über Ihrem Einkommen. Weniger nicht-essenzielle Ausgaben könnten rund {amount} {per} zurückholen — die Analyse zeigt genau, wo Sie kürzen können.",
+    fr: "Votre plan dépasse votre revenu d'environ {deficit} {per}. Réduire les dépenses non essentielles pourrait récupérer près de {amount} {per} — l'Analyse montre exactement où couper.",
+  },
+  "tips.whereToSave.chatDeficit": {
+    en: "I'm spending about {deficit} {per} more than I earn. Where can I realistically cut to get back to break-even?",
+    pt: "Estou a gastar cerca de {deficit} {per} mais do que ganho. Onde posso cortar de forma realista para voltar ao equilíbrio?",
+    es: "Estoy gastando unos {deficit} {per} más de lo que ingreso. ¿Dónde puedo recortar de forma realista para volver al equilibrio?",
+    de: "Ich gebe etwa {deficit} {per} mehr aus, als ich einnehme. Wo kann ich realistisch kürzen, um wieder ausgeglichen zu sein?",
+    fr: "Je dépense environ {deficit} {per} de plus que je ne gagne. Où puis-je réduire de façon réaliste pour revenir à l'équilibre ?",
   },
   "tips.incomeRoom.title": {
     en: "Another way to build room",
