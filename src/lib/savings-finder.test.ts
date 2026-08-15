@@ -18,6 +18,25 @@ test("Rui: tight budget surfaces trims and (under-55, low income) an income opti
   expect(r.income.some((i) => i.kind === "income_role")).toBe(true);
 });
 
+test("underwater (baseline > income) surfaces break-even framing with the real overspend", () => {
+  // Rui: income €2030, baseline €2440 → €410/mo over. This is exactly the family
+  // that most needs "where to cut", and must not be hidden.
+  const r = findSavings({
+    income: 2030,
+    surplus: 0,
+    marginPct: 3,
+    ageBand: "35_44",
+    incomeQuintile: 1,
+    nonEssentialMonthly: 150,
+    deficit: 410,
+  });
+  expect(r.surface).toBe(true);
+  expect(r.mode).toBe("breakeven");
+  expect(r.deficitEur).toBe(410);
+  // Total to free up = ~3% cushion (61) + 410 overspend ≈ 471.
+  expect(r.gapEur).toBe(471);
+});
+
 test("comfortable surplus never surfaces the finder", () => {
   const r = findSavings({
     income: 4000,

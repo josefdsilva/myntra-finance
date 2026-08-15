@@ -73,15 +73,14 @@ export function findSavings(inp: {
   const gapEur = Math.max(0, Math.round(target - surplus + deficit));
   const mode: "cushion" | "breakeven" = deficit > 0 ? "breakeven" : "cushion";
 
-  // Surface when money is genuinely tight AND there's room to trim: either the
-  // baseline already exceeds income (underwater — the household most needs "where
-  // to cut"), or there's a slim positive surplus. Never for a comfortable one.
-  // The number now reflects reality (the overspend is included), so this is the
-  // actionable companion to the "no surplus" issue, not a contradiction.
-  const surface =
-    income > 0 &&
-    gapEur > 0 &&
-    (deficit > 0 || (surplus > 0 && surplus < income * 0.1));
+  // Surface whenever money is genuinely tight and there's room to trim — a real
+  // gap and a surplus below 10% of income (which includes zero and underwater).
+  // The household that's underwater or at break-even needs "where to cut" most.
+  // We DON'T gate on surplus > 0: doing so hid this from exactly the families it's
+  // for. Instead `mode`/`deficit` keep the framing honest (break-even vs cushion),
+  // so it reads as the actionable companion to the "no surplus" issue — never the
+  // contradiction it was before (no more "€X short of a cushion" while underwater).
+  const surface = income > 0 && gapEur > 0 && surplus < income * 0.1;
 
   const spending: SavingsOpportunity[] = [];
   for (const c of inp.categoryCuts ?? []) {
