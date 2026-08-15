@@ -61,18 +61,27 @@ export function findSavings(inp: {
   /** Aggregate non-essential (nice-to-have + treat) spend — used by the compact
    *  dashboard tip when there's no per-category breakdown. */
   nonEssentialMonthly?: number;
+  /** Monthly overspend = max(0, baseline − income). When > 0 the household is
+   *  underwater and the result switches to break-even framing. */
+  deficit?: number;
 }): SavingsResult {
   const income = Math.max(0, inp.income);
   const surplus = Math.max(0, inp.surplus);
+  const deficit = Math.max(0, inp.deficit ?? 0);
   const target = income * (Math.max(0, inp.marginPct) / 100);
-  const gapEur = Math.max(0, Math.round(target - surplus));
+  // Total to free up = the overspend (get back to zero) plus the cushion gap.
+  const gapEur = Math.max(0, Math.round(target - surplus + deficit));
+  const mode: "cushion" | "breakeven" = deficit > 0 ? "breakeven" : "cushion";
 
-  // Relevant only when it's actually tight AND there is genuinely room to trim:
-  // a real gap to a healthy cushion, some positive surplus, but a slim one. When
-  // the baseline already eats all income (surplus == 0) this is NOT the message —
-  // the "no surplus / unsustainable" issue owns that state, so "you're €X short
-  // of a cushion, trim here" must not also fire and contradict it.
-  const surface = income > 0 && surplus > 0 && gapEur > 0 && surplus < income * 0.1;
+  // Surface when money is genuinely tight AND there's room to trim: either the
+  // baseline already exceeds income (underwater — the household most needs "where
+  // to cut"), or there's a slim positive surplus. Never for a comfortable one.
+  // The number now reflects reality (the overspend is included), so this is the
+  // actionable companion to the "no surplus" issue, not a contradiction.
+  const surface =
+    income > 0 &&
+    gapEur > 0 &&
+    (deficit > 0 || (surplus > 0 && surplus < income * 0.1));
 
   const spending: SavingsOpportunity[] = [];
   for (const c of inp.categoryCuts ?? []) {
@@ -93,5 +102,12 @@ export function findSavings(inp: {
     incomeOps.push({ kind: "income_role" });
   }
 
-  return { surface, gapEur, spending: spending.slice(0, 4), income: incomeOps };
+  return {
+    surface,
+    mode,
+    gapEur,
+    deficitEur: Math.round(deficit),
+    spending: spending.slice(0, 4),
+    income: incomeOps,
+  };
 }

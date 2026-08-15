@@ -389,23 +389,36 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     ageBand,
     incomeQuintile: est?.quintile ?? null,
     nonEssentialMonthly,
+    // When the baseline already exceeds income, the household is underwater — pass
+    // the overspend so "where to cut" surfaces (and reads as break-even, not "€X
+    // short of a cushion"). This is exactly the case a family like Rui's needs.
+    deficit: Math.max(0, baseline - income),
   });
   // Figures are monthly (benchmark-based); express them in the household's cycle.
   const cyclePeriod = cycleForSpace({ cycle: cycle ?? null });
   const per = t(`period.per.${cyclePeriod}` as MessageKey);
   const cyc = (m: number) => money(perCycleFromMonthly(m, cyclePeriod));
   if (savings.surface && savings.spending.length > 0) {
+    const breakeven = savings.mode === "breakeven";
     tips.push({
       id: "where-to-save",
-      severity: "warning",
-      title: t("tips.whereToSave.title"),
-      detail: t("tips.whereToSave.detail", {
-        gap: cyc(savings.gapEur),
-        amount: cyc(savings.spending[0].monthlyEur),
-        per,
-      }),
-      cta: { label: t("tips.cta.whereToSave"), to: "/analysis" },
-      chatPrompt: t("tips.whereToSave.chat", { gap: cyc(savings.gapEur), per }),
+      severity: breakeven ? "critical" : "warning",
+      title: breakeven ? t("tips.whereToSave.titleDeficit") : t("tips.whereToSave.title"),
+      detail: breakeven
+        ? t("tips.whereToSave.detailDeficit", {
+            deficit: cyc(savings.deficitEur),
+            amount: cyc(savings.spending[0].monthlyEur),
+            per,
+          })
+        : t("tips.whereToSave.detail", {
+            gap: cyc(savings.gapEur),
+            amount: cyc(savings.spending[0].monthlyEur),
+            per,
+          }),
+      cta: { label: t("tips.cta.whereToCut"), to: "/analysis" },
+      chatPrompt: breakeven
+        ? t("tips.whereToSave.chatDeficit", { deficit: cyc(savings.deficitEur), per })
+        : t("tips.whereToSave.chat", { gap: cyc(savings.gapEur), per }),
     });
   }
   if (savings.surface && savings.income.length > 0) {
