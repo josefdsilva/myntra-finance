@@ -46,12 +46,15 @@ export function WhereToSaveCard({
   surplus: number;
 }) {
   const t = useT();
+  const qc = useQueryClient();
   const { data: hh } = useQuery({
     queryKey: ["where-to-save-hh", householdId],
     queryFn: async () => {
       const { data } = await supabase
         .from("households")
-        .select("country, adults, children, kind, age_band, margin_pct, cycle, baseline_budget")
+        .select(
+          "country, adults, children, kind, age_band, margin_pct, cycle, cycle_mode, cycle_anchor_date, baseline_budget",
+        )
         .eq("id", householdId)
         .maybeSingle();
       return data;
@@ -66,6 +69,61 @@ export function WhereToSaveCard({
         .eq("household_id", householdId);
       return data ?? [];
     },
+  });
+
+  // Commitments the household has made ("I'll cut €40 of eating out"), plus the
+  // real spend so far in the CURRENT cycle per category — that pair is what turns
+  // a suggestion into a verified promise instead of advice that vanishes.
+  const { data: commitments = [] } = useQuery({
+    queryKey: commitmentsQueryKey(householdId),
+    queryFn: () => fetchCommitments(householdId),
+  });
+  const { data: cycleSpend } = useQuery({
+    enabled: !!hh,
+    queryKey: [
+      "where-to-save-cycle-spend",
+      householdId,
+      hh?.cycle,
+      hh?.cycle_mode,
+      hh?.cycle_anchor_date,
+    ],
+    queryFn: async () => {
+      const bounds = await fetchCycleBounds(supabase, householdId, hh);
+      const { data } = await supabase
+        .from("expenses")
+        .select("amount, category")
+        .eq("household_id", householdId)
+        .eq("kind", "expense")
+        .gte("occurred_at", bounds.start.toISOString())
+        .lt("occurred_at", bounds.end.toISOString());
+      const byCategory: Record<string, number> = {};
+      for (const r of (data ?? []) as Array<{ amount: number | string; category: string }>) {
+        byCategory[r.category] = (byCategory[r.category] ?? 0) + (Number(r.amount) || 0);
+      }
+      return { start: bounds.start, byCategory };
+    },
+  });
+
+  const commit = useMutation({
+    mutationFn: (v: { category: string; monthlyTarget: number; baselineMonthly: number }) =>
+      commitToCut({
+        householdId,
+        category: v.category,
+        monthlyTarget: v.monthlyTarget,
+        baselineMonthly: v.baselineMonthly,
+        cycleStart: cycleSpend?.start ?? new Date(),
+      }),
+    onSuccess: () => {
+      toast.success(t("ana.save.commitDone"));
+      void qc.invalidateQueries({ queryKey: commitmentsQueryKey(householdId) });
+    },
+    onError: () => toast.error(t("ana.save.commitFailed")),
+  });
+  const resolve = useMutation({
+    mutationFn: (v: { id: string; status: "kept" | "dropped" }) =>
+      resolveCommitment(v.id, v.status),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: commitmentsQueryKey(householdId) }),
+    onError: () => toast.error(t("ana.save.commitFailed")),
   });
 
   const country = hh?.country ?? null;
