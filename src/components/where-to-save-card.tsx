@@ -183,7 +183,14 @@ export function WhereToSaveCard({
     deficit,
   });
 
-  if (!savings.surface || savings.spending.length === 0) return null;
+  const committedCats = new Set(commitments.map((c) => c.category));
+  const suggestions = savings.surface
+    ? savings.spending.filter((s) => s.kind !== "category" || !committedCats.has(s.category))
+    : [];
+
+  // Keep the card alive while a promise is being tracked, even once the household
+  // is no longer "tight" — that improvement IS the proof they wanted to see.
+  if (suggestions.length === 0 && commitments.length === 0) return null;
 
   const byCat = new Map((comp?.categories ?? []).map((c) => [c.category, c]));
   const cycle = cycleForSpace(hh);
@@ -203,8 +210,85 @@ export function WhereToSaveCard({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {commitments.length > 0 && (
+          <div className="mb-4">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("ana.save.trackTitle")}
+            </p>
+            <ul className="space-y-2">
+              {commitments.map((c) => {
+                const target = Number(c.monthly_target) || 0;
+                const baselineMonthly = Number(c.baseline_monthly) || 0;
+                // The promise, in cycle money: spend no more than what they were
+                // spending minus the trim they chose.
+                const allowance = perCycleFromMonthly(
+                  Math.max(0, baselineMonthly - target),
+                  cycle,
+                );
+                const spent = cycleSpend?.byCategory[c.category] ?? 0;
+                const onTrack = spent <= allowance;
+                const pct = allowance > 0 ? Math.min(100, (spent / allowance) * 100) : 100;
+                return (
+                  <li key={c.id} className="rounded-lg border p-3 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 font-medium capitalize">
+                        {onTrack ? (
+                          <CheckCircle2 className="size-4 text-primary" />
+                        ) : (
+                          <AlertTriangle className="size-4 text-destructive" />
+                        )}
+                        {c.category}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-xs text-muted-foreground">
+                        {t("ana.save.trackSpend", {
+                          spent: money(spent),
+                          allowance: money(allowance),
+                          per,
+                        })}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={onTrack ? "h-full bg-primary" : "h-full bg-destructive"}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        {onTrack
+                          ? t("ana.save.trackOnTrack", { amount: money(allowance - spent) })
+                          : t("ana.save.trackOver", { amount: money(spent - allowance) })}
+                      </p>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          disabled={resolve.isPending}
+                          onClick={() => resolve.mutate({ id: c.id, status: "kept" })}
+                        >
+                          {t("ana.save.trackKept")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-muted-foreground"
+                          disabled={resolve.isPending}
+                          onClick={() => resolve.mutate({ id: c.id, status: "dropped" })}
+                        >
+                          {t("ana.save.trackDrop")}
+                        </Button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
         <ul className="space-y-2">
-          {savings.spending.map((s) => {
+          {suggestions.map((s) => {
             if (s.kind !== "category") return null;
             const c = byCat.get(s.category);
             const overPeer = c && c.userMonthly > c.benchmarkMonthly;
@@ -228,6 +312,21 @@ export function WhereToSaveCard({
                       })
                     : t("ana.save.detailPlain", { amount: cyc(catSpend[s.category] ?? 0), per })}
                 </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 h-7 text-xs"
+                  disabled={commit.isPending || !cycleSpend}
+                  onClick={() =>
+                    commit.mutate({
+                      category: s.category,
+                      monthlyTarget: s.monthlyEur,
+                      baselineMonthly: catSpend[s.category] ?? s.monthlyEur * 3,
+                    })
+                  }
+                >
+                  {t("ana.save.commit")}
+                </Button>
               </li>
             );
           })}
