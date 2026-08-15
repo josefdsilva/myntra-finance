@@ -20,8 +20,18 @@ export type IncomeOpportunity = { kind: "income_role" };
 export type SavingsResult = {
   /** Only true when money is genuinely tight — never for a comfortable surplus. */
   surface: boolean;
-  /** How far below a healthy cushion they are (EUR/month), for framing. */
+  /**
+   * "breakeven" when the baseline already meets/exceeds income (the household is
+   * underwater — trimming is about getting back to zero plus a small buffer);
+   * "cushion" when there's a slim but positive surplus. Callers pick their copy
+   * off this so the underwater case never reads as "you're €X short of a
+   * cushion" when the real story is "you're spending more than you earn".
+   */
+  mode: "cushion" | "breakeven";
+  /** Total to free up (EUR/month): the overspend, if any, plus the cushion gap. */
   gapEur: number;
+  /** Monthly amount spent above income (0 unless underwater) — for break-even copy. */
+  deficitEur: number;
   /** Ranked spending trims (largest achievable first). */
   spending: SavingsOpportunity[];
   /** Income options (age- and income-gated). */
