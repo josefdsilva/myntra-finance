@@ -1,14 +1,23 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { TrendingDown } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { TrendingDown, CheckCircle2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { computeBenchmarkComparison, hasBenchmark } from "@/lib/benchmarks";
 import { findSavings } from "@/lib/savings-finder";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
 import { resolveIntent, defaultIntentForCategory } from "@/lib/intent";
+import { fetchCycleBounds } from "@/lib/cycle-bounds";
+import {
+  fetchCommitments,
+  commitmentsQueryKey,
+  commitToCut,
+  resolveCommitment,
+} from "@/lib/savings-commitments";
 
 // Only these intents are ever suggested for cutting — never essentials
 // (housing, kids, groceries, health, utilities, transport) and never
