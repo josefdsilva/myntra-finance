@@ -297,6 +297,70 @@ export const ENTRIES = {
     de: "Ziel sind kleine, stetige Kürzungen — kein Verzicht.",
     fr: "L'objectif : de petites réductions régulières — pas de privation.",
   },
+  // "I'll cut this" commitments — the progress loop for the savings finder.
+  "ana.save.commit": {
+    en: "I'll cut this",
+    pt: "Vou cortar isto",
+    es: "Voy a recortar esto",
+    de: "Das kürze ich",
+    fr: "Je réduis ça",
+  },
+  "ana.save.commitDone": {
+    en: "Saved — we'll check how it goes this cycle",
+    pt: "Guardado — vamos ver como corre neste ciclo",
+    es: "Guardado — veremos cómo va en este ciclo",
+    de: "Gespeichert — wir prüfen es in diesem Zyklus",
+    fr: "Enregistré — on vérifie sur ce cycle",
+  },
+  "ana.save.commitFailed": {
+    en: "Couldn't save that",
+    pt: "Não foi possível guardar",
+    es: "No se pudo guardar",
+    de: "Konnte nicht gespeichert werden",
+    fr: "Impossible d'enregistrer",
+  },
+  "ana.save.trackTitle": {
+    en: "Cuts you're tracking",
+    pt: "Cortes que estás a seguir",
+    es: "Recortes que estás siguiendo",
+    de: "Kürzungen, die du verfolgst",
+    fr: "Réductions suivies",
+  },
+  "ana.save.trackSpend": {
+    en: "{spent} of {allowance} {per}",
+    pt: "{spent} de {allowance} {per}",
+    es: "{spent} de {allowance} {per}",
+    de: "{spent} von {allowance} {per}",
+    fr: "{spent} sur {allowance} {per}",
+  },
+  "ana.save.trackOnTrack": {
+    en: "On track — {amount} of room left.",
+    pt: "No caminho certo — resta {amount} de margem.",
+    es: "Vas bien — te queda {amount} de margen.",
+    de: "Auf Kurs — noch {amount} Spielraum.",
+    fr: "Sur la bonne voie — il reste {amount} de marge.",
+  },
+  "ana.save.trackOver": {
+    en: "{amount} over the cut you promised.",
+    pt: "{amount} acima do corte que prometeste.",
+    es: "{amount} por encima del recorte prometido.",
+    de: "{amount} über der zugesagten Kürzung.",
+    fr: "{amount} au-dessus de la réduction promise.",
+  },
+  "ana.save.trackKept": {
+    en: "Kept it",
+    pt: "Consegui",
+    es: "Lo cumplí",
+    de: "Geschafft",
+    fr: "Tenu",
+  },
+  "ana.save.trackDrop": {
+    en: "Stop tracking",
+    pt: "Deixar de seguir",
+    es: "Dejar de seguir",
+    de: "Nicht mehr verfolgen",
+    fr: "Arrêter le suivi",
+  },
 
   // Setup checklist: debt, assets, confirm estimates
   "setup.item.debt": {
