@@ -12,6 +12,7 @@ import {
   CalibrationCard,
   CycleCompareCard,
   SuperfluousTrendCard,
+  useCycleMetrics,
 } from "@/components/score-trend";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -167,6 +168,13 @@ function AnalysisPage() {
 
   const [range, setRange] = useState<RangeKey>("1");
   const [includeFixed, setIncludeFixed] = useState(true);
+
+  // The over-cycles analyses (score trend, calibration, cycle-vs-cycle, superfluous
+  // trend) only make sense with genuine history. A single real cycle padded with
+  // backfilled estimates would show meaningless comparisons (−100% swings, lone
+  // points), so gate the whole section on more than one non-estimated cycle.
+  const { data: cycleHistory } = useCycleMetrics(householdId);
+  const realCycleCount = (cycleHistory ?? []).filter((r) => r.source !== "backfill").length;
 
   // All salary dates (asc) → cycles
   const { data: salaryAsc = [] } = useQuery({
@@ -666,7 +674,7 @@ function AnalysisPage() {
         </div>
       </header>
 
-      {householdId && (
+      {householdId && realCycleCount > 1 && (
         <div className="grid gap-4 md:grid-cols-2">
           <ScoreTrendCard householdId={householdId} isBusiness={isBiz} />
           <CalibrationCard householdId={householdId} isBusiness={isBiz} />

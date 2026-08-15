@@ -34,7 +34,7 @@ type MetricRow = {
 };
 
 /** Cycle-metrics history for a space, oldest first. Shared by all variants. */
-function useCycleMetrics(householdId?: string) {
+export function useCycleMetrics(householdId?: string) {
   return useQuery({
     enabled: !!householdId,
     queryKey: ["cycle-metrics", householdId],
@@ -316,14 +316,21 @@ export function ScoreTrendCard({
               <YAxis domain={[0, 100]} tickLine={false} axisLine={false} width={32} fontSize={12} />
               <Tooltip
                 formatter={(v: number | string) => [v, t(isBusiness ? "trend.scoreTitleBiz" : "trend.scoreTitle")]}
+                contentStyle={{
+                  background: "var(--popover)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                }}
+                labelStyle={{ color: "var(--popover-foreground)" }}
+                itemStyle={{ color: "var(--popover-foreground)" }}
               />
               <Line
                 type="monotone"
                 dataKey="score"
-                stroke="hsl(var(--primary))"
+                stroke="var(--primary)"
                 strokeWidth={2.5}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                dot={{ r: 3, fill: "var(--primary)", stroke: "var(--primary)" }}
+                activeDot={{ r: 5, fill: "var(--primary)", stroke: "var(--background)", strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -451,14 +458,23 @@ export function SuperfluousTrendCard({ householdId }: { householdId?: string }) 
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
               <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis tickLine={false} axisLine={false} width={34} fontSize={12} unit="%" />
-              <Tooltip formatter={(v: number | string) => [`${v}%`, t("superfluous.title")]} />
+              <Tooltip
+                formatter={(v: number | string) => [`${v}%`, t("superfluous.title")]}
+                contentStyle={{
+                  background: "var(--popover)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                }}
+                labelStyle={{ color: "var(--popover-foreground)" }}
+                itemStyle={{ color: "var(--popover-foreground)" }}
+              />
               <Line
                 type="monotone"
                 dataKey="pct"
-                stroke="hsl(var(--primary))"
+                stroke="var(--primary)"
                 strokeWidth={2.5}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                dot={{ r: 3, fill: "var(--primary)", stroke: "var(--primary)" }}
+                activeDot={{ r: 5, fill: "var(--primary)", stroke: "var(--background)", strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
