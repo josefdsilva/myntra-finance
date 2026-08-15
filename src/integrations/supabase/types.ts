@@ -2009,6 +2009,56 @@ export type Database = {
           },
         ]
       }
+      savings_commitments: {
+        Row: {
+          baseline_monthly: number
+          category: string
+          created_at: string
+          created_by: string | null
+          cycle_start: string
+          household_id: string
+          id: string
+          monthly_target: number
+          resolved_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          baseline_monthly: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          cycle_start: string
+          household_id: string
+          id?: string
+          monthly_target: number
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          baseline_monthly?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          cycle_start?: string
+          household_id?: string
+          id?: string
+          monthly_target?: number
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_commitments_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
