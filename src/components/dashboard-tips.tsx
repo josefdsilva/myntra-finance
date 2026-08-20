@@ -166,11 +166,10 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     retry: false,
   });
   const isBusiness = facts?.isBusiness ?? false;
-  // For business spaces, household-framed tips (surplus, savings rate, income
-  // concentration, emergency fund, plan shortfall) swap to a `.biz` copy variant
-  // that speaks in cashflow/runway/revenue terms instead.
+  // Household-only now: `bt` is a thin wrapper kept so the many call sites don't
+  // churn — it always resolves the plain (household) copy.
   const bt = (key: string, vars?: Record<string, string | number>) =>
-    t((isBusiness ? `${key}.biz` : key) as MessageKey, vars);
+    t(key as MessageKey, vars);
 
   // Dismissal: cycle-aligned storage key, read from localStorage on every render
   // (so there's no flash of already-dismissed tips before an effect loads them),

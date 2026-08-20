@@ -42,10 +42,10 @@ export function PurchaseCheckButton({
   isBusiness?: boolean;
 }) {
   const t = useT();
-  // Business spaces reason about cash impact and runway, not goals/safety net,
-  // so the copy and the coach prompt swap to a `.biz` variant when present.
+  // Household-only now: `tb` always resolves the plain copy (kept as a wrapper so
+  // the call sites don't churn).
   const tb = (key: string, vars?: Record<string, string | number>) =>
-    t((isBusiness ? `${key}.biz` : key) as MessageKey, vars);
+    t(key as MessageKey, vars);
   const [open, setOpen] = useState(false);
   const [what, setWhat] = useState("");
   const [price, setPrice] = useState("");

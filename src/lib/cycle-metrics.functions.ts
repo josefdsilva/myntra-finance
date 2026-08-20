@@ -49,7 +49,7 @@ export async function snapshotCycleCore(
 
   const { data: hh } = await sb
     .from("households")
-    .select("kind, baseline_budget, adults, children, country, employees")
+    .select("kind, baseline_budget, adults, children, country")
     .eq("id", householdId)
     .maybeSingle();
   const baseline = Number(hh?.baseline_budget ?? 0);
@@ -252,7 +252,7 @@ export async function snapshotCycleCore(
           hasNetWorthData,
           incomeSources,
           distinctClients,
-          employees: Number(hh?.employees ?? 0),
+          employees: 0,
           hasProjects: bucketList.length > 0,
           activityCount: exp.length,
         },
