@@ -13,8 +13,6 @@ import {
   type CycleMetric,
   type Signal,
 } from "@/lib/coach-signals";
-import { gatherRunwayReceivables } from "@/lib/sme-cash.server";
-import { smeSignals } from "@/lib/sme-signals";
 
 // Single source of truth for "run the coach for one space". Both the on-open
 // daily trigger and the (optional) cron hooks call this, so the logic lives in
@@ -53,21 +51,6 @@ export async function runCoachForHousehold(
     });
     if (r.created) emitted++;
   };
-
-  // --- Business spaces: runway + receivables ---
-  if (hh.kind === "business") {
-    const picture = await gatherRunwayReceivables(admin, hh.id);
-    const periodKey = now.toISOString().slice(0, 7);
-    for (const s of smeSignals({
-      runway: picture.runway,
-      receivables: picture.receivables,
-      money,
-      periodKey,
-    })) {
-      await emit(s);
-    }
-    return emitted;
-  }
 
   // --- Personal spaces: drift + cost reminders + recap + milestones ---
   const baseline = Number(hh.baseline_budget ?? 0);

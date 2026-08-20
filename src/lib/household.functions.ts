@@ -388,36 +388,29 @@ export const createHousehold = createServerFn({ method: "POST" })
     z
       .object({
         name: z.string().trim().min(1).max(100),
-        kind: z.enum(["personal", "business"]).default("personal"),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const kind = data.kind;
+    // Bynku is household-only now — every space is personal.
+    const kind = "personal" as const;
 
-    // Limits are per kind: a tester can own one personal household AND one
-    // company, each with its own members/invitations.
     const PERSONAL_LIMIT = 1;
-    const BUSINESS_LIMIT = 1;
     const { data: owned, error: countErr } = await supabaseAdmin
       .from("household_members")
       .select("households(kind)")
       .eq("user_id", userId)
       .eq("role", "owner");
     if (countErr) throw countErr;
-    const ownedOfKind = (owned ?? []).filter(
-      (r) =>
-        ((r.households as { kind?: string } | null)?.kind ?? "personal") === kind,
+    const ownedPersonal = (owned ?? []).filter(
+      (r) => ((r.households as { kind?: string } | null)?.kind ?? "personal") !== "business",
     ).length;
-    if (kind === "personal" && ownedOfKind >= PERSONAL_LIMIT) {
+    if (ownedPersonal >= PERSONAL_LIMIT) {
       throw new Error(
         "HOUSEHOLD_LIMIT_REACHED: The free tier includes 1 personal household.",
       );
-    }
-    if (kind === "business" && ownedOfKind >= BUSINESS_LIMIT) {
-      throw new Error("BUSINESS_LIMIT_REACHED: You can create 1 company.");
     }
 
     const { data: household, error } = await supabaseAdmin
@@ -428,7 +421,7 @@ export const createHousehold = createServerFn({ method: "POST" })
         created_by: userId,
         baseline_budget: 0,
         margin_pct: 10,
-        cycle: kind === "business" ? "quarterly" : "monthly",
+        cycle: "monthly",
       })
       .select()
       .single();

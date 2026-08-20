@@ -26,7 +26,6 @@ import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
 import { pageShellClass } from "@/components/page-shell";
-import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,8 +114,6 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
-  // The Journey is a personal order-of-operations — business spaces don't get it.
-  const isBusiness = hh?.household?.kind === "business";
 
   const stagesQ = useQuery({
     enabled: !!householdId,
@@ -129,7 +126,7 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
   const recordedStagesRef = useRef<Set<string>>(new Set());
   const recordedLevelsRef = useRef<Set<number>>(new Set());
   useEffect(() => {
-    if (!householdId || seededRef.current || isBusiness) return;
+    if (!householdId || seededRef.current) return;
     if (stagesQ.data && stagesQ.data.length === 0) {
       seededRef.current = true;
       seedFn({ data: { household_id: householdId } })
@@ -516,18 +513,6 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
   }
 
   const loading = !stagesQ.data || !evaluated;
-
-  if (isBusiness) {
-    return (
-      <div className={embedded ? "space-y-6" : pageShellClass("3xl")}>
-        <EmptyState
-          icon={Flag}
-          title={t("journey.personalOnly")}
-          description={t("journey.personalOnlyBody")}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className={embedded ? "space-y-6" : pageShellClass("3xl")}>

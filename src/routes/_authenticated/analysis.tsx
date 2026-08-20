@@ -44,7 +44,6 @@ import { format as fmt } from "date-fns";
 import { cycleFor, cycleConfigForSpace, buildTimeCycles } from "@/lib/cycle";
 import { CoachPanel } from "@/components/coach-panel";
 import { BenchmarksCard } from "@/components/benchmarks-card";
-import { BusinessBenchmarksCard } from "@/components/business-benchmarks-card";
 import { WhereToSaveCard } from "@/components/where-to-save-card";
 import { pageShellClass } from "@/components/page-shell";
 import { EmptyState } from "@/components/empty-state";
@@ -150,7 +149,6 @@ function AnalysisPage() {
   });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
-  const isBiz = hh?.household?.kind === "business";
   const { ask: initialAsk } = Route.useSearch();
 
   // Heal cycle-metrics history on visit: snapshot any closed cycles that never
@@ -676,9 +674,9 @@ function AnalysisPage() {
 
       {householdId && realCycleCount > 1 && (
         <div className="grid gap-4 md:grid-cols-2">
-          <ScoreTrendCard householdId={householdId} isBusiness={isBiz} />
-          <CalibrationCard householdId={householdId} isBusiness={isBiz} />
-          <CycleCompareCard householdId={householdId} isBusiness={isBiz} />
+          <ScoreTrendCard householdId={householdId} />
+          <CalibrationCard householdId={householdId} />
+          <CycleCompareCard householdId={householdId} />
           <SuperfluousTrendCard householdId={householdId} />
         </div>
       )}
@@ -849,7 +847,7 @@ function AnalysisPage() {
         />
       )}
 
-      {householdId && !isBiz && cycleCount > 0 && (
+      {householdId && cycleCount > 0 && (
         <WhereToSaveCard
           householdId={householdId}
           monthlyIncome={cycleData?.monthlyIncome ?? 0}
@@ -858,9 +856,6 @@ function AnalysisPage() {
           surplus={cycleData?.surplus ?? 0}
         />
       )}
-
-      {/* Business spaces get a sector comparison (Eurostat SBS) instead. */}
-      {householdId && <BusinessBenchmarksCard householdId={householdId} />}
 
       <Card>
         <CardHeader>

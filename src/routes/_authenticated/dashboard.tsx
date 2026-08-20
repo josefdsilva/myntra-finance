@@ -41,7 +41,6 @@ import { GoalsCard } from "@/components/goals-card";
 import { JourneySummaryCard } from "@/components/journey-summary-card";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
-import { RunwayReceivablesCard } from "@/components/runway-receivables-card";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 import { useT } from "@/lib/i18n";
 
@@ -679,7 +678,7 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      {householdId && hh?.household?.kind !== "business" && <JourneySummaryCard householdId={householdId} />}
+      {householdId && <JourneySummaryCard householdId={householdId} />}
 
       {householdId && <GoalsCard householdId={householdId} />}
 
@@ -712,10 +711,6 @@ function Dashboard() {
           things that need attention (an unsustainable baseline, an expensive
           debt) reach the eye immediately rather than after a long scroll. */}
       {householdId && <DashboardTips householdId={householdId} />}
-
-      {householdId && hh?.household?.kind === "business" && (
-        <RunwayReceivablesCard householdId={householdId} />
-      )}
 
       {householdId && <NetWorthCard householdId={householdId} />}
 

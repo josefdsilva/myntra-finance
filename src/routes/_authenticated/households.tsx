@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Check, LogOut, Plus, Trash2, Users, Building2 } from "lucide-react";
+import { Check, LogOut, Plus, Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { pageShellClass } from "@/components/page-shell";
@@ -56,20 +56,15 @@ function HouseholdsPage() {
   });
 
   const personal = households.filter((h) => (h.household.kind ?? "personal") !== "business");
-  const businesses = households.filter((h) => h.household.kind === "business");
   const ownedPersonal = personal.filter((h) => h.role === "owner").length;
-  const ownedBusiness = businesses.filter((h) => h.role === "owner").length;
-  const BUSINESS_LIMIT = 1;
 
   const [newName, setNewName] = useState("");
-  const [newBizName, setNewBizName] = useState("");
 
   const createMutation = useMutation({
-    mutationFn: (v: { name: string; kind: "personal" | "business" }) => create({ data: v }),
+    mutationFn: (v: { name: string }) => create({ data: v }),
     onSuccess: (res) => {
       toast.success(t("households.createdToast"));
       setNewName("");
-      setNewBizName("");
       qc.invalidateQueries({ queryKey: ["my-households"] });
       setActiveHouseholdId(res.household.id);
       qc.clear();
@@ -147,7 +142,7 @@ function HouseholdsPage() {
               e.preventDefault();
               const n = newName.trim();
               if (!n) return;
-              createMutation.mutate({ name: n, kind: "personal" });
+              createMutation.mutate({ name: n });
             }}
           >
             <div className="flex-1">
@@ -180,67 +175,6 @@ function HouseholdsPage() {
           <p className="text-sm text-muted-foreground">{t("households.noHouseholds")}</p>
         )}
         {personal.map(renderCard)}
-      </div>
-
-      {/* Businesses */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="size-4" /> {t("businesses.createTitle")}
-          </CardTitle>
-          <CardDescription>
-            {t("businesses.createDescription")}
-            <span className="block mt-1 text-xs">
-              {t("businesses.limitNote", { count: ownedBusiness, limit: BUSINESS_LIMIT })}
-            </span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="flex flex-col sm:flex-row gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const n = newBizName.trim();
-              if (!n) return;
-              createMutation.mutate({ name: n, kind: "business" });
-            }}
-          >
-            <div className="flex-1">
-              <Label htmlFor="new-biz" className="sr-only">
-                {t("businesses.namePlaceholder")}
-              </Label>
-              <Input
-                id="new-biz"
-                placeholder={t("businesses.namePlaceholder")}
-                value={newBizName}
-                onChange={(e) => setNewBizName(e.target.value)}
-                maxLength={100}
-                disabled={ownedBusiness >= BUSINESS_LIMIT}
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={
-                !newBizName.trim() || createMutation.isPending || ownedBusiness >= BUSINESS_LIMIT
-              }
-            >
-              {createMutation.isPending ? t("households.creating") : t("businesses.create")}
-            </Button>
-          </form>
-          {ownedBusiness >= BUSINESS_LIMIT && (
-            <p className="mt-2 text-xs text-muted-foreground">{t("businesses.limitReached")}</p>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="space-y-3">
-        <h2 className="text-lg font-medium flex items-center gap-2">
-          <Building2 className="size-5" /> {t("businesses.sectionTitle")}
-        </h2>
-        {!isLoading && businesses.length === 0 && (
-          <p className="text-sm text-muted-foreground">{t("businesses.empty")}</p>
-        )}
-        {businesses.map(renderCard)}
       </div>
 
       <p className="text-xs text-muted-foreground">
