@@ -25,11 +25,11 @@ import {
   Sparkles,
   Building2,
   User,
-  Send,
   ArrowLeftRight,
   FastForward,
-  FileSpreadsheet,
   ScanLine,
+  Compass,
+  ChevronDown,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,7 +46,7 @@ import { AppTour } from "@/components/app-tour";
 
 import { useActiveHouseholdId, setActiveHouseholdId } from "@/lib/active-household";
 import { cn } from "@/lib/utils";
-import { useT, type MessageKey } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,39 +56,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Minimal by default. The core is what a household does week to week; everything
+// analytical/advanced is tucked behind a collapsible "Advanced" group so a less
+// technical user isn't overwhelmed (progressive disclosure, not a second mode).
 const NAV_SECTIONS = [
   {
     titleKey: null,
+    advanced: false,
     items: [
       { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    titleKey: "navSection.manage",
-    items: [
+      { to: "/journey", labelKey: "nav.journey", icon: Compass },
       { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
-      { to: "/assets", labelKey: "nav.assets", icon: Gem },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
-      { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
-      { to: "/loans", labelKey: "nav.loans", icon: Landmark },
     ],
   },
   {
-    titleKey: "navSection.data",
+    titleKey: "navSection.advanced",
+    advanced: true,
     items: [
+      { to: "/loans", labelKey: "nav.loans", icon: Landmark },
+      { to: "/assets", labelKey: "nav.assets", icon: Gem },
+      { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
       { to: "/fast-forward", labelKey: "nav.fastForward", icon: FastForward },
       { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
-    ],
-  },
-  {
-    titleKey: "navSection.docs",
-    items: [
       { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
     ],
   },
   {
     titleKey: "navSection.account",
+    advanced: false,
     items: [
       { to: "/households", labelKey: "nav.households", icon: Users },
       { to: "/share", labelKey: "nav.capture", icon: ScanLine },
@@ -104,6 +101,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
+  // Advanced nav group is collapsed by default; the choice is remembered.
+  const [showAdvanced, setShowAdvanced] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nav-advanced") === "1";
+  });
+  const toggleAdvanced = () =>
+    setShowAdvanced((s) => {
+      const next = !s;
+      try {
+        localStorage.setItem("nav-advanced", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   // Initialise from the saved choice (falling back to the OS setting) so the
   // very first render already has the right theme. Starting at "light" and
   // correcting in an effect caused a flash back to light when the shell
@@ -129,14 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   });
   const householdName = hh?.household?.name?.trim() || "Household";
   const resolvedId = hh?.household?.id ?? null;
-  // Business mode: the active space's `kind` flips labels and unlocks the
-  // business-only surfaces. Same app, same data model — mode-aware UI.
   const isBusiness = hh?.household?.kind === "business";
-  const BUSINESS_LABELS: Record<string, MessageKey> = {
-    "/cashflow": "nav.payablesReceivables",
-    "/expenses": "nav.costs",
-    "/loans": "nav.debt",
-  };
 
   // Drive money() formatting from the active household's currency. Set during
   // render so child screens format amounts in the right currency immediately.
@@ -396,60 +401,45 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           {NAV_SECTIONS.map((section, si) => (
             <Fragment key={section.titleKey ?? si}>
-              {section.titleKey && (
-                <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 first:pt-1">
+              {section.advanced ? (
+                <button
+                  type="button"
+                  onClick={toggleAdvanced}
+                  aria-expanded={showAdvanced}
+                  className="mt-2 flex w-full items-center justify-between px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-foreground"
+                >
                   {t(section.titleKey)}
-                </p>
+                  <ChevronDown
+                    className={cn("size-3.5 transition-transform", showAdvanced && "rotate-180")}
+                  />
+                </button>
+              ) : (
+                section.titleKey && (
+                  <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 first:pt-1">
+                    {t(section.titleKey)}
+                  </p>
+                )
               )}
-              {section.items.map((item) => {
-                const Icon = item.icon;
-                const active = pathname === item.to;
-                const override = isBusiness ? BUSINESS_LABELS[item.to] : undefined;
-                const label = t(override ?? item.labelKey);
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                      active
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )}
-                  >
-                    <Icon className="size-4" />
-                    {label}
-                  </Link>
-                );
-              })}
-              {isBusiness && section.titleKey === "navSection.manage" && (
-                <Link
-                  to="/handoff"
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    pathname === "/handoff"
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  <Send className="size-4" />
-                  {t("nav.handoff")}
-                </Link>
-              )}
-              {isBusiness && section.titleKey === "navSection.data" && (
-                <Link
-                  to="/statements"
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    pathname === "/statements"
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  <FileSpreadsheet className="size-4" />
-                  {t("nav.statements")}
-                </Link>
-              )}
+              {(!section.advanced || showAdvanced) &&
+                section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = pathname === item.to;
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                        active
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="size-4" />
+                      {t(item.labelKey)}
+                    </Link>
+                  );
+                })}
             </Fragment>
           ))}
         </nav>
