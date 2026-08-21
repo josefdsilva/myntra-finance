@@ -39,18 +39,11 @@ export type WikiSection = {
   callout?: Loc<string>;
   faq?: boolean;
   formula?: string; // rendered as a <pre> block, locale-agnostic
-  /**
-   * Who this section is for. Omitted = shown in every space. "personal" hides it
-   * in company spaces and vice versa, so the manual matches the space you're in.
-   */
-  audience?: "personal" | "business";
-  /** An extra note shown only when the current space is a company. */
-  businessNote?: Loc<string>;
 };
 
-/** The sections that apply to a given space kind (undefined audience = both). */
-export function wikiSectionsFor(kind: "personal" | "business"): WikiSection[] {
-  return WIKI_SECTIONS.filter((s) => !s.audience || s.audience === kind);
+/** Every manual section, in reading order. */
+export function wikiSections(): WikiSection[] {
+  return WIKI_SECTIONS;
 }
 
 // ---------------------------------------------------------------------------
@@ -260,491 +253,9 @@ const L = <T,>(en: T, pt: T, es: T, de: T, fr: T): Loc<T> => ({ en, pt, es, de, 
 // Sections. Order = display order in the wiki page.
 // ---------------------------------------------------------------------------
 export const WIKI_SECTIONS: WikiSection[] = [
-  // ============================================================ BUSINESS TRACK
-  // Shown only in company spaces (audience: "business"). Household spaces get the
-  // personal sections below instead, so each wiki reads end-to-end for its kind.
-  {
-    id: "bizOverview",
-    icon: "BookOpen",
-    audience: "business",
-    title: L(
-      "bynku for your company",
-      "O bynku para a tua empresa",
-      "bynku para tu empresa",
-      "bynku für dein Unternehmen",
-      "bynku pour votre entreprise",
-    ),
-    paragraphs: L(
-      [
-        "bynku gives a small company one honest read of its money: what's coming in, what's going out, and how much runway that leaves. It works around your real operating cycle, not the calendar, and rebuilds the picture as revenue lands and costs clear — so decisions rest on numbers you can see.",
-        "Think of it as the cockpit between your bank statements and your accountant: a management view, not your statutory books. And it's uninterested — nothing to sell you, no products — so its guidance points at the company's health, not a lender's. This guide is part manual, part short course in the finance every owner benefits from knowing.",
-      ],
-      [
-        "O bynku dá a uma pequena empresa uma leitura honesta do seu dinheiro: o que entra, o que sai e quanta autonomia isso deixa. Funciona em torno do teu ciclo operacional real, não do calendário, e reconstrói o quadro à medida que a receita entra e os custos são pagos — para as decisões assentarem em números que vês.",
-        "Pensa nele como a cabine entre os teus extratos bancários e o teu contabilista: uma visão de gestão, não a contabilidade oficial. E é desinteressado — nada para te vender, sem produtos — por isso aponta para a saúde da empresa, não a de um credor. Este guia é meio manual, meio curso curto sobre a finança que todo o dono beneficia em conhecer.",
-      ],
-      [
-        "bynku da a una pequeña empresa una lectura honesta de su dinero: lo que entra, lo que sale y cuánta autonomía deja. Funciona en torno a tu ciclo operativo real, no al calendario, y rehace el cuadro a medida que entra la facturación y se pagan los costes — para que las decisiones se apoyen en números que ves.",
-        "Piénsalo como la cabina entre tus extractos bancarios y tu contable: una visión de gestión, no la contabilidad oficial. Y es desinteresado — nada que venderte, sin productos — así que apunta a la salud de la empresa, no a la de un prestamista. Esta guía es mitad manual, mitad curso breve sobre las finanzas que todo dueño agradece conocer.",
-      ],
-      [
-        "bynku gibt einem kleinen Unternehmen eine ehrliche Sicht auf sein Geld: was reinkommt, was rausgeht und wie viel Reichweite das lässt. Es arbeitet um deinen echten Betriebszyklus, nicht den Kalender, und baut das Bild neu auf, wenn Umsatz eingeht und Kosten beglichen werden — damit Entscheidungen auf sichtbaren Zahlen ruhen.",
-        "Sieh es als Cockpit zwischen deinen Kontoauszügen und deiner Buchhalterin: eine Managementsicht, nicht der gesetzliche Abschluss. Und es ist uninteressiert — nichts zu verkaufen, keine Produkte — sein Rat zielt auf die Gesundheit des Unternehmens, nicht die eines Kreditgebers. Dieser Leitfaden ist halb Handbuch, halb kurzer Finanzkurs, den jede Inhaberin gut gebrauchen kann.",
-      ],
-      [
-        "bynku donne à une petite entreprise une lecture honnête de son argent : ce qui entre, ce qui sort, et l'autonomie qu'il reste. Il s'articule autour de votre cycle d'exploitation réel, pas du calendrier, et reconstruit le tableau à mesure que le chiffre d'affaires arrive et que les coûts sont réglés — pour des décisions fondées sur des chiffres visibles.",
-        "Voyez-le comme le cockpit entre vos relevés bancaires et votre comptable : une vue de gestion, pas les comptes officiels. Et il est désintéressé — rien à vous vendre, aucun produit — son conseil vise la santé de l'entreprise, pas celle d'un prêteur. Ce guide est mi-manuel, mi-cours de finance que tout dirigeant gagne à connaître.",
-      ],
-    ),
-    bullets: L(
-      [
-        { label: "Cash first", body: "Revenue in, costs out, runway left — the numbers a founder actually steers by." },
-        { label: "Management view", body: "Indicative figures to run the business; your accountant's stay the official ones." },
-        { label: "On your side", body: "No products to sell means advice aimed at the company, not a bank." },
-      ],
-      [
-        { label: "Primeiro a tesouraria", body: "Receita a entrar, custos a sair, autonomia restante — os números por que um fundador se guia." },
-        { label: "Visão de gestão", body: "Valores indicativos para gerir; os do teu contabilista continuam a ser os oficiais." },
-        { label: "Do teu lado", body: "Sem produtos para vender, o conselho é para a empresa, não para um banco." },
-      ],
-      [
-        { label: "Primero la caja", body: "Ingresos que entran, costes que salen, autonomía restante — los números que guían a un fundador." },
-        { label: "Visión de gestión", body: "Cifras indicativas para gestionar; las de tu contable siguen siendo las oficiales." },
-        { label: "De tu lado", body: "Sin productos que vender, el consejo es para la empresa, no para un banco." },
-      ],
-      [
-        { label: "Zuerst die Liquidität", body: "Umsatz rein, Kosten raus, Reichweite übrig — die Zahlen, nach denen ein Gründer steuert." },
-        { label: "Managementsicht", body: "Indikative Zahlen zum Steuern; die deiner Buchhalterin bleiben die offiziellen." },
-        { label: "Auf deiner Seite", body: "Keine Produkte zu verkaufen heißt Rat für das Unternehmen, nicht für eine Bank." },
-      ],
-      [
-        { label: "La trésorerie d'abord", body: "Revenus entrants, coûts sortants, autonomie restante — les chiffres qui guident un fondateur." },
-        { label: "Vue de gestion", body: "Des chiffres indicatifs pour piloter ; ceux de votre comptable restent officiels." },
-        { label: "De votre côté", body: "Aucun produit à vendre : le conseil vise l'entreprise, pas une banque." },
-      ],
-    ),
-    callout: L(
-      "You don't need a finance degree to run a healthy company. You need a clear read and a habit of looking. That's what this is.",
-      "Não precisas de um curso de finanças para gerir uma empresa saudável. Precisas de uma leitura clara e do hábito de olhar. É isso que isto é.",
-      "No hace falta una carrera de finanzas para llevar una empresa sana. Hace falta una lectura clara y el hábito de mirar. Eso es esto.",
-      "Du brauchst kein Finanzstudium für ein gesundes Unternehmen. Du brauchst eine klare Sicht und die Gewohnheit hinzuschauen. Genau das ist das hier.",
-      "Pas besoin d'un diplôme de finance pour gérer une entreprise saine. Il faut une lecture claire et l'habitude de regarder. C'est ce que voici.",
-    ),
-  },
-  {
-    id: "bizCashflow",
-    icon: "Wallet",
-    audience: "business",
-    title: L(
-      "Cash in, cash out, and your cycle",
-      "Entradas, saídas e o teu ciclo",
-      "Entradas, salidas y tu ciclo",
-      "Geldeingang, -ausgang und dein Zyklus",
-      "Entrées, sorties et votre cycle",
-    ),
-    paragraphs: L(
-      [
-        "A company lives or dies on cash flow — money actually received versus money actually paid — more than on profit on paper. bynku separates the two sides: revenue and receivables coming in, fixed costs and payables going out, each on your chosen operating cycle (monthly, quarterly, or your own fiscal period).",
-        "Recording both sides turns a vague 'are we ok?' into a number. Received income and paid costs build the ledger; the difference is your operating cash flow, the fuel for everything else. Invoices attach to entries so the trail stays audit-ready, and the accountant handoff is one click.",
-      ],
-      [
-        "Uma empresa vive ou morre pela tesouraria — dinheiro realmente recebido face a dinheiro realmente pago — mais do que pelo lucro no papel. O bynku separa os dois lados: receita e valores a receber a entrar, custos fixos e valores a pagar a sair, cada um no teu ciclo operacional (mensal, trimestral ou o teu próprio período fiscal).",
-        "Registar os dois lados transforma um vago 'estamos bem?' num número. Receitas recebidas e custos pagos constroem o livro-razão; a diferença é o teu fluxo de caixa operacional, o combustível para tudo o resto. As faturas anexam-se aos movimentos para o rasto ficar pronto para auditoria, e a entrega ao contabilista é um clique.",
-      ],
-      [
-        "Una empresa vive o muere por el flujo de caja — dinero realmente recibido frente a dinero realmente pagado — más que por el beneficio sobre el papel. bynku separa los dos lados: ingresos y cobros que entran, costes fijos y pagos que salen, cada uno en tu ciclo operativo (mensual, trimestral o tu propio periodo fiscal).",
-        "Registrar ambos lados convierte un vago '¿vamos bien?' en un número. Ingresos cobrados y costes pagados forman el libro; la diferencia es tu flujo de caja operativo, el combustible de todo lo demás. Las facturas se adjuntan a los movimientos para que el rastro quede listo para auditoría, y el traspaso al contable es un clic.",
-      ],
-      [
-        "Ein Unternehmen lebt oder stirbt am Cashflow — tatsächlich eingegangenes gegen tatsächlich gezahltes Geld — mehr als am Papiergewinn. bynku trennt die zwei Seiten: Umsatz und Forderungen rein, Fixkosten und Verbindlichkeiten raus, je in deinem Betriebszyklus (monatlich, quartalsweise oder dein eigener Geschäftsraum).",
-        "Beide Seiten zu erfassen macht aus einem vagen 'läuft's?' eine Zahl. Eingegangene Erlöse und gezahlte Kosten bilden das Journal; die Differenz ist dein operativer Cashflow, der Treibstoff für alles Weitere. Rechnungen hängen an den Einträgen, damit die Spur prüfbereit bleibt, und die Übergabe an die Buchhaltung ist ein Klick.",
-      ],
-      [
-        "Une entreprise vit ou meurt par sa trésorerie — l'argent réellement encaissé contre l'argent réellement payé — plus que par le bénéfice sur le papier. bynku sépare les deux côtés : chiffre d'affaires et créances entrants, charges fixes et dettes sortantes, chacun sur votre cycle d'exploitation (mensuel, trimestriel ou votre propre exercice).",
-        "Enregistrer les deux côtés transforme un vague « ça va ? » en chiffre. Recettes encaissées et coûts payés forment le journal ; la différence est votre flux de trésorerie d'exploitation, le carburant de tout le reste. Les factures s'attachent aux écritures pour garder une piste prête pour l'audit, et le transfert au comptable se fait en un clic.",
-      ],
-    ),
-    bullets: L(
-      [
-        { label: "Cash, not just profit", body: "A profitable month can still run out of cash. bynku watches the flow." },
-        { label: "Your fiscal cycle", body: "Monthly, quarterly or a custom period — the app follows how you actually report." },
-        { label: "Receivables & payables", body: "Money owed to you and money you owe, tracked so nothing is a surprise." },
-      ],
-      [
-        { label: "Tesouraria, não só lucro", body: "Um mês com lucro pode ficar sem dinheiro. O bynku vigia o fluxo." },
-        { label: "O teu ciclo fiscal", body: "Mensal, trimestral ou período próprio — a app segue como reportas de facto." },
-        { label: "A receber e a pagar", body: "O que te devem e o que deves, seguido para nada ser surpresa." },
-      ],
-      [
-        { label: "Caja, no solo beneficio", body: "Un mes con beneficio puede quedarse sin caja. bynku vigila el flujo." },
-        { label: "Tu ciclo fiscal", body: "Mensual, trimestral o periodo propio — la app sigue cómo reportas de verdad." },
-        { label: "Cobros y pagos", body: "Lo que te deben y lo que debes, seguido para que nada sea sorpresa." },
-      ],
-      [
-        { label: "Liquidität, nicht nur Gewinn", body: "Ein Gewinnmonat kann trotzdem ohne Cash dastehen. bynku beobachtet den Fluss." },
-        { label: "Dein Geschäftszyklus", body: "Monatlich, quartalsweise oder eigener Zeitraum — die App folgt deiner echten Berichtsweise." },
-        { label: "Forderungen & Verbindlichkeiten", body: "Was man dir schuldet und was du schuldest, verfolgt, damit nichts überrascht." },
-      ],
-      [
-        { label: "La trésorerie, pas que le profit", body: "Un mois bénéficiaire peut manquer de cash. bynku surveille le flux." },
-        { label: "Votre exercice", body: "Mensuel, trimestriel ou période propre — l'app suit votre façon de reporter." },
-        { label: "Créances & dettes", body: "Ce qu'on vous doit et ce que vous devez, suivis pour éviter les surprises." },
-      ],
-    ),
-    callout: L(
-      "Profit is an opinion; cash is a fact. Run the business on the fact, and let profit be the scoreboard.",
-      "O lucro é uma opinião; a tesouraria é um facto. Gere o negócio pelo facto e deixa o lucro ser o placar.",
-      "El beneficio es una opinión; la caja es un hecho. Lleva el negocio por el hecho y deja que el beneficio sea el marcador.",
-      "Gewinn ist eine Meinung; Cash ist eine Tatsache. Führe das Geschäft nach der Tatsache und lass den Gewinn der Punktestand sein.",
-      "Le bénéfice est une opinion ; la trésorerie est un fait. Pilotez sur le fait, et laissez le bénéfice être le score.",
-    ),
-  },
-  {
-    id: "bizRunway",
-    icon: "Calculator",
-    audience: "business",
-    title: L(
-      "Running costs, free cash and reserves",
-      "Custos correntes, caixa livre e reservas",
-      "Costes corrientes, caja libre y reservas",
-      "Laufende Kosten, freie Liquidität und Reserven",
-      "Coûts de fonctionnement, trésorerie libre et réserves",
-    ),
-    paragraphs: L(
-      [
-        "Your running costs are what a normal operating period takes to keep the lights on — fixed costs, payroll, debt service and everyday spend. bynku sums them into a baseline, then shows what's genuinely free after them: the company's version of safe-to-commit, already net of what you must cover.",
-        "Beyond that sits the reserve — a cash cushion measured in months of runway. It's the difference between a slow quarter being an inconvenience and an emergency. bynku holds reserves as projects, separate from operating cash, so the buffer you must not raid never gets confused with money earmarked to reinvest.",
-      ],
-      [
-        "Os custos correntes são o que um período operacional normal exige para manter a porta aberta — custos fixos, salários, serviço da dívida e gasto do dia a dia. O bynku soma-os numa base e mostra o que fica mesmo livre: a versão-empresa do 'seguro a comprometer', já líquido do que tens de cobrir.",
-        "Além disso está a reserva — uma almofada de caixa medida em meses de autonomia. É a diferença entre um trimestre fraco ser um incómodo ou uma emergência. O bynku guarda reservas como projetos, separadas da caixa operacional, para a almofada que não deves mexer não se confundir com o dinheiro destinado a reinvestir.",
-      ],
-      [
-        "Tus costes corrientes son lo que un periodo operativo normal necesita para seguir abierto — costes fijos, nóminas, servicio de deuda y gasto del día a día. bynku los suma en una base y muestra lo que queda de verdad libre: la versión-empresa del 'seguro para comprometer', ya neto de lo que debes cubrir.",
-        "Más allá está la reserva — un colchón de caja medido en meses de autonomía. Es la diferencia entre que un trimestre flojo sea una molestia o una emergencia. bynku guarda reservas como proyectos, aparte de la caja operativa, para que el colchón intocable no se confunda con el dinero destinado a reinvertir.",
-      ],
-      [
-        "Deine laufenden Kosten sind, was ein normaler Betriebszeitraum braucht, um den Laden am Laufen zu halten — Fixkosten, Löhne, Schuldendienst und Alltagsausgaben. bynku summiert sie zu einer Basis und zeigt, was wirklich frei bleibt: die Unternehmensversion des 'sicher zu binden', schon nach Abzug des Nötigen.",
-        "Darüber liegt die Reserve — ein Liquiditätspolster in Monaten Reichweite. Sie entscheidet, ob ein schwaches Quartal ein Ärgernis oder ein Notfall ist. bynku hält Reserven als Projekte, getrennt vom Betriebsgeld, damit der unantastbare Puffer nie mit dem zum Reinvestieren bestimmten Geld verwechselt wird.",
-      ],
-      [
-        "Vos coûts de fonctionnement sont ce qu'un cycle d'exploitation normal exige pour garder les portes ouvertes — charges fixes, paie, service de la dette et dépenses courantes. bynku les additionne en une base, puis montre ce qui est vraiment libre : la version entreprise du « sûr à engager », déjà net de ce que vous devez couvrir.",
-        "Au-delà se trouve la réserve — un matelas de trésorerie mesuré en mois d'autonomie. C'est la différence entre un trimestre creux qui gêne et un qui met en danger. bynku garde les réserves comme des projets, à part de la trésorerie d'exploitation, pour que le matelas intouchable ne se confonde pas avec l'argent destiné à réinvestir.",
-      ],
-    ),
-    bullets: L(
-      [
-        { label: "Runway in months", body: "How long the reserve covers running costs if income paused — the survival number." },
-        { label: "Free after costs", body: "What's left once fixed costs, payroll and debt are set aside — safe to commit." },
-        { label: "Reserves apart", body: "A cash cushion kept separate from operating money, so it's there when it's needed." },
-      ],
-      [
-        { label: "Autonomia em meses", body: "Quanto tempo a reserva cobre os custos correntes se a receita parasse — o número de sobrevivência." },
-        { label: "Livre após custos", body: "O que fica depois de reservar custos fixos, salários e dívida — seguro a comprometer." },
-        { label: "Reservas à parte", body: "Uma almofada separada da caixa operacional, para estar lá quando é precisa." },
-      ],
-      [
-        { label: "Autonomía en meses", body: "Cuánto cubre la reserva los costes corrientes si parara el ingreso — el número de supervivencia." },
-        { label: "Libre tras costes", body: "Lo que queda tras apartar costes fijos, nóminas y deuda — seguro para comprometer." },
-        { label: "Reservas aparte", body: "Un colchón separado de la caja operativa, para que esté cuando haga falta." },
-      ],
-      [
-        { label: "Reichweite in Monaten", body: "Wie lange die Reserve laufende Kosten deckt, wenn Einnahmen pausieren — die Überlebenszahl." },
-        { label: "Frei nach Kosten", body: "Was bleibt, wenn Fixkosten, Löhne und Schulden zurückgelegt sind — sicher zu binden." },
-        { label: "Reserven getrennt", body: "Ein Polster getrennt vom Betriebsgeld, damit es da ist, wenn es gebraucht wird." },
-      ],
-      [
-        { label: "Autonomie en mois", body: "Combien de temps la réserve couvre les coûts si les revenus s'arrêtaient — le chiffre de survie." },
-        { label: "Libre après coûts", body: "Ce qui reste une fois charges fixes, paie et dette réservées — sûr à engager." },
-        { label: "Réserves à part", body: "Un matelas séparé de la trésorerie d'exploitation, présent le moment venu." },
-      ],
-    ),
-    callout: L(
-      "Runway buys time, and time is what lets a company fix a bad patch instead of folding in one.",
-      "A autonomia compra tempo, e o tempo é o que deixa uma empresa corrigir um mau período em vez de fechar nele.",
-      "La autonomía compra tiempo, y el tiempo es lo que deja a una empresa arreglar un mal tramo en vez de cerrar en él.",
-      "Reichweite kauft Zeit, und Zeit lässt ein Unternehmen eine Durststrecke beheben, statt in ihr aufzugeben.",
-      "L'autonomie achète du temps, et le temps permet à une entreprise de corriger un mauvais passage plutôt que d'y sombrer.",
-    ),
-  },
-  {
-    id: "bizFinancing",
-    icon: "CreditCard",
-    audience: "business",
-    title: L(
-      "Loans, credit lines and leverage",
-      "Empréstimos, linhas de crédito e alavancagem",
-      "Préstamos, líneas de crédito y apalancamiento",
-      "Kredite, Kreditlinien und Verschuldung",
-      "Prêts, lignes de crédit et effet de levier",
-    ),
-    paragraphs: L(
-      [
-        "Debt is a tool with a price. A term loan for equipment that earns its keep can be sensible; a revolving line left rolling at a high rate quietly drains margin. bynku works in total cost: enter any facility and it reconstructs the real amortization — interest versus principal, the payoff date, and the true annual rate even when only the instalment was quoted.",
-        "Leverage cuts both ways: it amplifies returns when the business is growing and losses when it isn't. When there's spare cash, clearing expensive debt is a risk-free return at its rate — often better than reinvesting. The coach, with nothing to sell, will suggest overpaying, refinancing or renegotiating with the bank; the simulator shows what an extra payment saves.",
-      ],
-      [
-        "A dívida é uma ferramenta com preço. Um empréstimo a prazo para equipamento que se paga a si próprio pode fazer sentido; uma linha rotativa a rolar a taxa alta drena a margem em silêncio. O bynku trabalha em custo total: insere qualquer facilidade e ele reconstrói a amortização real — juro face a capital, a data de fim, e a taxa anual real mesmo quando só a prestação foi indicada.",
-        "A alavancagem corta para os dois lados: amplia os retornos quando o negócio cresce e as perdas quando não. Havendo caixa a mais, liquidar dívida cara é um retorno sem risco à sua taxa — muitas vezes melhor que reinvestir. O coach, sem nada para vender, sugere amortizar, refinanciar ou renegociar com o banco; o simulador mostra o que um pagamento extra poupa.",
-      ],
-      [
-        "La deuda es una herramienta con precio. Un préstamo a plazo para equipo que se paga solo puede ser sensato; una línea revolving rodando a tipo alto drena el margen en silencio. bynku trabaja en coste total: introduce cualquier facilidad y reconstruye la amortización real — interés frente a principal, la fecha de fin, y el tipo anual real aunque solo se indicara la cuota.",
-        "El apalancamiento corta por ambos lados: amplía los retornos cuando el negocio crece y las pérdidas cuando no. Cuando sobra caja, saldar deuda cara es un retorno sin riesgo a su tipo — a menudo mejor que reinvertir. El asistente, sin nada que vender, sugiere amortizar, refinanciar o renegociar con el banco; el simulador muestra lo que ahorra un pago extra.",
-      ],
-      [
-        "Schuld ist ein Werkzeug mit Preis. Ein Terminkredit für Ausrüstung, die sich trägt, kann sinnvoll sein; eine revolvierende Linie zu hohem Zins zehrt leise an der Marge. bynku rechnet in Gesamtkosten: Gib eine Fazilität ein, und es rekonstruiert die echte Tilgung — Zins gegen Kapital, das Enddatum und den echten Jahreszins, selbst wenn nur die Rate genannt war.",
-        "Verschuldung schneidet beidseitig: Sie verstärkt Erträge im Wachstum und Verluste sonst. Bei überschüssigem Cash ist teure Schuld zu tilgen eine risikofreie Rendite zu ihrem Zins — oft besser als reinvestieren. Der Coach, ohne etwas zu verkaufen, schlägt Sondertilgung, Umschuldung oder Neuverhandlung mit der Bank vor; der Simulator zeigt, was eine Extrazahlung spart.",
-      ],
-      [
-        "La dette est un outil avec un prix. Un prêt à terme pour un équipement qui se rentabilise peut être sensé ; une ligne renouvelable à taux élevé ronge la marge en silence. bynku raisonne en coût total : saisissez une facilité et il reconstruit l'amortissement réel — intérêts contre capital, la date de fin, et le taux annuel réel même quand seule l'échéance était indiquée.",
-        "L'effet de levier coupe des deux côtés : il amplifie les rendements en croissance et les pertes sinon. Quand il reste du cash, solder la dette chère est un rendement sans risque à son taux — souvent mieux que réinvestir. L'assistant, sans rien à vendre, suggère de rembourser, refinancer ou renégocier avec la banque ; le simulateur montre ce qu'un paiement en plus économise.",
-      ],
-    ),
-    bullets: L(
-      [
-        { label: "Total cost, not the instalment", body: "APR and full cost surfaced for every loan, overdraft or lease." },
-        { label: "Leverage is a magnifier", body: "It amplifies good years and bad. Size it to cash flow you can rely on." },
-        { label: "Clear dear debt first", body: "Paying off high-rate debt is a guaranteed return; the coach will say so." },
-      ],
-      [
-        { label: "Custo total, não a prestação", body: "Taxa e custo total à vista para cada empréstimo, descoberto ou leasing." },
-        { label: "A alavancagem amplifica", body: "Amplia os bons anos e os maus. Dimensiona-a à tesouraria em que podes confiar." },
-        { label: "Primeiro a dívida cara", body: "Pagar dívida a taxa alta é um retorno garantido; o coach di-lo-á." },
-      ],
-      [
-        { label: "Coste total, no la cuota", body: "Tipo y coste total a la vista para cada préstamo, descubierto o leasing." },
-        { label: "El apalancamiento amplifica", body: "Amplía los buenos años y los malos. Dimensiónalo a la caja en que puedas confiar." },
-        { label: "Primero la deuda cara", body: "Saldar deuda de tipo alto es un retorno garantizado; el asistente lo dirá." },
-      ],
-      [
-        { label: "Gesamtkosten, nicht die Rate", body: "Zins und Gesamtkosten sichtbar für jeden Kredit, Dispo oder Leasing." },
-        { label: "Hebel ist ein Verstärker", body: "Er verstärkt gute wie schlechte Jahre. Bemiss ihn am verlässlichen Cashflow." },
-        { label: "Teure Schuld zuerst", body: "Hochverzinste Schuld zu tilgen ist eine garantierte Rendite; der Coach sagt es." },
-      ],
-      [
-        { label: "Coût total, pas l'échéance", body: "Taux et coût total affichés pour chaque prêt, découvert ou leasing." },
-        { label: "Le levier amplifie", body: "Il amplifie les bonnes et mauvaises années. Dimensionnez-le à une trésorerie fiable." },
-        { label: "La dette chère d'abord", body: "Solder une dette à taux élevé est un rendement garanti ; l'assistant le dira." },
-      ],
-    ),
-    callout: L(
-      "The cheapest financing is the one you understand before you sign — and bynku is always on your side against its cost.",
-      "O financiamento mais barato é o que percebes antes de assinar — e o bynku está sempre do teu lado contra o seu custo.",
-      "La financiación más barata es la que entiendes antes de firmar — y bynku está siempre de tu lado frente a su coste.",
-      "Die günstigste Finanzierung ist die, die du vor der Unterschrift verstehst — und bynku steht immer auf deiner Seite gegen ihre Kosten.",
-      "Le financement le moins cher est celui que vous comprenez avant de signer — et bynku est toujours de votre côté contre son coût.",
-    ),
-  },
-  {
-    id: "bizAssets",
-    icon: "PiggyBank",
-    audience: "business",
-    title: L(
-      "Assets, depreciation and equity",
-      "Ativos, depreciação e capital próprio",
-      "Activos, amortización y patrimonio",
-      "Vermögen, Abschreibung und Eigenkapital",
-      "Actifs, amortissement et capitaux propres",
-    ),
-    paragraphs: L(
-      [
-        "A company's assets — equipment, vehicles, premises, cash and investments — are one half of its worth; what it owes is the other. bynku tracks both and shows the difference as equity, the honest net position. For business assets it also models depreciation: the written-down value as gear ages, so net worth reflects book value, not the purchase price.",
-        "Depreciation is a real, non-cash cost: it lowers reported profit without touching this period's cash. Seeing it keeps profitability honest and reminds you to plan for eventual replacement. bynku's Finance Statements pull all of this into an indicative balance sheet you can sanity-check against your accountant's.",
-      ],
-      [
-        "Os ativos de uma empresa — equipamento, viaturas, instalações, caixa e investimentos — são metade do seu valor; o que deve é a outra. O bynku acompanha ambos e mostra a diferença como capital próprio, a posição líquida honesta. Para ativos de empresa modela também a depreciação: o valor abatido à medida que o equipamento envelhece, para o património refletir o valor contabilístico, não o preço de compra.",
-        "A depreciação é um custo real, não monetário: reduz o lucro reportado sem tocar na caixa deste período. Vê-la mantém a rentabilidade honesta e lembra-te de planear a substituição. As Demonstrações financeiras do bynku reúnem tudo isto num balanço indicativo que podes confrontar com o do teu contabilista.",
-      ],
-      [
-        "Los activos de una empresa — equipo, vehículos, locales, caja e inversiones — son la mitad de su valor; lo que debe es la otra. bynku sigue ambos y muestra la diferencia como patrimonio, la posición neta honesta. Para activos de empresa también modela la amortización: el valor rebajado según envejece el equipo, para que el patrimonio refleje el valor contable, no el precio de compra.",
-        "La amortización es un coste real, no de caja: baja el beneficio reportado sin tocar la caja de este periodo. Verla mantiene honesta la rentabilidad y recuerda planificar la reposición. Los Estados financieros de bynku reúnen todo esto en un balance indicativo que puedes contrastar con el de tu contable.",
-      ],
-      [
-        "Das Vermögen eines Unternehmens — Ausrüstung, Fahrzeuge, Räume, Cash und Anlagen — ist die eine Hälfte seines Werts; die Schulden die andere. bynku verfolgt beide und zeigt die Differenz als Eigenkapital, die ehrliche Nettoposition. Für Geschäftsvermögen bildet es auch Abschreibung ab: den abgeschriebenen Wert im Alter, damit das Nettovermögen den Buchwert zeigt, nicht den Kaufpreis.",
-        "Abschreibung ist ein echter, nicht zahlungswirksamer Aufwand: Sie senkt den ausgewiesenen Gewinn, ohne die Liquidität dieser Periode zu berühren. Sie zu sehen hält die Rentabilität ehrlich und erinnert an die Ersatzplanung. bynkus Finanzberichte fügen all das zu einer indikativen Bilanz zusammen, die du gegen die deiner Buchhalterin prüfen kannst.",
-      ],
-      [
-        "Les actifs d'une entreprise — équipements, véhicules, locaux, trésorerie et placements — sont une moitié de sa valeur ; ce qu'elle doit est l'autre. bynku suit les deux et montre la différence en capitaux propres, la position nette honnête. Pour les actifs professionnels, il modélise aussi l'amortissement : la valeur nette comptable au fil du vieillissement, pour que le patrimoine reflète la valeur comptable, pas le prix d'achat.",
-        "L'amortissement est un coût réel, non décaissé : il baisse le bénéfice affiché sans toucher la trésorerie de la période. Le voir garde la rentabilité honnête et rappelle de prévoir le remplacement. Les États financiers de bynku réunissent tout cela en un bilan indicatif à confronter à celui de votre comptable.",
-      ],
-    ),
-    bullets: L(
-      [
-        { label: "Equity = assets − liabilities", body: "The company's true net position, updated as debts amortize and values change." },
-        { label: "Depreciation, done right", body: "Straight-line write-down so book value and net worth stay realistic." },
-        { label: "Non-cash but real", body: "Depreciation trims profit, not cash — plan replacements before they bite." },
-      ],
-      [
-        { label: "Capital = ativo − passivo", body: "A verdadeira posição líquida da empresa, atualizada à medida que a dívida amortiza." },
-        { label: "Depreciação bem feita", body: "Abatimento linear para o valor contabilístico e o património ficarem realistas." },
-        { label: "Não é caixa, mas é real", body: "A depreciação corta o lucro, não a caixa — planeia substituições antes que doam." },
-      ],
-      [
-        { label: "Patrimonio = activo − pasivo", body: "La verdadera posición neta de la empresa, actualizada según amortiza la deuda." },
-        { label: "Amortización bien hecha", body: "Rebaja lineal para que el valor contable y el patrimonio sigan siendo realistas." },
-        { label: "No es caja, pero es real", body: "La amortización recorta el beneficio, no la caja — planifica reposiciones a tiempo." },
-      ],
-      [
-        { label: "Eigenkapital = Aktiva − Passiva", body: "Die echte Nettoposition, aktualisiert, während Schulden tilgen und Werte sich ändern." },
-        { label: "Abschreibung, richtig", body: "Lineare Abschreibung, damit Buchwert und Nettovermögen realistisch bleiben." },
-        { label: "Nicht Cash, aber real", body: "Abschreibung mindert Gewinn, nicht Cash — plane Ersatz, bevor er beißt." },
-      ],
-      [
-        { label: "Capitaux = actif − passif", body: "La vraie position nette, mise à jour à mesure que la dette s'amortit." },
-        { label: "Amortissement bien fait", body: "Décote linéaire pour garder valeur comptable et patrimoine réalistes." },
-        { label: "Non décaissé mais réel", body: "L'amortissement rogne le bénéfice, pas la trésorerie — anticipez les remplacements." },
-      ],
-    ),
-    callout: L(
-      "Net worth is the scoreboard that can't be faked. Cash flow is what moves it up.",
-      "O património líquido é o placar que não se falsifica. A tesouraria é o que o faz subir.",
-      "El patrimonio neto es el marcador que no se falsea. El flujo de caja es lo que lo sube.",
-      "Das Nettovermögen ist der Punktestand, der sich nicht fälschen lässt. Der Cashflow bewegt ihn nach oben.",
-      "La valeur nette est le score qu'on ne peut truquer. La trésorerie est ce qui la fait monter.",
-    ),
-  },
-  {
-    id: "bizPlanning",
-    icon: "CalendarClock",
-    audience: "business",
-    title: L(
-      "Payables, receivables and looking ahead",
-      "A pagar, a receber e olhar em frente",
-      "Pagos, cobros y mirar adelante",
-      "Verbindlichkeiten, Forderungen und Vorausschau",
-      "Dettes, créances et anticipation",
-    ),
-    paragraphs: L(
-      [
-        "The costs and receipts you already know are coming are half the battle won. bynku lets you line up dated payables and receivables — a tax bill, a big invoice, a renewal — and forecasts the cash position month by month, flagging any point where cash runs short before it happens.",
-        "Fast Forward takes it further: model a hire, new equipment, a new site or a jump in revenue and watch cash and runway respond. The Finance Statements give an indicative P&L, balance sheet and cash flow; Analysis and the sector comparison show productivity and margin against your industry. Together they turn 'I think we're fine' into evidence.",
-      ],
-      [
-        "Os custos e recebimentos que já sabes que vêm são meia batalha ganha. O bynku deixa-te alinhar valores a pagar e a receber datados — um imposto, uma fatura grande, uma renovação — e prevê a posição de caixa mês a mês, assinalando qualquer ponto em que a caixa fica curta antes de acontecer.",
-        "O Avançar rápido vai mais longe: modela uma contratação, equipamento novo, uma nova unidade ou um salto na receita e vê a caixa e a autonomia responderem. As Demonstrações financeiras dão um P&L, balanço e fluxos indicativos; a Análise e a comparação setorial mostram produtividade e margem face à tua indústria. Juntos, transformam o 'acho que estamos bem' em evidência.",
-      ],
-      [
-        "Los costes y cobros que ya sabes que vienen son media batalla ganada. bynku te deja alinear pagos y cobros con fecha — un impuesto, una factura grande, una renovación — y prevé la posición de caja mes a mes, señalando cualquier punto donde la caja se quede corta antes de que pase.",
-        "El Avance rápido va más allá: modela una contratación, equipo nuevo, una nueva sede o un salto de ingresos y observa cómo responden la caja y la autonomía. Los Estados financieros dan un P&L, balance y flujo indicativos; el Análisis y la comparación sectorial muestran productividad y margen frente a tu industria. Juntos, convierten el 'creo que vamos bien' en evidencia.",
-      ],
-      [
-        "Die Kosten und Eingänge, von denen du schon weißt, sind die halbe Miete. bynku lässt dich datierte Verbindlichkeiten und Forderungen aufreihen — eine Steuer, eine große Rechnung, eine Verlängerung — und prognostiziert die Liquidität Monat für Monat, mit Warnung an jedem Punkt, wo das Geld knapp wird, bevor es passiert.",
-        "Vorspulen geht weiter: Modelliere eine Einstellung, neue Ausrüstung, einen neuen Standort oder einen Umsatzsprung und sieh, wie Cash und Reichweite reagieren. Die Finanzberichte liefern eine indikative GuV, Bilanz und Kapitalflussrechnung; Analyse und Branchenvergleich zeigen Produktivität und Marge gegenüber deiner Branche. Zusammen machen sie aus 'ich glaube, es läuft' Belege.",
-      ],
-      [
-        "Les coûts et recettes que vous savez déjà venir sont la moitié de la bataille gagnée. bynku vous laisse aligner dettes et créances datées — un impôt, une grosse facture, un renouvellement — et prévoit la trésorerie mois par mois, en signalant tout point où le cash manque avant qu'il n'arrive.",
-        "L'Avance rapide va plus loin : modélisez une embauche, du nouvel équipement, un nouveau site ou un bond de revenus et voyez la trésorerie et l'autonomie réagir. Les États financiers donnent un compte de résultat, un bilan et un flux indicatifs ; l'Analyse et la comparaison sectorielle montrent productivité et marge face à votre secteur. Ensemble, ils changent « je crois qu'on va bien » en preuves.",
-      ],
-    ),
-    bullets: L(
-      [
-        { label: "See the shortfall early", body: "The forecast flags a cash gap before the month it lands, so you can act." },
-        { label: "Model the what-if", body: "Test a hire, a purchase or a new contract and see the effect on cash and runway." },
-        { label: "Statements & benchmarks", body: "Indicative P&L, balance sheet, cash flow, and how you compare to your sector." },
-      ],
-      [
-        { label: "Vê a falha cedo", body: "A previsão assinala uma falta de caixa antes do mês em que cai, para poderes agir." },
-        { label: "Modela o e-se", body: "Testa uma contratação, uma compra ou um novo contrato e vê o efeito na caixa e autonomia." },
-        { label: "Demonstrações e referências", body: "P&L, balanço e fluxos indicativos, e como te comparas com o teu setor." },
-      ],
-      [
-        { label: "Ve el faltante pronto", body: "La previsión señala un hueco de caja antes del mes en que llega, para que actúes." },
-        { label: "Modela el qué-pasaría-si", body: "Prueba una contratación, una compra o un nuevo contrato y ve el efecto en caja y autonomía." },
-        { label: "Estados y referencias", body: "P&L, balance y flujo indicativos, y cómo te comparas con tu sector." },
-      ],
-      [
-        { label: "Die Lücke früh sehen", body: "Die Prognose meldet eine Liquiditätslücke vor dem Monat, in dem sie eintritt — du kannst handeln." },
-        { label: "Das Was-wäre-wenn modellieren", body: "Teste eine Einstellung, einen Kauf oder einen neuen Vertrag und sieh die Wirkung auf Cash und Reichweite." },
-        { label: "Berichte & Benchmarks", body: "Indikative GuV, Bilanz, Cashflow, und wie du gegenüber deiner Branche stehst." },
-      ],
-      [
-        { label: "Voir le manque tôt", body: "La prévision signale un trou de trésorerie avant le mois où il tombe, pour agir." },
-        { label: "Modéliser le et-si", body: "Testez une embauche, un achat ou un contrat et voyez l'effet sur cash et autonomie." },
-        { label: "États & repères", body: "Compte de résultat, bilan, flux indicatifs, et comment vous vous situez face au secteur." },
-      ],
-    ),
-    callout: L(
-      "Every cash crunch is easier to solve six weeks early than the morning it arrives. Looking ahead is the whole point.",
-      "Todo o aperto de caixa é mais fácil de resolver seis semanas antes do que na manhã em que chega. Olhar em frente é a razão de tudo.",
-      "Todo apretón de caja es más fácil de resolver seis semanas antes que la mañana en que llega. Mirar adelante es la clave.",
-      "Jede Liquiditätsklemme lässt sich sechs Wochen früher leichter lösen als am Morgen ihres Eintreffens. Vorausschau ist der ganze Sinn.",
-      "Toute tension de trésorerie se règle plus facilement six semaines avant que le matin où elle survient. Anticiper, c'est tout l'intérêt.",
-    ),
-  },
-  {
-    id: "bizCapital",
-    icon: "BarChart3",
-    audience: "business",
-    title: L(
-      "Putting spare cash to work: the order",
-      "Pôr a caixa a mais a render: a ordem",
-      "Poner la caja sobrante a trabajar: el orden",
-      "Überschüssiges Geld einsetzen: die Reihenfolge",
-      "Faire travailler le cash excédentaire : l'ordre",
-    ),
-    paragraphs: L(
-      [
-        "When a company generates more cash than it needs, the order of what to do with it usually beats improvising. First a reserve — enough runway to weather a slow patch. Then clear expensive debt, since that's a guaranteed return at its rate. Then reinvest where the return beats your cost of capital — and only then distribute or park the rest.",
-        "The logic is the same time value and compounding you'll see in the concept chapters, applied to a balance sheet. bynku shows where the company stands on each rung and keeps reserves, debt and reinvestment visible, so allocation is a deliberate choice rather than whatever's left at period end.",
-      ],
-      [
-        "Quando uma empresa gera mais caixa do que precisa, a ordem do que fazer com ela costuma vencer a improvisação. Primeiro uma reserva — autonomia suficiente para aguentar um período fraco. Depois liquidar dívida cara, pois é um retorno garantido à sua taxa. Depois reinvestir onde o retorno supera o teu custo de capital — e só então distribuir ou guardar o resto.",
-        "A lógica é o mesmo valor no tempo e juro composto que vês nos capítulos de conceitos, aplicado a um balanço. O bynku mostra em que degrau a empresa está e mantém reservas, dívida e reinvestimento visíveis, para a alocação ser uma escolha deliberada e não o que sobra no fim do período.",
-      ],
-      [
-        "Cuando una empresa genera más caja de la que necesita, el orden de qué hacer con ella suele ganar a improvisar. Primero una reserva — autonomía suficiente para aguantar un tramo flojo. Luego saldar deuda cara, pues es un retorno garantizado a su tipo. Luego reinvertir donde el retorno supere tu coste de capital — y solo entonces distribuir o guardar el resto.",
-        "La lógica es el mismo valor temporal e interés compuesto que verás en los capítulos de conceptos, aplicado a un balance. bynku muestra en qué peldaño está la empresa y mantiene reservas, deuda y reinversión a la vista, para que la asignación sea una elección deliberada y no lo que sobra a fin de periodo.",
-      ],
-      [
-        "Erzeugt ein Unternehmen mehr Cash als nötig, schlägt die Reihenfolge meist das Improvisieren. Zuerst eine Reserve — genug Reichweite für eine Durststrecke. Dann teure Schuld tilgen, denn das ist eine garantierte Rendite zu ihrem Zins. Dann reinvestieren, wo die Rendite die Kapitalkosten schlägt — und erst dann den Rest ausschütten oder parken.",
-        "Die Logik ist derselbe Zeitwert und Zinseszins wie in den Konzeptkapiteln, auf eine Bilanz angewandt. bynku zeigt, auf welcher Stufe das Unternehmen steht, und hält Reserven, Schuld und Reinvestition sichtbar, damit Allokation eine bewusste Wahl ist statt dessen, was am Periodenende übrig bleibt.",
-      ],
-      [
-        "Quand une entreprise génère plus de cash qu'il n'en faut, l'ordre de ce qu'on en fait bat souvent l'improvisation. D'abord une réserve — assez d'autonomie pour traverser un creux. Puis solder la dette chère, car c'est un rendement garanti à son taux. Puis réinvestir là où le rendement dépasse votre coût du capital — et seulement ensuite distribuer ou garder le reste.",
-        "La logique est la même valeur temporelle et capitalisation que dans les chapitres de concepts, appliquée à un bilan. bynku montre où l'entreprise se situe sur chaque échelon et garde réserves, dette et réinvestissement visibles, pour que l'allocation soit un choix délibéré et non ce qui reste en fin de période.",
-      ],
-    ),
-    bullets: L(
-      [
-        { label: "Reserve first", body: "Runway before growth — a shock shouldn't force emergency borrowing." },
-        { label: "Then kill dear debt", body: "Clearing high-rate debt is a risk-free return; usually it comes before reinvesting." },
-        { label: "Reinvest above your hurdle", body: "Put cash where the return beats your cost of capital; distribute the rest." },
-      ],
-      [
-        { label: "Primeiro a reserva", body: "Autonomia antes do crescimento — um choque não deve forçar crédito de emergência." },
-        { label: "Depois a dívida cara", body: "Liquidar dívida a taxa alta é um retorno sem risco; costuma vir antes de reinvestir." },
-        { label: "Reinveste acima do teu limiar", body: "Põe a caixa onde o retorno supera o custo de capital; distribui o resto." },
-      ],
-      [
-        { label: "Primero la reserva", body: "Autonomía antes que crecimiento — un golpe no debe forzar crédito de emergencia." },
-        { label: "Luego la deuda cara", body: "Saldar deuda de tipo alto es un retorno sin riesgo; suele ir antes de reinvertir." },
-        { label: "Reinvierte sobre tu umbral", body: "Pon la caja donde el retorno supere tu coste de capital; distribuye el resto." },
-      ],
-      [
-        { label: "Zuerst die Reserve", body: "Reichweite vor Wachstum — ein Schock soll keine Notkredite erzwingen." },
-        { label: "Dann teure Schuld", body: "Hochverzinste Schuld zu tilgen ist eine risikofreie Rendite; meist vor dem Reinvestieren." },
-        { label: "Über deiner Hürde reinvestieren", body: "Setz Cash ein, wo die Rendite die Kapitalkosten schlägt; den Rest ausschütten." },
-      ],
-      [
-        { label: "La réserve d'abord", body: "L'autonomie avant la croissance — un choc ne doit pas forcer un emprunt d'urgence." },
-        { label: "Puis la dette chère", body: "Solder une dette à taux élevé est un rendement sans risque ; en général avant de réinvestir." },
-        { label: "Réinvestir au-dessus du seuil", body: "Placez le cash où le rendement dépasse votre coût du capital ; distribuez le reste." },
-      ],
-    ),
-    callout: L(
-      "Capital allocation is the quiet skill that compounds a company. Spare cash is a decision, not a leftover.",
-      "A alocação de capital é a competência silenciosa que compõe uma empresa. A caixa a mais é uma decisão, não uma sobra.",
-      "La asignación de capital es la habilidad silenciosa que compone una empresa. La caja sobrante es una decisión, no un sobrante.",
-      "Kapitalallokation ist die leise Fähigkeit, die ein Unternehmen verzinst. Überschüssiges Geld ist eine Entscheidung, kein Rest.",
-      "L'allocation du capital est le savoir-faire discret qui capitalise une entreprise. Le cash excédentaire est une décision, pas un reste.",
-    ),
-  },
-
-  // ------------------------------------------------------------ overview
   {
     id: "overview",
     icon: "BookOpen",
-    audience: "personal",
     title: L("Welcome to bynku", "Bem-vindo ao bynku", "Bienvenido a bynku", "Willkommen bei bynku", "Bienvenue sur bynku"),
     paragraphs: L(
       [
@@ -780,20 +291,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Die ganze App basiert auf einer Idee: Ein Plan, den du verstehst, schlägt einen perfekten Plan, den du nicht verstehst.",
       "Toute l'app repose sur une idée : un plan que tu comprends vaut mieux qu'un plan parfait que tu ne comprends pas.",
     ),
-    businessNote: L(
-      "You're in a company space, so this manual uses business language: money in is revenue and receivables, money out is fixed costs and payables, and the same engine projects cash flow and runway instead of household net worth. The Handoff page hands a space to an accountant.",
-      "Estás num espaço de empresa, por isso este manual usa linguagem de negócio: as entradas são receita e valores a receber, as saídas são custos fixos e valores a pagar, e o mesmo motor projeta fluxo de caixa e autonomia em vez do património familiar. A página de Transferência entrega o espaço a um contabilista.",
-      "Estás en un espacio de empresa, así que este manual usa lenguaje de negocio: los ingresos son facturación y cobros pendientes, los gastos son costes fijos y pagos pendientes, y el mismo motor proyecta el flujo de caja y la autonomía en vez del patrimonio familiar. La página de Traspaso entrega el espacio a un contable.",
-      "Du bist in einem Firmenraum, daher nutzt dieses Handbuch Geschäftssprache: Einnahmen sind Umsatz und Forderungen, Ausgaben sind Fixkosten und Verbindlichkeiten, und dieselbe Engine projiziert Cashflow und Runway statt Haushalts-Nettovermögen. Die Übergabeseite übergibt einen Raum an eine Buchhalterin.",
-      "Vous êtes dans un espace entreprise : ce manuel emploie donc un vocabulaire pro : les entrées sont le chiffre d'affaires et les créances, les sorties les charges fixes et les dettes fournisseurs, et le même moteur projette la trésorerie et l'autonomie plutôt que le patrimoine du foyer. La page de Transfert confie un espace à un comptable.",
-    ),
   },
-
-  // ------------------------------------------------------------ mindset
   {
     id: "mindset",
     icon: "Sparkles",
-    audience: "personal",
     title: L(
       "Money is a tool, not a scoreboard",
       "O dinheiro é uma ferramenta, não um placar",
@@ -868,12 +369,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Pas besoin d'être doué avec les chiffres. Il faut un plan que vous comprenez et une habitude que vous tenez. bynku est fait pour ça.",
     ),
   },
-
-  // ------------------------------------------------------------ spending well
   {
     id: "spendingWell",
     icon: "Receipt",
-    audience: "personal",
     title: L(
       "Spending is a choice, not an accident",
       "Gastar é uma escolha, não um acaso",
@@ -948,12 +446,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Un plaisir fait partie d'un budget sain, ce n'est pas un échec. Le but du suivi n'est pas de dépenser moins, mais de dépenser à dessein.",
     ),
   },
-
-  // ------------------------------------------------------------ saving well
   {
     id: "savingWell",
     icon: "PiggyBank",
-    audience: "personal",
     title: L(
       "Pay yourself first",
       "Paga a ti primeiro",
@@ -1028,12 +523,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Le fonds d'urgence est la chose la moins excitante et la plus puissante que vous bâtirez. C'est lui qui permet à tout autre plan de survivre à une mauvaise semaine.",
     ),
   },
-
-  // ------------------------------------------------------------ investing basics
   {
     id: "investingBasics",
     icon: "BarChart3",
-    audience: "personal",
     title: L(
       "Let time do the heavy lifting",
       "Deixa o tempo fazer o trabalho pesado",
@@ -1108,12 +600,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "bynku ne vous dit pas quoi acheter — ce n'est pas son rôle, et méfiez-vous de qui est payé pour ça. Il montre pourquoi investir vient à ce moment, et ce que le temps peut faire.",
     ),
   },
-
-  // ------------------------------------------------------------ understanding debt
   {
     id: "understandingDebt",
     icon: "CreditCard",
-    audience: "personal",
     title: L(
       "Borrowing, and the true cost of it",
       "Pedir emprestado, e o seu custo real",
@@ -1188,8 +677,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "La dette la moins chère est celle que vous comprenez avant de signer. Le rôle de bynku est de rendre le coût total impossible à manquer — et de toujours prendre votre parti contre elle.",
     ),
   },
-
-  // ------------------------------------------------------------ time value of money
   {
     id: "timeValue",
     icon: "Calculator",
@@ -1266,16 +753,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Zeit ist die eine Ressource, von der du nicht mehr kaufen kannst. Gut genutzt bewirkt sie mehr für dein Geld als jedes clevere Produkt.",
       "Le temps est la seule ressource dont on ne peut acheter plus. Bien utilisé, il fait plus pour votre argent que tout produit malin.",
     ),
-    businessNote: L(
-      "Companies formalise this as discounting: future cash flows are converted to today's value (present value), and an investment only makes sense if its discounted returns beat the cost of the capital tied up. It's the backbone of every 'should we spend on this?' decision — the same question the 'Plan a purchase' and Fast Forward tools help you weigh.",
-      "As empresas formalizam isto como desconto: os fluxos de caixa futuros são convertidos ao valor de hoje (valor atual), e um investimento só faz sentido se os retornos descontados superarem o custo do capital imobilizado. É a base de toda a decisão de 'vale a pena gastar nisto?' — a mesma pergunta que o 'Planear uma compra' e o Avançar rápido ajudam a pesar.",
-      "Las empresas lo formalizan como descuento: los flujos de caja futuros se convierten a valor de hoy (valor actual), y una inversión solo tiene sentido si sus retornos descontados superan el coste del capital inmovilizado. Es la base de toda decisión de '¿merece la pena gastar en esto?' — la misma que 'Planear una compra' y Avance rápido ayudan a sopesar.",
-      "Unternehmen formalisieren das als Abzinsung: Künftige Cashflows werden auf den heutigen Wert (Barwert) gebracht, und eine Investition lohnt nur, wenn ihre abgezinsten Erträge die Kosten des gebundenen Kapitals schlagen. Das ist der Kern jeder 'Sollen wir dafür Geld ausgeben?'-Entscheidung — dieselbe Frage, die 'Kauf planen' und Vorspulen abwägen helfen.",
-      "Les entreprises le formalisent par l'actualisation : les flux futurs sont ramenés à leur valeur d'aujourd'hui (valeur actuelle), et un investissement n'a de sens que si ses rendements actualisés dépassent le coût du capital immobilisé. C'est le socle de toute décision « faut-il dépenser pour cela ? » — la question que « Planifier un achat » et Avance rapide aident à peser.",
-    ),
   },
-
-  // ------------------------------------------------------------ compounding
   {
     id: "compounding",
     icon: "Calculator",
@@ -1352,16 +830,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Zinseszins belohnt Geduld und bestraft Aufschieben. Der beste Tag zum Start war vor Jahren; der zweitbeste ist heute.",
       "Les intérêts composés récompensent la patience et punissent la procrastination. Le meilleur jour pour commencer était il y a des années ; le deuxième, c'est aujourd'hui.",
     ),
-    businessNote: L(
-      "For a business, retained profit reinvested at a good return compounds the value of the whole company — that is how enterprises grow. The mirror risk is revolving credit and overdrafts, where compounding interest quietly eats operating margin. bynku's loan tools surface that true cost; the finance statements show reinvested surplus building equity over time.",
-      "Numa empresa, o lucro retido reinvestido a um bom retorno compõe o valor de toda a empresa — é assim que os negócios crescem. O risco espelhado é o crédito rotativo e os descobertos, onde o juro composto come em silêncio a margem operacional. As ferramentas de crédito do bynku mostram esse custo real; as demonstrações financeiras mostram o excedente reinvestido a construir capital próprio ao longo do tempo.",
-      "En una empresa, el beneficio retenido reinvertido a un buen retorno compone el valor de toda la compañía — así crecen los negocios. El riesgo espejo es el crédito revolving y los descubiertos, donde el interés compuesto come en silencio el margen operativo. Las herramientas de préstamo de bynku muestran ese coste real; los estados financieros muestran el excedente reinvertido construyendo patrimonio con el tiempo.",
-      "Für ein Unternehmen verzinst reinvestierter Gewinn bei guter Rendite den Wert der ganzen Firma — so wachsen Unternehmen. Das Spiegelrisiko sind revolvierende Kredite und Dispo, wo Zinseszins leise die operative Marge frisst. bynkus Kredit-Tools zeigen diese echten Kosten; die Finanzberichte zeigen, wie reinvestierter Überschuss über die Zeit Eigenkapital aufbaut.",
-      "Pour une entreprise, le bénéfice réinvesti à bon rendement capitalise la valeur de toute la société — c'est ainsi qu'on grandit. Le risque miroir est le crédit renouvelable et les découverts, où l'intérêt composé ronge en silence la marge d'exploitation. Les outils de prêt de bynku exposent ce coût réel ; les états financiers montrent l'excédent réinvesti bâtir des capitaux propres au fil du temps.",
-    ),
   },
-
-  // ------------------------------------------------------------ inflation
   {
     id: "inflation",
     icon: "BarChart3",
@@ -1438,16 +907,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Inflation ist die Steuer, die niemand wählt. Vermeiden kannst du sie nicht, aber aufhören, so zu tun, als sagten nominale Zahlen die ganze Wahrheit.",
       "L'inflation est l'impôt que personne ne vote. On ne l'évite pas, mais on peut cesser de croire que les chiffres nominaux disent tout.",
     ),
-    businessNote: L(
-      "For a company, input-cost inflation erodes margin unless prices keep pace — repricing is a real management decision, not a courtesy. Cash reserves held for safety also lose real value the longer they sit, which is the trade-off behind holding runway versus deploying capital.",
-      "Numa empresa, a inflação dos custos corrói a margem a menos que os preços acompanhem — rever preços é uma decisão de gestão, não uma cortesia. As reservas de caixa guardadas por segurança também perdem valor real quanto mais tempo ficam, e é esse o dilema entre manter autonomia e aplicar capital.",
-      "En una empresa, la inflación de costes erosiona el margen salvo que los precios sigan el ritmo — repreciar es una decisión de gestión, no una cortesía. Las reservas de caja por seguridad también pierden valor real cuanto más quietas, y ese es el dilema entre mantener autonomía y desplegar capital.",
-      "Für ein Unternehmen frisst Kosteninflation die Marge, wenn die Preise nicht mithalten — Neupreisung ist eine Managemententscheidung, keine Höflichkeit. Als Sicherheit gehaltene Barreserven verlieren real an Wert, je länger sie liegen — der Zielkonflikt zwischen Reichweite halten und Kapital einsetzen.",
-      "Pour une entreprise, l'inflation des coûts érode la marge sauf si les prix suivent — reprézer est une décision de gestion, pas une politesse. Les réserves de trésorerie de sécurité perdent aussi de la valeur réelle en dormant, d'où l'arbitrage entre garder de l'autonomie et déployer le capital.",
-    ),
   },
-
-  // ------------------------------------------------------------ risk & return
   {
     id: "riskReturn",
     icon: "ShieldCheck",
@@ -1524,20 +984,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Du wirst nicht fürs Risiko bezahlt — sondern für Risiko, das du verstehst und tragen kannst. Der Rest ist Glücksspiel.",
       "On n'est pas payé pour prendre du risque — mais pour prendre un risque qu'on comprend et qu'on peut tenir. Le reste est du jeu.",
     ),
-    businessNote: L(
-      "For a business, concentration risk is usually revenue: leaning on one client or one product is the classic fragility. bynku's snapshot rewards diversified income, and 'How you compare' shows your spread against your sector — the corporate version of not putting every egg in one basket.",
-      "Numa empresa, o risco de concentração é normalmente a receita: depender de um cliente ou de um produto é a fragilidade clássica. O snapshot do bynku premeia receita diversificada, e o 'Como me comparo' mostra a tua dispersão face ao setor — a versão corporativa de não pôr todos os ovos no mesmo cesto.",
-      "En una empresa, el riesgo de concentración suele ser el ingreso: depender de un cliente o un producto es la fragilidad clásica. El snapshot de bynku premia el ingreso diversificado, y 'Cómo me comparo' muestra tu dispersión frente al sector — la versión corporativa de no poner todos los huevos en la misma cesta.",
-      "Für ein Unternehmen ist Konzentrationsrisiko meist der Umsatz: sich auf einen Kunden oder ein Produkt zu stützen ist die klassische Fragilität. bynkus Snapshot belohnt diversifizierte Einnahmen, und 'Wie ich abschneide' zeigt deine Streuung gegenüber der Branche — die Unternehmensversion davon, nicht alle Eier in einen Korb zu legen.",
-      "Pour une entreprise, le risque de concentration est souvent le revenu : dépendre d'un client ou d'un produit est la fragilité classique. Le snapshot de bynku récompense un revenu diversifié, et « Comment je me situe » montre votre dispersion face au secteur — la version corporate de ne pas mettre tous ses œufs dans le même panier.",
-    ),
   },
-
-  // ------------------------------------------------------------ position
   {
     id: "position",
     icon: "Wallet",
-    audience: "personal",
     title: L(
       "Your financial position, simplified",
       "A tua posição financeira, simplificada",
@@ -1621,20 +1071,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Die Stufen sind kein Wettlauf. Mach die ersten beiden, dann kannst du mehrere zugleich aufbauen — etwas ins Netz, etwas gegen die Schuld, etwas investiert — gewichtet nach dem Dringendsten. bynku zeigt, wo du auf jeder stehst.",
       "Les couches ne sont pas une course. Faites les deux premières, puis construisez-en plusieurs à la fois — un peu au matelas, un peu à la dette, un peu investi — en pondérant vers le plus urgent. bynku montre où vous en êtes sur chacune.",
     ),
-    businessNote: L(
-      "In a company space these layers map to working capital and runway: the emergency fund is a cash reserve for lean months, the safety net is several months of operating costs, debt still deserves active management, and 'assets' include equipment and receivables. The same net-worth and cash-flow maths applies to the business.",
-      "Num espaço de empresa, estas camadas correspondem a fundo de maneio e autonomia: o fundo de emergência é uma reserva de tesouraria para meses fracos, a rede de segurança são vários meses de custos operacionais, a dívida continua a merecer gestão ativa e os 'ativos' incluem equipamento e valores a receber. A mesma matemática de património e fluxo de caixa aplica-se ao negócio.",
-      "En un espacio de empresa, estas capas equivalen a capital de trabajo y autonomía: el fondo de emergencia es una reserva de caja para meses flojos, la red de seguridad son varios meses de costes operativos, la deuda sigue mereciendo gestión activa y los 'activos' incluyen equipo y cobros pendientes. La misma matemática de patrimonio y flujo de caja se aplica al negocio.",
-      "In einem Firmenraum entsprechen diese Stufen Betriebskapital und Runway: der Notgroschen ist eine Bar-Reserve für schwache Monate, das Sicherheitsnetz mehrere Monate Betriebskosten, Schulden verdienen weiter aktives Management, und 'Vermögen' umfasst Ausrüstung und Forderungen. Dieselbe Nettovermögens- und Cashflow-Mathematik gilt fürs Unternehmen.",
-      "Dans un espace entreprise, ces couches correspondent au fonds de roulement et à l'autonomie : le fonds d'urgence est une réserve de trésorerie pour les mois creux, le matelas plusieurs mois de charges d'exploitation, la dette mérite toujours une gestion active, et les « actifs » incluent équipements et créances. La même arithmétique de patrimoine et de trésorerie s'applique à l'entreprise.",
-    ),
   },
-
-  // ------------------------------------------------------------ cycles
   {
     id: "cycles",
     icon: "Calendar",
-    audience: "personal",
     diagram: "cycle",
     title: L("Your pay cycle", "O teu ciclo salarial", "Tu ciclo de cobro", "Dein Gehaltszyklus", "Ton cycle de paie"),
     paragraphs: L(
@@ -1692,12 +1132,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ moneyIn
   {
     id: "moneyIn",
     icon: "Wallet",
-    audience: "personal",
     title: L("Money in", "Entradas", "Ingresos", "Einnahmen", "Entrées"),
     paragraphs: L(
       [
@@ -1749,12 +1186,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ moneyOut
   {
     id: "moneyOut",
     icon: "Receipt",
-    audience: "personal",
     title: L("Money out", "Saídas", "Gastos", "Ausgaben", "Sorties"),
     paragraphs: L(
       [
@@ -1811,12 +1245,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ baseline
   {
     id: "baseline",
     icon: "Calculator",
-    audience: "personal",
     diagram: "baseline",
     title: L(
       "How much do I need",
@@ -1881,12 +1312,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ safeToSpend
   {
     id: "safeToSpend",
     icon: "Sparkles",
-    audience: "personal",
     title: L(
       "Safe to spend & Available",
       "Podes gastar & Disponível",
@@ -1988,8 +1416,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Vois cela comme l'ambition face à la réalité : À dépenser est l'objectif, Disponible est la vérité. Dépense sous l'objectif et la différence devient de l'excédent — le carburant de tes projets et de tes investissements.",
     ),
   },
-
-  // ------------------------------------------------------------ progressOverTime
   {
     id: "progressOverTime",
     icon: "BarChart3",
@@ -2072,12 +1498,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Des estimations qui varient, c'est normal — l'important est de le remarquer et d'ajuster. Un score qui monte sur plusieurs cycles est le vrai signe que votre situation s'améliore.",
     ),
   },
-
-  // ------------------------------------------------------------ projects (save & invest)
   {
     id: "projects",
     icon: "PiggyBank",
-    audience: "personal",
     diagram: "waterfall",
     title: L(
       "Save & Invest (projects)",
@@ -2148,12 +1571,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Objectif courant : un fonds d'urgence couvrant 3 à 6 mois de dépenses essentielles avant d'investir sérieusement.",
     ),
   },
-
-  // ------------------------------------------------------------ loans
   {
     id: "loans",
     icon: "CreditCard",
-    audience: "personal",
     diagram: "ladder",
     title: L(
       "Loans & interest",
@@ -2224,12 +1644,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Règle simple : si le TAEG d'un crédit dépasse ce que ton épargne peut raisonnablement rapporter, rembourser bat souvent investir.",
     ),
   },
-
-  // ------------------------------------------------------------ assets & net worth
   {
     id: "assets",
     icon: "Wallet",
-    audience: "personal",
     title: L(
       "Assets & net worth",
       "Ativos e património",
@@ -2304,12 +1721,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "La valeur nette est un stock, pas un flux — elle évolue lentement. Garde les valeurs à peu près à jour et elle devient un repère fiable de ta trajectoire réelle au fil du temps.",
     ),
   },
-
-  // ------------------------------------------------------------ plans
   {
     id: "plans",
     icon: "CalendarClock",
-    audience: "personal",
     title: L("Coming up (plans)", "A caminho (planos)", "Por venir (planes)", "Kommt bald (Pläne)", "À venir (plans)"),
     paragraphs: L(
       [
@@ -2361,8 +1775,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ coach
   {
     id: "coach",
     icon: "Bell",
@@ -2427,20 +1839,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
         { label: "Jalons", body: "Un discret bravo quand votre score grimpe ou que votre série d'excédents s'allonge." },
       ],
     ),
-    businessNote: L(
-      "For companies, the coach also watches runway and receivables: it warns as runway falls under three, two, and one month, and nudges you to chase overdue invoices with a ready-to-send message.",
-      "Para empresas, o coach também vigia a autonomia e os valores a receber: avisa quando a autonomia desce abaixo de três, dois e um mês, e lembra-te de cobrar faturas em atraso com uma mensagem pronta a enviar.",
-      "Para empresas, el coach también vigila la autonomía y los cobros: avisa cuando la autonomía baja de tres, dos y un mes, y te recuerda reclamar facturas vencidas con un mensaje listo para enviar.",
-      "Für Unternehmen beobachtet der Coach auch Reichweite und Forderungen: Er warnt, wenn die Reichweite unter drei, zwei und einen Monat fällt, und erinnert dich, überfällige Rechnungen mit einer fertigen Nachricht anzumahnen.",
-      "Pour les entreprises, le coach surveille aussi la trésorerie et les créances : il alerte quand la trésorerie passe sous trois, deux et un mois, et vous rappelle de relancer les factures en retard avec un message prêt à envoyer.",
-    ),
   },
-
-  // ------------------------------------------------------------ analysis
   {
     id: "analysis",
     icon: "BarChart3",
-    audience: "personal",
     title: L(
       "Analysis & benchmarks",
       "Análise e comparações",
@@ -2498,12 +1900,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ principles
   {
     id: "principles",
     icon: "PiggyBank",
-    audience: "personal",
     diagram: "ladder",
     title: L(
       "Money principles: the order that works",
@@ -2584,8 +1983,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Ce sont des repères, pas un dogme. bynku montre où vous en êtes sur chaque échelon et s'adapte à votre situation ; le but est un ordre clair sur lequel s'appuyer, pas un script rigide.",
     ),
   },
-
-  // ------------------------------------------------------------ coach
   {
     id: "coach",
     icon: "MessageCircle",
@@ -2640,8 +2037,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ smartHelp
   {
     id: "smartHelp",
     icon: "Sparkles",
@@ -2697,8 +2092,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Rien de tout cela ne remplace votre jugement — cela l'affine. Les chiffres sont les vôtres ; bynku les rend juste faciles à raisonner.",
     ),
   },
-
-  // ------------------------------------------------------------ settings
   {
     id: "settings",
     icon: "Settings",
@@ -2759,8 +2152,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ notifications
   {
     id: "notifications",
     icon: "Bell",
@@ -2815,8 +2206,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ privacy
   {
     id: "privacy",
     icon: "ShieldCheck",
@@ -2877,8 +2266,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       ],
     ),
   },
-
-  // ------------------------------------------------------------ credits
   {
     id: "credits",
     icon: "Sparkles",
@@ -2951,8 +2338,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Économiser des crédits : rester focalisé, écarter les suggestions inutiles, et taper plutôt que parler pour les saisies très courtes.",
     ),
   },
-
-  // ------------------------------------------------------------ how bynku uses AI
   {
     id: "aiTransparency",
     icon: "Sparkles",
@@ -2998,8 +2383,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
       "Repérez l'étiquette « IA » : là où vous la voyez, le contenu a été généré par un modèle et mérite une vérification rapide avant de vous y fier.",
     ),
   },
-
-  // ------------------------------------------------------------ faq
   {
     id: "faq",
     icon: "HelpCircle",
