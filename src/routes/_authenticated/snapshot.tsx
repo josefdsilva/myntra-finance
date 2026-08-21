@@ -218,23 +218,6 @@ function SnapshotPage() {
           )
         : null;
 
-      // --- Business indicators ------------------------------------------------
-      // Revenue diversification: the monthly amount of each income stream, plus
-      // the distinct payers/clients seen in this cycle's receipts.
-      const incomeSources = incomes.map((r) => Number(r.monthly_amount)).filter((n) => n > 0);
-      const distinctClients = new Set(
-        (expenses ?? [])
-          .filter((r) => r.kind === "income")
-          .map((r) => (r.merchant ?? "").trim().toLowerCase())
-          .filter((m) => m.length > 0),
-      ).size;
-      const employees = Number(hh?.household?.employees ?? 0);
-      const hasProjects = buckets.length > 0;
-      const activityCount = (expenses ?? []).length;
-      const monthlyOutgoings = fixedTotal + variablePool;
-      // Operating cash flow ≈ revenue − all running costs (fixed + debt + everyday).
-      const operatingCashFlow = income - monthlyOutgoings;
-      const reserve = bucketsTotal + Math.max(0, liquidAssets);
 
       return {
         income,
