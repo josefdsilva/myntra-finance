@@ -6,13 +6,7 @@
 // rows through the series helpers. Keeping it side-effect-free means it is fully
 // unit-testable and can run on the client (backfill) or the server (rollover).
 
-import {
-  computeHealth,
-  type ScoreInputs,
-  type BusinessScoreInputs,
-  type SubScore,
-  type Badge,
-} from "./health-score";
+import { computeHealth, type ScoreInputs, type SubScore, type Badge } from "./health-score";
 
 function round2(n: number): number {
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
