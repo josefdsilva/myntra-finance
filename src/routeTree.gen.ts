@@ -17,7 +17,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
-import { Route as AuthenticatedStatementsRouteImport } from './routes/_authenticated/statements'
 import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
 import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticated/snapshot'
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
@@ -31,7 +30,6 @@ import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
 import { Route as AuthenticatedJobChangeRouteImport } from './routes/_authenticated/job-change'
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
-import { Route as AuthenticatedHandoffRouteImport } from './routes/_authenticated/handoff'
 import { Route as AuthenticatedFastForwardRouteImport } from './routes/_authenticated/fast-forward'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -50,7 +48,6 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiPublicHooksWeeklyDigestRouteImport } from './routes/api/public/hooks/weekly-digest'
 import { Route as ApiPublicHooksCycleStartRouteImport } from './routes/api/public/hooks/cycle-start'
 import { Route as ApiPublicHooksCoachDailyRouteImport } from './routes/api/public/hooks/coach-daily'
-import { Route as ApiPublicHooksCoachBusinessDailyRouteImport } from './routes/api/public/hooks/coach-business-daily'
 import { Route as ApiPublicHooksBudgetAlertsRouteImport } from './routes/api/public/hooks/budget-alerts'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -90,11 +87,6 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
 const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
   id: '/wiki',
   path: '/wiki',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedStatementsRoute = AuthenticatedStatementsRouteImport.update({
-  id: '/statements',
-  path: '/statements',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStatementImportRoute =
@@ -161,11 +153,6 @@ const AuthenticatedJobChangeRoute = AuthenticatedJobChangeRouteImport.update({
 const AuthenticatedHouseholdsRoute = AuthenticatedHouseholdsRouteImport.update({
   id: '/households',
   path: '/households',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedHandoffRoute = AuthenticatedHandoffRouteImport.update({
-  id: '/handoff',
-  path: '/handoff',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFastForwardRoute =
@@ -268,12 +255,6 @@ const ApiPublicHooksCoachDailyRoute =
     path: '/api/public/hooks/coach-daily',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksCoachBusinessDailyRoute =
-  ApiPublicHooksCoachBusinessDailyRouteImport.update({
-    id: '/api/public/hooks/coach-business-daily',
-    path: '/api/public/hooks/coach-business-daily',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicHooksBudgetAlertsRoute =
   ApiPublicHooksBudgetAlertsRouteImport.update({
     id: '/api/public/hooks/budget-alerts',
@@ -294,7 +275,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fast-forward': typeof AuthenticatedFastForwardRoute
-  '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/job-change': typeof AuthenticatedJobChangeRoute
   '/journey': typeof AuthenticatedJourneyRoute
@@ -308,14 +288,12 @@ export interface FileRoutesByFullPath {
   '/share': typeof AuthenticatedShareRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
-  '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
-  '/api/public/hooks/coach-business-daily': typeof ApiPublicHooksCoachBusinessDailyRoute
   '/api/public/hooks/coach-daily': typeof ApiPublicHooksCoachDailyRoute
   '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
@@ -338,7 +316,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fast-forward': typeof AuthenticatedFastForwardRoute
-  '/handoff': typeof AuthenticatedHandoffRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/job-change': typeof AuthenticatedJobChangeRoute
   '/journey': typeof AuthenticatedJourneyRoute
@@ -352,14 +329,12 @@ export interface FileRoutesByTo {
   '/share': typeof AuthenticatedShareRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
-  '/statements': typeof AuthenticatedStatementsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
-  '/api/public/hooks/coach-business-daily': typeof ApiPublicHooksCoachBusinessDailyRoute
   '/api/public/hooks/coach-daily': typeof ApiPublicHooksCoachDailyRoute
   '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
@@ -384,7 +359,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/fast-forward': typeof AuthenticatedFastForwardRoute
-  '/_authenticated/handoff': typeof AuthenticatedHandoffRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
   '/_authenticated/job-change': typeof AuthenticatedJobChangeRoute
   '/_authenticated/journey': typeof AuthenticatedJourneyRoute
@@ -398,14 +372,12 @@ export interface FileRoutesById {
   '/_authenticated/share': typeof AuthenticatedShareRoute
   '/_authenticated/snapshot': typeof AuthenticatedSnapshotRoute
   '/_authenticated/statement-import': typeof AuthenticatedStatementImportRoute
-  '/_authenticated/statements': typeof AuthenticatedStatementsRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/api/public/benchmarks-version': typeof ApiPublicBenchmarksVersionRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/budget-alerts': typeof ApiPublicHooksBudgetAlertsRoute
-  '/api/public/hooks/coach-business-daily': typeof ApiPublicHooksCoachBusinessDailyRoute
   '/api/public/hooks/coach-daily': typeof ApiPublicHooksCoachDailyRoute
   '/api/public/hooks/cycle-start': typeof ApiPublicHooksCycleStartRoute
   '/api/public/hooks/weekly-digest': typeof ApiPublicHooksWeeklyDigestRoute
@@ -430,7 +402,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/fast-forward'
-    | '/handoff'
     | '/households'
     | '/job-change'
     | '/journey'
@@ -444,14 +415,12 @@ export interface FileRouteTypes {
     | '/share'
     | '/snapshot'
     | '/statement-import'
-    | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
-    | '/api/public/hooks/coach-business-daily'
     | '/api/public/hooks/coach-daily'
     | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
@@ -474,7 +443,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/fast-forward'
-    | '/handoff'
     | '/households'
     | '/job-change'
     | '/journey'
@@ -488,14 +456,12 @@ export interface FileRouteTypes {
     | '/share'
     | '/snapshot'
     | '/statement-import'
-    | '/statements'
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
-    | '/api/public/hooks/coach-business-daily'
     | '/api/public/hooks/coach-daily'
     | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
@@ -519,7 +485,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
     | '/_authenticated/fast-forward'
-    | '/_authenticated/handoff'
     | '/_authenticated/households'
     | '/_authenticated/job-change'
     | '/_authenticated/journey'
@@ -533,14 +498,12 @@ export interface FileRouteTypes {
     | '/_authenticated/share'
     | '/_authenticated/snapshot'
     | '/_authenticated/statement-import'
-    | '/_authenticated/statements'
     | '/_authenticated/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
     | '/api/public/benchmarks-version'
     | '/lovable/email/suppression'
     | '/api/public/hooks/budget-alerts'
-    | '/api/public/hooks/coach-business-daily'
     | '/api/public/hooks/coach-daily'
     | '/api/public/hooks/cycle-start'
     | '/api/public/hooks/weekly-digest'
@@ -562,7 +525,6 @@ export interface RootRouteChildren {
   ApiPublicBenchmarksVersionRoute: typeof ApiPublicBenchmarksVersionRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBudgetAlertsRoute: typeof ApiPublicHooksBudgetAlertsRoute
-  ApiPublicHooksCoachBusinessDailyRoute: typeof ApiPublicHooksCoachBusinessDailyRoute
   ApiPublicHooksCoachDailyRoute: typeof ApiPublicHooksCoachDailyRoute
   ApiPublicHooksCycleStartRoute: typeof ApiPublicHooksCycleStartRoute
   ApiPublicHooksWeeklyDigestRoute: typeof ApiPublicHooksWeeklyDigestRoute
@@ -629,13 +591,6 @@ declare module '@tanstack/react-router' {
       path: '/wiki'
       fullPath: '/wiki'
       preLoaderRoute: typeof AuthenticatedWikiRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/statements': {
-      id: '/_authenticated/statements'
-      path: '/statements'
-      fullPath: '/statements'
-      preLoaderRoute: typeof AuthenticatedStatementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/statement-import': {
@@ -727,13 +682,6 @@ declare module '@tanstack/react-router' {
       path: '/households'
       fullPath: '/households'
       preLoaderRoute: typeof AuthenticatedHouseholdsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/handoff': {
-      id: '/_authenticated/handoff'
-      path: '/handoff'
-      fullPath: '/handoff'
-      preLoaderRoute: typeof AuthenticatedHandoffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/fast-forward': {
@@ -862,13 +810,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCoachDailyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/coach-business-daily': {
-      id: '/api/public/hooks/coach-business-daily'
-      path: '/api/public/hooks/coach-business-daily'
-      fullPath: '/api/public/hooks/coach-business-daily'
-      preLoaderRoute: typeof ApiPublicHooksCoachBusinessDailyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/budget-alerts': {
       id: '/api/public/hooks/budget-alerts'
       path: '/api/public/hooks/budget-alerts'
@@ -888,7 +829,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFastForwardRoute: typeof AuthenticatedFastForwardRoute
-  AuthenticatedHandoffRoute: typeof AuthenticatedHandoffRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
   AuthenticatedJobChangeRoute: typeof AuthenticatedJobChangeRoute
   AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
@@ -902,7 +842,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
   AuthenticatedSnapshotRoute: typeof AuthenticatedSnapshotRoute
   AuthenticatedStatementImportRoute: typeof AuthenticatedStatementImportRoute
-  AuthenticatedStatementsRoute: typeof AuthenticatedStatementsRoute
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
 }
 
@@ -915,7 +854,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFastForwardRoute: AuthenticatedFastForwardRoute,
-  AuthenticatedHandoffRoute: AuthenticatedHandoffRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
   AuthenticatedJobChangeRoute: AuthenticatedJobChangeRoute,
   AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
@@ -929,7 +867,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedShareRoute: AuthenticatedShareRoute,
   AuthenticatedSnapshotRoute: AuthenticatedSnapshotRoute,
   AuthenticatedStatementImportRoute: AuthenticatedStatementImportRoute,
-  AuthenticatedStatementsRoute: AuthenticatedStatementsRoute,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
 }
 
@@ -947,7 +884,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBenchmarksVersionRoute: ApiPublicBenchmarksVersionRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBudgetAlertsRoute: ApiPublicHooksBudgetAlertsRoute,
-  ApiPublicHooksCoachBusinessDailyRoute: ApiPublicHooksCoachBusinessDailyRoute,
   ApiPublicHooksCoachDailyRoute: ApiPublicHooksCoachDailyRoute,
   ApiPublicHooksCycleStartRoute: ApiPublicHooksCycleStartRoute,
   ApiPublicHooksWeeklyDigestRoute: ApiPublicHooksWeeklyDigestRoute,

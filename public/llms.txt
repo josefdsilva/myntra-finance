@@ -8,7 +8,3 @@ bynku helps people see their money in one place — recurring income, fixed mont
 
 - [Home](/): What bynku is, who it's for, and how the budgeting cycle works.
 - [Privacy](/privacy): How financial data is stored, kept household-scoped, exported and erased (GDPR).
-- [Guides](/guides): Practical budgeting guides for couples, families and small businesses.
-- [Budgeting for couples](/guides/budgeting-for-couples): Fair income-based bill splitting, shared buckets, and one safe-to-spend number.
-- [Family budgeting](/guides/family-budgeting): Baselines, sinking funds for lumpy costs, and involving children.
-- [Small business cash flow](/guides/small-business-cash-flow): Owner pay, tax/VAT reserves, burn and runway for freelancers and SMEs.

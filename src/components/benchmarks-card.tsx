@@ -103,8 +103,7 @@ export function BenchmarksCard({
 
   // Never assume a country. If the household has none, or one we don't curate,
   // we show a clear "not available" state instead of silently comparing them to
-  // some other country's data. Company spaces have no household benchmark yet,
-  // so we hide the comparison there rather than compare a business to families.
+  // some other country's data.
   const country = hh?.country ?? null;
   const adults = hh?.adults ?? 2;
   const children = hh?.children ?? 0;

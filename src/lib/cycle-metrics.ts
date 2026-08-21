@@ -6,13 +6,7 @@
 // rows through the series helpers. Keeping it side-effect-free means it is fully
 // unit-testable and can run on the client (backfill) or the server (rollover).
 
-import {
-  computeHealth,
-  type ScoreInputs,
-  type BusinessScoreInputs,
-  type SubScore,
-  type Badge,
-} from "./health-score";
+import { computeHealth, type ScoreInputs, type SubScore, type Badge } from "./health-score";
 
 function round2(n: number): number {
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
@@ -41,17 +35,15 @@ type CommonCycleInputs = {
   baselineAtClose: number | null;
   /** When false, the score is stored as null (too little set up to judge). */
   scoreable?: boolean;
-  /** Anything extra to keep in the metrics JSONB (business KPIs, plan calibration…). */
+  /** Anything extra to keep in the metrics JSONB (plan calibration…). */
   extra?: Record<string, unknown>;
 };
 
-export type CycleMetricsInputs =
-  | ({ kind: "personal"; score: ScoreInputs } & CommonCycleInputs)
-  | ({ kind: "business"; score: BusinessScoreInputs } & CommonCycleInputs);
+export type CycleMetricsInputs = { kind: "personal"; score: ScoreInputs } & CommonCycleInputs;
 
 /** The row payload written to `cycle_metrics` (snake_case to match the table). */
 export type CycleMetricsRow = {
-  kind: "personal" | "business";
+  kind: "personal";
   cycle_start: string;
   cycle_end: string;
   income_actual: number;

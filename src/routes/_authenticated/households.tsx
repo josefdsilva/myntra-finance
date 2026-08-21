@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/households")({
       path: "/households",
       title: "Spaces & households · bynku",
       description:
-        "Switch between households and business spaces, invite members, and manage who shares your bynku budget.",
+        "Switch between households, invite members, and manage who shares your bynku budget.",
       noindex: true,
     }),
   component: HouseholdsPage,
@@ -55,7 +55,7 @@ function HouseholdsPage() {
     queryFn: () => list(),
   });
 
-  const personal = households.filter((h) => (h.household.kind ?? "personal") !== "business");
+  const personal = households;
   const ownedPersonal = personal.filter((h) => h.role === "owner").length;
 
   const [newName, setNewName] = useState("");

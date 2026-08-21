@@ -10,7 +10,7 @@ import {
   meanSignedErrorPct,
   type CycleMetricsInputs,
 } from "./cycle-metrics";
-import type { ScoreInputs, BusinessScoreInputs } from "./health-score";
+import type { ScoreInputs } from "./health-score";
 
 const personalScore: ScoreInputs = {
   income: 3000,
@@ -29,21 +29,6 @@ const personalScore: ScoreInputs = {
   variablePool: 0,
   variableSpent: 0,
   cycleProgress: 1,
-};
-
-const bizScore: BusinessScoreInputs = {
-  revenueMonthly: 10000,
-  operatingCashFlow: 2000,
-  reserve: 30000,
-  monthlyOutgoings: 8000,
-  debtMonthly: 0,
-  netWorth: 0,
-  hasNetWorthData: false,
-  incomeSources: [6000, 4000],
-  distinctClients: 5,
-  employees: 2,
-  hasProjects: true,
-  activityCount: 10,
 };
 
 const commonPersonal: CycleMetricsInputs = {
@@ -82,32 +67,6 @@ test("scoreable:false stores a null score but still records the money", () => {
   const row = computeCycleMetrics({ ...commonPersonal, scoreable: false });
   expect(row.score_overall).toBeNull();
   expect(row.surplus_actual).toBe(300);
-});
-
-test("computeCycleMetrics (business) uses the business scorecard", () => {
-  const row = computeCycleMetrics({
-    kind: "business",
-    score: bizScore,
-    cycleStart: "2026-07-01",
-    cycleEnd: "2026-07-31",
-    incomeActual: 10000,
-    spendActual: 6000,
-    fixedTotal: 2000,
-    debtTotal: 0,
-    projectFunded: 1000,
-    everydayPool: 6000,
-    everydaySpent: 6000,
-    availableEnd: 1000,
-    superfluousShare: null,
-    consumptionRatio: 0.8,
-    incomeExpected: 10000,
-    plannedSpend: 8000,
-    baselineAtClose: 8000,
-    extra: { runwayMonths: 3.75 },
-  });
-  expect(row.kind).toBe("business");
-  expect(typeof row.score_overall).toBe("number");
-  expect(row.metrics.runwayMonths).toBe(3.75);
 });
 
 test("trend detects direction", () => {

@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
       path: "/",
       title: "bynku — daily safe-to-spend & household allocations",
       description:
-        "bynku turns your income, bills and loans into one number: what you can safely spend today. Shared household and small-business budgeting with an AI coach that is committed to improving your financial position, not selling you products.",
+        "bynku turns your income, bills and loans into one number: what you can safely spend today. Shared household budgeting with an AI coach that is committed to improving your financial position, not selling you products.",
     }),
   // Client-side navigations to "/" (e.g. pressing back) redirect before the
   // landing renders, so it never flashes. Guarded to the client since the

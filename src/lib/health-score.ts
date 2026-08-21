@@ -56,13 +56,7 @@ export type SubScore = {
     | "emergency"
     | "debt"
     | "budget"
-    | "networth"
-    // Business pillars
-    | "cashflow"
-    | "runway"
-    | "diversification"
-    | "productivity"
-    | "equity";
+    | "networth";
   value: number;
 };
 
@@ -73,15 +67,7 @@ export type Badge =
   | "budget_hero"
   | "investing"
   | "net_worth_positive"
-  | "getting_started"
-  // Business badges
-  | "fcf_positive"
-  | "strong_runway"
-  | "diversified"
-  | "productive"
-  | "low_leverage"
-  | "equity_positive"
-  | "active";
+  | "getting_started";
 
 export type HealthResult = {
   overall: number;
@@ -132,6 +118,15 @@ export function projectFundedFraction(
     }
   }
   return sum / targeted.length;
+}
+
+/** Effective number of income streams via the inverse Herfindahl index. */
+function effectiveSources(amounts: number[]): number {
+  const pos = amounts.filter((a) => a > 0);
+  const total = pos.reduce((s, a) => s + a, 0);
+  if (total <= 0) return 0;
+  const hhi = pos.reduce((s, a) => s + (a / total) ** 2, 0);
+  return hhi > 0 ? 1 / hhi : 0;
 }
 
 export function computeHealth(input: ScoreInputs): HealthResult {
@@ -266,48 +261,3 @@ export function computeHealth(input: ScoreInputs): HealthResult {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Business health — a different scorecard for company spaces
-// ---------------------------------------------------------------------------
-// Companies are judged on the things that make a business durable rather than a
-// household's savings discipline: does it throw off free cash flow, does it hold
-// a runway, is its revenue diversified (many sources / many clients), is it
-// productive per head, is it lightly leveraged, and does it hold positive equity.
-// Everything stays ratio-based so the snapshot is still safe to share.
-
-export type BusinessScoreInputs = {
-  /** Monthly revenue (recurring income). */
-  revenueMonthly: number;
-  /** Monthly operating cash flow = revenue − running costs (fixed + variable + debt). */
-  operatingCashFlow: number;
-  /** Accessible cash reserve (project balances + quickly-sellable assets). */
-  reserve: number;
-  /** Total monthly outgoings the reserve has to cover. */
-  monthlyOutgoings: number;
-  /** Monthly debt servicing. */
-  debtMonthly: number;
-  /** Equity = assets + reserves − debt owed. */
-  netWorth: number;
-  hasNetWorthData: boolean;
-  /** Monthly amounts of each income source (to gauge concentration). */
-  incomeSources: number[];
-  /** Distinct payers/clients seen in receipts this cycle. */
-  distinctClients: number;
-  /** Number of employees (0 = solo/owner-run). */
-  employees: number;
-  /** Whether the business tracks any projects/reserves. */
-  hasProjects: boolean;
-  /** Transactions logged this cycle — a liveliness signal. */
-  activityCount: number;
-};
-
-/** Effective number of income streams via the inverse Herfindahl index. */
-function effectiveSources(amounts: number[]): number {
-  const pos = amounts.filter((a) => a > 0);
-  const total = pos.reduce((s, a) => s + a, 0);
-  if (total <= 0) return 0;
-  const hhi = pos.reduce((s, a) => s + (a / total) ** 2, 0);
-  return hhi > 0 ? 1 / hhi : 0;
-}
-
-// (Business health scorecard removed — the app is household-only.)
