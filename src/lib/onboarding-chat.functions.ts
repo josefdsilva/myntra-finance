@@ -52,7 +52,7 @@ function normalize(items: unknown[]): Array<{ label: string; monthly_amount: num
 
 const TOPIC_SYSTEM: Record<Topic, string> = {
   income:
-    "Extract each source of income the person or business describes. Give each a short label and a MONTHLY amount.",
+    "Extract each source of income the person describes. Give each a short label and a MONTHLY amount.",
   fixed:
     "Extract recurring FIXED costs/bills (rent, utilities, subscriptions, insurance, salaries). Give each a short label and a MONTHLY amount.",
   variable:
