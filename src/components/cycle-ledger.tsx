@@ -115,7 +115,7 @@ export function CommittedThisCycle({
       // cycle bounds — fetch them in parallel.
       const startISO = bounds.start.toISOString();
       const endISO = bounds.end.toISOString();
-      const [{ data: receipts }, settlementsRes, { data: invs }] = await Promise.all([
+      const [{ data: receipts }, { data: invs }] = await Promise.all([
         supabase
           .from("expenses")
           .select("id, income_id, amount, occurred_at")
