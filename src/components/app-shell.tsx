@@ -23,7 +23,6 @@ import {
   ChevronsUpDown,
   Plus,
   Sparkles,
-  Building2,
   User,
   ArrowLeftRight,
   FastForward,
@@ -141,7 +140,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   });
   const householdName = hh?.household?.name?.trim() || "Household";
   const resolvedId = hh?.household?.id ?? null;
-  const isBusiness = hh?.household?.kind === "business";
 
   // Drive money() formatting from the active household's currency. Set during
   // render so child screens format amounts in the right currency immediately.
@@ -284,13 +282,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide leading-none",
-                  isBusiness
-                    ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300"
-                    : "bg-muted text-muted-foreground",
+                  "bg-muted text-muted-foreground",
                 )}
               >
-                {isBusiness ? <Building2 className="size-3" /> : <User className="size-3" />}
-                {isBusiness ? t("shell.business") : t("shell.personal")}
+                <User className="size-3" />
+                {t("shell.personal")}
               </span>
             </div>
           </div>

@@ -320,7 +320,6 @@ export const fastForward = createServerFn({ method: "POST" })
 
     return {
       currency: hh?.currency ?? "EUR",
-      isBusiness: hh?.kind === "business",
       startYm,
       targetYm,
       months,

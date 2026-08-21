@@ -26,10 +26,6 @@ const DEFAULT_CATEGORIES_PERSONAL = [
   "groceries", "dining", "transport", "fuel", "utilities", "housing", "health",
   "subscriptions", "shopping", "clothing", "entertainment", "kids", "insurance", "other",
 ];
-const DEFAULT_CATEGORIES_BUSINESS = [
-  "supplies", "materials", "software", "marketing", "travel", "utilities", "rent",
-  "payroll", "professional_services", "fees", "taxes", "other",
-];
 
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
@@ -97,11 +93,10 @@ async function ensurePersonaUser(admin: Admin, p: PersonaDef): Promise<string> {
 }
 
 function bucketRows(householdId: string, p: PersonaDef) {
-  const business = p.kind === "business";
   return [
     {
       household_id: householdId,
-      name: business ? "Cash buffer" : "Emergency savings",
+      name: "Emergency savings",
       kind: "emergency" as const,
       target_type: "pct_surplus" as const,
       target_value: 30,
@@ -111,7 +106,7 @@ function bucketRows(householdId: string, p: PersonaDef) {
     },
     {
       household_id: householdId,
-      name: business ? "Reinvestment" : "Long-term investments",
+      name: "Long-term investments",
       kind: "investment" as const,
       target_type: "pct_surplus" as const,
       target_value: 40,
@@ -121,7 +116,7 @@ function bucketRows(householdId: string, p: PersonaDef) {
     },
     {
       household_id: householdId,
-      name: business ? "Tax reserve" : "Life projects",
+      name: "Life projects",
       kind: "savings" as const,
       target_type: "pct_surplus" as const,
       target_value: 20,
@@ -236,14 +231,12 @@ export async function seedPersona(admin: Admin, key: string) {
       name: p.householdName,
       created_by: userId,
       is_synthetic: true,
-      kind: p.kind,
+      kind: "personal",
       country: p.country,
       currency: p.currency,
       adults: p.adults,
       children: p.children,
       age_band: p.ageBand,
-      employees: p.employees ?? 0,
-      sector: p.sector ?? null,
       margin_pct: budget.marginPct,
       baseline_budget: 0,
       cycle: "monthly",
@@ -264,9 +257,8 @@ export async function seedPersona(admin: Admin, key: string) {
     .from("household_members")
     .insert({ household_id: household.id, user_id: userId, role: "owner" });
 
-  // Categories (the household trigger seeds a personal default set; make sure
-  // the business set exists too).
-  const names = p.kind === "business" ? DEFAULT_CATEGORIES_BUSINESS : DEFAULT_CATEGORIES_PERSONAL;
+  // Categories (the household trigger seeds a personal default set).
+  const names = DEFAULT_CATEGORIES_PERSONAL;
   await admin.from("expense_categories").upsert(
     names.map((name, i) => ({ household_id: household.id, name, sort_order: (i + 1) * 10 })),
     { onConflict: "household_id,name", ignoreDuplicates: true },

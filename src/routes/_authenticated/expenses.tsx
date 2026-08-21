@@ -64,7 +64,6 @@ function ExpensesPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
-  const isBusiness = hh?.household?.kind === "business";
   const [invoiceFor, setInvoiceFor] = useState<string | null>(null);
 
   // Which expenses already have at least one invoice — so business rows without
@@ -385,9 +384,7 @@ function ExpensesPage() {
                         className={
                           withInvoice?.has(e.id)
                             ? "text-primary"
-                            : isBusiness
-                              ? "text-destructive"
-                              : "text-muted-foreground"
+                            : "text-muted-foreground"
                         }
                       >
                         <Paperclip className="size-4" />
@@ -419,7 +416,6 @@ function ExpensesPage() {
             <InvoiceAttachments
               householdId={householdId}
               expenseId={invoiceFor}
-              isBusiness={isBusiness}
             />
           )}
         </DialogContent>

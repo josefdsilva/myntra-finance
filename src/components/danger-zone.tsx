@@ -35,10 +35,9 @@ type Props = {
   householdId: string;
   householdName: string;
   role: "owner" | "member" | string;
-  isBusiness?: boolean;
 };
 
-export function DangerZone({ householdId, householdName, role, isBusiness = false }: Props) {
+export function DangerZone({ householdId, householdName, role }: Props) {
   const isOwner = role === "owner";
   const t = useT();
 
@@ -61,11 +60,7 @@ export function DangerZone({ householdId, householdName, role, isBusiness = fals
         {isOwner && <StartFreshRow householdId={householdId} householdName={householdName} />}
         <LeaveHouseholdRow householdId={householdId} householdName={householdName} />
         {isOwner && (
-          <DeleteHouseholdRow
-            householdId={householdId}
-            householdName={householdName}
-            isBusiness={isBusiness}
-          />
+          <DeleteHouseholdRow householdId={householdId} householdName={householdName} />
         )}
         <DeleteAccountRow />
       </CardContent>
@@ -235,11 +230,9 @@ function StartFreshRow({
 function DeleteHouseholdRow({
   householdId,
   householdName,
-  isBusiness = false,
 }: {
   householdId: string;
   householdName: string;
-  isBusiness?: boolean;
 }) {
   const del = useServerFn(deleteHousehold);
   const [confirm, setConfirm] = useState("");
@@ -261,14 +254,14 @@ function DeleteHouseholdRow({
 
   return (
     <RowShell
-      title={t(isBusiness ? "danger.deleteHh.titleBiz" : "danger.deleteHh.title")}
+      title={t("danger.deleteHh.title")}
       body={t("danger.deleteHh.body", { name: householdName })}
       danger
     >
       <AlertDialog onOpenChange={() => setConfirm("")}>
         <AlertDialogTrigger asChild>
           <Button variant="destructive" size="sm">
-            {t(isBusiness ? "danger.deleteHh.buttonBiz" : "danger.deleteHh.button")}
+            {t("danger.deleteHh.button")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>

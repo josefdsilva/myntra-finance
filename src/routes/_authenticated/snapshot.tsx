@@ -35,7 +35,6 @@ import { debtLiveSchedule, type Debt } from "@/lib/debt-schedule";
 import { fetchCycleBounds, cycleKeyPart } from "@/lib/cycle-bounds";
 import {
   computeHealth,
-  computeBusinessHealth,
   projectFundedFraction,
   type Badge as BadgeKind,
 } from "@/lib/health-score";
@@ -269,27 +268,10 @@ function SnapshotPage() {
     },
   });
 
-  const isBusiness = hh?.household?.kind === "business";
   const health = useMemo(() => {
     if (!data) return null;
-    if (isBusiness) {
-      return computeBusinessHealth({
-        revenueMonthly: data.income,
-        operatingCashFlow: data.operatingCashFlow,
-        reserve: data.reserve,
-        monthlyOutgoings: data.monthlyOutgoings,
-        debtMonthly: data.debtMonthly,
-        netWorth: data.netWorth,
-        hasNetWorthData: data.hasNetWorthData,
-        incomeSources: data.incomeSources,
-        distinctClients: data.distinctClients,
-        employees: data.employees,
-        hasProjects: data.hasProjects,
-        activityCount: data.activityCount,
-      });
-    }
     return computeHealth(data);
-  }, [data, isBusiness]);
+  }, [data]);
   const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const setupIncomplete = !data || data.income === 0;
@@ -311,7 +293,7 @@ function SnapshotPage() {
         width: CARD_WIDTH,
         height: node.offsetHeight,
         style: { transform: "none", width: `${CARD_WIDTH}px` },
-        backgroundColor: isBusiness ? "#0a0a0a" : "#0f172a",
+        backgroundColor: "#0f172a",
       });
 
       const res = await fetch(dataUrl);
@@ -396,14 +378,13 @@ function SnapshotPage() {
                 scores={health.scores}
                 badges={health.badges}
                 monthLabel={monthLabel}
-                isBusiness={isBusiness}
                 t={t as unknown as (key: string, vars?: Record<string, string | number>) => string}
               />
             )}
           </ScaledPreview>
 
 
-          <ScoreTrendMini householdId={householdId} isBusiness={isBusiness} />
+          <ScoreTrendMini householdId={householdId} />
 
           <p className="text-xs text-muted-foreground">{t("snapshot.privacyNote")}</p>
         </>
@@ -507,16 +488,11 @@ type CardProps = {
   scores: { key: string; value: number }[];
   badges: BadgeKind[];
   monthLabel: string;
-  isBusiness?: boolean;
   t: (key: string, vars?: Record<string, string | number>) => string;
 };
 
-// Score → colour. Households use a plain traffic-light scale; businesses get a
-// metallic gold/bronze scale so the whole card reads premium.
-function scoreColor(v: number, isBusiness: boolean): string {
-  if (isBusiness) {
-    return v >= 80 ? "#e8c874" : v >= 60 ? "#cdae6b" : v >= 40 ? "#b08d57" : "#c77b6b";
-  }
+// Score → colour. A plain traffic-light scale.
+function scoreColor(v: number): string {
   return v >= 80 ? "#34d399" : v >= 60 ? "#facc15" : v >= 40 ? "#fb923c" : "#f87171";
 }
 
@@ -526,14 +502,11 @@ const SnapshotCard = ({
   scores,
   badges,
   monthLabel,
-  isBusiness = false,
   t,
 }: CardProps & { ref: React.Ref<HTMLDivElement> }) => {
-  const ringColor = scoreColor(overall, isBusiness);
-  // Premium: deep charcoal with champagne-gold and emerald light sources.
-  const background = isBusiness
-    ? "radial-gradient(circle at 14% -8%, rgba(212,175,90,0.22) 0%, transparent 55%), radial-gradient(circle at 100% 108%, rgba(20,120,96,0.24) 0%, transparent 55%), linear-gradient(135deg, #0b0b0e 0%, #17140d 55%, #0a0a0a 100%)"
-    : "radial-gradient(circle at 15% -10%, #6d28d9 0%, transparent 55%), radial-gradient(circle at 100% 110%, #0891b2 0%, transparent 55%), linear-gradient(135deg, #0b1024 0%, #1e1b4b 55%, #0f172a 100%)";
+  const ringColor = scoreColor(overall);
+  const background =
+    "radial-gradient(circle at 15% -10%, #6d28d9 0%, transparent 55%), radial-gradient(circle at 100% 110%, #0891b2 0%, transparent 55%), linear-gradient(135deg, #0b1024 0%, #1e1b4b 55%, #0f172a 100%)";
 
   return (
     <div
@@ -544,17 +517,8 @@ const SnapshotCard = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <img
-            src={appIcon.url}
-            alt=""
-            className={`size-9 rounded-xl ring-1 ${isBusiness ? "ring-amber-300/30" : "ring-white/20"}`}
-          />
+          <img src={appIcon.url} alt="" className="size-9 rounded-xl ring-1 ring-white/20" />
           <span className="font-display text-2xl tracking-tight">bynku</span>
-          {isBusiness && (
-            <span className="ml-1 inline-flex items-center rounded-full bg-amber-300/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-amber-200 ring-1 ring-amber-300/40">
-              {t("snapshot.businessLabel")}
-            </span>
-          )}
         </div>
         <span className="text-[11px] uppercase tracking-[0.2em] text-white/60">{monthLabel}</span>
       </div>
@@ -596,11 +560,9 @@ const SnapshotCard = ({
         </div>
         <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">
-            {t(isBusiness ? "snapshot.taglineBiz" : "snapshot.tagline")}
+            {t("snapshot.tagline")}
           </p>
-          <h2 className="text-3xl font-display leading-tight mt-1.5">
-            {t(isBusiness ? "snapshot.overallBiz" : "snapshot.overall")}
-          </h2>
+          <h2 className="text-3xl font-display leading-tight mt-1.5">{t("snapshot.overall")}</h2>
         </div>
       </div>
 
@@ -618,7 +580,7 @@ const SnapshotCard = ({
             <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div
                 className="h-full rounded-full"
-                style={{ width: `${s.value}%`, background: scoreColor(s.value, isBusiness) }}
+                style={{ width: `${s.value}%`, background: scoreColor(s.value) }}
               />
             </div>
           </div>

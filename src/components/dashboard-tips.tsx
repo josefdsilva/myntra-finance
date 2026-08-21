@@ -126,7 +126,6 @@ const monthLabel = (ym: string) =>
 
 export type IssuesResult = {
   loading: boolean;
-  isBusiness: boolean;
   criticals: Tip[];
   primary: Tip[];
   overflow: Tip[];
@@ -165,7 +164,6 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     enabled: !!householdId,
     retry: false,
   });
-  const isBusiness = facts?.isBusiness ?? false;
   // Household-only now: `bt` is a thin wrapper kept so the many call sites don't
   // churn — it always resolves the plain (household) copy.
   const bt = (key: string, vars?: Record<string, string | number>) =>
@@ -333,7 +331,6 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
 
   const emptyResult: IssuesResult = {
     loading: true,
-    isBusiness,
     criticals: [],
     primary: [],
     overflow: [],
@@ -452,7 +449,7 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
   // advice is unambiguous. A painful rate (>= HIGH_APR_PCT, credit-card
   // territory) is a critical shout; a merely expensive one (>= PRIORITY_APR_PCT,
   // e.g. a 9–12% personal loan) is a warning — still worth clearing next.
-  if (!isBusiness) {
+  {
     const pricey = priciestClearableDebt(data.debtsDetail);
     if (pricey) {
       const label = pricey.debt.label ?? t("tips.expensiveDebt.fallbackLabel");
@@ -1012,7 +1009,7 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     // problem (when the surplus is thin, high-treat-share above already covers
     // it). Household-only — the intent scale is a household concept.
     const lowSavings = income > 0 && surplus / income < 0.1;
-    if (!isBusiness && intent.total > 0 && intent.discretionarySharePct >= 45 && !lowSavings) {
+    if (intent.total > 0 && intent.discretionarySharePct >= 45 && !lowSavings) {
       const heavy = intent.discretionarySharePct >= 55;
       tips.push({
         id: "discretionary-heavy",
@@ -1084,7 +1081,6 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
 
   return {
     loading: false,
-    isBusiness,
     criticals,
     primary,
     overflow,

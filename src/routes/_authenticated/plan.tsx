@@ -116,7 +116,6 @@ function PlanPage() {
   });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
-  const isBusiness = hh?.household?.kind === "business";
 
   return (
     <div className={pageShellClass("5xl")}>
@@ -125,7 +124,7 @@ function PlanPage() {
         <p className="text-sm text-muted-foreground">{t("plan.subtitle")}</p>
       </header>
       {householdId && (
-        <PlanPanel householdId={householdId} baseline={baseline} isBusiness={isBusiness} />
+        <PlanPanel householdId={householdId} baseline={baseline} />
       )}
     </div>
   );
@@ -138,11 +137,9 @@ function PlanPage() {
 export function PlanPanel({
   householdId,
   baseline,
-  isBusiness = false,
 }: {
   householdId: string;
   baseline: number;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -895,7 +892,6 @@ export function PlanPanel({
               <InvoiceAttachments
                 householdId={householdId}
                 planId={resolveRow.id}
-                isBusiness={isBusiness}
               />
             </div>
           )}

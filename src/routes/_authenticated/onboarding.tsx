@@ -36,7 +36,6 @@ import { CoachOnboarding } from "@/components/coach-onboarding";
 import { money, currencySymbol } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
-import { groupSectors, NACE_SECTIONS } from "@/lib/business-benchmarks";
 import { debtKindOptions, type DebtKind } from "@/lib/debt-kinds";
 import { useCategories, useCategoryMutations } from "@/hooks/use-categories";
 import { buildSetupPresets } from "@/lib/setup-presets";
@@ -55,7 +54,6 @@ import {
   TrendingUp,
   TrendingDown,
   Gem,
-  Building2,
   Info,
   Tags,
   X,
@@ -90,8 +88,6 @@ const COUNTRIES = [
 const STEPS = [
   "welcome",
   "whereWho",
-  "country",
-  "business",
   "income",
   "cycle",
   "preset",
@@ -133,7 +129,6 @@ function OnboardingPage() {
       householdId={householdId}
       initialCountry={hh?.household?.country ?? "PT"}
       initialMargin={Number(hh?.household?.margin_pct ?? 10)}
-      kind={(hh?.household?.kind as "personal" | "business") ?? "personal"}
     />
   );
 }
@@ -142,12 +137,10 @@ function Wizard({
   householdId,
   initialCountry,
   initialMargin,
-  kind,
 }: {
   householdId: string;
   initialCountry: string;
   initialMargin: number;
-  kind: "personal" | "business";
 }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -162,28 +155,13 @@ function Wizard({
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [ageBand, setAgeBand] = useState<string>("");
-  const [cycleLen, setCycleLen] = useState<Cycle>(kind === "business" ? "quarterly" : "monthly");
+  const [cycleLen, setCycleLen] = useState<Cycle>("monthly");
   const [fiscalStart, setFiscalStart] = useState("");
-  const [sector, setSector] = useState("");
-  const [employees, setEmployees] = useState("");
-  const [advisorEmail, setAdvisorEmail] = useState("");
   const [margin, setMargin] = useState(initialMargin);
   const [cycleMode, setCycleMode] = useState<"event" | "time">("event");
   const [housing, setHousing] = useState("");
 
-  const isBusiness = kind === "business";
-  // A business space skips the household (adults/children) demographics step but
-  // gets a fiscal-cycle step and an "about your business" step (sector, employees,
-  // advisor) that power the benchmarks and accountant handoff; personal spaces are
-  // the reverse (their cycle is payday-driven, so there's nothing to configure).
-  const steps = STEPS.filter((s) => {
-    if (DEFERRED_STEPS.has(s)) return false;
-    // Personal-only: combined where/who step and the generated starting plan.
-    if (s === "whereWho" || s === "preset") return !isBusiness;
-    // Business-only: standalone country + "about your business".
-    if (s === "country" || s === "business") return isBusiness;
-    return true; // welcome, income, cycle, fixed, variable, margin
-  });
+  const steps = STEPS.filter((s) => !DEFERRED_STEPS.has(s));
   const key = steps[Math.min(step, steps.length - 1)];
   const isLast = step === steps.length - 1;
 
@@ -210,7 +188,6 @@ function Wizard({
   async function next() {
     setBusy(true);
     try {
-      if (key === "country") await updateHh({ data: { household_id: householdId, country } });
       if (key === "whereWho")
         await updateHh({
           data: {
@@ -229,16 +206,7 @@ function Wizard({
           },
         });
       if (key === "cycle") {
-        if (isBusiness) {
-          await updateHh({
-            data: {
-              household_id: householdId,
-              cycle_mode: "time",
-              cycle: cycleLen,
-              cycle_anchor_date: fiscalStart || null,
-            },
-          });
-        } else if (cycleMode === "time") {
+        if (cycleMode === "time") {
           // Personal, fixed day: a monthly time cycle anchored on the chosen date.
           await updateHh({
             data: {
@@ -260,15 +228,6 @@ function Wizard({
           });
         }
       }
-      if (key === "business")
-        await updateHh({
-          data: {
-            household_id: householdId,
-            sector: sector || null,
-            employees: employees ? Math.max(0, Math.round(parseFloat(employees))) : 0,
-            advisor_email: advisorEmail.trim() || null,
-          },
-        });
       if (key === "margin")
         await updateHh({ data: { household_id: householdId, margin_pct: margin } });
       if (key === "household")
@@ -325,7 +284,6 @@ function Wizard({
     return (
       <CoachOnboarding
         householdId={householdId}
-        isBusiness={isBusiness}
         onSwitchToForms={() => setChat(false)}
         onDone={finish}
       />
@@ -340,7 +298,7 @@ function Wizard({
         <div className="flex-1">
           {key === "welcome" && (
             <div>
-              <Welcome isBusiness={isBusiness} householdId={householdId} />
+              <Welcome householdId={householdId} />
               <button
                 type="button"
                 onClick={() => setChat(true)}
@@ -349,9 +307,6 @@ function Wizard({
                 <Sparkles className="size-4" /> {t("coachOb.entryTitle")}
               </button>
             </div>
-          )}
-          {key === "country" && (
-            <CountryStep country={country} setCountry={setCountry} isBusiness={isBusiness} />
           )}
           {key === "whereWho" && (
             <WhereWhoStep
@@ -378,23 +333,12 @@ function Wizard({
           )}
           {key === "cycle" && (
             <CycleStep
-              isBusiness={isBusiness}
               cycleMode={cycleMode}
               setCycleMode={setCycleMode}
               cycleLen={cycleLen}
               setCycleLen={setCycleLen}
               fiscalStart={fiscalStart}
               setFiscalStart={setFiscalStart}
-            />
-          )}
-          {key === "business" && (
-            <BusinessStep
-              sector={sector}
-              setSector={setSector}
-              employees={employees}
-              setEmployees={setEmployees}
-              advisorEmail={advisorEmail}
-              setAdvisorEmail={setAdvisorEmail}
             />
           )}
           {key === "household" && (
@@ -407,24 +351,17 @@ function Wizard({
               setAgeBand={setAgeBand}
             />
           )}
-          {key === "categories" && (
-            <CategoriesStep householdId={householdId} isBusiness={isBusiness} />
-          )}
+          {key === "categories" && <CategoriesStep householdId={householdId} />}
           {key === "income" && (
-            <IncomeStep
-              householdId={householdId}
-              isBusiness={isBusiness}
-              housing={housing}
-              setHousing={setHousing}
-            />
+            <IncomeStep householdId={householdId} housing={housing} setHousing={setHousing} />
           )}
           {key === "fixed" && <FixedStep householdId={householdId} />}
-          {key === "variable" && <VariableStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "variable" && <VariableStep householdId={householdId} />}
           {key === "margin" && <MarginStep margin={margin} setMargin={setMargin} />}
-          {key === "debt" && <DebtStep householdId={householdId} isBusiness={isBusiness} />}
-          {key === "assets" && <AssetsStep householdId={householdId} isBusiness={isBusiness} />}
-          {key === "projects" && <ProjectsStep householdId={householdId} isBusiness={isBusiness} />}
-          {key === "plans" && <PlansStep householdId={householdId} isBusiness={isBusiness} />}
+          {key === "debt" && <DebtStep householdId={householdId} />}
+          {key === "assets" && <AssetsStep householdId={householdId} />}
+          {key === "projects" && <ProjectsStep householdId={householdId} />}
+          {key === "plans" && <PlansStep householdId={householdId} />}
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-2">
@@ -485,13 +422,7 @@ function StepInfo({ body }: { body: string }) {
   );
 }
 
-function CategoriesStep({
-  householdId,
-  isBusiness,
-}: {
-  householdId: string;
-  isBusiness: boolean;
-}) {
+function CategoriesStep({ householdId }: { householdId: string }) {
   const t = useT();
   const { data: cats = [] } = useCategories(householdId);
   const { add, remove } = useCategoryMutations(householdId);
@@ -508,7 +439,7 @@ function CategoriesStep({
       <StepHead
         icon={Tags}
         title={t("ob.categories.title")}
-        subtitle={t(isBusiness ? "ob.categories.subtitleBiz" : "ob.categories.subtitle")}
+        subtitle={t("ob.categories.subtitle")}
       />
       <StepInfo body={t("ob.categories.info")} />
       <div className="mb-4 flex gap-2">
@@ -577,19 +508,15 @@ function MarginStep({ margin, setMargin }: { margin: number; setMargin: (n: numb
   );
 }
 
-function Welcome({ isBusiness, householdId }: { isBusiness: boolean; householdId: string }) {
+function Welcome({ householdId }: { householdId: string }) {
   const t = useT();
   return (
     <div className="space-y-4 pt-6">
       <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Sparkles className="size-7" />
       </div>
-      <h1 className="font-display text-3xl">
-        {t(isBusiness ? "ob.welcome.titleBiz" : "ob.welcome.title")}
-      </h1>
-      <p className="text-muted-foreground">
-        {t(isBusiness ? "ob.welcome.bodyBiz" : "ob.welcome.body")}
-      </p>
+      <h1 className="font-display text-3xl">{t("ob.welcome.title")}</h1>
+      <p className="text-muted-foreground">{t("ob.welcome.body")}</p>
       <StatementFastLane householdId={householdId} />
     </div>
   );
@@ -610,41 +537,7 @@ function StatementFastLane({ householdId }: { householdId: string }) {
   );
 }
 
-function CountryStep({
-  country,
-  setCountry,
-  isBusiness,
-}: {
-  country: string;
-  setCountry: (v: string) => void;
-  isBusiness: boolean;
-}) {
-  const t = useT();
-  return (
-    <div>
-      <StepHead
-        icon={Home}
-        title={t(isBusiness ? "ob.country.titleBiz" : "ob.country.title")}
-        subtitle={t("ob.country.subtitle")}
-      />
-      <Select value={country} onValueChange={setCountry}>
-        <SelectTrigger className="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {COUNTRIES.map(([code, name]) => (
-            <SelectItem key={code} value={code}>
-              {name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
 function CycleStep({
-  isBusiness,
   cycleMode,
   setCycleMode,
   cycleLen,
@@ -652,7 +545,6 @@ function CycleStep({
   fiscalStart,
   setFiscalStart,
 }: {
-  isBusiness: boolean;
   cycleMode: "event" | "time";
   setCycleMode: (v: "event" | "time") => void;
   cycleLen: Cycle;
@@ -661,37 +553,6 @@ function CycleStep({
   setFiscalStart: (v: string) => void;
 }) {
   const t = useT();
-
-  if (isBusiness) {
-    return (
-      <div>
-        <StepHead icon={CalendarClock} title={t("ob.cycle.title")} subtitle={t("ob.cycle.subtitle")} />
-        <StepInfo body={t("ob.cycle.infoBiz")} />
-        <div className="space-y-4">
-          <div>
-            <Label>{t("ob.cycle.lengthLabel")}</Label>
-            <Select value={cycleLen} onValueChange={(v) => setCycleLen(v as Cycle)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CYCLES.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {t(`cadence.${c}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>{t("ob.cycle.fiscalLabel")}</Label>
-            <Input type="date" value={fiscalStart} onChange={(e) => setFiscalStart(e.target.value)} />
-            <p className="mt-1 text-xs text-muted-foreground">{t("ob.cycle.fiscalHint")}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const choiceClass = (active: boolean) =>
     `flex flex-col items-start gap-0.5 rounded-xl border p-4 text-left transition-colors ${
@@ -765,77 +626,6 @@ function Stepper({
         <Button variant="outline" size="icon" onClick={() => setValue(value + 1)}>
           +
         </Button>
-      </div>
-    </div>
-  );
-}
-
-function BusinessStep({
-  sector,
-  setSector,
-  employees,
-  setEmployees,
-  advisorEmail,
-  setAdvisorEmail,
-}: {
-  sector: string;
-  setSector: (v: string) => void;
-  employees: string;
-  setEmployees: (v: string) => void;
-  advisorEmail: string;
-  setAdvisorEmail: (v: string) => void;
-}) {
-  const t = useT();
-  return (
-    <div>
-      <StepHead
-        icon={Building2}
-        title={t("ob.business.title")}
-        subtitle={t("ob.business.subtitle")}
-      />
-      <div className="space-y-4">
-        <div>
-          <Label>{t("ob.business.sectorLabel")}</Label>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={sector}
-            onChange={(e) => setSector(e.target.value)}
-          >
-            <option value="">{t("ob.business.sectorPh")}</option>
-            {groupSectors().map(([section, sectors]) => (
-              <optgroup key={section} label={NACE_SECTIONS[section] ?? section}>
-                {sectors.map((s) => (
-                  <option key={s.code} value={s.code}>
-                    {s.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          <p className="mt-1 text-xs text-muted-foreground">{t("ob.business.sectorHint")}</p>
-        </div>
-        <div>
-          <Label>{t("ob.business.employeesLabel")}</Label>
-          <Input
-            type="number"
-            min={0}
-            inputMode="numeric"
-            value={employees}
-            onChange={(e) => setEmployees(e.target.value)}
-            placeholder="0"
-          />
-          <p className="mt-1 text-xs text-muted-foreground">{t("ob.business.employeesHint")}</p>
-        </div>
-        <div>
-          <Label>{t("ob.business.advisorLabel")}</Label>
-          <Input
-            type="email"
-            value={advisorEmail}
-            onChange={(e) => setAdvisorEmail(e.target.value)}
-            placeholder="advisor@firm.com"
-          />
-          <p className="mt-1 text-xs text-muted-foreground">{t("ob.business.advisorHint")}</p>
-        </div>
       </div>
     </div>
   );
@@ -1256,12 +1046,10 @@ function useList(
 
 function IncomeStep({
   householdId,
-  isBusiness,
   housing,
   setHousing,
 }: {
   householdId: string;
-  isBusiness: boolean;
   housing?: string;
   setHousing?: (v: string) => void;
 }) {
@@ -1286,7 +1074,7 @@ function IncomeStep({
           // Tag the first personal income as salary (the usual case) so payday
           // cycles, the coach and retirement planning have a salary signal from
           // the start. It can be re-typed later in Money In.
-          type: isBusiness ? undefined : items.length === 0 ? "salary" : "other",
+          type: items.length === 0 ? "salary" : "other",
         },
       });
       setLabel("");
@@ -1301,8 +1089,8 @@ function IncomeStep({
     <div>
       <StepHead
         icon={Wallet}
-        title={t(isBusiness ? "ob.income.titleBiz" : "ob.income.title")}
-        subtitle={t(isBusiness ? "ob.income.subtitleBiz" : "ob.income.subtitle")}
+        title={t("ob.income.title")}
+        subtitle={t("ob.income.subtitle")}
       />
       <StepInfo body={t("ob.income.info")} />
       <div className="mb-3">
@@ -1311,7 +1099,7 @@ function IncomeStep({
       </div>
       <div className="flex gap-2">
         <Input
-          placeholder={t(isBusiness ? "ob.income.namePhBiz" : "ob.income.namePh")}
+          placeholder={t("ob.income.namePh")}
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
@@ -1327,7 +1115,7 @@ function IncomeStep({
         </Button>
       </div>
       <EntryList items={items} />
-      {!isBusiness && setHousing && (
+      {setHousing && (
         <div className="mt-6">
           <Label htmlFor="ob-housing">{t("ob.income.housingLabel")}</Label>
           <Input
@@ -1400,7 +1188,7 @@ function FixedStep({ householdId }: { householdId: string }) {
   );
 }
 
-function VariableStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
+function VariableStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -1430,7 +1218,7 @@ function VariableStep({ householdId, isBusiness }: { householdId: string; isBusi
       <StepHead
         icon={Receipt}
         title={t("ob.variable.title")}
-        subtitle={t(isBusiness ? "ob.variable.subtitleBiz" : "ob.variable.subtitle")}
+        subtitle={t("ob.variable.subtitle")}
       />
       <StepInfo body={t("ob.variable.info")} />
       <div className="mb-3">
@@ -1439,7 +1227,7 @@ function VariableStep({ householdId, isBusiness }: { householdId: string; isBusi
       </div>
       <div className="flex gap-2">
         <Input
-          placeholder={t(isBusiness ? "ob.variable.namePhBiz" : "ob.variable.namePh")}
+          placeholder={t("ob.variable.namePh")}
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
@@ -1459,7 +1247,7 @@ function VariableStep({ householdId, isBusiness }: { householdId: string; isBusi
   );
 }
 
-function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
+function DebtStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -1470,10 +1258,10 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("");
   const [maturity, setMaturity] = useState("");
-  const [dkind, setDkind] = useState<DebtKind>(isBusiness ? "business_loan" : "other");
+  const [dkind, setDkind] = useState<DebtKind>("other");
   const [saving, setSaving] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const kindOptions = debtKindOptions(t, isBusiness);
+  const kindOptions = debtKindOptions(t);
 
   async function submit() {
     if (!label || !monthly) return;
@@ -1495,7 +1283,7 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
       setPrincipal("");
       setRate("");
       setMaturity("");
-      setDkind(isBusiness ? "business_loan" : "other");
+      setDkind("other");
       qc.invalidateQueries({ queryKey: ["ob-debts", householdId] });
     } finally {
       setSaving(false);
@@ -1506,8 +1294,8 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
     <div>
       <StepHead
         icon={Wallet}
-        title={t(isBusiness ? "ob.debt.titleBiz" : "ob.debt.title")}
-        subtitle={t(isBusiness ? "ob.debt.subtitleBiz" : "ob.debt.subtitle")}
+        title={t("ob.debt.title")}
+        subtitle={t("ob.debt.subtitle")}
       />
       <StepInfo body={t("ob.debt.info")} />
       <div className="space-y-3">
@@ -1515,7 +1303,7 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
           <Label className="text-xs">{t("ob.debt.whatLabel")}</Label>
           <div className="flex gap-2">
             <Input
-              placeholder={t(isBusiness ? "ob.debt.namePhBiz" : "ob.debt.namePh")}
+              placeholder={t("ob.debt.namePh")}
               value={label}
               onChange={(e) => setLabel(e.target.value)}
             />
@@ -1593,7 +1381,7 @@ function DebtStep({ householdId, isBusiness }: { householdId: string; isBusiness
 
 // ---- Assets ---------------------------------------------------------------
 
-function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
+function AssetsStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -1619,7 +1407,6 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
   const [current, setCurrent] = useState("");
   const [acquired, setAcquired] = useState("");
   const [acquiredOn, setAcquiredOn] = useState("");
-  const [deprYears, setDeprYears] = useState("");
   const [saving, setSaving] = useState(false);
 
   const KIND_LABEL: Record<string, string> = {
@@ -1646,20 +1433,12 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
           acquired_value: acquired ? parseFloat(acquired.replace(",", ".")) : null,
           acquired_on: acquiredOn || null,
           current_value: parseFloat(current.replace(",", ".")) || 0,
-          ...(isBusiness && deprYears && parseFloat(deprYears) > 0
-            ? {
-                depreciation_method: "straight_line" as const,
-                useful_life_months: Math.round(parseFloat(deprYears) * 12),
-                depreciation_start: acquiredOn || null,
-              }
-            : {}),
         },
       });
       setName("");
       setCurrent("");
       setAcquired("");
       setAcquiredOn("");
-      setDeprYears("");
       qc.invalidateQueries({ queryKey: ["ob-assets", householdId] });
     } finally {
       setSaving(false);
@@ -1670,12 +1449,12 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
     <div>
       <StepHead
         icon={Gem}
-        title={t(isBusiness ? "ob.assets.titleBiz" : "ob.assets.title")}
-        subtitle={t(isBusiness ? "ob.assets.subtitleBiz" : "ob.assets.subtitle")}
+        title={t("ob.assets.title")}
+        subtitle={t("ob.assets.subtitle")}
       />
       <div className="space-y-2">
         <Input
-          placeholder={t(isBusiness ? "ob.assets.namePhBiz" : "ob.assets.namePh")}
+          placeholder={t("ob.assets.namePh")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -1717,19 +1496,6 @@ function AssetsStep({ householdId, isBusiness }: { householdId: string; isBusine
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
           </Button>
         </div>
-        {isBusiness && (
-          <div>
-            <Input
-              type="number"
-              min={0}
-              inputMode="numeric"
-              placeholder={t("ob.assets.deprYearsPh")}
-              value={deprYears}
-              onChange={(e) => setDeprYears(e.target.value)}
-            />
-            <p className="mt-1 text-xs text-muted-foreground">{t("ob.assets.deprHint")}</p>
-          </div>
-        )}
       </div>
       {items.length > 0 && (
         <ul className="mt-4 divide-y rounded-xl border">
@@ -1761,7 +1527,7 @@ type Suggestion = {
   kind: BucketKind;
 };
 
-function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
+function ProjectsStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
   const t = useT();
   const sym = currencySymbol();
@@ -1815,28 +1581,24 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
       kind: "investment",
     },
     // Holidays and kids are personal-only suggestions.
-    ...(isBusiness
-      ? []
-      : [
+    {
+      name: t("ob.projects.sug.holidays"),
+      target_type: "fixed_monthly" as const,
+      target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5),
+      why: t("ob.projects.sug.holidaysWhy"),
+      kind: "savings" as const,
+    },
+    ...(data && data.children > 0
+      ? [
           {
-            name: t("ob.projects.sug.holidays"),
+            name: t("ob.projects.sug.kids"),
             target_type: "fixed_monthly" as const,
-            target_value: Math.max(25, Math.round((surplus * 0.1) / 5) * 5),
-            why: t("ob.projects.sug.holidaysWhy"),
+            target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5),
+            why: t("ob.projects.sug.kidsWhy"),
             kind: "savings" as const,
           },
-          ...(data && data.children > 0
-            ? [
-                {
-                  name: t("ob.projects.sug.kids"),
-                  target_type: "fixed_monthly" as const,
-                  target_value: Math.max(25, Math.round((surplus * 0.15) / 5) * 5),
-                  why: t("ob.projects.sug.kidsWhy"),
-                  kind: "savings" as const,
-                },
-              ]
-            : []),
-        ]),
+        ]
+      : []),
   ];
 
   const [name, setName] = useState("");
@@ -1889,7 +1651,7 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
     <div>
       <StepHead
         icon={PiggyBank}
-        title={t(isBusiness ? "ob.projects.titleBiz" : "ob.projects.title")}
+        title={t("ob.projects.title")}
         subtitle={t("ob.projects.subtitle", { amount: money(surplus) })}
       />
       <StepInfo body={t("ob.projects.info")} />
@@ -1926,7 +1688,7 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
       <p className="mb-2 mt-6 text-sm font-medium">{t("ob.projects.orCustom")}</p>
       <div className="space-y-2">
         <Input
-          placeholder={t(isBusiness ? "ob.projects.namePhBiz" : "ob.projects.namePh")}
+          placeholder={t("ob.projects.namePh")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -1964,7 +1726,7 @@ function ProjectsStep({ householdId, isBusiness }: { householdId: string; isBusi
 
 // ---- Plans (future costs / income the user already knows about) -----------
 
-function PlansStep({ householdId, isBusiness }: { householdId: string; isBusiness: boolean }) {
+function PlansStep({ householdId }: { householdId: string }) {
   const qc = useQueryClient();
   const t = useT();
   const add = useServerFn(upsertPlan);
@@ -2017,7 +1779,7 @@ function PlansStep({ householdId, isBusiness }: { householdId: string; isBusines
       <StepHead
         icon={CalendarClock}
         title={t("ob.plans.title")}
-        subtitle={t(isBusiness ? "ob.plans.subtitleBiz" : "ob.plans.subtitle")}
+        subtitle={t("ob.plans.subtitle")}
       />
       <div className="space-y-2">
         <div className="flex gap-2">

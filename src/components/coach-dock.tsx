@@ -67,7 +67,6 @@ export function CoachDock() {
     queryKey: ["household", householdId],
     queryFn: () => fetchHh({ data: householdId ? { household_id: householdId } : {} }),
   });
-  const isBusiness = hh?.household?.kind === "business";
 
   const [open, setOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
@@ -418,7 +417,6 @@ export function CoachDock() {
       {setupOpen && householdId && (
         <CoachOnboarding
           householdId={householdId}
-          isBusiness={isBusiness}
           onSwitchToForms={() => setSetupOpen(false)}
           onDone={() => setSetupOpen(false)}
         />

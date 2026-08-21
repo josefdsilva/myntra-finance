@@ -29,7 +29,6 @@ function AssetsPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
-  const isBusiness = hh?.household?.kind === "business";
 
   return (
     <div className={pageShellClass("3xl")}>
@@ -38,7 +37,7 @@ function AssetsPage() {
         <p className="text-sm text-muted-foreground">{t("assets.subtitle")}</p>
       </header>
       {householdId && <NetWorthCard householdId={householdId} />}
-      {householdId && <AssetsSection householdId={householdId} isBusiness={isBusiness} />}
+      {householdId && <AssetsSection householdId={householdId} />}
     </div>
   );
 }

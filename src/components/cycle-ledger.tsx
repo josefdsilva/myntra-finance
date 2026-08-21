@@ -6,7 +6,6 @@ import {
   TrendingDown,
   Check,
   Paperclip,
-  AlertTriangle,
   ChevronDown,
   ChevronRight,
   CalendarClock,
@@ -78,11 +77,9 @@ const ymd = (d: Date) =>
 export function CommittedThisCycle({
   householdId,
   cycle,
-  isBusiness,
 }: {
   householdId: string;
   cycle: Cycle;
-  isBusiness: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -127,14 +124,7 @@ export function CommittedThisCycle({
           .not("income_id", "is", null)
           .gte("occurred_at", startISO)
           .lt("occurred_at", endISO),
-        isBusiness
-          ? supabase
-              .from("fixed_expense_settlements")
-              .select("id, fixed_expense_id, amount, occurred_at")
-              .eq("household_id", householdId)
-              .gte("occurred_at", startISO)
-              .lt("occurred_at", endISO)
-          : null,
+        null,
         supabase
           .from("invoices")
           .select("expense_id, settlement_id")
@@ -281,7 +271,7 @@ export function CommittedThisCycle({
           {incomes.length > 0 && data && (
             <div>
               <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-                {t(isBusiness ? "cashflow.inBiz" : "cashflow.in")}
+                {t("cashflow.in")}
               </p>
               <ul className="divide-y">
                 {incomes.map((line) => (
@@ -295,7 +285,6 @@ export function CommittedThisCycle({
                     marks={data.receiptsByIncome[line.id] ?? []}
                     withInvoice={data.invExpenses}
                     canMark
-                    isBusiness={isBusiness}
                     onMark={openMark}
                     onAttach={openAttach}
                     onUndo={undo}
@@ -311,36 +300,18 @@ export function CommittedThisCycle({
                 {t("cashflow.fixed")}
               </p>
               <ul className="divide-y">
-                {fixed.map((line) =>
-                  isBusiness ? (
-                    <ReconLine
-                      key={line.id}
-                      dir="out"
-                      line={line}
-                      cycle={cycle}
-                      cycleStart={data.start}
-                      cycleEnd={data.end}
-                      marks={data.settlementsByFixed[line.id] ?? []}
-                      withInvoice={data.invSettlements}
-                      canMark
-                      isBusiness={isBusiness}
-                      onMark={openMark}
-                      onAttach={openAttach}
-                      onUndo={undo}
-                    />
-                  ) : (
-                    <li
-                      key={line.id}
-                      className="flex items-center justify-between gap-2 py-1.5 text-sm"
-                    >
-                      <span className="min-w-0 truncate">{line.label}</span>
-                      <span className="shrink-0 tabular-nums">
-                        −{money(perCycleFromMonthly(Number(line.monthly_amount), cycle))}
-                        {suffix}
-                      </span>
-                    </li>
-                  ),
-                )}
+                {fixed.map((line) => (
+                  <li
+                    key={line.id}
+                    className="flex items-center justify-between gap-2 py-1.5 text-sm"
+                  >
+                    <span className="min-w-0 truncate">{line.label}</span>
+                    <span className="shrink-0 tabular-nums">
+                      −{money(perCycleFromMonthly(Number(line.monthly_amount), cycle))}
+                      {suffix}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
@@ -411,7 +382,6 @@ export function CommittedThisCycle({
                 householdId={householdId}
                 expenseId={dialog.dir === "in" ? dialog.targetId! : undefined}
                 settlementId={dialog.dir === "out" ? dialog.targetId! : undefined}
-                isBusiness={isBusiness}
               />
               <DialogFooter>
                 <Button onClick={() => setDialog(null)}>{t("ledger.done")}</Button>
@@ -434,7 +404,6 @@ function ReconLine({
   marks,
   withInvoice,
   canMark,
-  isBusiness,
   onMark,
   onAttach,
   onUndo,
@@ -447,7 +416,6 @@ function ReconLine({
   marks: Mark[];
   withInvoice: Set<string>;
   canMark: boolean;
-  isBusiness: boolean;
   onMark: (dir: Dir, line: Line, occStart: Date, expected: number) => void;
   onAttach: (dir: Dir, label: string, targetId: string) => void;
   onUndo: (dir: Dir, markId: string) => void;
@@ -483,15 +451,11 @@ function ReconLine({
 
   function markCell(r: { start: Date; expected: number; mark: Mark | null }) {
     if (r.mark) {
-      const missing = isBusiness && !withInvoice.has(r.mark.id);
       return (
         <span className={`flex shrink-0 items-center gap-1.5 tabular-nums ${amountClass}`}>
           <Check className="size-3.5 text-emerald-600" />
           {sign}
           {money(r.mark.amount)}
-          {missing && (
-            <AlertTriangle className="size-3.5 text-destructive" aria-label={t("inv.missing")} />
-          )}
           <Button
             size="sm"
             variant="ghost"

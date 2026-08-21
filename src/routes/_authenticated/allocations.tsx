@@ -74,8 +74,6 @@ function AllocationsPage() {
   });
   const householdId = hh?.household?.id;
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
-  // The Journey is personal-only, so it only appears as a tab for personal spaces.
-  const isBusiness = hh?.household?.kind === "business";
 
   const { data } = useQuery({
     enabled: !!householdId,
@@ -338,7 +336,7 @@ function AllocationsPage() {
         <TabsList>
           <TabsTrigger value="projects">{t("alloc.tab.projects")}</TabsTrigger>
           <TabsTrigger value="targets">{t("alloc.tab.targets")}</TabsTrigger>
-          {!isBusiness && <TabsTrigger value="journey">{t("nav.journey")}</TabsTrigger>}
+          <TabsTrigger value="journey">{t("nav.journey")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="projects" className="space-y-6">
@@ -573,11 +571,9 @@ function AllocationsPage() {
           {householdId && <KpiTargetsTab householdId={householdId} />}
         </TabsContent>
 
-        {!isBusiness && (
-          <TabsContent value="journey">
-            <JourneyPage embedded />
-          </TabsContent>
-        )}
+        <TabsContent value="journey">
+          <JourneyPage embedded />
+        </TabsContent>
       </Tabs>
     </div>
   );

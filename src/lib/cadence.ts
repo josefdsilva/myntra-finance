@@ -37,8 +37,8 @@ export function perCycleFromMonthly(monthlyAmount: number, cycle: Cycle): number
 }
 
 /** Sensible default cycle for a space kind. */
-export function defaultCycleForKind(kind: string | null | undefined): Cycle {
-  return kind === "business" ? "quarterly" : "monthly";
+export function defaultCycleForKind(_kind?: string | null | undefined): Cycle {
+  return "monthly";
 }
 
 // Approximate months per one period, used only to decide whether a line's

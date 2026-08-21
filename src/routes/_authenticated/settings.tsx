@@ -59,7 +59,6 @@ import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
-import { groupSectors, NACE_SECTIONS } from "@/lib/business-benchmarks";
 import { debtKindOptions, debtKindLabel, type DebtKind } from "@/lib/debt-kinds";
 import {
   defaultIntentForCategory,
@@ -162,17 +161,13 @@ function SettingsPage() {
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
           />
           <CategoryManager householdId={householdId} />
-          <MembersSection
-            householdId={householdId}
-            isBusiness={hh!.household!.kind === "business"}
-          />
+          <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
           <CreditUsageSection household={hh!.household!} />
           <DangerZone
             householdId={householdId}
             householdName={hh!.household!.name ?? t("hh.defaultName")}
             role={hh!.role ?? "member"}
-            isBusiness={hh!.household!.kind === "business"}
           />
         </>
       )}
@@ -332,10 +327,8 @@ function HouseholdSection({
     adults?: number | null;
     children?: number | null;
     age_band?: string | null;
-    employees?: number | null;
     currency?: string | null;
     kind?: string | null;
-    advisor_email?: string | null;
     cycle?: string | null;
     cycle_mode?: string | null;
     cycle_anchor_income_id?: string | null;
@@ -352,15 +345,9 @@ function HouseholdSection({
   const [adults, setAdults] = useState(Number(household.adults ?? 2));
   const [children, setChildren] = useState(Number(household.children ?? 0));
   const [ageBand, setAgeBand] = useState<string>(household.age_band ?? "");
-  const [employees, setEmployees] = useState(Number(household.employees ?? 0));
-  const [sector, setSector] = useState<string>(
-    (household as { sector?: string | null }).sector ?? "",
-  );
   const [currency, setCurrency] = useState<"EUR" | "USD" | "GBP">(
     (String(household.currency ?? "EUR").toUpperCase() as "EUR" | "USD" | "GBP") ?? "EUR",
   );
-  const isBusiness = household.kind === "business";
-  const [advisorEmail, setAdvisorEmail] = useState(household.advisor_email ?? "");
   const [cycle, setCycle] = useState<Cycle>(cycleForSpace(household));
   const [cycleMode, setCycleMode] = useState<"event" | "time">(
     household.cycle_mode === "time" ? "time" : "event",
@@ -452,18 +439,6 @@ function HouseholdSection({
     }
   }
 
-  async function saveAdvisor() {
-    try {
-      await update({
-        data: { household_id: household.id, advisor_email: advisorEmail.trim() || null },
-      });
-      toast.success(t("hh.savedToast"));
-      onChange();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
-    }
-  }
-
   async function saveCurrency(next: "EUR" | "USD" | "GBP") {
     setCurrency(next);
     setCurrentCurrency(next); // update money() formatting immediately
@@ -514,20 +489,16 @@ function HouseholdSection({
         data: {
           household_id: household.id,
           country: country.toUpperCase().slice(0, 2),
-          ...(isBusiness
-            ? { employees: Math.max(0, Math.round(employees)), sector: sector || null }
-            : {
-                adults: Math.max(1, Math.round(adults)),
-                children: Math.max(0, Math.round(children)),
-                age_band: (ageBand || null) as
-                  | "under35"
-                  | "35_44"
-                  | "45_54"
-                  | "55_64"
-                  | "65_74"
-                  | "75plus"
-                  | null,
-              }),
+          adults: Math.max(1, Math.round(adults)),
+          children: Math.max(0, Math.round(children)),
+          age_band: (ageBand || null) as
+            | "under35"
+            | "35_44"
+            | "45_54"
+            | "55_64"
+            | "65_74"
+            | "75plus"
+            | null,
         },
       });
       toast.success(t("hh.savedToast"));
@@ -542,34 +513,13 @@ function HouseholdSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t(isBusiness ? "hh.titleBusiness" : "hh.title")}</CardTitle>
-        <CardDescription>
-          {t(isBusiness ? "hh.descriptionBusiness" : "hh.description")}
-        </CardDescription>
+        <CardTitle>{t("hh.title")}</CardTitle>
+        <CardDescription>{t("hh.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isBusiness && (
-          <div className="rounded-lg border p-4">
-            <div className="text-sm font-medium">{t("settings.business.advisorLabel")}</div>
-            <div className="text-xs text-muted-foreground">
-              {t("settings.business.advisorHint")}
-            </div>
-            <div className="mt-3 flex gap-2">
-              <Input
-                type="email"
-                placeholder={t("settings.business.advisorPh")}
-                value={advisorEmail}
-                onChange={(e) => setAdvisorEmail(e.target.value)}
-              />
-              <Button variant="outline" onClick={saveAdvisor}>
-                {t("common.save")}
-              </Button>
-            </div>
-          </div>
-        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>{t(isBusiness ? "hh.nameBiz" : "hh.name")}</Label>
+            <Label>{t("hh.name")}</Label>
             <div className="flex gap-2">
               <Input value={name} onChange={(e) => setName(e.target.value)} />
               <Button onClick={saveName} variant="outline">
@@ -691,12 +641,8 @@ function HouseholdSection({
         <div className="rounded-lg border p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-sm">
-                {t(isBusiness ? "hh.profileBiz" : "hh.profile")}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {t(isBusiness ? "hh.profileHintBiz" : "hh.profileHint")}
-              </div>
+              <div className="font-medium text-sm">{t("hh.profile")}</div>
+              <div className="text-xs text-muted-foreground">{t("hh.profileHint")}</div>
             </div>
             <Button onClick={saveProfile} variant="outline" size="sm">
               {t("common.save")}
@@ -712,76 +658,40 @@ function HouseholdSection({
                 placeholder="PT"
               />
             </div>
-            {isBusiness ? (
-              <>
-                <div>
-                  <Label>{t("hh.employees")}</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={employees}
-                    onChange={(e) => setEmployees(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label>{t("hh.sector")}</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={sector}
-                    onChange={(e) => setSector(e.target.value)}
-                  >
-                    <option value="">{t("hh.sectorNone")}</option>
-                    {groupSectors().map(([section, items]) => (
-                      <optgroup key={section} label={NACE_SECTIONS[section] ?? section}>
-                        {items.map((s) => (
-                          <option key={s.code} value={s.code}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground mt-1">{t("hh.sectorHint")}</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <Label>{t("hh.adults")}</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={adults}
-                    onChange={(e) => setAdults(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label>{t("hh.children")}</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={children}
-                    onChange={(e) => setChildren(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label>{t("hh.ageBand")}</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={ageBand}
-                    onChange={(e) => setAgeBand(e.target.value)}
-                  >
-                    <option value="">{t("hh.ageBandNone")}</option>
-                    {AGE_BANDS.map((b) => (
-                      <option key={b} value={b}>
-                        {t(`hh.ageBand.${b}` as MessageKey)}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground mt-1">{t("hh.ageBandHint")}</p>
-                </div>
-              </>
-            )}
+            <div>
+              <Label>{t("hh.adults")}</Label>
+              <Input
+                type="number"
+                min={1}
+                value={adults}
+                onChange={(e) => setAdults(Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <Label>{t("hh.children")}</Label>
+              <Input
+                type="number"
+                min={0}
+                value={children}
+                onChange={(e) => setChildren(Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <Label>{t("hh.ageBand")}</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={ageBand}
+                onChange={(e) => setAgeBand(e.target.value)}
+              >
+                <option value="">{t("hh.ageBandNone")}</option>
+                {AGE_BANDS.map((b) => (
+                  <option key={b} value={b}>
+                    {t(`hh.ageBand.${b}` as MessageKey)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">{t("hh.ageBandHint")}</p>
+            </div>
           </div>
         </div>
         <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
@@ -994,28 +904,16 @@ function CadenceLineValue({
   );
 }
 
-// Recurring-income categories, split by space kind. Personal life vs a firm's
-// income streams need different words (salary vs services rendered).
+// Recurring-income categories for a household.
 const PERSONAL_INCOME_TYPES = ["salary", "rent", "pension", "benefits", "other"] as const;
-const BUSINESS_INCOME_TYPES = [
-  "services",
-  "sales",
-  "subscriptions",
-  "rent",
-  "interest",
-  "grants",
-  "other",
-] as const;
-type IncomeType = (typeof PERSONAL_INCOME_TYPES)[number] | (typeof BUSINESS_INCOME_TYPES)[number];
+type IncomeType = (typeof PERSONAL_INCOME_TYPES)[number];
 
 export function IncomesSection({
   householdId,
   cycle = "monthly",
-  isBusiness = false,
 }: {
   householdId: string;
   cycle?: Cycle;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -1036,9 +934,9 @@ export function IncomesSection({
   });
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState<IncomeType>(isBusiness ? "services" : "salary");
+  const [type, setType] = useState<IncomeType>("salary");
   const [cadence, setCadence] = useState<Cadence>("monthly");
-  const typeOptions = isBusiness ? BUSINESS_INCOME_TYPES : PERSONAL_INCOME_TYPES;
+  const typeOptions = PERSONAL_INCOME_TYPES;
 
   const TYPE_LABEL: Record<string, string> = {
     salary: t("income.typeSalary"),
@@ -1124,8 +1022,7 @@ export function IncomesSection({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!isBusiness &&
-          (rows?.length ?? 0) > 0 &&
+        {(rows?.length ?? 0) > 0 &&
           !(rows ?? []).some((r) => r.type === "salary") && (
             <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-2.5 text-xs">
               <AlertTriangle className="size-3.5 mt-0.5 shrink-0 text-amber-600" />
@@ -1699,13 +1596,7 @@ function BucketRow<T extends BucketRowShape>({
   );
 }
 
-function MembersSection({
-  householdId,
-  isBusiness = false,
-}: {
-  householdId: string;
-  isBusiness?: boolean;
-}) {
+function MembersSection({ householdId }: { householdId: string }) {
   const t = useT();
   const invite = useServerFn(inviteMember);
   const { data: members } = useQuery({
@@ -1764,7 +1655,7 @@ function MembersSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t(isBusiness ? "members.titleBiz" : "members.title")}</CardTitle>
+        <CardTitle>{t("members.title")}</CardTitle>
         <CardDescription>{t("members.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -1817,15 +1708,9 @@ function MembersSection({
   );
 }
 
-export function DebtsSection({
-  householdId,
-  isBusiness = false,
-}: {
-  householdId: string;
-  isBusiness?: boolean;
-}) {
+export function DebtsSection({ householdId }: { householdId: string }) {
   const t = useT();
-  const DEBT_KINDS = debtKindOptions(t, isBusiness);
+  const DEBT_KINDS = debtKindOptions(t);
   const qc = useQueryClient();
   const upsert = useServerFn(upsertDebt);
   const del = useServerFn(deleteDebt);
@@ -1843,7 +1728,7 @@ export function DebtsSection({
   });
 
   const [label, setLabel] = useState("");
-  const [kind, setKind] = useState<DebtKind>(isBusiness ? "business_loan" : "mortgage");
+  const [kind, setKind] = useState<DebtKind>("mortgage");
   const [monthly, setMonthly] = useState("");
   const [taeg, setTaeg] = useState("");
   const [principal, setPrincipal] = useState("");
@@ -1942,9 +1827,9 @@ export function DebtsSection({
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="min-w-0">
-            <CardTitle>{t(isBusiness ? "debts.setupTitleBiz" : "debts.setupTitle")}</CardTitle>
+            <CardTitle>{t("debts.setupTitle")}</CardTitle>
             <CardDescription>
-              {t(isBusiness ? "debts.setupDescBiz" : "debts.setupDesc", {
+              {t("debts.setupDesc", {
                 rate: t("settings.debtRateLabel"),
               })}{" "}
               {t("debts.totalLabel")}:{" "}
@@ -2004,7 +1889,7 @@ export function DebtsSection({
           <div>
             <Label className="text-xs">{t("debts.labelField")}</Label>
             <Input
-              placeholder={t(isBusiness ? "debts.labelPhBiz" : "debts.labelPh")}
+              placeholder={t("debts.labelPh")}
               value={label}
               onChange={(e) => setLabel(e.target.value)}
             />

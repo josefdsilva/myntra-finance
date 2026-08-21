@@ -112,8 +112,7 @@ function WikiPage() {
     queryKey: ["household", activeHouseholdId],
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
-  const isBusiness = hh?.household?.kind === "business";
-  const kind: "personal" | "business" = isBusiness ? "business" : "personal";
+  const kind = "personal";
   const sections = useMemo(() => wikiSectionsFor(kind), [kind]);
 
   const [query, setQuery] = useState("");
@@ -201,7 +200,6 @@ function WikiPage() {
         const paras = s.paragraphs[locale] ?? s.paragraphs.en;
         const bullets = s.bullets?.[locale] ?? s.bullets?.en ?? [];
         const callout = s.callout?.[locale] ?? s.callout?.en;
-        const businessNote = isBusiness ? (s.businessNote?.[locale] ?? s.businessNote?.en) : null;
 
         return (
           <SectionCard key={s.id} id={s.id} icon={Icon} title={title}>
@@ -280,12 +278,6 @@ function WikiPage() {
 
             {callout && (
               <p className="rounded-lg border bg-muted/40 p-3 text-foreground">{callout}</p>
-            )}
-
-            {businessNote && (
-              <p className="rounded-lg border border-primary/25 bg-primary/5 p-3 text-foreground">
-                {businessNote}
-              </p>
             )}
           </SectionCard>
         );

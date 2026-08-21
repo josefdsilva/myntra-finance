@@ -98,21 +98,8 @@ function FastForwardPage() {
     });
   };
 
-  const isBusiness = data?.isBusiness ?? false;
-  const worthKey = isBusiness ? "ff.cash" : "ff.netWorth";
-  // A business is read in cash-flow terms: the trajectory is projected CASH (the
-  // running accumulation of free cash flow), not net worth (which folds in
-  // illiquid equipment). Households keep net worth.
-  const worthOf = (m: { netWorth: number; savings: number }) =>
-    isBusiness ? m.savings : m.netWorth;
-
-  // Runway: the first projected month cash goes negative under the expected path.
-  const runwayYm = useMemo(() => {
-    if (!isBusiness) return null;
-    const series = data?.scenarios.find((s) => s.key === "expected")?.series ?? [];
-    const hit = series.find((m) => m.savings < 0);
-    return hit ? hit.ym : null;
-  }, [isBusiness, data]);
+  const worthKey = "ff.netWorth";
+  const worthOf = (m: { netWorth: number; savings: number }) => m.netWorth;
 
   const byKey = useMemo(() => {
     const m: Record<string, { key: string; series: ProjectionMonth[]; at: ProjectionMonth }> = {};
@@ -154,9 +141,7 @@ function FastForwardPage() {
           <h1 className="flex items-center gap-2 font-display text-2xl">
             <FastForward className="size-6 text-primary" /> {t("ff.title")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {t(isBusiness ? "ff.subtitleBiz" : "ff.subtitle")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("ff.subtitle")}</p>
         </div>
         <div className="w-full sm:w-auto">
           <Label className="text-xs">{t("ff.targetLabel")}</Label>
@@ -191,7 +176,7 @@ function FastForwardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="size-5 text-primary" />
-                {t(isBusiness ? "ff.positionInBiz" : "ff.positionIn", {
+                {t("ff.positionIn", {
                   date: monthLabel(data.targetYm),
                 })}
               </CardTitle>
@@ -220,11 +205,6 @@ function FastForwardPage() {
                   );
                 })}
               </div>
-              {isBusiness && runwayYm && (
-                <div className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {t("ff.runwayNote", { date: monthLabel(runwayYm) })}
-                </div>
-              )}
               {data.hasEvents &&
                 (() => {
                   const delta =
@@ -248,7 +228,6 @@ function FastForwardPage() {
           <ScenarioBuilder
             events={events}
             onChange={setEvents}
-            isBusiness={isBusiness}
             debts={data.debts}
             salaryIncomes={data.salaryIncomes ?? []}
             minMonth={minMonth}
@@ -260,9 +239,9 @@ function FastForwardPage() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Stat label={t("ff.now")} value={money(worthOf(data.current))} sub={t(worthKey)} />
             <Stat
-              label={isBusiness ? t("ff.cashThen") : t("ff.savingsThen")}
+              label={t("ff.savingsThen")}
               value={money(byKey.expected?.at.savings ?? 0)}
-              sub={isBusiness ? t("ff.cash") : t("ff.savings")}
+              sub={t("ff.savings")}
             />
             <Stat
               label={t("ff.debtThen")}
@@ -275,9 +254,9 @@ function FastForwardPage() {
               good={byKey.expected?.at.debtFree}
             />
             <Stat
-              label={isBusiness ? t("ff.cashflowThen") : t("ff.surplusThen")}
+              label={t("ff.surplusThen")}
               value={money(byKey.expected?.at.surplus ?? 0)}
-              sub={isBusiness ? t("ff.cashflowMonthly") : t("ff.surplusMonthly")}
+              sub={t("ff.surplusMonthly")}
             />
           </div>
 
@@ -429,15 +408,7 @@ type UiType =
   | "salaryChange"
   | "retirement"
   | "loan"
-  | "overpay"
-  // Business presets — each maps to an engine primitive below.
-  | "hire"
-  | "payrollRaise"
-  | "bonus"
-  | "newRevenue"
-  | "newOffice"
-  | "buyEquipment"
-  | "newSite";
+  | "overpay";
 
 const PERSONAL_UI_TYPES: UiType[] = [
   "salaryChange",
@@ -451,28 +422,9 @@ const PERSONAL_UI_TYPES: UiType[] = [
   "overpay",
 ];
 
-const BUSINESS_UI_TYPES: UiType[] = [
-  "hire",
-  "payrollRaise",
-  "bonus",
-  "newRevenue",
-  "newOffice",
-  "buyEquipment",
-  "newSite",
-  "oneOffExpense",
-  "loan",
-  "overpay",
-];
-
-// Business presets that add a recurring monthly cost/income (apply from a month
-// onward), vs one-off / capital events that land on a single month.
-const BUSINESS_RECURRING: UiType[] = ["hire", "payrollRaise", "newOffice", "newRevenue"];
-const BUSINESS_CAPEX: UiType[] = ["buyEquipment", "newSite"];
-
 function ScenarioBuilder({
   events,
   onChange,
-  isBusiness,
   debts,
   salaryIncomes,
   minMonth,
@@ -481,7 +433,6 @@ function ScenarioBuilder({
 }: {
   events: ScenarioEvent[];
   onChange: (e: ScenarioEvent[]) => void;
-  isBusiness: boolean;
   debts: Array<{ id: string; label: string }>;
   salaryIncomes: Array<{ id: string; label: string; monthly: number }>;
   minMonth: string;
@@ -490,12 +441,11 @@ function ScenarioBuilder({
 }) {
   const t = useT();
   const locale = useLocale();
-  const uiTypes = isBusiness ? BUSINESS_UI_TYPES : PERSONAL_UI_TYPES;
-  const [type, setType] = useState<UiType>(isBusiness ? "hire" : "oneOffExpense");
+  const uiTypes = PERSONAL_UI_TYPES;
+  const [type, setType] = useState<UiType>("oneOffExpense");
   const [month, setMonth] = useState(defaultMonth);
   const [amount, setAmount] = useState("");
   const [name, setName] = useState("");
-  const [count, setCount] = useState("1");
   // "__all__" targets the whole salary; otherwise a specific salary income id.
   const [replacesId, setReplacesId] = useState("__all__");
   const [apr, setApr] = useState("");
@@ -516,9 +466,8 @@ function ScenarioBuilder({
   };
   const clampMonth = (v: string) => (v < minMonth ? minMonth : v > maxMonth ? maxMonth : v);
 
-  const isRecurring =
-    type === "raise" || type === "recurringCost" || BUSINESS_RECURRING.includes(type);
-  const isCapex = type === "purchaseAsset" || BUSINESS_CAPEX.includes(type);
+  const isRecurring = type === "raise" || type === "recurringCost";
+  const isCapex = type === "purchaseAsset";
   // Events that apply "from a month onward" rather than on a single month.
   const usesFromMonth = isRecurring || type === "retirement" || type === "salaryChange";
   const amountKey =
@@ -530,15 +479,7 @@ function ScenarioBuilder({
           ? "ff.evt.pension"
           : type === "salaryChange"
             ? "ff.evt.newSalary"
-            : type === "hire"
-              ? "ff.evt.perEmployee"
-              : type === "newOffice"
-                ? "ff.evt.monthlyRent"
-                : type === "newRevenue"
-                  ? "ff.evt.monthlyRevenue"
-                  : type === "payrollRaise"
-                    ? "ff.evt.monthlyExtra"
-                    : "ff.evt.amount";
+            : "ff.evt.amount";
 
   function add() {
     const amt = num(amount);
@@ -546,75 +487,8 @@ function ScenarioBuilder({
     if (type === "overpay" && !targetDebtId) return;
     const id = crypto.randomUUID();
     const label = name.trim() || undefined;
-    // Auto-label the business presets so the chip/summary stays meaningful even
-    // though they map down to generic engine primitives.
-    const nHires = Math.max(1, Math.round(num(count)) || 1);
     let ev: ScenarioEvent;
     switch (type) {
-      // ---- Business presets → engine primitives ----
-      case "hire":
-        // N employees × per-employee monthly cost = a recurring payroll cost.
-        ev = {
-          id,
-          kind: "recurring",
-          direction: "expense",
-          fromMonth: month,
-          amount: amt * nHires,
-          label: label ?? t("ff.evt.hireLabel", { count: nHires }),
-        };
-        break;
-      case "payrollRaise":
-        ev = {
-          id,
-          kind: "recurring",
-          direction: "expense",
-          fromMonth: month,
-          amount: amt,
-          label: label ?? t("ff.evt.type.payrollRaise"),
-        };
-        break;
-      case "newOffice":
-        ev = {
-          id,
-          kind: "recurring",
-          direction: "expense",
-          fromMonth: month,
-          amount: amt,
-          label: label ?? t("ff.evt.type.newOffice"),
-        };
-        break;
-      case "newRevenue":
-        ev = {
-          id,
-          kind: "recurring",
-          direction: "income",
-          fromMonth: month,
-          amount: amt,
-          label: label ?? t("ff.evt.type.newRevenue"),
-        };
-        break;
-      case "bonus":
-        ev = {
-          id,
-          kind: "one_off",
-          direction: "expense",
-          month,
-          amount: amt,
-          label: label ?? t("ff.evt.type.bonus"),
-        };
-        break;
-      case "buyEquipment":
-      case "newSite":
-        // Capex: cash out now, adds to assets (net-worth neutral, cash-negative).
-        ev = {
-          id,
-          kind: "asset_purchase",
-          month,
-          price: amt,
-          assetValue: assetValue.trim() ? num(assetValue) : amt,
-          label: label ?? t(`ff.evt.type.${type}` as MessageKey),
-        };
-        break;
       case "purchaseAsset":
         ev = {
           id,
@@ -795,17 +669,6 @@ function ScenarioBuilder({
                 />
               </div>
             </>
-          )}
-          {type === "hire" && (
-            <div>
-              <Label className="text-xs">{t("ff.evt.count")}</Label>
-              <Input
-                inputMode="numeric"
-                placeholder="1"
-                value={count}
-                onChange={(e) => setCount(e.target.value)}
-              />
-            </div>
           )}
           {isCapex && (
             <div>

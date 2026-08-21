@@ -105,10 +105,8 @@ function DeltaChip({ delta }: { delta: number }) {
  */
 export function ScoreTrendMini({
   householdId,
-  isBusiness = false,
 }: {
   householdId?: string;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const { data } = useCycleMetrics(householdId);
@@ -126,7 +124,7 @@ export function ScoreTrendMini({
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <LineChartIcon className="size-4 text-primary" />
-          {t(isBusiness ? "trend.scoreTitleBiz" : "trend.scoreTitle")}
+          {t("trend.scoreTitle")}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-4">
@@ -211,10 +209,8 @@ function DriftRow({ label, pct }: { label: string; pct: number | null }) {
  */
 export function CalibrationCard({
   householdId,
-  isBusiness = false,
 }: {
   householdId?: string;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const { data } = useCycleMetrics(householdId);
@@ -233,8 +229,8 @@ export function CalibrationCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DriftRow label={t(isBusiness ? "calib.costs" : "calib.everyday")} pct={everyday?.pct ?? null} />
-        <DriftRow label={t(isBusiness ? "calib.revenue" : "calib.income")} pct={income?.pct ?? null} />
+        <DriftRow label={t("calib.everyday")} pct={everyday?.pct ?? null} />
+        <DriftRow label={t("calib.income")} pct={income?.pct ?? null} />
         <p className="mt-2 text-xs text-muted-foreground">
           {overspends ? t("calib.hintOver") : t("calib.subtitle", { n })}
         </p>
@@ -256,10 +252,8 @@ const RANGES = [
  */
 export function ScoreTrendCard({
   householdId,
-  isBusiness = false,
 }: {
   householdId?: string;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const { data } = useCycleMetrics(householdId);
@@ -286,7 +280,7 @@ export function ScoreTrendCard({
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <CardTitle className="flex items-center gap-2 text-base">
             <LineChartIcon className="size-4 text-primary" />
-            {t(isBusiness ? "trend.scoreTitleBiz" : "trend.scoreTitle")}
+            {t("trend.scoreTitle")}
           </CardTitle>
           <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
             {RANGES.map((r) => (
@@ -315,7 +309,7 @@ export function ScoreTrendCard({
               <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis domain={[0, 100]} tickLine={false} axisLine={false} width={32} fontSize={12} />
               <Tooltip
-                formatter={(v: number | string) => [v, t(isBusiness ? "trend.scoreTitleBiz" : "trend.scoreTitle")]}
+                formatter={(v: number | string) => [v, t("trend.scoreTitle")]}
                 contentStyle={{
                   background: "var(--popover)",
                   border: "1px solid var(--border)",
@@ -350,10 +344,8 @@ export function ScoreTrendCard({
  */
 export function CycleCompareCard({
   householdId,
-  isBusiness = false,
 }: {
   householdId?: string;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const { data } = useCycleMetrics(householdId);
@@ -361,8 +353,8 @@ export function CycleCompareCard({
   if (rows.length < 2) return null;
 
   const metrics: Array<{ key: keyof MetricRow; label: string; goodUp: boolean }> = [
-    { key: "income_actual", label: t(isBusiness ? "compare.revenue" : "compare.income"), goodUp: true },
-    { key: "spend_actual", label: t(isBusiness ? "compare.costs" : "compare.spend"), goodUp: false },
+    { key: "income_actual", label: t("compare.income"), goodUp: true },
+    { key: "spend_actual", label: t("compare.spend"), goodUp: false },
     { key: "project_funded", label: t("compare.saved"), goodUp: true },
     { key: "surplus_actual", label: t("compare.surplus"), goodUp: true },
   ];

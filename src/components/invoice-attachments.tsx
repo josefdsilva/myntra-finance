@@ -2,12 +2,11 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Paperclip, FileText, Trash2, Eye, Loader2, AlertTriangle, Upload } from "lucide-react";
+import { Paperclip, FileText, Trash2, Eye, Loader2, Upload } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { addInvoice, deleteInvoice } from "@/lib/invoices.functions";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useT } from "@/lib/i18n";
 
 const ACCEPT = "image/jpeg,image/png,image/heic,image/webp,application/pdf";
@@ -29,13 +28,11 @@ export function InvoiceAttachments({
   expenseId,
   planId,
   settlementId,
-  isBusiness = false,
 }: {
   householdId: string;
   expenseId?: string;
   planId?: string;
   settlementId?: string;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -122,8 +119,6 @@ export function InvoiceAttachments({
     }
   }
 
-  const missing = isBusiness && invoices.length === 0;
-
   return (
     <div className="space-y-2">
       {invoices.length > 0 ? (
@@ -161,13 +156,7 @@ export function InvoiceAttachments({
       ) : (
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
           <Paperclip className="size-3.5" />
-          {missing ? (
-            <Badge variant="outline" className="gap-1 text-destructive">
-              <AlertTriangle className="size-3" /> {t("inv.missing")}
-            </Badge>
-          ) : (
-            t("inv.none")
-          )}
+          {t("inv.none")}
         </p>
       )}
 

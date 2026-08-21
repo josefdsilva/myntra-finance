@@ -104,9 +104,7 @@ test("unknown country → empty preset", () => {
   expect(p.marginPct).toBe(0);
 });
 
-test("business or zero income → empty preset", () => {
-  const biz = buildSetupPresets({ country: "PT", adults: 1, children: 0, monthlyIncome: 3000, isBusiness: true });
-  expect(biz.estimated).toBe(false);
+test("zero income → empty preset", () => {
   const zero = buildSetupPresets({ country: "PT", adults: 1, children: 0, monthlyIncome: 0 });
   expect(zero.estimated).toBe(false);
 });

@@ -51,7 +51,6 @@ export const issueFacts = createServerFn({ method: "GET" })
     const avgDaily7 = spent7 / 7;
 
     return {
-      isBusiness: hh.kind === "business",
       baseline: facts.baseline,
       income: facts.monthlyIncome,
       surplus: facts.surplus,

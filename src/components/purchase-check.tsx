@@ -35,11 +35,9 @@ type PayType = "oneOff" | "financed";
 export function PurchaseCheckButton({
   variant = "outline",
   className,
-  isBusiness = false,
 }: {
   variant?: "outline" | "default" | "secondary" | "ghost";
   className?: string;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   // Household-only now: `tb` always resolves the plain copy (kept as a wrapper so

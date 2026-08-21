@@ -34,7 +34,6 @@ function LoansPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
-  const isBusiness = hh?.household?.kind === "business";
 
   const debtsQ = householdId ? debtsQuery(householdId) : null;
   const { data: debts } = useQuery({
@@ -61,7 +60,7 @@ function LoansPage() {
         <DebtsOverview householdId={householdId} showMoveFunds={false} showSimulator />
       )}
 
-      {householdId && <DebtsSetup householdId={householdId} isBusiness={isBusiness} />}
+      {householdId && <DebtsSetup householdId={householdId} />}
     </div>
   );
 }

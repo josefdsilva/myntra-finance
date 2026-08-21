@@ -7,9 +7,6 @@ import { Check, ArrowRight, X, ListChecks } from "lucide-react";
 import { useT, type MessageKey } from "@/lib/i18n";
 
 type Hh = {
-  sector?: string | null;
-  employees?: number | null;
-  advisor_email?: string | null;
   age_band?: string | null;
 } | null;
 
@@ -25,17 +22,14 @@ type Item = {
 /**
  * Post-onboarding "finish setting up" checklist. Instead of a rigid tour, it
  * lands on the dashboard and deep-links into the REAL screens for whatever's
- * still missing — including the business fields (sector, employees, advisor)
- * that unlock benchmarks and the handoff. Auto-hides when done; dismissible.
+ * still missing. Auto-hides when done; dismissible.
  */
 export function SetupChecklist({
   householdId,
   household,
-  isBusiness,
 }: {
   householdId: string;
   household: Hh;
-  isBusiness: boolean;
 }) {
   const t = useT();
   const dismissKey = `bynku.setup.dismissed.${householdId}`;
@@ -91,19 +85,19 @@ export function SetupChecklist({
       key: "income",
       done: counts.incomes > 0,
       to: "/cashflow",
-      label: isBusiness ? "setup.item.incomeBiz" : "setup.item.income",
+      label: "setup.item.income",
     },
     {
       key: "fixed",
       done: counts.fixed > 0,
       to: "/cashflow",
-      label: isBusiness ? "setup.item.fixedBiz" : "setup.item.fixed",
+      label: "setup.item.fixed",
     },
     {
       key: "variable",
       done: counts.variable > 0,
       to: "/cashflow",
-      label: isBusiness ? "setup.item.variableBiz" : "setup.item.variable",
+      label: "setup.item.variable",
     },
     {
       key: "projects",
@@ -137,38 +131,15 @@ export function SetupChecklist({
           },
         ] as Item[])
       : []),
-    ...(isBusiness
-      ? ([
-          {
-            key: "sector",
-            done: !!household?.sector,
-            to: "/settings",
-            label: "setup.item.sector",
-            hint: "setup.item.sectorHint",
-          },
-          {
-            key: "employees",
-            done: (household?.employees ?? 0) > 0,
-            to: "/settings",
-            label: "setup.item.employees",
-          },
-          {
-            key: "advisor",
-            done: !!household?.advisor_email,
-            to: "/settings",
-            label: "setup.item.advisor",
-            hint: "setup.item.advisorHint",
-          },
-        ] as Item[])
-      : ([
-          {
-            key: "ageBand",
-            done: !!household?.age_band,
-            to: "/settings",
-            label: "setup.item.ageBand",
-            hint: "setup.item.ageBandHint",
-          },
-        ] as Item[])),
+    ...([
+      {
+        key: "ageBand",
+        done: !!household?.age_band,
+        to: "/settings",
+        label: "setup.item.ageBand",
+        hint: "setup.item.ageBandHint",
+      },
+    ] as Item[]),
   ];
 
   const doneCount = items.filter((i) => i.done).length;

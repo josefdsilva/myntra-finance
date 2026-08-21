@@ -127,7 +127,6 @@ export function WhereToSaveCard({
   });
 
   const country = hh?.country ?? null;
-  const isBusiness = hh?.kind === "business";
   const adults = Number(hh?.adults ?? 2);
   const children = Number(hh?.children ?? 0);
   const ageBand = (hh?.age_band as string | null) ?? null;
@@ -137,7 +136,7 @@ export function WhereToSaveCard({
   // supplies the income quintile for the income-side nudge.
   const comp = useMemo(
     () =>
-      country && hasBenchmark(country) && !isBusiness
+      country && hasBenchmark(country)
         ? computeBenchmarkComparison({
             country,
             adults,
@@ -147,10 +146,8 @@ export function WhereToSaveCard({
             spendByCategory,
           })
         : null,
-    [country, isBusiness, adults, children, monthlyIncome, monthlySpend, spendByCategory],
+    [country, adults, children, monthlyIncome, monthlySpend, spendByCategory],
   );
-
-  if (isBusiness) return null;
 
   // Discretionary spend per category — fixed (by its intent) + variable (by the
   // category's default intent). Essentials/important are excluded.

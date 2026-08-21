@@ -108,8 +108,7 @@ export function BenchmarksCard({
   const country = hh?.country ?? null;
   const adults = hh?.adults ?? 2;
   const children = hh?.children ?? 0;
-  const isBusiness = hh?.kind === "business";
-  const supported = hasBenchmark(country) && !isBusiness;
+  const supported = hasBenchmark(country);
 
   const { data: latestVersions } = useQuery({
     enabled: supported,
@@ -167,9 +166,6 @@ export function BenchmarksCard({
   // While demographics are loading, render nothing rather than flashing the
   // "not available" state.
   if (hhLoading) return null;
-
-  // Company spaces don't get a household comparison at all yet.
-  if (isBusiness) return null;
 
   if (!supported || !comp) {
     const supportedList = supportedBenchmarkCountries();

@@ -8,7 +8,6 @@
 
 import {
   computeHealth,
-  computeBusinessHealth,
   type ScoreInputs,
   type BusinessScoreInputs,
   type SubScore,
@@ -82,8 +81,7 @@ export type CycleMetricsRow = {
 
 /** Compute a single cycle's snapshot row from already-gathered primitives. */
 export function computeCycleMetrics(input: CycleMetricsInputs): CycleMetricsRow {
-  const health =
-    input.kind === "business" ? computeBusinessHealth(input.score) : computeHealth(input.score);
+  const health = computeHealth(input.score as ScoreInputs);
 
   // Surplus actual = what was truly left after fixed+debt, everyday spend, and
   // what was set aside to projects this cycle (fixedTotal already bundles debt).

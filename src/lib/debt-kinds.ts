@@ -39,23 +39,8 @@ export function debtKindLabel(t: Translate, kind: string): string {
   return map[kind] ?? kind;
 }
 
-/** The kind options offered in the picker, tailored to the space. */
-export function debtKindOptions(
-  t: Translate,
-  isBusiness: boolean,
-): Array<{ value: DebtKind; label: string }> {
-  const kinds: DebtKind[] = isBusiness
-    ? [
-        "business_loan",
-        "credit_line",
-        "equipment_finance",
-        "leasing",
-        "vehicle",
-        "property",
-        "factoring",
-        "credit_card",
-        "other",
-      ]
-    : ["mortgage", "personal", "auto", "credit_card", "student", "other"];
+/** The kind options offered in the picker. */
+export function debtKindOptions(t: Translate): Array<{ value: DebtKind; label: string }> {
+  const kinds: DebtKind[] = ["mortgage", "personal", "auto", "credit_card", "student", "other"];
   return kinds.map((value) => ({ value, label: debtKindLabel(t, value) }));
 }

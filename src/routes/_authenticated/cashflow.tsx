@@ -47,7 +47,6 @@ function CashflowPage() {
     queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
   });
   const householdId = hh?.household?.id;
-  const isBusiness = hh?.household?.kind === "business";
   const cycle = cycleForSpace(hh?.household);
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
 
@@ -57,12 +56,8 @@ function CashflowPage() {
   return (
     <div className={pageShellClass("5xl")}>
       <header>
-        <h1 className="text-3xl md:text-4xl font-display">
-          {t(isBusiness ? "cashflow.titleBiz" : "cashflow.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t(isBusiness ? "cashflow.subtitleBiz" : "cashflow.subtitle")}
-        </p>
+        <h1 className="text-3xl md:text-4xl font-display">{t("cashflow.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("cashflow.subtitle")}</p>
       </header>
 
       <Tabs value={lens} onValueChange={(v) => setLens(v as typeof lens)}>
@@ -77,7 +72,7 @@ function CashflowPage() {
       {lens === "recurring" && (
         <>
           {householdId && (
-            <IncomesSection householdId={householdId} cycle={cycle} isBusiness={isBusiness} />
+            <IncomesSection householdId={householdId} cycle={cycle} />
           )}
           {householdId && <FixedExpensesSection householdId={householdId} cycle={cycle} />}
           {householdId && <VariableEstimatesSection householdId={householdId} />}
@@ -88,7 +83,7 @@ function CashflowPage() {
       {lens === "cycle" && (
         <>
           {householdId && (
-            <CommittedThisCycle householdId={householdId} cycle={cycle} isBusiness={isBusiness} />
+            <CommittedThisCycle householdId={householdId} cycle={cycle} />
           )}
           {householdId && <SpendingVsEstimate householdId={householdId} />}
           {householdId && <PlannedThisCycle householdId={householdId} />}
@@ -97,7 +92,7 @@ function CashflowPage() {
 
       {/* Planned lens: dated one-offs and the forward forecast, fully in-hub. */}
       {lens === "planned" && householdId && (
-        <PlanPanel householdId={householdId} baseline={baseline} isBusiness={isBusiness} />
+        <PlanPanel householdId={householdId} baseline={baseline} />
       )}
     </div>
   );

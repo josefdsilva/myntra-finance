@@ -100,10 +100,8 @@ function deprFromRow(r: AssetRow): DeprState {
 
 export function AssetsSection({
   householdId,
-  isBusiness = false,
 }: {
   householdId: string;
-  isBusiness?: boolean;
 }) {
   const t = useT();
   const qc = useQueryClient();
@@ -356,15 +354,6 @@ export function AssetsSection({
                           />
                         </div>
                       </div>
-                      {isBusiness && (
-                        <DepreciationEditor
-                          value={eDepr}
-                          onChange={setEDepr}
-                          acquired={eAcquired}
-                          acquiredOn={eAcquiredOn}
-                          current={eCurrent}
-                        />
-                      )}
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={cancelEdit}>
                           {t("common.cancel")}
@@ -406,29 +395,6 @@ export function AssetsSection({
                         })}
                       </p>
                     )}
-                    {(() => {
-                      if (!isBusiness || r.depreciation_method !== "straight_line") return null;
-                      const dep = computeDepreciation({
-                        method: "straight_line",
-                        acquiredValue: r.acquired_value,
-                        salvageValue: Number(r.salvage_value ?? 0),
-                        usefulLifeMonths: r.useful_life_months,
-                        start: r.depreciation_start ?? r.acquired_on,
-                      });
-                      if (!dep) return null;
-                      return (
-                        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
-                          <TrendingDown className="size-3 shrink-0" />
-                          {dep.fullyDepreciated
-                            ? t("assets.deprFully", { book: money(dep.bookValue) })
-                            : t("assets.deprLine", {
-                                annual: money(dep.annual),
-                                pct: dep.pctDepreciated,
-                                years: Math.round((dep.remainingMonths / 12) * 10) / 10,
-                              })}
-                        </p>
-                      );
-                    })()}
                     {(rentIncomes.length > 0 || r.income_id || RENTAL_KINDS.has(r.kind)) && (
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {rentIncomes.length > 0 || r.income_id ? (
@@ -608,15 +574,6 @@ export function AssetsSection({
               </Button>
             </div>
           </div>
-          {isBusiness && (
-            <DepreciationEditor
-              value={depr}
-              onChange={setDepr}
-              acquired={acquired}
-              acquiredOn={acquiredOn}
-              current={current}
-            />
-          )}
           <button
             type="button"
             disabled={!name}

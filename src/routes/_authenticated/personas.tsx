@@ -126,9 +126,7 @@ function PersonasPage() {
                       <span className="font-medium">{p.label}</span>
                       <Badge variant="secondary">Synthetic</Badge>
                       <Badge variant="outline">{p.country}</Badge>
-                      <Badge variant="outline">
-                        {p.kind === "business" ? "Business" : `${p.adults}a · ${p.children}c`}
-                      </Badge>
+                      <Badge variant="outline">{`${p.adults}a · ${p.children}c`}</Badge>
                       {p.seeded ? (
                         <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
                           Seeded

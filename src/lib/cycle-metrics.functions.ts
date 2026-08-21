@@ -53,7 +53,6 @@ export async function snapshotCycleCore(
     .eq("id", householdId)
     .maybeSingle();
   const baseline = Number(hh?.baseline_budget ?? 0);
-  const isBusiness = hh?.kind === "business";
 
   const [
     { data: incomes },
@@ -239,78 +238,43 @@ export async function snapshotCycleCore(
     return s + (HOUSING_CATEGORY_NAMES.has(cat) ? Number(r.monthly_amount) || 0 : 0);
   }, 0);
 
-  const row: CycleMetricsRow = isBusiness
-    ? computeCycleMetrics({
-        kind: "business",
-        score: {
-          revenueMonthly: income,
-          operatingCashFlow,
-          reserve,
-          monthlyOutgoings,
-          debtMonthly,
-          netWorth,
-          hasNetWorthData,
-          incomeSources,
-          distinctClients,
-          employees: 0,
-          hasProjects: bucketList.length > 0,
-          activityCount: exp.length,
-        },
-        cycleStart,
-        cycleEnd,
-        incomeActual,
-        spendActual: variableSpent,
-        fixedTotal,
-        debtTotal: debtMonthly,
-        projectFunded,
-        everydayPool: variablePool,
-        everydaySpent: variableSpent,
-        availableEnd,
-        superfluousShare,
-        consumptionRatio,
-        incomeExpected,
-        plannedSpend,
-        baselineAtClose: baseline,
-        scoreable,
-        extra: { runwayMonths: Math.round(runwayMonths * 10) / 10, distinctClients },
-      })
-    : computeCycleMetrics({
-        kind: "personal",
-        score: {
-          income,
-          incomeSources,
-          incomePercentile,
-          fixedTotal,
-          debtMonthly,
-          bucketsTotal,
-          liquidAssets,
-          investedAmount,
-          netWorth,
-          hasNetWorthData,
-          hasInvestment,
-          fundedFraction,
-          superfluousShare,
-          variablePool,
-          variableSpent,
-          cycleProgress: 1,
-        },
-        cycleStart,
-        cycleEnd,
-        incomeActual,
-        spendActual: variableSpent,
-        fixedTotal,
-        debtTotal: debtMonthly,
-        projectFunded,
-        everydayPool: variablePool,
-        everydaySpent: variableSpent,
-        availableEnd,
-        superfluousShare,
-        consumptionRatio,
-        incomeExpected,
-        plannedSpend,
-        baselineAtClose: baseline,
-        scoreable,
-      });
+  const row: CycleMetricsRow = computeCycleMetrics({
+    kind: "personal",
+    score: {
+      income,
+      incomeSources,
+      incomePercentile,
+      fixedTotal,
+      debtMonthly,
+      bucketsTotal,
+      liquidAssets,
+      investedAmount,
+      netWorth,
+      hasNetWorthData,
+      hasInvestment,
+      fundedFraction,
+      superfluousShare,
+      variablePool,
+      variableSpent,
+      cycleProgress: 1,
+    },
+    cycleStart,
+    cycleEnd,
+    incomeActual,
+    spendActual: variableSpent,
+    fixedTotal,
+    debtTotal: debtMonthly,
+    projectFunded,
+    everydayPool: variablePool,
+    everydaySpent: variableSpent,
+    availableEnd,
+    superfluousShare,
+    consumptionRatio,
+    incomeExpected,
+    plannedSpend,
+    baselineAtClose: baseline,
+    scoreable,
+  });
 
   // Record every registry index this cycle so the coach can trend them and flag
   // sustained degradation. savings_rate reuses the health-computed rate (matching

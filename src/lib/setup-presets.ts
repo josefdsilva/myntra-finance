@@ -61,12 +61,10 @@ export function buildSetupPresets(params: {
   monthlyIncome: number;
   /** Optional real housing cost (rent or mortgage payment) — overrides the estimate. */
   housingMonthly?: number | null;
-  isBusiness?: boolean;
 }): SetupPreset {
   const income = Math.max(0, Math.round(params.monthlyIncome || 0));
-  // Business spaces have no per-category benchmark to copy; and with no income
-  // there's nothing to scale. Either way, skip the preset (start empty).
-  if (params.isBusiness || income <= 0) return { ...EMPTY };
+  // With no income there's nothing to scale, so skip the preset (start empty).
+  if (income <= 0) return { ...EMPTY };
 
   const est = expectedCategorySpend({
     country: params.country,

@@ -51,14 +51,12 @@ export type PersonaDef = {
   angle: string;
   displayName: string;
   householdName: string;
-  kind: "personal" | "business";
+  kind: "personal";
   country: string;
   currency: "EUR";
   adults: number;
   children: number;
   ageBand: "under35" | "35_44" | "45_54" | "55_64" | "65_74" | "75plus" | null;
-  employees?: number;
-  sector?: string | null;
   incomes: PersonaIncome[];
   debts: PersonaDebt[];
   /** Things the household owns (home, car, savings account, portfolio…). */
@@ -450,7 +448,6 @@ export function buildPersonaBudget(p: PersonaDef): PersonaBudget {
     children: p.children,
     monthlyIncome: income,
     housingMonthly: p.housingMonthly ?? null,
-    isBusiness: p.kind === "business",
   });
 
   const fixed = preset.fixed
@@ -534,11 +531,11 @@ export function buildPersonaHistory(
     const lastDay = isCurrent ? Math.max(1, now.getUTCDate() - 1) : daysInMonth;
     const progress = lastDay / daysInMonth;
 
-    // Income: paid on day 1 (or the 25th of the previous style for business).
+    // Income: paid on day 1.
     for (const inc of p.incomes) {
-      const day = Math.min(lastDay, p.kind === "business" ? Math.min(10, lastDay) : 1);
+      const day = Math.min(lastDay, 1);
       if (!isCurrent || now.getUTCDate() > day) {
-        const jitter = p.kind === "business" ? 0.82 + rng() * 0.4 : 0.99 + rng() * 0.02;
+        const jitter = 0.99 + rng() * 0.02;
         out.push({
           amount: Math.round(inc.monthly_amount * jitter * 100) / 100,
           category: "income",

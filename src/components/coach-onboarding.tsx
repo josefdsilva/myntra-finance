@@ -70,12 +70,10 @@ function looksNegative(text: string): boolean {
  */
 export function CoachOnboarding({
   householdId,
-  isBusiness,
   onSwitchToForms,
   onDone,
 }: {
   householdId: string;
-  isBusiness: boolean;
   onSwitchToForms: () => void;
   onDone: () => void | Promise<void>;
 }) {
@@ -106,11 +104,11 @@ export function CoachOnboarding({
 
   function topicQuestion(topic: Topic): string {
     const key: Record<Topic, MessageKey> = {
-      income: isBusiness ? "coachOb.incomeQBiz" : "coachOb.incomeQ",
-      fixed: isBusiness ? "coachOb.fixedQBiz" : "coachOb.fixedQ",
-      variable: isBusiness ? "coachOb.variableQBiz" : "coachOb.variableQ",
-      debt: isBusiness ? "coachOb.debtQBiz" : "coachOb.debtQ",
-      projects: isBusiness ? "coachOb.projectsQBiz" : "coachOb.projectsQ",
+      income: "coachOb.incomeQ",
+      fixed: "coachOb.fixedQ",
+      variable: "coachOb.variableQ",
+      debt: "coachOb.debtQ",
+      projects: "coachOb.projectsQ",
     };
     return t(key[topic]);
   }
@@ -209,7 +207,7 @@ export function CoachOnboarding({
               household_id: householdId,
               label: r.label,
               monthly_amount: r.monthly_amount,
-              type: isBusiness ? undefined : i === 0 ? "salary" : "other",
+              type: i === 0 ? "salary" : "other",
             },
           });
         else if (topic === "fixed")
@@ -225,7 +223,7 @@ export function CoachOnboarding({
             data: {
               household_id: householdId,
               label: r.label,
-              kind: isBusiness ? "business_loan" : "other",
+              kind: "other",
               monthly_amount: r.monthly_amount,
               taeg_pct: null,
               principal_remaining: null,

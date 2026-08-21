@@ -392,15 +392,11 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">{cycleLabel}</p>
           <h1 className="text-3xl md:text-4xl font-display">{t("dashboard.heading")}</h1>
         </div>
-        {householdId && <PurchaseCheckButton isBusiness={hh?.household?.kind === "business"} />}
+        {householdId && <PurchaseCheckButton />}
       </header>
 
       {!isLoading && householdId && (
-        <SetupChecklist
-          householdId={householdId}
-          household={hh?.household ?? null}
-          isBusiness={hh?.household?.kind === "business"}
-        />
+        <SetupChecklist householdId={householdId} household={hh?.household ?? null} />
       )}
 
       {showPlansNudge && (
