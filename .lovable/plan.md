@@ -1,73 +1,97 @@
-# Faster setup: 3 questions, then a real number
+# Journey-first, values-driven bynku
 
-Today the wizard walks up to 11 screens (country, cycle, household, categories, income, fixed, variable, margin, debt, assets, projects, plans) before anyone sees a dashboard. That is where new users stall. The coach-assisted chat stays available, but it is still the same long script.
+Make bynku feel less like a live-budgeting dashboard and more like a human-centred guide that households check weekly or monthly. The work keeps the current navigation (no nav surgery) and focuses on three levers: a values-first onboarding, a stellar bank-statement fast lane, and a coach that nudges users based on their chosen update rhythm.
 
-The recommendation combines your second and third ideas, plus one addition: **estimate first, correct later**. Ask only what cannot be guessed, guess the rest from the country benchmark data already bundled in the app, and land on the dashboard where every guessed number is visibly marked and one tap away from being fixed.
+## Decisions from the choices
 
-## The new flow (personal space)
+- App structure: keep today's navigation; add a chat entry point rather than a second mode.
+- Values: ask "what 3 things do you value?" as the first step of onboarding, and let users edit it later in Settings.
+- Data entry: statement-first. The bank-statement import becomes the primary way to catch up; chat starts by guiding that import and answering questions.
+- Staleness: users pick their rhythm in Settings (weekly / biweekly / per cycle), weekly by default; bynku nudges only at that interval.
 
-1. **Where and who** — country, adults, children, age band. One screen.
-2. **What comes in** — one amount: total monthly money in (plus an optional "add another" for a second income). One screen.
-3. **When your cycle starts** — payday-anchored or fixed day of the month. One screen.
-4. **Here is your starting plan** — generated, not asked:
-   - Estimated monthly fixed costs and variable costs, split per category, derived from the bundled benchmark data (`avgMonthlyHouseholdExpenditure`, `categoryShares`, `quintileExpenditureMultipliers`, equivalence factor for the household size, and the income quintile implied by step 2).
-   - A suggested savings margin instead of the slider.
-   - Shown as an editable list: each row has the amount, the category and a "estimated" tag. The user can edit, delete or accept all.
-   - Two buttons: **Use these and continue** or **I'll enter my own** (drops into today's income/fixed/variable steps).
-5. Finish → dashboard, with the first useful numbers already populated.
+## Implementation
 
-Debt, assets, projects and plans leave the wizard entirely. They become checklist items on the dashboard (the existing `SetupChecklist`), so nobody is blocked by them.
+### 1. Household values
 
-Business spaces keep the same shape: where/sector/employees → money in → fiscal cycle → generated cost preset from the business benchmark data.
+Add a `values` column to `public.households` (JSONB, default `{}`). Store up to three ranked values chosen from a curated list plus a free-text option.
 
-## Making the estimates honest
+Curated options (localized): family time, travel, health & wellbeing, home, giving/donations, learning/career, freedom/security, fun/little treats, environment, other.
 
-An estimated number that silently pretends to be real is worse than no number. So:
+- Onboarding step: rendered before country/household size. One screen: "What 3 things matter most to your household?" Pick up to 3 chips; optional free-text fourth item. Skippable with a "Decide later" button.
+- Settings section: editable chip list; changing values regenerates the journey copy and default project suggestions.
+- Privacy: values are household data, covered by existing RLS; no sharing.
 
-- Every preset-created row is tagged as an estimate (a `source`/note marker on the row) and rendered with a subtle "estimated" chip in Money In & Out.
-- The dashboard shows one line: "Some costs are still estimates from national averages — confirm them to sharpen your plan," linking to Money In & Out.
-- Confirming a row (edit or tick) clears the estimate tag; the checklist item completes when no estimates remain.
-- The analysis/benchmark screens already explain the data source; the estimate chip links to that explanation.
+### 2. Values shape the journey and defaults
 
-## Everything is skippable
+Use the stored values to personalise the app without removing user control.
 
-Every step, including the three questions and the preset screen, has a visible "Skip for now" (and a "Finish later" on the header that closes the wizard). Skipping never blocks the dashboard:
+- Journey stages: when values change, rewrite stage titles and objective copy via the existing `journey_stages` table. A travel-heavy household sees "Build your travel fund" instead of generic "Invest". Health-heavy households see "Health safety net" earlier.
+- Default projects (buckets): seed values-aligned starter buckets on household creation. Travel → "Holidays"; family → "Family time"; giving → "Donations"; home → "Home improvements"; health → "Health buffer". Existing buckets remain editable.
+- Category intent defaults: map value tags to intent levels. Travel → "important"; fun/little treats → "nice-to-have"; health → "essential". Applied only to newly categorised expenses; never retroactively overwrite user choices.
+- Coach prompt: feed values into `coach.functions.ts` system prompt so the coach references them ("Your surplus this month could cover a trip — that's one of your top values").
 
-- Skipping the preset screen writes nothing — the space starts empty and the dashboard shows what it can.
-- Whatever was skipped becomes an item in the dashboard checklist, so nothing is lost.
-- The wizard can be reopened any time from Settings ("Run setup again"), resuming where it stopped.
+### 3. Statement-first fast lane
 
-## The coach helps with setup at any time, not just in the wizard
+Make the bank-statement import the obvious way to catch up after a week or month of not opening bynku.
 
-The coach becomes the permanent guided-setup path, not a one-off onboarding mode:
+- Promote the import on the Dashboard when no expense has been added in the user's chosen cadence. Card copy: "Catch up in one go — upload your bank statement".
+- Improve the review step in `statement-import-flow.tsx`:
+  - Auto-split detected recurring items into fixed vs variable with confidence scores.
+  - Surface income rows separately and suggest marking salary/rent/etc.
+  - Let the user confirm all rows in one click or edit individual rows inline.
+  - Add a "Remember these choices for next month" toggle that learns category mappings per merchant.
+- Add a coach message triggered on first import: explain what was created (fixed expenses, variable estimate, income) in one short paragraph.
+- Allow statement import from the chat composer via a paper-clip / "Upload statement" quick action.
 
-- The existing coach dock gains a "Help me finish setting up" entry that runs the same topic script as the wizard (income, fixed, variable, debt, projects), extracting rows the user confirms before anything is written. Available forever, for a space that is fully set up or barely started.
-- The coach can also be asked in free text ("add my rent, 700 a month") and will propose rows to confirm on any screen.
-- Proactive nudges: the daily coach run checks the same gaps the checklist tracks and, when something important is missing (no income, no fixed costs, costs still estimates, no cycle set), posts one coach message the user can answer inline — the reply feeds straight into the same extraction-and-confirm flow. Rate-limited to one setup nudge at a time, deduped, and silenced once the gap closes or the user dismisses it.
+### 4. Update cadence and staleness nudges
 
-## Bank statement as the fast lane, stated plainly
+Add `update_cadence` to `public.households` (`'weekly' | 'biweekly' | 'per_cycle'`, default `'weekly'`).
 
-The statement path already exists but is easy to miss. It gets promoted:
+- Settings section: radio group under Notifications. Label: "How often do you plan to update bynku?"
+- Staleness check: a lightweight server function reads the latest `expenses.occurred_at` (or statement import date) per household. If older than the cadence, surface a coach tip and a dashboard card: "It's been X days — upload a statement or tell me what's changed."
+- No push/email yet; start with in-app coach nudges only.
 
-- On the welcome step and on the preset step: "Prefer not to type? Upload 3–6 months of bank statements (PDF or CSV) and bynku will work out your income, fixed costs and variable costs for you." with a direct button into the statement import flow.
-- Same call-out on the dashboard checklist and inside the coach's setup script.
-- The import result lands in the same confirm-before-save review the presets use, so the three paths (type it, estimate it, import it) converge on one screen.
-- The copy states the limits honestly: it reads what's in the file, categorises with AI, and the user confirms everything before it is saved.
+### 5. Coach chat entry point
 
+Add a persistent floating chat button (bottom-right on desktop, bottom-center on mobile) that opens the existing coach conversation.
 
-## Resuming and existing users
+- Quick actions inside the chat empty state: "Upload statement", "What's my safe-to-spend?", "Add an expense", "Show my journey".
+- The coach can already answer questions; in this pass, teach it to hand off to the statement import flow when the user mentions bank statements, CSVs, catching up, or many transactions.
+- Keep the existing CoachDock/CoachInbox behaviour unchanged for now.
 
-- The saved step position keeps working; anyone mid-way through the old wizard is mapped to the nearest new step.
-- Already-onboarded spaces are untouched — no retroactive estimates.
+### 6. Keep navigation unchanged
 
-## Technical notes
+No new top-level routes and no "Advanced" toggle. The current nav already groups analytical screens under "Advanced". This plan only adds values editing inside Settings and the floating chat button.
 
-- New `src/lib/setup-presets.ts`: pure function taking `{ country, adults, children, monthlyIncome, isBusiness }` and returning suggested fixed rows, variable rows and a margin, built from `src/lib/benchmarks/*.json` via the existing helpers (`equivalenceFactor`, `percentileFromDeciles`, `quintileFromPercentile`, `getCountryBenchmark`). Unit-tested like the other `src/lib/*.test.ts` files.
-- `src/routes/_authenticated/onboarding.tsx`: reduce `STEPS` to `welcome → whereWho → income → cycle → preset`, move `DebtStep`/`AssetsStep`/`ProjectsStep`/`PlansStep` out of the wizard (components stay, reused by their own pages).
-- Preset rows are written through the existing `upsertFixedExpense` / `upsertVariableEstimate` server functions on confirmation — no new tables. The estimate marker uses a note/intent field on those rows, so no migration is needed unless we want a dedicated flag (decide during build).
-- `src/components/setup-checklist.tsx` gains items for debt, assets and "confirm your estimated costs".
-- `src/components/coach-onboarding.tsx`: script trimmed to the three topics plus preset confirmation.
-- All new copy goes through `src/lib/i18n.tsx` for the existing five locales.
-- Coach setup mode: reuse `extractSetupItems` from `src/lib/onboarding-chat.functions.ts` inside `src/components/coach-dock.tsx` / `coach-panel.tsx`, so the same extraction powers the wizard chat and the always-on coach.
-- Setup nudges: add a gap check to `src/lib/coach-runner.server.ts` writing deduped `coach_messages` rows (existing `dedupe_key`), with an inline reply that routes through the same extract-and-confirm path.
-- Statement fast lane: link to the existing `/statement-import` flow from the wizard, checklist and coach; no changes to its parsing logic.
+## Technical details
+
+- Database migration:
+  - `ALTER TABLE public.households ADD COLUMN values jsonb DEFAULT '{}'::jsonb;`
+  - `ALTER TABLE public.households ADD COLUMN update_cadence text DEFAULT 'weekly';`
+  - GRANTs and RLS unchanged (households already has RLS).
+- Update `src/integrations/supabase/types.ts` after migration.
+- `src/routes/_authenticated/onboarding.tsx`: insert a new `values` step at index 0, persist to household row, and skip if already set.
+- `src/routes/_authenticated/settings.tsx`: add Values section and Update cadence section.
+- `src/lib/household.functions.ts`: extend `updateHousehold` schema to accept `values` and `update_cadence`.
+- `src/lib/journey.functions.ts`: add `regenerateJourneyForValues` server function that rewrites `template_key`/`title`/`objective` on existing seed stages without touching custom user stages.
+- `src/lib/household.functions.ts`: use values in `defaultBucketsFor` when seeding a new household.
+- `src/lib/intent.ts`: add `defaultIntentForValueTag` helper; use in statement import and quick-add when a category is first seen.
+- `src/lib/coach.functions.ts`: include values in the system prompt context.
+- `src/components/statement-import-flow.tsx`: add merchant→category learning via a new `merchant_category_hints` table or localStorage fallback.
+- `src/components/floating-coach.tsx` (new): wraps `CoachDock`/`CoachInbox` with a floating trigger.
+- `src/routes/_authenticated/dashboard.tsx`: add staleness card and statement CTA.
+- Localisation: add keys to `src/lib/i18n-entries.ts` for all new UI copy.
+
+## Out of scope for this plan
+
+- Removing more features (the nav is already minimal).
+- Chat-based creation of expenses/debts/projects (statement-first is the priority).
+- Push/email notifications.
+- Open-banking reconnection.
+
+## Success check
+
+- New onboarding completes with values stored and visible in Settings.
+- A new household with "travel" as a top value sees a "Holidays" project and travel-friendly journey copy.
+- Dashboard shows the statement CTA when no expense has been added for the chosen cadence.
+- Typecheck clean and existing tests pass.
