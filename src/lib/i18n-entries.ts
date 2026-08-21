@@ -1715,27 +1715,6 @@ export const ENTRIES = {
     de: "Schaltet den Vergleich mit ähnlichen Unternehmen frei",
     fr: "Débloque la comparaison avec des entreprises similaires",
   },
-  "setup.item.employees": {
-    en: "Add number of employees",
-    pt: "Adiciona o número de colaboradores",
-    es: "Añade el número de empleados",
-    de: "Anzahl der Mitarbeitenden hinzufügen",
-    fr: "Ajoutez le nombre d'employés",
-  },
-  "setup.item.advisor": {
-    en: "Add your accountant email",
-    pt: "Adiciona o email do contabilista",
-    es: "Añade el email del asesor",
-    de: "E-Mail des Steuerberaters hinzufügen",
-    fr: "Ajoutez l'e-mail de votre comptable",
-  },
-  "setup.item.advisorHint": {
-    en: "Needed for the accountant handoff",
-    pt: "Necessário para a entrega ao contabilista",
-    es: "Necesario para la entrega al asesor",
-    de: "Nötig für die Steuerberater-Übergabe",
-    fr: "Nécessaire pour la transmission au comptable",
-  },
   "coachOb.title": {
     en: "Set up by chat",
     pt: "Configurar por conversa",
