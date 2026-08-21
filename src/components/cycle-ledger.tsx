@@ -115,7 +115,7 @@ export function CommittedThisCycle({
       // cycle bounds — fetch them in parallel.
       const startISO = bounds.start.toISOString();
       const endISO = bounds.end.toISOString();
-      const [{ data: receipts }, settlementsRes, { data: invs }] = await Promise.all([
+      const [{ data: receipts }, { data: invs }] = await Promise.all([
         supabase
           .from("expenses")
           .select("id, income_id, amount, occurred_at")
@@ -124,7 +124,6 @@ export function CommittedThisCycle({
           .not("income_id", "is", null)
           .gte("occurred_at", startISO)
           .lt("occurred_at", endISO),
-        null,
         supabase
           .from("invoices")
           .select("expense_id, settlement_id")
@@ -141,15 +140,9 @@ export function CommittedThisCycle({
         });
       }
 
+      // Fixed-cost settlements were a business-only overlay; households don't use
+      // them, so there is nothing to fetch here.
       const settlementsByFixed: Record<string, Mark[]> = {};
-      for (const s of settlementsRes?.data ?? []) {
-        const k = s.fixed_expense_id as string;
-        (settlementsByFixed[k] ??= []).push({
-          id: s.id as string,
-          amount: Number(s.amount),
-          occurred_at: s.occurred_at as string,
-        });
-      }
       const invExpenses = new Set<string>();
       const invSettlements = new Set<string>();
       for (const i of invs ?? []) {

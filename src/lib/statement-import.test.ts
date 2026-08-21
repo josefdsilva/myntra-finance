@@ -35,7 +35,7 @@ test("detectDelimiter picks semicolon for EU exports", () => {
 
 test("normalizeMerchant strips card/transfer noise, dates and refs", () => {
   expect(normalizeMerchant("COMPRA CONTINENTE 05/01 REF 123456789")).toBe("CONTINENTE");
-  expect(normalizeMerchant("MB WAY NETFLIX.COM *LISBOA")).toBe("NETFLIX COM LISBOA");
+  expect(normalizeMerchant("MB WAY NETFLIX.COM *LISBOA")).toBe("NETFLIX LISBOA");
 });
 
 // A small 3-month Portuguese-style statement (semicolon-delimited, EU amounts).

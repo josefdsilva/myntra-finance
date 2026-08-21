@@ -1338,11 +1338,8 @@ export type Database = {
       households: {
         Row: {
           adults: number
-          advisor_email: string | null
           age_band: string | null
           baseline_budget: number
-          cash_on_hand_override: number | null
-          cash_on_hand_override_at: string | null
           children: number
           coach_run_on: string | null
           country: string
@@ -1354,23 +1351,18 @@ export type Database = {
           cycle_anchor_date: string | null
           cycle_anchor_income_id: string | null
           cycle_mode: string
-          employees: number
           id: string
           is_synthetic: boolean
           kind: string
           margin_pct: number
           name: string
           onboarded_at: string | null
-          sector: string | null
           updated_at: string
         }
         Insert: {
           adults?: number
-          advisor_email?: string | null
           age_band?: string | null
           baseline_budget?: number
-          cash_on_hand_override?: number | null
-          cash_on_hand_override_at?: string | null
           children?: number
           coach_run_on?: string | null
           country?: string
@@ -1382,23 +1374,18 @@ export type Database = {
           cycle_anchor_date?: string | null
           cycle_anchor_income_id?: string | null
           cycle_mode?: string
-          employees?: number
           id?: string
           is_synthetic?: boolean
           kind?: string
           margin_pct?: number
           name?: string
           onboarded_at?: string | null
-          sector?: string | null
           updated_at?: string
         }
         Update: {
           adults?: number
-          advisor_email?: string | null
           age_band?: string | null
           baseline_budget?: number
-          cash_on_hand_override?: number | null
-          cash_on_hand_override_at?: string | null
           children?: number
           coach_run_on?: string | null
           country?: string
@@ -1410,14 +1397,12 @@ export type Database = {
           cycle_anchor_date?: string | null
           cycle_anchor_income_id?: string | null
           cycle_mode?: string
-          employees?: number
           id?: string
           is_synthetic?: boolean
           kind?: string
           margin_pct?: number
           name?: string
           onboarded_at?: string | null
-          sector?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -31,10 +31,10 @@ test("monthlyEquivalent and perCycleFromMonthly round-trip for the same period",
 });
 
 test("cycle defaults by space kind", () => {
-  expect(defaultCycleForKind("business")).toBe("quarterly");
+  // Household-only app: every space defaults to a monthly cycle.
   expect(defaultCycleForKind("personal")).toBe("monthly");
-  expect(cycleForSpace({ cycle: "yearly", kind: "business" })).toBe("yearly");
-  expect(cycleForSpace({ kind: "business" })).toBe("quarterly"); // falls back to kind default
+  expect(cycleForSpace({ cycle: "yearly", kind: "personal" })).toBe("yearly");
+  expect(cycleForSpace({ kind: "personal" })).toBe("monthly");
   expect(cycleForSpace({ cycle: "nonsense", kind: "personal" })).toBe("monthly"); // invalid -> default
   expect(cycleForSpace(null)).toBe("monthly");
 });
