@@ -432,14 +432,6 @@ const BADGE_META: Record<BadgeKind, { icon: typeof Sparkles; tone: string }> = {
   investing: { icon: TrendingUp, tone: "bg-violet-500/20 text-violet-100 ring-violet-400/40" },
   net_worth_positive: { icon: Gem, tone: "bg-teal-500/20 text-teal-100 ring-teal-400/40" },
   getting_started: { icon: Sparkles, tone: "bg-slate-500/20 text-slate-100 ring-slate-400/40" },
-  // Business badges — premium tone.
-  fcf_positive: { icon: TrendingUp, tone: PREMIUM_TONE },
-  strong_runway: { icon: ShieldCheck, tone: PREMIUM_TONE },
-  diversified: { icon: Layers, tone: PREMIUM_TONE },
-  productive: { icon: Gauge, tone: PREMIUM_TONE },
-  low_leverage: { icon: Landmark, tone: PREMIUM_TONE },
-  equity_positive: { icon: Gem, tone: PREMIUM_TONE },
-  active: { icon: Activity, tone: PREMIUM_TONE },
 };
 
 const SCORE_LABELS: Record<string, string> = {
@@ -452,12 +444,6 @@ const SCORE_LABELS: Record<string, string> = {
   networth: "snapshot.score.networth",
   savings: "snapshot.score.savings",
   budget: "snapshot.score.budget",
-  // Business pillars
-  cashflow: "snapshot.score.cashflow",
-  runway: "snapshot.score.runway",
-  diversification: "snapshot.score.diversification",
-  productivity: "snapshot.score.productivity",
-  equity: "snapshot.score.equity",
 };
 
 type CardProps = {

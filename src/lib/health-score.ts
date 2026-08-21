@@ -120,6 +120,15 @@ export function projectFundedFraction(
   return sum / targeted.length;
 }
 
+/** Effective number of income streams via the inverse Herfindahl index. */
+function effectiveSources(amounts: number[]): number {
+  const pos = amounts.filter((a) => a > 0);
+  const total = pos.reduce((s, a) => s + a, 0);
+  if (total <= 0) return 0;
+  const hhi = pos.reduce((s, a) => s + (a / total) ** 2, 0);
+  return hhi > 0 ? 1 / hhi : 0;
+}
+
 export function computeHealth(input: ScoreInputs): HealthResult {
   const {
     income,
