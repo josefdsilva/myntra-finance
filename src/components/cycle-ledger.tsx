@@ -124,7 +124,6 @@ export function CommittedThisCycle({
           .not("income_id", "is", null)
           .gte("occurred_at", startISO)
           .lt("occurred_at", endISO),
-        null,
         supabase
           .from("invoices")
           .select("expense_id, settlement_id")
