@@ -35,17 +35,15 @@ type CommonCycleInputs = {
   baselineAtClose: number | null;
   /** When false, the score is stored as null (too little set up to judge). */
   scoreable?: boolean;
-  /** Anything extra to keep in the metrics JSONB (business KPIs, plan calibration…). */
+  /** Anything extra to keep in the metrics JSONB (plan calibration…). */
   extra?: Record<string, unknown>;
 };
 
-export type CycleMetricsInputs =
-  | ({ kind: "personal"; score: ScoreInputs } & CommonCycleInputs)
-  | ({ kind: "business"; score: BusinessScoreInputs } & CommonCycleInputs);
+export type CycleMetricsInputs = { kind: "personal"; score: ScoreInputs } & CommonCycleInputs;
 
 /** The row payload written to `cycle_metrics` (snake_case to match the table). */
 export type CycleMetricsRow = {
-  kind: "personal" | "business";
+  kind: "personal";
   cycle_start: string;
   cycle_end: string;
   income_actual: number;
