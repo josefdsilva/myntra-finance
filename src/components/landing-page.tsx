@@ -153,7 +153,7 @@ function CtaRow({ size = "default", center = false }: { size?: "default" | "lg";
   );
 }
 
-// ---- Premium snapshot with a households / businesses tab ---------------------
+// ---- Premium snapshot showcase ----------------------------------------------
 
 type SnapshotData = {
   title: string;
@@ -162,8 +162,7 @@ type SnapshotData = {
   bars: [string, number][];
 };
 
-const SNAPSHOTS: Record<"household" | "business", SnapshotData> = {
-  household: {
+const HOUSEHOLD_SNAPSHOT: SnapshotData = {
     title: "Financial health",
     score: 74,
     badges: ["Emergency ready", "Debt slayer", "Investing"],
@@ -173,48 +172,18 @@ const SNAPSHOTS: Record<"household" | "business", SnapshotData> = {
       ["Buffer", 66],
       ["Debt", 90],
       ["Funding", 60],
-      ["Net worth", 71],
-    ],
-  },
-  business: {
-    title: "Business health",
-    score: 68,
-    badges: ["Positive cash flow", "Low leverage", "Diversified"],
-    bars: [
-      ["Cash flow", 72],
-      ["Runway", 58],
-      ["Diversification", 64],
-      ["Productivity", 70],
-      ["Debt", 88],
-      ["Equity", 55],
-    ],
-  },
+    ["Net worth", 71],
+  ],
 };
 
 function SnapshotShowcase() {
-  const [aud, setAud] = useState<"household" | "business">("household");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const d = SNAPSHOTS[aud];
+  const d = HOUSEHOLD_SNAPSHOT;
   const r = 52;
   const c = 2 * Math.PI * r;
   return (
     <div className="mx-auto w-full min-w-0 max-w-sm md:mx-0 md:ml-auto">
-      <div className="mb-3 inline-flex rounded-lg border bg-card p-0.5 text-xs sm:text-sm">
-        {(["household", "business"] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setAud(k)}
-            className={cn(
-              "rounded-md px-3 py-1.5 font-medium transition-colors sm:px-3.5",
-              aud === k ? "bg-primary text-primary-foreground" : "text-muted-foreground",
-            )}
-          >
-            {k === "household" ? "For households" : "For businesses"}
-          </button>
-        ))}
-      </div>
       <div
         className="min-w-0 rounded-2xl p-5 text-white shadow-xl transition-opacity duration-300 sm:p-6"
         style={{ backgroundColor: DEEP }}
@@ -940,13 +909,13 @@ export function LandingPage() {
               <div className="grid items-center gap-10 md:grid-cols-2">
                 <div className="min-w-0">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1 text-xs">
-                    <Sparkles className="size-3.5" /> For households and small businesses
+                    <Sparkles className="size-3.5" /> For households and families
                   </span>
                   <h1 className="mt-4 font-display text-4xl leading-tight md:text-5xl">
                     Hire bynku. Stay in control of your money.
                   </h1>
                   <p className="mt-4 max-w-xl text-base leading-relaxed text-white/90 md:text-lg">
-                    bynku is the financial brain your household or company hires to bring clarity to every
+                    bynku is the financial brain your household hires to bring clarity to every
                     decision, from saving and buying to borrowing and planning. Know what is safe to spend
                     today, and simulate the big moves before you commit, whether that is changing jobs,
                     overpaying a loan, retiring, or taking on staff.
@@ -1119,33 +1088,6 @@ export function LandingPage() {
                   <p className="mt-1 text-sm text-muted-foreground">{f.body}</p>
                 </Reveal>
               ))}
-            </div>
-          </section>
-
-          {/* Two modes */}
-          <section className="border-t bg-muted/30">
-            <div className="mx-auto max-w-6xl px-5 py-16">
-              <Reveal>
-                <h2 className="font-display text-3xl">One product, two modes.</h2>
-              </Reveal>
-              <div className="mt-8 grid gap-4 md:grid-cols-2">
-                <Reveal className="rounded-2xl border bg-card p-6">
-                  <Users className="size-6 text-primary" />
-                  <h3 className="mt-3 font-medium">Households</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Shared budgeting anchored to payday. Safe to spend, projects, plans and a coach that
-                    keeps the whole family on the same page.
-                  </p>
-                </Reveal>
-                <Reveal delay={60} className="rounded-2xl border bg-card p-6">
-                  <Building2 className="size-6 text-primary" />
-                  <h3 className="mt-3 font-medium">Small businesses</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Fiscal-period cashflow, runway, margin and sector benchmarks. The same clarity, in the
-                    language a company runs on.
-                  </p>
-                </Reveal>
-              </div>
             </div>
           </section>
 
