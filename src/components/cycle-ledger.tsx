@@ -140,15 +140,9 @@ export function CommittedThisCycle({
         });
       }
 
+      // Fixed-cost settlements were a business-only overlay; households don't use
+      // them, so there is nothing to fetch here.
       const settlementsByFixed: Record<string, Mark[]> = {};
-      for (const s of settlementsRes?.data ?? []) {
-        const k = s.fixed_expense_id as string;
-        (settlementsByFixed[k] ??= []).push({
-          id: s.id as string,
-          amount: Number(s.amount),
-          occurred_at: s.occurred_at as string,
-        });
-      }
       const invExpenses = new Set<string>();
       const invSettlements = new Set<string>();
       for (const i of invs ?? []) {
