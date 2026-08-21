@@ -104,8 +104,7 @@ function WikiPage() {
   const meta = WIKI_META[locale] ?? WIKI_META.en;
   const diag = meta.diagrams;
 
-  // Show the manual for the space you're in: a company space hides household-only
-  // sections (and vice versa) and surfaces the business notes.
+  // The manual is household-only.
   const activeHouseholdId = useActiveHouseholdId();
   const fetchHh = useServerFn(getOrCreateHousehold);
   const { data: hh } = useQuery({

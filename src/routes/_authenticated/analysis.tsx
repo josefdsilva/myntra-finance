@@ -205,8 +205,8 @@ function AnalysisPage() {
       : 1;
 
   const cycles = useMemo(() => {
-    // Time-driven spaces (e.g. a business on quarterly/weekly periods) step by
-    // fixed fiscal periods, not salary events — build the window from the
+    // Time-driven cycles (quarterly/weekly periods) step by fixed calendar
+    // periods, not salary events — build the window from the
     // configured cycle so a quarter shows as a quarter, not a calendar month.
     if (cycleConfig.mode === "time") {
       return buildTimeCycles(cycleConfig.length, cycleConfig.anchorDate, 12);
