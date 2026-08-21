@@ -234,10 +234,6 @@ export const updateHousehold = createServerFn({ method: "POST" })
           .enum(["under35", "35_44", "45_54", "55_64", "65_74", "75plus"])
           .nullable()
           .optional(),
-        employees: z.number().int().min(0).max(100000).optional(),
-        sector: z.string().max(8).nullable().optional(),
-        kind: z.enum(["personal", "business"]).optional(),
-        advisor_email: z.string().max(200).nullable().optional(),
         cycle: z.enum(["weekly", "monthly", "quarterly", "yearly"]).optional(),
         cycle_mode: z.enum(["event", "time"]).optional(),
         cycle_anchor_income_id: z.string().uuid().nullable().optional(),
