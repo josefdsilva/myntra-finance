@@ -218,9 +218,12 @@ function SnapshotPage() {
           )
         : null;
 
+      // How concentrated the household's income is (one salary vs several).
+      const incomeSources = incomes.map((r) => Number(r.monthly_amount)).filter((n) => n > 0);
 
       return {
         income,
+        incomeSources,
         savedThisCycle,
         assetsTotal,
         liquidAssets,
