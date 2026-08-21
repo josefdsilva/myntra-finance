@@ -1081,7 +1081,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       [
         "A pay cycle runs from one payday to the day before the next. It matches how most people actually feel their money — pay-to-pay, not calendar month to calendar month.",
         "Every number in the app resets each cycle. The dashboard always answers 'today, in this cycle', so today's decisions come from today's reality.",
-        "Not everyone lives payday to payday. A business usually thinks in fixed periods — a month, quarter, or fiscal year that starts on a set date. In Settings you can switch a space to a fixed-period cycle and set when its financial year begins (say 1 April), so its quarters line up with the books instead of a paycheque. A payday space starts each cycle when you mark a salary received; a fixed-period space just rolls over on the calendar.",
+        "Not everyone lives payday to payday. Some households prefer fixed periods — a month, quarter, or year that starts on a set date. In Settings you can switch to a fixed-period cycle and choose when it begins, so the periods line up with the calendar instead of a paycheque. A payday cycle starts when you mark a salary received; a fixed-period cycle just rolls over on the calendar.",
       ],
       [
         "Um ciclo salarial vai de um pagamento até ao dia anterior ao seguinte. É como a maioria das pessoas sente o dinheiro — de salário em salário, não de mês a mês do calendário.",
