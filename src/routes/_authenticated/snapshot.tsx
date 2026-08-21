@@ -17,9 +17,6 @@ import {
   Target,
   Gem,
   Users,
-  Gauge,
-  Layers,
-  Activity,
 } from "lucide-react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";

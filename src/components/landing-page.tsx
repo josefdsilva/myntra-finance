@@ -13,8 +13,6 @@ import {
   ShieldCheck,
   ArrowRight,
   Check,
-  Building2,
-  Users,
   TrendingUp,
   Landmark,
   ScanLine,
