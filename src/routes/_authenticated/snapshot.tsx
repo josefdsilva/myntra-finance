@@ -238,15 +238,6 @@ function SnapshotPage() {
         superfluousShare,
         investedAmount,
         fundedFraction,
-        // Business
-        incomeSources,
-        distinctClients,
-        employees,
-        hasProjects,
-        activityCount,
-        monthlyOutgoings,
-        operatingCashFlow,
-        reserve,
       };
     },
   });
