@@ -30,11 +30,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { getOrCreateHousehold } from "@/lib/household.functions";
-import { useActiveHouseholdId } from "@/lib/active-household";
 import { useLocale } from "@/lib/i18n";
-import { WIKI_META, wikiSectionsFor, type WikiIcon } from "@/lib/wiki-content";
+import { WIKI_META, wikiSections, type WikiIcon } from "@/lib/wiki-content";
 import { pageShellClass } from "@/components/page-shell";
 import {
   BaselineDiagram,
@@ -104,15 +101,7 @@ function WikiPage() {
   const meta = WIKI_META[locale] ?? WIKI_META.en;
   const diag = meta.diagrams;
 
-  // The manual is household-only.
-  const activeHouseholdId = useActiveHouseholdId();
-  const fetchHh = useServerFn(getOrCreateHousehold);
-  const { data: hh } = useQuery({
-    queryKey: ["household", activeHouseholdId],
-    queryFn: () => fetchHh({ data: activeHouseholdId ? { household_id: activeHouseholdId } : {} }),
-  });
-  const kind = "personal";
-  const sections = useMemo(() => wikiSectionsFor(kind), [kind]);
+  const sections = useMemo(() => wikiSections(), []);
 
   const [query, setQuery] = useState("");
   const [noResults, setNoResults] = useState(false);
