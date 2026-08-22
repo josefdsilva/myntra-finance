@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { JsonObject } from "@/lib/json";
 import { priciestClearableDebt, debtBalance } from "@/lib/debt-apr";
+import { parseValues, valueKeysOf, lifeStageOf, categoriesForValues } from "@/lib/values";
 
 // Money Journey stages — user- and coach-authored roadmap milestones. Objectives
 // are evaluated live on the client against numbers the app already computes; this
@@ -178,8 +179,12 @@ export const draftJourney = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const hid = data.household_id;
-    const [hh, buckets, allocs, moves, debts, fixed, incomes] = await Promise.all([
-      context.supabase.from("households").select("baseline_budget").eq("id", hid).maybeSingle(),
+    const [hh, buckets, allocs, moves, debts, fixed, incomes, people] = await Promise.all([
+      context.supabase
+        .from("households")
+        .select("baseline_budget, life_values")
+        .eq("id", hid)
+        .maybeSingle(),
       context.supabase
         .from("buckets")
         .select("id, name, kind, target_type, target_value, initial_balance")
@@ -198,6 +203,7 @@ export const draftJourney = createServerFn({ method: "POST" })
         .eq("household_id", hid),
       context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       context.supabase.from("incomes").select("monthly_amount").eq("household_id", hid),
+      context.supabase.from("household_people").select("age, role").eq("household_id", hid),
     ]);
 
     const baseline = Number(hh.data?.baseline_budget ?? 0);
