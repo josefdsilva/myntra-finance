@@ -18,9 +18,12 @@ import {
   parseReceiptPhoto,
   extractStatementTransactions,
 } from "@/lib/ai-parse.functions";
-import { categorizeMerchants } from "@/lib/statement-import.functions";
+import { categorizeMerchants, saveMerchantRule } from "@/lib/statement-import.functions";
 import { prepareImageForUpload } from "@/lib/image-prep";
 import { addExpensesBulk } from "@/lib/budget.functions";
+import { existingFingerprints } from "@/lib/import.functions";
+import { txnFingerprint } from "@/lib/import-dedup";
+import { defaultIntentForCategory, type IntentLevel } from "@/lib/intent";
 import { money, fmtDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { useCategoryNames } from "@/hooks/use-categories";
@@ -70,13 +73,26 @@ const DEFAULT_CATEGORIES = [
   "other",
 ];
 
-type Row = {
+type ParsedRow = {
   direction: "out" | "in";
   amount: number;
   category: string;
   merchant: string;
   occurred_at?: string;
   note?: string;
+};
+
+type Row = ParsedRow & {
+  /** Need-level, auto-derived from the category; adjustable later on Expenses. */
+  intent?: IntentLevel;
+  /** Dedup fingerprint (also stored in source_meta.fp so re-imports are clean). */
+  fp?: string;
+  /** True when this row matches an existing ledger transaction. */
+  duplicate?: boolean;
+  /** Whether this row will be saved. Duplicates default to unchecked. */
+  include: boolean;
+  /** The auto-suggested category, so we can learn from a user's correction. */
+  suggestedCategory?: string;
 };
 
 const isCsvFile = (f: File) =>
@@ -105,6 +121,8 @@ export function ShareCapture({
   const extract = useServerFn(extractStatementTransactions);
   const categorize = useServerFn(categorizeMerchants);
   const bulk = useServerFn(addExpensesBulk);
+  const existFp = useServerFn(existingFingerprints);
+  const saveRule = useServerFn(saveMerchantRule);
 
   const { names: hhCats } = useCategoryNames(householdId);
   // Always include the fallback categories the parser may assign ("income",
@@ -127,6 +145,51 @@ export function ShareCapture({
     setRows((prev) => [...(prev ?? []), ...next]);
   }
 
+  // Turn freshly-parsed rows into review rows: derive the need-level from the
+  // category, compute a dedup fingerprint, and flag (and uncheck) any that match
+  // a transaction already in the ledger — so re-importing an overlapping
+  // statement never doubles anything.
+  async function finalizeRows(parsed: ParsedRow[]): Promise<Row[]> {
+    const withMeta: Row[] = parsed.map((r) => {
+      const kind = r.direction === "in" ? "income" : "expense";
+      const fp = txnFingerprint({
+        date: r.occurred_at ?? new Date().toISOString(),
+        amount: r.amount,
+        description: r.merchant,
+        kind,
+      });
+      return {
+        ...r,
+        fp,
+        intent: r.direction === "in" ? undefined : defaultIntentForCategory(r.category),
+        suggestedCategory: r.category,
+        duplicate: false,
+        include: true,
+      };
+    });
+    const dates = withMeta.map((r) => r.occurred_at).filter(Boolean) as string[];
+    if (dates.length) {
+      const start = dates.reduce((a, b) => (a < b ? a : b));
+      const endDay = dates.reduce((a, b) => (a > b ? a : b)).slice(0, 10);
+      const end = `${endDay}T23:59:59.999Z`;
+      try {
+        const { fingerprints } = await existFp({
+          data: { household_id: householdId, start, end },
+        });
+        const seen = new Set(fingerprints);
+        for (const r of withMeta) {
+          if (r.fp && seen.has(r.fp)) {
+            r.duplicate = true;
+            r.include = false;
+          }
+        }
+      } catch {
+        // Dedup is best-effort; if the lookup fails, show every row as new.
+      }
+    }
+    return withMeta;
+  }
+
   // Files handed in from an OS share (via the service worker) are parsed once,
   // automatically, so the user lands straight on the review deck.
   const seededRef = useRef(false);
@@ -142,7 +205,7 @@ export function ShareCapture({
     setBusy(true);
     try {
       const res = await parseText({ data: { text: text.slice(0, 2000), householdId } });
-      const mapped: Row[] = (res.items ?? []).map((i) => ({
+      const mapped: ParsedRow[] = (res.items ?? []).map((i) => ({
         direction: "out",
         amount: Math.abs(i.amount) || 0,
         category: i.category || "other",
@@ -152,7 +215,7 @@ export function ShareCapture({
       }));
       if (!mapped.length) toast.info(t("share.nothingDetected"));
       else {
-        addRows(mapped);
+        addRows(await finalizeRows(mapped));
         setText("");
       }
     } catch (err) {
@@ -162,7 +225,7 @@ export function ShareCapture({
     }
   }
 
-  async function runReceipt(file: File): Promise<Row[]> {
+  async function runReceipt(file: File): Promise<ParsedRow[]> {
     // Downscale + transcode to JPEG first (handles big iPhone photos and HEIC).
     const prepped = await prepareImageForUpload(file);
     const res = await parsePhoto({
@@ -178,7 +241,7 @@ export function ShareCapture({
     }));
   }
 
-  async function runTextFile(file: File): Promise<Row[]> {
+  async function runTextFile(file: File): Promise<ParsedRow[]> {
     const raw = (await file.text()).slice(0, 2000);
     if (!raw.trim()) return [];
     const res = await parseText({ data: { text: raw, householdId } });
@@ -192,7 +255,7 @@ export function ShareCapture({
     }));
   }
 
-  async function runStatement(file: File): Promise<Row[]> {
+  async function runStatement(file: File): Promise<ParsedRow[]> {
     const b64 = bufferToBase64(await file.arrayBuffer());
     const res = await extract({
       data: {
@@ -242,7 +305,7 @@ export function ShareCapture({
     if (!files.length) return;
     setBusy(true);
     try {
-      const collected: Row[] = [];
+      const collected: ParsedRow[] = [];
       let skipped = 0;
       for (const f of files) {
         try {
@@ -255,7 +318,7 @@ export function ShareCapture({
         }
       }
       if (skipped) toast.info(t("share.unsupportedSkipped", { count: skipped }));
-      if (collected.length) addRows(collected);
+      if (collected.length) addRows(await finalizeRows(collected));
       else if (!skipped) toast.info(t("share.nothingDetected"));
     } finally {
       setBusy(false);
@@ -264,7 +327,19 @@ export function ShareCapture({
   }
 
   function update(idx: number, patch: Partial<Row>) {
-    setRows((prev) => (prev ? prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)) : prev));
+    setRows((prev) =>
+      prev
+        ? prev.map((r, i) => {
+            if (i !== idx) return r;
+            const next = { ...r, ...patch };
+            // Changing the category re-derives the need-level (unless income).
+            if (patch.category !== undefined) {
+              next.intent = next.direction === "in" ? undefined : defaultIntentForCategory(next.category);
+            }
+            return next;
+          })
+        : prev,
+    );
   }
   function remove(idx: number) {
     setRows((prev) => {
@@ -275,28 +350,46 @@ export function ShareCapture({
 
   async function save() {
     if (!rows?.length || !confirmed) return;
+    const toSave = rows.filter((r) => r.include && r.amount > 0);
+    if (!toSave.length) {
+      toast.info(t("share.nothingToSave"));
+      return;
+    }
     setBusy(true);
     try {
       await bulk({
         data: {
-          items: rows
-            .filter((r) => r.amount > 0)
-            .map((r) => ({
-              household_id: householdId,
-              amount: r.amount,
-              category: r.category,
-              merchant: r.merchant || null,
-              occurred_at: r.occurred_at,
-              note: r.note || null,
-              source: "share" as const,
-              kind: r.direction === "in" ? ("income" as const) : ("expense" as const),
-            })),
+          items: toSave.map((r) => ({
+            household_id: householdId,
+            amount: r.amount,
+            category: r.category,
+            merchant: r.merchant || null,
+            occurred_at: r.occurred_at,
+            note: r.note || null,
+            source: "share" as const,
+            kind: r.direction === "in" ? ("income" as const) : ("expense" as const),
+            intent: r.direction === "in" ? null : (r.intent ?? null),
+            // Fingerprint travels with the row so a future re-import can skip it.
+            source_meta: r.fp ? { fp: r.fp } : undefined,
+          })),
         },
       });
+      // Learn from corrections: when a money-out row's category was changed away
+      // from the suggestion, remember merchant → category for next time.
+      const corrections = toSave.filter(
+        (r) =>
+          r.direction === "out" &&
+          r.merchant &&
+          r.category &&
+          r.category !== r.suggestedCategory,
+      );
+      await Promise.allSettled(
+        corrections.map((r) =>
+          saveRule({ data: { householdId, merchant: r.merchant, category: r.category } }),
+        ),
+      );
       toast.success(
-        rows.length === 1
-          ? t("share.savedOne")
-          : t("share.savedMany", { count: rows.length }),
+        toSave.length === 1 ? t("share.savedOne") : t("share.savedMany", { count: toSave.length }),
       );
       setRows(null);
       setConfirmText("");
@@ -400,12 +493,31 @@ export function ShareCapture({
             />
           </div>
 
+          {rows.some((r) => r.duplicate) && (
+            <p className="rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+              {t("share.duplicatesFound", { count: rows.filter((r) => r.duplicate).length })}
+            </p>
+          )}
+
           <div className="space-y-2">
             {rows.map((r, i) => (
               <div
                 key={i}
-                className="grid grid-cols-12 items-center gap-2 rounded-md bg-muted/30 p-2"
+                className={`flex items-center gap-2 rounded-md bg-muted/30 p-2 ${!r.include ? "opacity-55" : ""}`}
               >
+                <input
+                  type="checkbox"
+                  checked={r.include}
+                  onChange={(e) => update(i, { include: e.target.checked })}
+                  className="size-4 shrink-0"
+                  aria-label={t("share.include")}
+                />
+                {r.duplicate && (
+                  <span className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                    {t("share.dupTag")}
+                  </span>
+                )}
+                <div className="grid grid-cols-12 items-center gap-2 flex-1 min-w-0">
                 <button
                   type="button"
                   onClick={() =>
@@ -463,6 +575,7 @@ export function ShareCapture({
                 >
                   <X className="size-4" />
                 </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -484,9 +597,14 @@ export function ShareCapture({
                 autoComplete="off"
                 spellCheck={false}
               />
-              <Button onClick={save} disabled={busy || !confirmed || !rows.length}>
+              <Button
+                onClick={save}
+                disabled={busy || !confirmed || !rows.some((r) => r.include && r.amount > 0)}
+              >
                 {busy ? <Loader2 className="animate-spin" /> : null}{" "}
-                {t("share.saveCount", { count: rows.length })}
+                {t("share.saveCount", {
+                  count: rows.filter((r) => r.include && r.amount > 0).length,
+                })}
               </Button>
               <Button
                 variant="ghost"

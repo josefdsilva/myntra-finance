@@ -24,6 +24,7 @@ const en = {
   // Nav
   "nav.dashboard": "Dashboard",
   "nav.journey": "Journey",
+  "nav.import": "Import",
   "navSection.advanced": "Advanced",
   "nav.moneyIn": "Money in",
   "moneyIn.title": "Money in",
@@ -1509,6 +1510,7 @@ export type MessageKey = BaseKey | keyof typeof ENTRIES;
 const pt: Record<BaseKey, string> = {
   "nav.dashboard": "Painel",
   "nav.journey": "Percurso",
+  "nav.import": "Importar",
   "navSection.advanced": "Avançado",
   "nav.moneyIn": "Rendimentos",
   "moneyIn.title": "Rendimentos",
@@ -2983,6 +2985,7 @@ const pt: Record<BaseKey, string> = {
 const es: Record<BaseKey, string> = {
   "nav.dashboard": "Panel",
   "nav.journey": "Recorrido",
+  "nav.import": "Importar",
   "navSection.advanced": "Avanzado",
   "nav.moneyIn": "Ingresos",
   "moneyIn.title": "Ingresos",
@@ -4456,6 +4459,7 @@ const es: Record<BaseKey, string> = {
 const de: Record<BaseKey, string> = {
   "nav.dashboard": "Übersicht",
   "nav.journey": "Weg",
+  "nav.import": "Importieren",
   "navSection.advanced": "Erweitert",
   "nav.moneyIn": "Einnahmen",
   "moneyIn.title": "Einnahmen",
@@ -5937,6 +5941,7 @@ const de: Record<BaseKey, string> = {
 const fr: Record<BaseKey, string> = {
   "nav.dashboard": "Tableau de bord",
   "nav.journey": "Parcours",
+  "nav.import": "Importer",
   "navSection.advanced": "Avancé",
   "nav.moneyIn": "Revenus",
   "moneyIn.title": "Revenus",

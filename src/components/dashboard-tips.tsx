@@ -290,11 +290,20 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
           )
           .eq("household_id", householdId),
       ]);
+      // When was anything last added? Drives the gentle "time to update" nudge.
+      const { data: lastEntry } = await supabase
+        .from("expenses")
+        .select("created_at")
+        .eq("household_id", householdId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       const allTimeTotals: Record<string, number> = {};
       for (const r of allTimeAllocations ?? []) {
         allTimeTotals[r.bucket_id] = (allTimeTotals[r.bucket_id] ?? 0) + Number(r.amount);
       }
       return {
+        lastEntryAt: (lastEntry?.created_at as string | null) ?? null,
         buckets,
         incomes,
         fixed: [...fixed, ...debts],
@@ -352,6 +361,23 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
   const cycle = facts.cycle;
 
   const tips: Tip[] = [];
+
+  // ---- Freshness: a gentle "time to update" nudge ----
+  // Bynku is a check-in tool, not a daily chore — updating weekly/per-cycle is
+  // the intent. But once a couple of weeks pass with nothing new, the numbers
+  // drift, so surface ONE dismissible nudge to import a statement. Never a nag.
+  if (data.expenseCount > 0 && data.lastEntryAt) {
+    const days = Math.floor((now.getTime() - new Date(data.lastEntryAt).getTime()) / 86_400_000);
+    if (days >= 14) {
+      tips.push({
+        id: "stale-data",
+        severity: "info",
+        title: t("tips.staleData.title"),
+        detail: t("tips.staleData.detail", { days }),
+        cta: { label: t("tips.cta.importStatement"), to: "/share" },
+      });
+    }
+  }
 
   // ---- Estimates still to confirm (surface first for a fresh preset) ----
   if (data.estimatedCount > 0) {

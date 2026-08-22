@@ -65,6 +65,7 @@ const NAV_SECTIONS = [
     items: [
       { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
       { to: "/journey", labelKey: "nav.journey", icon: Compass },
+      { to: "/share", labelKey: "nav.import", icon: ScanLine },
       { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
       { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
     ],
@@ -87,7 +88,6 @@ const NAV_SECTIONS = [
     advanced: false,
     items: [
       { to: "/households", labelKey: "nav.households", icon: Users },
-      { to: "/share", labelKey: "nav.capture", icon: ScanLine },
       { to: "/settings", labelKey: "nav.settings", icon: Settings },
     ],
   },
