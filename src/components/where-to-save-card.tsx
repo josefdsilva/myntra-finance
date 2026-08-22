@@ -10,7 +10,8 @@ import { useT, type MessageKey } from "@/lib/i18n";
 import { computeBenchmarkComparison, hasBenchmark } from "@/lib/benchmarks";
 import { findSavings } from "@/lib/savings-finder";
 import { cycleForSpace, perCycleFromMonthly } from "@/lib/cadence";
-import { resolveIntent, defaultIntentForCategory } from "@/lib/intent";
+import { defaultIntentForCategory } from "@/lib/intent";
+import { matchValue, parseValues, resolveIntentWithValues } from "@/lib/values";
 import { fetchCycleBounds } from "@/lib/cycle-bounds";
 import {
   fetchCommitments,
@@ -53,7 +54,7 @@ export function WhereToSaveCard({
       const { data } = await supabase
         .from("households")
         .select(
-          "country, adults, children, kind, age_band, margin_pct, cycle, cycle_mode, cycle_anchor_date, baseline_budget",
+          "country, adults, children, kind, age_band, margin_pct, cycle, cycle_mode, cycle_anchor_date, baseline_budget, life_values",
         )
         .eq("id", householdId)
         .maybeSingle();
@@ -151,15 +152,19 @@ export function WhereToSaveCard({
 
   // Discretionary spend per category — fixed (by its intent) + variable (by the
   // category's default intent). Essentials/important are excluded.
+  // Values-aware: spending that serves what the household said matters is never
+  // offered up as a cut. Asking a travel-first family to give up its one trip is
+  // the fastest way to lose them, even when the arithmetic works.
+  const values = parseValues(hh?.life_values);
   const catSpend: Record<string, number> = {};
   for (const r of fixedRows ?? []) {
-    const level = resolveIntent({ intent: r.intent, category: r.category });
-    if (DISCRETIONARY.has(level) && r.category) {
+    const level = resolveIntentWithValues({ intent: r.intent, category: r.category }, values);
+    if (DISCRETIONARY.has(level) && r.category && !matchValue(values, r.category)) {
       catSpend[r.category] = (catSpend[r.category] ?? 0) + (Number(r.monthly_amount) || 0);
     }
   }
   for (const [cat, amt] of Object.entries(spendByCategory)) {
-    if (DISCRETIONARY.has(defaultIntentForCategory(cat))) {
+    if (DISCRETIONARY.has(defaultIntentForCategory(cat)) && !matchValue(values, cat)) {
       catSpend[cat] = (catSpend[cat] ?? 0) + amt;
     }
   }
