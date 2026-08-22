@@ -306,12 +306,27 @@ export const draftJourney = createServerFn({ method: "POST" })
     } else if (hasDebt) {
       specs.push({ template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } });
     }
+    // The financial backbone stays, but the household's values are interleaved
+    // between the rungs — the safety net protects what they care about, and the
+    // next rung funds it. Values come before generic investing on purpose.
+    if (valueKeys[0]) specs.push(valueSpec(valueKeys[0]));
+    specs.push({ template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } });
+    if (valueKeys[1]) specs.push(valueSpec(valueKeys[1]));
     specs.push(
-      { template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } },
-      { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 6 } },
+      { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: netTarget } },
       { template_key: "invest", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 1 } },
-      { template_key: "investDeep", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 6 } },
     );
+    if (valueKeys[2]) specs.push(valueSpec(valueKeys[2]));
+    specs.push({ template_key: "investDeep", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 6 } });
+    // Life stage: an adult within 15 years of 65 gets a retirement rung early,
+    // instead of waiting for the far-horizon financial-independence rung.
+    if (stage.yearsToRetirement != null && stage.yearsToRetirement <= 15) {
+      specs.push({
+        template_key: "retireSoon",
+        objective_type: "metric",
+        objective_config: { key: "invested_years", op: ">=", value: 5 },
+      });
+    }
     // Advanced rungs appear once the safety net is built — keeps the horizon open
     // for households that are already well past the basics.
     if (emergencyMonths >= 6) {
@@ -321,12 +336,24 @@ export const draftJourney = createServerFn({ method: "POST" })
       );
     }
     // Goal-by-date projects become their own milestones (house, property, a big
-    // goal). The emergency fund is skipped — it already drives the safety net.
+    // goal). The emergency fund is skipped — it already drives the safety net, and
+    // so are projects already claimed by a values rung above.
+    const claimed = new Set(
+      specs
+        .map((s) => (s.objective_config as { bucket_id?: string }).bucket_id)
+        .filter((id): id is string => !!id),
+    );
     for (const b of bs) {
-      if (b.target_type === "goal_by_date" && Number(b.target_value) > 0 && b.kind !== "emergency") {
+      if (
+        b.target_type === "goal_by_date" &&
+        Number(b.target_value) > 0 &&
+        b.kind !== "emergency" &&
+        !claimed.has(b.id)
+      ) {
         specs.push({ title: b.name, objective_type: "project", objective_config: { bucket_id: b.id }, optional: true });
       }
     }
+    void starterMonths;
 
     // Replace the previous suggested spine (seed + earlier coach drafts); keep the
     // user's own stages, re-numbered to follow the fresh spine.
