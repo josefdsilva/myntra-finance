@@ -266,8 +266,7 @@ export const draftJourney = createServerFn({ method: "POST" })
     const stage = lifeStageOf((people.data ?? []) as Array<{ age: number | null; role: string }>);
     // Young children or a retired adult mean a thicker buffer; both make a shock
     // more expensive to absorb.
-    const netTarget = stage.dependants > 0 || stage.hasRetired ? 6 : 6;
-    const starterMonths = stage.dependants > 0 ? 1 : 1;
+    const netTarget = stage.dependants > 0 || stage.hasRetired ? 9 : 6;
 
     /** A rung that funds one of the household's values, linked to its project when one exists. */
     function valueSpec(key: string): DraftSpec {
@@ -353,7 +352,6 @@ export const draftJourney = createServerFn({ method: "POST" })
         specs.push({ title: b.name, objective_type: "project", objective_config: { bucket_id: b.id }, optional: true });
       }
     }
-    void starterMonths;
 
     // Replace the previous suggested spine (seed + earlier coach drafts); keep the
     // user's own stages, re-numbered to follow the fresh spine.
