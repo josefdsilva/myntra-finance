@@ -29,7 +29,7 @@ import { CoachActionsCard } from "@/components/coach-actions-card";
 import { parseCoachActions } from "@/lib/coach-actions.functions";
 import { looksLikeAction, type CoachAction } from "@/lib/coach-actions";
 import { useActiveHouseholdId } from "@/lib/active-household";
-import { useLocale } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 import { AiNotice } from "@/components/ai-badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,7 @@ const STORAGE_KEY_PREFIX = "coach-dock:conv:";
 export function CoachDock() {
   const householdId = useActiveHouseholdId();
   const locale = useLocale();
+  const t = useT();
   const qc = useQueryClient();
 
   const listFn = useServerFn(listCoachConversations);
@@ -253,20 +254,21 @@ export function CoachDock() {
 
   return (
     <>
-      {/* Floating trigger */}
+      {/* Floating trigger — labelled so it's obvious you can just talk to it */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Open AI coach"
+        aria-label={t("chatFirst.fab")}
         className={cn(
           "fixed z-40 bottom-4 right-4 md:bottom-6 md:right-6 print:hidden",
-          "rounded-full h-14 w-14 shadow-lg border border-primary/30",
+          "rounded-full h-14 pl-4 pr-5 shadow-lg border border-primary/30",
           "bg-primary text-primary-foreground hover:bg-primary/90",
-          "flex items-center justify-center transition-all",
+          "flex items-center gap-2 transition-all",
           open && "opacity-0 pointer-events-none",
         )}
       >
-        <Sparkles className="size-6" />
+        <Sparkles className="size-5 shrink-0" />
+        <span className="text-sm font-medium whitespace-nowrap">{t("chatFirst.fab")}</span>
       </button>
 
       {/* Backdrop on mobile */}
@@ -359,17 +361,33 @@ export function CoachDock() {
             </div>
           )}
           {messages.length === 0 && !convQ.isFetching && (
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                Ask about budgets, big purchases, savings goals, or debt. This chat stays saved so
-                you can come back to it later.
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>{t("chatFirst.dock.intro")}</p>
+              <p className="text-xs font-medium text-foreground">
+                {t("chatFirst.dock.tryTitle")}
               </p>
-              <p>
-                You can also just <strong className="text-foreground">tell me what happened</strong>{" "}
-                — "spent 34 at Lidl", "rent is 780 a month", "car loan 210 a month at 6.4%", "save
-                200 a month for Japan" — and I'll fill in the app for you. You confirm before
-                anything is saved.
-              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    "chatFirst.dock.ex1",
+                    "chatFirst.dock.ex2",
+                    "chatFirst.dock.ex3",
+                    "chatFirst.dock.ex4",
+                  ] as const
+                ).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => {
+                      setInput(t(k));
+                      inputRef.current?.focus();
+                    }}
+                    className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-primary/10"
+                  >
+                    {t(k)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {messages.map((m, i) => (
