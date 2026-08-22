@@ -361,16 +361,27 @@ function Wizard({
           {key === "values" && <ValuesPicker value={lifeValues} onChange={setLifeValues} />}
           {key === "people" && <PeopleEditor householdId={householdId} />}
           {key === "whereWho" && (
-            <WhereWhoStep
-              country={country}
-              setCountry={setCountry}
-              adults={adults}
-              setAdults={setAdults}
-              children={children}
-              setChildren={setChildren}
-              ageBand={ageBand}
-              setAgeBand={setAgeBand}
-            />
+            <>
+              <WhereWhoStep
+                country={country}
+                setCountry={setCountry}
+                adults={adults}
+                setAdults={setAdults}
+                children={children}
+                setChildren={setChildren}
+                ageBand={ageBand}
+                setAgeBand={setAgeBand}
+              />
+              <details className="mt-5 rounded-xl border p-4">
+                <summary className="cursor-pointer text-sm font-medium">
+                  {t("ob.people.optional")}
+                </summary>
+                <p className="mt-1 text-xs text-muted-foreground">{t("ob.people.optionalHint")}</p>
+                <div className="mt-3">
+                  <PeopleEditor householdId={householdId} compact />
+                </div>
+              </details>
+            </>
           )}
           {key === "preset" && (
             <PresetStep
@@ -380,7 +391,15 @@ function Wizard({
               children={children}
               housing={housing}
               onEnterOwn={() => setStep((s) => s + 1)}
-              onFinish={finish}
+              onFinish={toJourney}
+            />
+          )}
+          {key === "journey" && (
+            <JourneyStep
+              householdId={householdId}
+              onOpenJourney={() => finish("/journey")}
+              onOpenDashboard={() => finish("/dashboard")}
+              busy={busy}
             />
           )}
           {key === "cycle" && (
