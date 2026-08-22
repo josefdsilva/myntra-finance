@@ -397,6 +397,8 @@ function Dashboard() {
         {householdId && <PurchaseCheckButton />}
       </header>
 
+      {householdId && <ChatFirstCard />}
+
       {!isLoading && householdId && (
         <SetupChecklist householdId={householdId} household={hh?.household ?? null} />
       )}
