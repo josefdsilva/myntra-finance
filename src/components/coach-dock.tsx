@@ -180,12 +180,49 @@ export function CoachDock() {
     chatMut.mutate({ message, conversationId: currentConvId, forceDeep: deepThink, brief });
   }
 
+  /**
+   * Chat-first actions: when the message plainly describes something to record
+   * ("spent 34 at Lidl", "car loan 210/month at 6.4%"), extract it and show the
+   * confirm card instead of a chat answer. Anything else — questions, advice,
+   * chit-chat — falls through to the normal coach chat.
+   */
   async function send() {
     const msg = input.trim();
-    if (!msg || chatMut.isPending) return;
+    if (!msg || chatMut.isPending || parsing) return;
     setInput("");
+
+    if (householdId && looksLikeAction(msg)) {
+      setParsing(true);
+      setPending([{ role: "user", content: msg }]);
+      try {
+        const res = await parseFn({ data: { householdId, text: msg } });
+        if (res.actions.length) {
+          setDraft({ actions: res.actions, categories: res.categories });
+          setParsing(false);
+          return;
+        }
+      } catch {
+        /* extraction is best-effort — fall back to a normal chat answer */
+      }
+      setParsing(false);
+      setPending([]);
+    }
+
     await submit(msg, convId);
   }
+
+  /** Keep the confirmed items visible in the transcript, locally. */
+  function afterApply(summary: string) {
+    setDraft(null);
+    setPending([]);
+    setLocalNotes((n) => [...n, summary]);
+  }
+
+  function cancelDraft() {
+    setDraft(null);
+    setPending([]);
+  }
+
 
   async function newChat() {
     setConvId(null);
