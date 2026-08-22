@@ -190,7 +190,13 @@ function Wizard({
 
   const steps = STEPS.filter((s) => !DEFERRED_STEPS.has(s));
   const key = steps[Math.min(step, steps.length - 1)];
+  const journeyIdx = steps.indexOf("journey");
   const isLast = step === steps.length - 1;
+
+  // Progress is counted over the screens most people actually see (welcome →
+  // preset → journey), so the manual detour doesn't make the bar lie.
+  const coreCount = steps.indexOf("preset") + 2;
+  const shownIdx = key === "journey" ? coreCount - 1 : Math.min(step, coreCount - 2);
 
   // Remember where the user got to, so re-entering the wizard resumes there
   // instead of restarting at the welcome screen.
