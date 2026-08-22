@@ -14,7 +14,7 @@ New setup step (early, skippable, editable later in Settings): a small member li
 
 ## 2. Values step
 
-Pick up to three values, ranked, from a localized list: family time, travel, health, home, giving, learning/career, freedom & security, little treats, environment, community, plus a free-text "something else". Asked as the first content step of setup, skippable, and editable in Settings (changing them re-drafts the journey with a confirm step).
+Pick up to three values, ranked, from a localized list: family time, travel, health, home, giving, learning/career, freedom & security, little treats, environment, community, investing plus a free-text "something else". Asked as the first content step of setup, skippable, and editable in Settings (changing them re-drafts the journey with a confirm step).
 
 ## 3. Values-aware intent
 
@@ -35,7 +35,7 @@ No punitive language: off-values spending is shown as an opportunity, and the co
 
 `draftJourney` keeps its financial backbone but re-frames and re-orders it around values and life stage:
 
-- Backbone stays: starter buffer, expensive debt, 3 and 6 months of cover, first invested month. Titles are re-worded as protection of the values ("Protect the family: one month of cover").
+- Backbone stays: starter buffer, expensive debt, 3 and 6 months of cover, first invested month. Titles are re-worded as protection of the values ("Protect the family: one month of cover"). 
 - Values rungs are interleaved: a travel household gets "Fund next year's trip"; giving gets "Give X per year without strain"; learning gets a course/education fund; family gets a kids' fund sized to the youngest child's horizon.
 - Life stage adjusts targets: adults near retirement get an earlier retirement rung; households with young children get a larger buffer target.
 - Re-drafting is idempotent and never deletes user-authored stages.
