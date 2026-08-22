@@ -4764,6 +4764,41 @@ export const ENTRIES = {
   "journey.stage.retireSoon.title": { en: "Get retirement-ready", pt: "Preparar a reforma", es: "Preparar la jubilación", de: "Bereit für den Ruhestand", fr: "Préparer la retraite" },
   "journey.stage.retireSoon.obj": { en: "Five years of living costs invested before you stop working", pt: "Cinco anos de custos de vida investidos antes de parar de trabalhar", es: "Cinco años de coste de vida invertidos antes de dejar de trabajar", de: "Fünf Jahre Lebenshaltung investiert, bevor du aufhörst", fr: "Cinq ans de coût de la vie investis avant d'arrêter" },
   "journey.role.retireSoon": { en: "Retirement", pt: "Reforma", es: "Jubilación", de: "Ruhestand", fr: "Retraite" },
+  // --- Onboarding: shorter, friendlier first run --------------------------
+  "ob.stepOf": { en: "Step {n} of {total}", pt: "Passo {n} de {total}", es: "Paso {n} de {total}", de: "Schritt {n} von {total}", fr: "Étape {n} sur {total}" },
+  "ob.welcome.title": { en: "Welcome — let's build your journey", pt: "Bem-vindo — vamos construir o seu percurso", es: "Bienvenido — vamos a construir tu recorrido", de: "Willkommen — bauen wir deinen Weg", fr: "Bienvenue — construisons votre parcours" },
+  "ob.welcome.body": {
+    en: "Four short questions and bynku drafts a plan and a journey for you. You can skip anything and change everything later.",
+    pt: "Quatro perguntas curtas e o bynku prepara um plano e um percurso para si. Pode saltar tudo e mudar depois.",
+    es: "Cuatro preguntas cortas y bynku te prepara un plan y un recorrido. Puedes saltarte todo y cambiarlo luego.",
+    de: "Vier kurze Fragen und bynku entwirft dir Plan und Weg. Du kannst alles überspringen und später ändern.",
+    fr: "Quatre questions courtes et bynku prépare un plan et un parcours. Vous pouvez tout passer et modifier plus tard.",
+  },
+  "ob.welcome.time": { en: "About 2 minutes. No bank connection needed.", pt: "Cerca de 2 minutos. Sem ligar o banco.", es: "Unos 2 minutos. Sin conectar el banco.", de: "Etwa 2 Minuten. Keine Bankverbindung nötig.", fr: "Environ 2 minutes. Sans connexion bancaire." },
+  "ob.welcome.b1": { en: "What your money is for", pt: "Para que serve o seu dinheiro", es: "Para qué es tu dinero", de: "Wofür dein Geld da ist", fr: "À quoi sert votre argent" },
+  "ob.welcome.b2": { en: "Who is in the household", pt: "Quem vive no agregado", es: "Quién vive en el hogar", de: "Wer im Haushalt lebt", fr: "Qui vit dans le foyer" },
+  "ob.welcome.b3": { en: "What comes in each month", pt: "O que entra cada mês", es: "Lo que entra cada mes", de: "Was monatlich reinkommt", fr: "Ce qui rentre chaque mois" },
+  "ob.welcome.b4": { en: "We estimate the rest — you correct it", pt: "Estimamos o resto — você corrige", es: "Estimamos el resto — tú lo corriges", de: "Den Rest schätzen wir — du korrigierst", fr: "On estime le reste — vous corrigez" },
+  "ob.people.optional": { en: "Add the people (optional)", pt: "Adicionar as pessoas (opcional)", es: "Añadir a las personas (opcional)", de: "Personen hinzufügen (optional)", fr: "Ajouter les personnes (facultatif)" },
+  "ob.people.optionalHint": {
+    en: "Names and ages let bynku time things like school years or retirement. Skip it — the journey still works.",
+    pt: "Nomes e idades permitem ao bynku prever a escola ou a reforma. Pode saltar — o percurso continua a funcionar.",
+    es: "Nombres y edades permiten a bynku prever el colegio o la jubilación. Puedes saltarlo — el recorrido sigue funcionando.",
+    de: "Namen und Alter helfen bynku bei Schule oder Ruhestand. Überspringen geht — der Weg funktioniert weiter.",
+    fr: "Noms et âges aident bynku à anticiper l'école ou la retraite. Passez si vous voulez — le parcours fonctionne quand même.",
+  },
+  "ob.journey.title": { en: "Here's your journey", pt: "Aqui está o seu percurso", es: "Aquí está tu recorrido", de: "Hier ist dein Weg", fr: "Voici votre parcours" },
+  "ob.journey.subtitle": {
+    en: "Built from what you value and where you stand today. It updates itself as your numbers change.",
+    pt: "Construído a partir do que valoriza e de onde está hoje. Atualiza-se conforme os números mudam.",
+    es: "Construido con lo que valoras y tu situación de hoy. Se actualiza según cambian tus números.",
+    de: "Gebaut aus deinen Werten und deiner heutigen Lage. Er aktualisiert sich mit deinen Zahlen.",
+    fr: "Construit à partir de vos valeurs et de votre situation actuelle. Il se met à jour avec vos chiffres.",
+  },
+  "ob.journey.loading": { en: "Drawing your journey…", pt: "A desenhar o seu percurso…", es: "Dibujando tu recorrido…", de: "Dein Weg wird gezeichnet…", fr: "Nous dessinons votre parcours…" },
+  "ob.journey.more": { en: "+{n} more steps after these", pt: "+{n} passos depois destes", es: "+{n} pasos después de estos", de: "+{n} weitere Schritte danach", fr: "+{n} étapes après celles-ci" },
+  "ob.journey.cta": { en: "Open my journey", pt: "Abrir o meu percurso", es: "Abrir mi recorrido", de: "Meinen Weg öffnen", fr: "Ouvrir mon parcours" },
+  "ob.journey.dash": { en: "Go to the dashboard instead", pt: "Ir para o painel", es: "Ir al panel", de: "Zum Dashboard", fr: "Aller au tableau de bord" },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type EntryKey = keyof typeof ENTRIES;
