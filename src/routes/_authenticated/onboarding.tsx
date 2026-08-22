@@ -583,6 +583,12 @@ function MarginStep({ margin, setMargin }: { margin: number; setMargin: (n: numb
 
 function Welcome({ householdId }: { householdId: string }) {
   const t = useT();
+  const bullets: MessageKey[] = [
+    "ob.welcome.b1",
+    "ob.welcome.b2",
+    "ob.welcome.b3",
+    "ob.welcome.b4",
+  ];
   return (
     <div className="space-y-4 pt-6">
       <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -590,7 +596,108 @@ function Welcome({ householdId }: { householdId: string }) {
       </div>
       <h1 className="font-display text-3xl">{t("ob.welcome.title")}</h1>
       <p className="text-muted-foreground">{t("ob.welcome.body")}</p>
+      <ul className="space-y-2">
+        {bullets.map((b) => (
+          <li key={b} className="flex items-start gap-2 text-sm">
+            <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+            <span>{t(b)}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-xs text-muted-foreground">{t("ob.welcome.time")}</p>
       <StatementFastLane householdId={householdId} />
+    </div>
+  );
+}
+
+/**
+ * The payoff screen: instead of ending onboarding on a form, bynku drafts the
+ * tailored journey from what it now knows and shows the first rungs, plus
+ * values-aligned projects that are one tap away. Nothing here is required — both
+ * buttons complete setup.
+ */
+function JourneyStep({
+  householdId,
+  onOpenJourney,
+  onOpenDashboard,
+  busy,
+}: {
+  householdId: string;
+  onOpenJourney: () => void;
+  onOpenDashboard: () => void;
+  busy: boolean;
+}) {
+  const t = useT();
+  const draft = useServerFn(draftJourney);
+  const list = useServerFn(listStages);
+
+  const { data: stages, isLoading } = useQuery({
+    queryKey: ["ob-journey", householdId],
+    queryFn: async () => {
+      try {
+        await draft({ data: { household_id: householdId } });
+      } catch {
+        /* a failed draft still leaves the seeded spine to show */
+      }
+      return await list({ data: { household_id: householdId } });
+    },
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  const shown = (stages ?? []).slice(0, 4);
+  const rest = Math.max(0, (stages ?? []).length - shown.length);
+
+  return (
+    <div>
+      <StepHead icon={Sparkles} title={t("ob.journey.title")} subtitle={t("ob.journey.subtitle")} />
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> {t("ob.journey.loading")}
+        </div>
+      ) : (
+        <ol className="space-y-2">
+          {shown.map((s, i) => {
+            const title =
+              s.title ??
+              (s.template_key ? t(`journey.stage.${s.template_key}.title` as MessageKey) : "");
+            const obj =
+              s.objective ??
+              (s.template_key ? t(`journey.stage.${s.template_key}.obj` as MessageKey) : "");
+            return (
+              <li key={s.id} className="flex gap-3 rounded-xl border p-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  {i + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium">{title}</span>
+                  <span className="block text-xs text-muted-foreground">{obj}</span>
+                </span>
+              </li>
+            );
+          })}
+          {rest > 0 && (
+            <li className="px-1 text-xs text-muted-foreground">
+              {t("ob.journey.more", { n: rest })}
+            </li>
+          )}
+        </ol>
+      )}
+
+      <div className="mt-5">
+        <ProjectSuggestions householdId={householdId} />
+      </div>
+
+      <div className="mt-6 flex flex-col gap-2">
+        <Button onClick={onOpenJourney} disabled={busy}>
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{" "}
+          {t("ob.journey.cta")}
+        </Button>
+        <Button variant="ghost" onClick={onOpenDashboard} disabled={busy}>
+          {t("ob.journey.dash")}
+        </Button>
+      </div>
     </div>
   );
 }
