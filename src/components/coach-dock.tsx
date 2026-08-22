@@ -253,20 +253,21 @@ export function CoachDock() {
 
   return (
     <>
-      {/* Floating trigger */}
+      {/* Floating trigger — labelled so it's obvious you can just talk to it */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Open AI coach"
+        aria-label={t("chatFirst.fab")}
         className={cn(
           "fixed z-40 bottom-4 right-4 md:bottom-6 md:right-6 print:hidden",
-          "rounded-full h-14 w-14 shadow-lg border border-primary/30",
+          "rounded-full h-14 pl-4 pr-5 shadow-lg border border-primary/30",
           "bg-primary text-primary-foreground hover:bg-primary/90",
-          "flex items-center justify-center transition-all",
+          "flex items-center gap-2 transition-all",
           open && "opacity-0 pointer-events-none",
         )}
       >
-        <Sparkles className="size-6" />
+        <Sparkles className="size-5 shrink-0" />
+        <span className="text-sm font-medium whitespace-nowrap">{t("chatFirst.fab")}</span>
       </button>
 
       {/* Backdrop on mobile */}
