@@ -439,7 +439,7 @@ function Wizard({
           <Button variant="ghost" onClick={back} disabled={step === 0 || busy}>
             {t("ob.back")}
           </Button>
-          {key !== "preset" && (
+          {key !== "preset" && key !== "journey" && (
             <div className="flex items-center gap-2">
               {key !== "welcome" && (
                 <Button variant="ghost" onClick={skip} disabled={busy}>
@@ -454,7 +454,9 @@ function Wizard({
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">{t("ob.skipHint")}</p>
+        {key !== "journey" && (
+          <p className="mt-4 text-center text-xs text-muted-foreground">{t("ob.skipHint")}</p>
+        )}
       </div>
     </div>
   );
