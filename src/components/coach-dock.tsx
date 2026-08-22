@@ -137,7 +137,7 @@ export function CoachDock() {
   useEffect(() => {
     if (!open) return;
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, open]);
+  }, [messages.length, open, draft, parsing, localNotes.length]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50);
@@ -462,7 +462,7 @@ export function CoachDock() {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask the coach…"
+              placeholder="Ask, or just say what happened…"
               rows={2}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -471,15 +471,15 @@ export function CoachDock() {
                 }
               }}
               className="min-h-0 resize-none"
-              disabled={chatMut.isPending}
+              disabled={chatMut.isPending || parsing || !!draft}
             />
             <Button
               onClick={send}
-              disabled={!input.trim() || chatMut.isPending}
+              disabled={!input.trim() || chatMut.isPending || parsing || !!draft}
               size="icon"
               aria-label="Send"
             >
-              {chatMut.isPending ? (
+              {chatMut.isPending || parsing ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Send className="size-4" />
