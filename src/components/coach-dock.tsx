@@ -25,6 +25,9 @@ import {
 } from "@/lib/coach.functions";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { CoachOnboarding } from "@/components/coach-onboarding";
+import { CoachActionsCard } from "@/components/coach-actions-card";
+import { parseCoachActions } from "@/lib/coach-actions.functions";
+import { looksLikeAction, type CoachAction } from "@/lib/coach-actions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { useLocale } from "@/lib/i18n";
 import { AiNotice } from "@/components/ai-badge";
@@ -75,6 +78,10 @@ export function CoachDock() {
   const [input, setInput] = useState("");
   const [deepThink, setDeepThink] = useState(false);
   const [brief, setBrief] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [draft, setDraft] = useState<{ actions: CoachAction[]; categories: string[] } | null>(null);
+  const [localNotes, setLocalNotes] = useState<string[]>([]);
+  const parseFn = useServerFn(parseCoachActions);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const autoSentRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -130,7 +137,7 @@ export function CoachDock() {
   useEffect(() => {
     if (!open) return;
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, open]);
+  }, [messages.length, open, draft, parsing, localNotes.length]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50);
@@ -177,12 +184,49 @@ export function CoachDock() {
     chatMut.mutate({ message, conversationId: currentConvId, forceDeep: deepThink, brief });
   }
 
+  /**
+   * Chat-first actions: when the message plainly describes something to record
+   * ("spent 34 at Lidl", "car loan 210/month at 6.4%"), extract it and show the
+   * confirm card instead of a chat answer. Anything else — questions, advice,
+   * chit-chat — falls through to the normal coach chat.
+   */
   async function send() {
     const msg = input.trim();
-    if (!msg || chatMut.isPending) return;
+    if (!msg || chatMut.isPending || parsing) return;
     setInput("");
+
+    if (householdId && looksLikeAction(msg)) {
+      setParsing(true);
+      setPending([{ role: "user", content: msg }]);
+      try {
+        const res = await parseFn({ data: { householdId, text: msg } });
+        if (res.actions.length) {
+          setDraft({ actions: res.actions, categories: res.categories });
+          setParsing(false);
+          return;
+        }
+      } catch {
+        /* extraction is best-effort — fall back to a normal chat answer */
+      }
+      setParsing(false);
+      setPending([]);
+    }
+
     await submit(msg, convId);
   }
+
+  /** Keep the confirmed items visible in the transcript, locally. */
+  function afterApply(summary: string) {
+    setDraft(null);
+    setPending([]);
+    setLocalNotes((n) => [...n, summary]);
+  }
+
+  function cancelDraft() {
+    setDraft(null);
+    setPending([]);
+  }
+
 
   async function newChat() {
     setConvId(null);
@@ -315,9 +359,17 @@ export function CoachDock() {
             </div>
           )}
           {messages.length === 0 && !convQ.isFetching && (
-            <div className="text-sm text-muted-foreground">
-              Ask about budgets, big purchases, savings goals, or debt. This chat stays saved so you
-              can come back to it later.
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                Ask about budgets, big purchases, savings goals, or debt. This chat stays saved so
+                you can come back to it later.
+              </p>
+              <p>
+                You can also just <strong className="text-foreground">tell me what happened</strong>{" "}
+                — "spent 34 at Lidl", "rent is 780 a month", "car loan 210 a month at 6.4%", "save
+                200 a month for Japan" — and I'll fill in the app for you. You confirm before
+                anything is saved.
+              </p>
             </div>
           )}
           {messages.map((m, i) => (
@@ -346,7 +398,30 @@ export function CoachDock() {
               </div>
             </div>
           ))}
+
+          {parsing && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> Reading that…
+            </div>
+          )}
+
+          {draft && householdId && (
+            <CoachActionsCard
+              householdId={householdId}
+              actions={draft.actions}
+              categories={draft.categories}
+              onCancel={cancelDraft}
+              onApplied={afterApply}
+            />
+          )}
+
+          {localNotes.map((n, i) => (
+            <div key={`note-${i}`} className="flex justify-start">
+              <div className="rounded-lg bg-muted px-3 py-2 text-sm">{n}</div>
+            </div>
+          ))}
         </div>
+
 
         {/* Composer */}
         <div className="p-3 border-t space-y-2">
@@ -387,7 +462,7 @@ export function CoachDock() {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask the coach…"
+              placeholder="Ask, or just say what happened…"
               rows={2}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -396,15 +471,15 @@ export function CoachDock() {
                 }
               }}
               className="min-h-0 resize-none"
-              disabled={chatMut.isPending}
+              disabled={chatMut.isPending || parsing || !!draft}
             />
             <Button
               onClick={send}
-              disabled={!input.trim() || chatMut.isPending}
+              disabled={!input.trim() || chatMut.isPending || parsing || !!draft}
               size="icon"
               aria-label="Send"
             >
-              {chatMut.isPending ? (
+              {chatMut.isPending || parsing ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Send className="size-4" />
