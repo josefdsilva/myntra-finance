@@ -35,6 +35,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { DashboardTips } from "@/components/dashboard-tips";
+import { ChatFirstCard } from "@/components/chat-first-card";
 import { MomentumCard } from "@/components/score-trend";
 import { PurchaseCheckButton } from "@/components/purchase-check";
 import { GoalsCard } from "@/components/goals-card";
