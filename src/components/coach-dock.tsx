@@ -25,6 +25,9 @@ import {
 } from "@/lib/coach.functions";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { CoachOnboarding } from "@/components/coach-onboarding";
+import { CoachActionsCard } from "@/components/coach-actions-card";
+import { parseCoachActions } from "@/lib/coach-actions.functions";
+import { looksLikeAction, type CoachAction } from "@/lib/coach-actions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { useLocale } from "@/lib/i18n";
 import { AiNotice } from "@/components/ai-badge";
