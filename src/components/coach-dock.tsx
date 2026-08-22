@@ -78,6 +78,10 @@ export function CoachDock() {
   const [input, setInput] = useState("");
   const [deepThink, setDeepThink] = useState(false);
   const [brief, setBrief] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [draft, setDraft] = useState<{ actions: CoachAction[]; categories: string[] } | null>(null);
+  const [localNotes, setLocalNotes] = useState<string[]>([]);
+  const parseFn = useServerFn(parseCoachActions);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const autoSentRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
