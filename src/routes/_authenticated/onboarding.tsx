@@ -88,31 +88,45 @@ const COUNTRIES = [
   ["LU", "Luxembourg"],
 ] as const;
 
+// The guided flow is deliberately short: what your money is for, who you are,
+// what comes in, when the cycle turns — then bynku estimates the rest and shows
+// the journey it drafted. Everything else is reachable later from the dashboard
+// checklist, and the manual "enter my own" path still walks the detailed
+// editors (which is why they stay in this list, after the preset).
 const STEPS = [
   "welcome",
   "values",
-  "people",
   "whereWho",
   "income",
   "cycle",
   "preset",
+  // Manual path only (reached from the preset's "enter my own").
   "fixed",
   "variable",
   "margin",
-  // Deferred to the dashboard checklist — these editors stay defined (and are
-  // still referenced in the render switch so they keep compiling and can be
-  // reached from the preset's "enter my own" path), but are filtered out of the
-  // default flow so nobody is blocked by them.
+  // The payoff screen — always last.
+  "journey",
+  // Deferred to the dashboard checklist — these editors stay defined so they
+  // keep compiling and can still be reached from other entry points.
   "categories",
   "debt",
   "assets",
   "projects",
   "plans",
   "household",
+  "people",
 ] as const;
 
 // Steps no longer part of the guided flow (moved to the dashboard checklist).
-const DEFERRED_STEPS = new Set(["categories", "debt", "assets", "projects", "plans", "household"]);
+const DEFERRED_STEPS = new Set([
+  "categories",
+  "debt",
+  "assets",
+  "projects",
+  "plans",
+  "household",
+  "people",
+]);
 
 function OnboardingPage() {
   const activeHouseholdId = useActiveHouseholdId();
