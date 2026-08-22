@@ -340,7 +340,10 @@ function Wizard({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
       <div className="mx-auto flex min-h-full max-w-xl flex-col px-5 py-8">
-        <Progress value={(step / (steps.length - 1)) * 100} className="mb-8" />
+        <Progress value={(shownIdx / (coreCount - 1)) * 100} className="mb-2" />
+        <p className="mb-6 text-xs text-muted-foreground">
+          {t("ob.stepOf", { n: shownIdx + 1, total: coreCount })}
+        </p>
 
         <div className="flex-1">
           {key === "welcome" && (
