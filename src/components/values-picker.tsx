@@ -99,7 +99,7 @@ export function ValuesPicker({
           variant={chosen("other") >= 0 ? "default" : "outline"}
           size="sm"
           disabled={!other.trim() && chosen("other") < 0}
-          onClick={() => toggle("other", other.trim() || null)}
+          onClick={() => toggle("other", other.trim() || undefined)}
         >
           <Check className="size-4" /> {t("values.other")}
         </Button>

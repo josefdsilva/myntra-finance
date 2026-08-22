@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
-import { fetchCycleBounds } from "@/lib/cycle-bounds";
+import { fetchCycleBoundsById } from "@/lib/cycle-bounds";
 import { alignmentSummary, parseValues, valueLabelKey } from "@/lib/values";
 
 /**
@@ -26,7 +26,7 @@ export function AlignmentCard({ householdId }: { householdId: string }) {
     queryFn: async () => {
       const [{ data: hh }, bounds] = await Promise.all([
         supabase.from("households").select("life_values").eq("id", householdId).maybeSingle(),
-        fetchCycleBounds(supabase, householdId),
+        fetchCycleBoundsById(supabase, householdId),
       ]);
       const { data: rows } = await supabase
         .from("expenses")
