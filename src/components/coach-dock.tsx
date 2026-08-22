@@ -29,7 +29,7 @@ import { CoachActionsCard } from "@/components/coach-actions-card";
 import { parseCoachActions } from "@/lib/coach-actions.functions";
 import { looksLikeAction, type CoachAction } from "@/lib/coach-actions";
 import { useActiveHouseholdId } from "@/lib/active-household";
-import { useLocale } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/i18n";
 import { AiNotice } from "@/components/ai-badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,7 @@ const STORAGE_KEY_PREFIX = "coach-dock:conv:";
 export function CoachDock() {
   const householdId = useActiveHouseholdId();
   const locale = useLocale();
+  const t = useT();
   const qc = useQueryClient();
 
   const listFn = useServerFn(listCoachConversations);
