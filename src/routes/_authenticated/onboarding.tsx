@@ -34,6 +34,8 @@ import {
 import { StatementImportButton } from "@/components/statement-import-flow";
 import { ValuesPicker } from "@/components/values-picker";
 import { PeopleEditor } from "@/components/people-editor";
+import { ProjectSuggestions } from "@/components/project-suggestions";
+import { draftJourney, listStages } from "@/lib/journey.functions";
 import { parseValues, type HouseholdValue } from "@/lib/values";
 import { CoachOnboarding } from "@/components/coach-onboarding";
 import { money, currencySymbol } from "@/lib/format";
