@@ -258,6 +258,39 @@ export const draftJourney = createServerFn({ method: "POST" })
     // demoralizing. This becomes the very first rung when money is tight.
     const tight = income > 0 && income - essentials < income * 0.1;
 
+    // What the household values, and who is in it — the journey is tailored to
+    // both, so the rungs read as "protect and fund what matters to you" rather
+    // than a generic order of operations.
+    const values = parseValues(hh.data?.life_values);
+    const valueKeys = valueKeysOf(values);
+    const stage = lifeStageOf((people.data ?? []) as Array<{ age: number | null; role: string }>);
+    // Young children or a retired adult mean a thicker buffer; both make a shock
+    // more expensive to absorb.
+    const netTarget = stage.dependants > 0 || stage.hasRetired ? 6 : 6;
+    const starterMonths = stage.dependants > 0 ? 1 : 1;
+
+    /** A rung that funds one of the household's values, linked to its project when one exists. */
+    function valueSpec(key: string): DraftSpec {
+      const cats = categoriesForValues([{ key } as never]);
+      const bucket = bs.find((b) => {
+        const n = (b.name ?? "").toLowerCase();
+        return cats.some((c) => n.includes(c)) || n.includes(key);
+      });
+      return bucket
+        ? {
+            template_key: `value_${key}`,
+            objective_type: "project",
+            objective_config: { bucket_id: bucket.id, value: key },
+            optional: false,
+          }
+        : {
+            template_key: `value_${key}`,
+            objective_type: "custom",
+            objective_config: { value: key },
+            optional: true,
+          };
+    }
+
     const specs: DraftSpec[] = [];
     if (tight) {
       specs.push({ template_key: "freeUp", objective_type: "metric", objective_config: { key: "non_essential_ratio", op: "<=", value: 25 } });
