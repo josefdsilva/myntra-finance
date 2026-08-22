@@ -359,9 +359,17 @@ export function CoachDock() {
             </div>
           )}
           {messages.length === 0 && !convQ.isFetching && (
-            <div className="text-sm text-muted-foreground">
-              Ask about budgets, big purchases, savings goals, or debt. This chat stays saved so you
-              can come back to it later.
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                Ask about budgets, big purchases, savings goals, or debt. This chat stays saved so
+                you can come back to it later.
+              </p>
+              <p>
+                You can also just <strong className="text-foreground">tell me what happened</strong>{" "}
+                — "spent 34 at Lidl", "rent is 780 a month", "car loan 210 a month at 6.4%", "save
+                200 a month for Japan" — and I'll fill in the app for you. You confirm before
+                anything is saved.
+              </p>
             </div>
           )}
           {messages.map((m, i) => (
@@ -390,7 +398,30 @@ export function CoachDock() {
               </div>
             </div>
           ))}
+
+          {parsing && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> Reading that…
+            </div>
+          )}
+
+          {draft && householdId && (
+            <CoachActionsCard
+              householdId={householdId}
+              actions={draft.actions}
+              categories={draft.categories}
+              onCancel={cancelDraft}
+              onApplied={afterApply}
+            />
+          )}
+
+          {localNotes.map((n, i) => (
+            <div key={`note-${i}`} className="flex justify-start">
+              <div className="rounded-lg bg-muted px-3 py-2 text-sm">{n}</div>
+            </div>
+          ))}
         </div>
+
 
         {/* Composer */}
         <div className="p-3 border-t space-y-2">
