@@ -1335,6 +1335,47 @@ export type Database = {
           },
         ]
       }
+      household_people: {
+        Row: {
+          age: number | null
+          created_at: string
+          household_id: string
+          id: string
+          name: string | null
+          role: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          household_id: string
+          id?: string
+          name?: string | null
+          role?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          name?: string | null
+          role?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_people_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       households: {
         Row: {
           adults: number
@@ -1354,6 +1395,7 @@ export type Database = {
           id: string
           is_synthetic: boolean
           kind: string
+          life_values: Json
           margin_pct: number
           name: string
           onboarded_at: string | null
@@ -1377,6 +1419,7 @@ export type Database = {
           id?: string
           is_synthetic?: boolean
           kind?: string
+          life_values?: Json
           margin_pct?: number
           name?: string
           onboarded_at?: string | null
@@ -1400,6 +1443,7 @@ export type Database = {
           id?: string
           is_synthetic?: boolean
           kind?: string
+          life_values?: Json
           margin_pct?: number
           name?: string
           onboarded_at?: string | null
