@@ -38,6 +38,8 @@ import { DashboardTips } from "@/components/dashboard-tips";
 import { MomentumCard } from "@/components/score-trend";
 import { PurchaseCheckButton } from "@/components/purchase-check";
 import { GoalsCard } from "@/components/goals-card";
+import { AlignmentCard } from "@/components/alignment-card";
+import { ProjectSuggestions } from "@/components/project-suggestions";
 import { JourneySummaryCard } from "@/components/journey-summary-card";
 import { pageShellClass } from "@/components/page-shell";
 import { NetWorthCard } from "@/components/net-worth-card";
@@ -706,6 +708,14 @@ function Dashboard() {
       {/* Issues & tips sit high on the page — above net worth / momentum — so the
           things that need attention (an unsustainable baseline, an expensive
           debt) reach the eye immediately rather than after a long scroll. */}
+      {/* Is the money going where the household said it matters? Sits with the
+          tips so intent and action are read together. */}
+      {householdId && <AlignmentCard householdId={householdId} />}
+
+      {householdId && (
+        <ProjectSuggestions householdId={householdId} monthlySurplus={realSurplus} />
+      )}
+
       {householdId && <DashboardTips householdId={householdId} />}
 
       {householdId && <NetWorthCard householdId={householdId} />}

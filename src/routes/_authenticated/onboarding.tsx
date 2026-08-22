@@ -32,6 +32,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { StatementImportButton } from "@/components/statement-import-flow";
+import { ValuesPicker } from "@/components/values-picker";
+import { PeopleEditor } from "@/components/people-editor";
+import { parseValues, type HouseholdValue } from "@/lib/values";
 import { CoachOnboarding } from "@/components/coach-onboarding";
 import { money, currencySymbol } from "@/lib/format";
 import { useT, type MessageKey } from "@/lib/i18n";
@@ -87,6 +90,8 @@ const COUNTRIES = [
 
 const STEPS = [
   "welcome",
+  "values",
+  "people",
   "whereWho",
   "income",
   "cycle",
@@ -129,6 +134,9 @@ function OnboardingPage() {
       householdId={householdId}
       initialCountry={hh?.household?.country ?? "PT"}
       initialMargin={Number(hh?.household?.margin_pct ?? 10)}
+      initialValues={parseValues(
+        (hh?.household as { life_values?: unknown } | undefined)?.life_values,
+      )}
     />
   );
 }
@@ -137,10 +145,12 @@ function Wizard({
   householdId,
   initialCountry,
   initialMargin,
+  initialValues,
 }: {
   householdId: string;
   initialCountry: string;
   initialMargin: number;
+  initialValues: HouseholdValue[];
 }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -160,6 +170,9 @@ function Wizard({
   const [margin, setMargin] = useState(initialMargin);
   const [cycleMode, setCycleMode] = useState<"event" | "time">("event");
   const [housing, setHousing] = useState("");
+  // What the household's money is for, ranked. Drives the journey, the suggested
+  // projects and how spending is judged. Skippable like every other step.
+  const [lifeValues, setLifeValues] = useState<HouseholdValue[]>(initialValues);
 
   const steps = STEPS.filter((s) => !DEFERRED_STEPS.has(s));
   const key = steps[Math.min(step, steps.length - 1)];
@@ -228,6 +241,13 @@ function Wizard({
           });
         }
       }
+      if (key === "values")
+        await updateHh({
+          data: {
+            household_id: householdId,
+            life_values: lifeValues.map((v) => ({ key: v.key, text: v.text ?? null })),
+          },
+        });
       if (key === "margin")
         await updateHh({ data: { household_id: householdId, margin_pct: margin } });
       if (key === "household")
@@ -308,6 +328,8 @@ function Wizard({
               </button>
             </div>
           )}
+          {key === "values" && <ValuesPicker value={lifeValues} onChange={setLifeValues} />}
+          {key === "people" && <PeopleEditor householdId={householdId} />}
           {key === "whereWho" && (
             <WhereWhoStep
               country={country}

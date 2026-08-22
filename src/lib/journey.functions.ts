@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { JsonObject } from "@/lib/json";
 import { priciestClearableDebt, debtBalance } from "@/lib/debt-apr";
+import { parseValues, valueKeysOf, lifeStageOf, categoriesForValues } from "@/lib/values";
 
 // Money Journey stages — user- and coach-authored roadmap milestones. Objectives
 // are evaluated live on the client against numbers the app already computes; this
@@ -178,8 +179,12 @@ export const draftJourney = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const hid = data.household_id;
-    const [hh, buckets, allocs, moves, debts, fixed, incomes] = await Promise.all([
-      context.supabase.from("households").select("baseline_budget").eq("id", hid).maybeSingle(),
+    const [hh, buckets, allocs, moves, debts, fixed, incomes, people] = await Promise.all([
+      context.supabase
+        .from("households")
+        .select("baseline_budget, life_values")
+        .eq("id", hid)
+        .maybeSingle(),
       context.supabase
         .from("buckets")
         .select("id, name, kind, target_type, target_value, initial_balance")
@@ -198,6 +203,7 @@ export const draftJourney = createServerFn({ method: "POST" })
         .eq("household_id", hid),
       context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       context.supabase.from("incomes").select("monthly_amount").eq("household_id", hid),
+      context.supabase.from("household_people").select("age, role").eq("household_id", hid),
     ]);
 
     const baseline = Number(hh.data?.baseline_budget ?? 0);
@@ -258,6 +264,38 @@ export const draftJourney = createServerFn({ method: "POST" })
     // demoralizing. This becomes the very first rung when money is tight.
     const tight = income > 0 && income - essentials < income * 0.1;
 
+    // What the household values, and who is in it — the journey is tailored to
+    // both, so the rungs read as "protect and fund what matters to you" rather
+    // than a generic order of operations.
+    const values = parseValues(hh.data?.life_values);
+    const valueKeys = valueKeysOf(values);
+    const stage = lifeStageOf((people.data ?? []) as Array<{ age: number | null; role: string }>);
+    // Young children or a retired adult mean a thicker buffer; both make a shock
+    // more expensive to absorb.
+    const netTarget = stage.dependants > 0 || stage.hasRetired ? 9 : 6;
+
+    /** A rung that funds one of the household's values, linked to its project when one exists. */
+    function valueSpec(key: string): DraftSpec {
+      const cats = categoriesForValues([{ key } as never]);
+      const bucket = bs.find((b) => {
+        const n = (b.name ?? "").toLowerCase();
+        return cats.some((c) => n.includes(c)) || n.includes(key);
+      });
+      return bucket
+        ? {
+            template_key: `value_${key}`,
+            objective_type: "project",
+            objective_config: { bucket_id: bucket.id, value: key },
+            optional: false,
+          }
+        : {
+            template_key: `value_${key}`,
+            objective_type: "custom",
+            objective_config: { value: key },
+            optional: true,
+          };
+    }
+
     const specs: DraftSpec[] = [];
     if (tight) {
       specs.push({ template_key: "freeUp", objective_type: "metric", objective_config: { key: "non_essential_ratio", op: "<=", value: 25 } });
@@ -273,12 +311,27 @@ export const draftJourney = createServerFn({ method: "POST" })
     } else if (hasDebt) {
       specs.push({ template_key: "debt", objective_type: "metric", objective_config: { key: "dti_pct", op: "<=", value: 15 } });
     }
+    // The financial backbone stays, but the household's values are interleaved
+    // between the rungs — the safety net protects what they care about, and the
+    // next rung funds it. Values come before generic investing on purpose.
+    if (valueKeys[0]) specs.push(valueSpec(valueKeys[0]));
+    specs.push({ template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } });
+    if (valueKeys[1]) specs.push(valueSpec(valueKeys[1]));
     specs.push(
-      { template_key: "net3", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 3 } },
-      { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: 6 } },
+      { template_key: "net6", objective_type: "metric", objective_config: { key: "emergency_months", op: ">=", value: netTarget } },
       { template_key: "invest", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 1 } },
-      { template_key: "investDeep", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 6 } },
     );
+    if (valueKeys[2]) specs.push(valueSpec(valueKeys[2]));
+    specs.push({ template_key: "investDeep", objective_type: "metric", objective_config: { key: "invested_months", op: ">=", value: 6 } });
+    // Life stage: an adult within 15 years of 65 gets a retirement rung early,
+    // instead of waiting for the far-horizon financial-independence rung.
+    if (stage.yearsToRetirement != null && stage.yearsToRetirement <= 15) {
+      specs.push({
+        template_key: "retireSoon",
+        objective_type: "metric",
+        objective_config: { key: "invested_years", op: ">=", value: 5 },
+      });
+    }
     // Advanced rungs appear once the safety net is built — keeps the horizon open
     // for households that are already well past the basics.
     if (emergencyMonths >= 6) {
@@ -288,9 +341,20 @@ export const draftJourney = createServerFn({ method: "POST" })
       );
     }
     // Goal-by-date projects become their own milestones (house, property, a big
-    // goal). The emergency fund is skipped — it already drives the safety net.
+    // goal). The emergency fund is skipped — it already drives the safety net, and
+    // so are projects already claimed by a values rung above.
+    const claimed = new Set(
+      specs
+        .map((s) => (s.objective_config as { bucket_id?: string }).bucket_id)
+        .filter((id): id is string => !!id),
+    );
     for (const b of bs) {
-      if (b.target_type === "goal_by_date" && Number(b.target_value) > 0 && b.kind !== "emergency") {
+      if (
+        b.target_type === "goal_by_date" &&
+        Number(b.target_value) > 0 &&
+        b.kind !== "emergency" &&
+        !claimed.has(b.id)
+      ) {
         specs.push({ title: b.name, objective_type: "project", objective_config: { bucket_id: b.id }, optional: true });
       }
     }

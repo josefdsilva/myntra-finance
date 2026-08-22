@@ -54,6 +54,9 @@ import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
 import { StatementImportButton } from "@/components/statement-import-flow";
 import { LanguageSettings } from "@/components/language-settings";
+import { ValuesPicker } from "@/components/values-picker";
+import { PeopleEditor } from "@/components/people-editor";
+import { parseValues, type HouseholdValue } from "@/lib/values";
 import { CategoryManager } from "@/components/category-manager";
 import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
@@ -160,6 +163,7 @@ function SettingsPage() {
             household={hh!.household!}
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
           />
+          <ValuesSection household={hh!.household!} />
           <CategoryManager householdId={householdId} />
           <MembersSection householdId={householdId} />
           <NotificationSettings householdId={householdId} />
@@ -172,6 +176,59 @@ function SettingsPage() {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Values and people, editable after setup. Values are saved explicitly (the
+ * picker is a ranking, so an accidental tap should not rewrite the journey);
+ * people save as you add or remove them.
+ */
+function ValuesSection({ household }: { household: { id: string; life_values?: unknown } }) {
+  const t = useT();
+  const qc = useQueryClient();
+  const updateHh = useServerFn(updateHousehold);
+  const [values, setValues] = useState<HouseholdValue[]>(() => parseValues(household.life_values));
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    try {
+      await updateHh({
+        data: {
+          household_id: household.id,
+          life_values: values.map((v) => ({ key: v.key, text: v.text ?? null })),
+        },
+      });
+      toast.success(t("values.saved"));
+      await qc.invalidateQueries();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("hh.failedToast"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("values.title")}</CardTitle>
+        <CardDescription>{t("values.subtitle")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <ValuesPicker value={values} onChange={setValues} compact />
+          <Button className="mt-3" onClick={save} disabled={busy}>
+            {t("common.save")}
+          </Button>
+        </div>
+        <div className="border-t pt-4">
+          <p className="font-medium">{t("people.title")}</p>
+          <p className="mb-3 text-sm text-muted-foreground">{t("people.subtitle")}</p>
+          <PeopleEditor householdId={household.id} compact />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -238,6 +238,17 @@ export const updateHousehold = createServerFn({ method: "POST" })
         cycle_mode: z.enum(["event", "time"]).optional(),
         cycle_anchor_income_id: z.string().uuid().nullable().optional(),
         cycle_anchor_date: z.string().nullable().optional(),
+        // Ranked list (max 3) of what the household values most. Drives the
+        // journey, the suggested projects and the need-level scale.
+        life_values: z
+          .array(
+            z.object({
+              key: z.string().min(1).max(32),
+              text: z.string().max(80).nullable().optional(),
+            }),
+          )
+          .max(3)
+          .optional(),
       })
       .parse(input),
   )

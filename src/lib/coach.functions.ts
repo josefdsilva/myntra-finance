@@ -22,6 +22,7 @@ import { debtLiveSchedule, type Debt } from "./debt-schedule";
 import { computeDepreciation } from "./depreciation";
 import { buildForecast, monthKey, type Plan } from "./plan";
 import { summariseIntent, resolveIntent, isDiscretionary } from "./intent";
+import { alignmentSummary, parseValues } from "./values";
 import { trend, deltaVsPrev, meanSignedErrorPct } from "./cycle-metrics";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
@@ -215,6 +216,12 @@ type CoachContext = {
   debtServiceComparison: DebtServiceComparison | null;
   country: string;
   countryName: string;
+  /** What the household said its money is for, most important first. Frame advice around these. */
+  lifeValues: string[];
+  /** Of this cycle's flexible spend, how much served those values (pct 0-100, plus totals). */
+  valueAlignment: { alignedPct: number; aligned: number; offValues: number } | null;
+  /** Ages and occupations, when the household filled them in. Drives life-stage advice. */
+  people: Array<{ name: string | null; age: number | null; role: string }>;
   /** fixed (incl. debt) + variable estimate per month. */
   essentialsMonthly: number;
   /** liquidReserve / essentialsMonthly, in months (excludes investments). Null if no expenses. */
@@ -302,7 +309,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const { data: hh } = await supabase
     .from("households")
     .select(
-      "currency, baseline_budget, margin_pct, country, adults, children, kind, age_band, cycle, cycle_mode, cycle_anchor_date",
+      "currency, baseline_budget, margin_pct, country, adults, children, kind, age_band, cycle, cycle_mode, cycle_anchor_date, life_values",
     )
     .eq("id", householdId)
     .maybeSingle();
@@ -677,6 +684,22 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const intentSummary = summariseIntent(
     rowsOrEmpty<ExpenseRow>(cycleExp).filter((e) => e.kind !== "income"),
   );
+  // Values: what the household said its money is for, and how much of the
+  // flexible spend actually served that. This is the coach's frame — money is a
+  // means to those ends, not a score to win.
+  const hhValues = parseValues((hh as { life_values?: unknown } | null)?.life_values);
+  const valueAlign = alignmentSummary(
+    rowsOrEmpty<ExpenseRow>(cycleExp).filter((e) => e.kind !== "income"),
+    hhValues,
+  );
+  const { data: peopleData } = await supabase
+    .from("household_people")
+    .select("name, age, role")
+    .eq("household_id", householdId)
+    .order("sort_order", { ascending: true });
+  const peopleRows = rowsOrEmpty<{ name: string | null; age: number | null; role: string }>(
+    peopleData,
+  );
 
   // Surplus matches the app: Settings income − baseline (baseline already includes
   // fixed + debt + variable + safety margin).
@@ -936,6 +959,15 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     debtServiceComparison,
     // Never fabricate Portugal for an unknown country: leave the code blank (so
     // no benchmark is invented) and use a neutral country name in the prompt.
+    lifeValues: hhValues.map((v) => (v.key === "other" ? (v.text ?? "other") : v.key)),
+    valueAlignment: hhValues.length
+      ? {
+          alignedPct: valueAlign.alignedPct,
+          aligned: valueAlign.aligned,
+          offValues: valueAlign.offValues,
+        }
+      : null,
+    people: peopleRows,
     country: (hh?.country ?? "").toUpperCase(),
     countryName: hh?.country
       ? (COUNTRY_NAMES[hh.country.toUpperCase()] ?? hh.country)
@@ -1031,6 +1063,7 @@ The snapshot pre-computes the key figures; quote them verbatim rather than deriv
 - assets[] are significant things the household owns (property, vehicles, stocks, bonds, funds, a business) with currentValue; assetsTotal is their sum and liquidAssetsTotal is the quickly-sellable part (stocks/bonds/funds). netWorth = assetsTotal + totalSavings − debtPrincipalOutstanding (bank cash is not tracked, so it is excluded). Use netWorth for the big-picture "how am I really doing" and solvency questions, and treat liquidAssetsTotal as a secondary emergency backstop BEHIND liquidReserve.
 - For a business, some assets depreciate: an asset may carry annualDepreciation and pctDepreciated, and annualDepreciationTotal is the sum. Its currentValue is already the written-down (book) value, so net worth reflects depreciation. Depreciation is a non-cash expense: it lowers reported profit but does NOT consume cash this cycle — keep it out of cashflow/runway math while counting it in profitability. If annualDepreciationTotal is 0 there is nothing to depreciate.
 - Liquidity levers: when cash is genuinely tight (thin liquidReserve, a shortfall month in planForecast, or high-APR debt) and the household holds sizeable illiquid assets, selling one — or borrowing against it — is a legitimate option to raise liquidity; surface it WITH its trade-offs (transaction costs, weeks/months to sell, losing future growth or rent), never as a default and never lightly. The opposite lever applies too: if there is idle cash or a reserve well beyond a healthy emergency cushion, converting some into productive assets or investments puts it to work. Frame both as trade-offs and cite the figures.
+- lifeValues / valueAlignment / people — what this household said its money is FOR (most important first), how much of the flexible spend served those values, and who lives there (ages, occupations). Frame every suggestion around these: protect and fund what they chose, and look for savings in the spending that serves none of their values. Never call values-aligned spending a waste. When lifeValues is empty, invite them to choose their values in Settings.
 - wealthComparison — how netWorth compares to similar households from the ECB HFCS survey: peerMedian is the median for the same country, income band and (if ageBand is set) age band; ratio is user/peer. Use it for "how does my net worth compare" questions. If ageBand is null, note the comparison is against all ages and suggest setting an age band in Settings for a fairer read. It is a public survey median, never other users; may be null.
 - debtServiceComparison — userPct is the share of monthly income going to debt payments; medianPct is the country median for indebted households (HFCS). Use it to judge whether the debt load is heavy relative to peers; may be null.
 - debtProjections[] — per debt: aprPct, monthlyInstallment, scheduledPayoff, remainingInterest, and the effect of paying an extra €100/mo (overpay100MonthsSaved, overpay100InterestSaved).
