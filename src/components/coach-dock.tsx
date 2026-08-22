@@ -360,17 +360,33 @@ export function CoachDock() {
             </div>
           )}
           {messages.length === 0 && !convQ.isFetching && (
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                Ask about budgets, big purchases, savings goals, or debt. This chat stays saved so
-                you can come back to it later.
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>{t("chatFirst.dock.intro")}</p>
+              <p className="text-xs font-medium text-foreground">
+                {t("chatFirst.dock.tryTitle")}
               </p>
-              <p>
-                You can also just <strong className="text-foreground">tell me what happened</strong>{" "}
-                — "spent 34 at Lidl", "rent is 780 a month", "car loan 210 a month at 6.4%", "save
-                200 a month for Japan" — and I'll fill in the app for you. You confirm before
-                anything is saved.
-              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    "chatFirst.dock.ex1",
+                    "chatFirst.dock.ex2",
+                    "chatFirst.dock.ex3",
+                    "chatFirst.dock.ex4",
+                  ] as const
+                ).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => {
+                      setInput(t(k));
+                      inputRef.current?.focus();
+                    }}
+                    className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-primary/10"
+                  >
+                    {t(k)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {messages.map((m, i) => (
