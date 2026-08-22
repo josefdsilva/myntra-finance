@@ -22,6 +22,7 @@ import { debtLiveSchedule, type Debt } from "./debt-schedule";
 import { computeDepreciation } from "./depreciation";
 import { buildForecast, monthKey, type Plan } from "./plan";
 import { summariseIntent, resolveIntent, isDiscretionary } from "./intent";
+import { alignmentSummary, parseValues } from "./values";
 import { trend, deltaVsPrev, meanSignedErrorPct } from "./cycle-metrics";
 import { estimateTextCredits, logHouseholdCredits } from "./credits.server";
 
@@ -215,6 +216,12 @@ type CoachContext = {
   debtServiceComparison: DebtServiceComparison | null;
   country: string;
   countryName: string;
+  /** What the household said its money is for, most important first. Frame advice around these. */
+  lifeValues: string[];
+  /** Of this cycle's flexible spend, how much served those values (pct 0-100, plus totals). */
+  valueAlignment: { alignedPct: number; aligned: number; offValues: number } | null;
+  /** Ages and occupations, when the household filled them in. Drives life-stage advice. */
+  people: Array<{ name: string | null; age: number | null; role: string }>;
   /** fixed (incl. debt) + variable estimate per month. */
   essentialsMonthly: number;
   /** liquidReserve / essentialsMonthly, in months (excludes investments). Null if no expenses. */
@@ -302,7 +309,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const { data: hh } = await supabase
     .from("households")
     .select(
-      "currency, baseline_budget, margin_pct, country, adults, children, kind, age_band, cycle, cycle_mode, cycle_anchor_date",
+      "currency, baseline_budget, margin_pct, country, adults, children, kind, age_band, cycle, cycle_mode, cycle_anchor_date, life_values",
     )
     .eq("id", householdId)
     .maybeSingle();
@@ -677,6 +684,22 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const intentSummary = summariseIntent(
     rowsOrEmpty<ExpenseRow>(cycleExp).filter((e) => e.kind !== "income"),
   );
+  // Values: what the household said its money is for, and how much of the
+  // flexible spend actually served that. This is the coach's frame — money is a
+  // means to those ends, not a score to win.
+  const hhValues = parseValues((hh as { life_values?: unknown } | null)?.life_values);
+  const valueAlign = alignmentSummary(
+    rowsOrEmpty<ExpenseRow>(cycleExp).filter((e) => e.kind !== "income"),
+    hhValues,
+  );
+  const { data: peopleData } = await supabase
+    .from("household_people")
+    .select("name, age, role")
+    .eq("household_id", householdId)
+    .order("sort_order", { ascending: true });
+  const peopleRows = rowsOrEmpty<{ name: string | null; age: number | null; role: string }>(
+    peopleData,
+  );
 
   // Surplus matches the app: Settings income − baseline (baseline already includes
   // fixed + debt + variable + safety margin).
@@ -936,6 +959,15 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     debtServiceComparison,
     // Never fabricate Portugal for an unknown country: leave the code blank (so
     // no benchmark is invented) and use a neutral country name in the prompt.
+    lifeValues: hhValues.map((v) => (v.key === "other" ? (v.text ?? "other") : v.key)),
+    valueAlignment: hhValues.length
+      ? {
+          alignedPct: valueAlign.alignedPct,
+          aligned: valueAlign.aligned,
+          offValues: valueAlign.offValues,
+        }
+      : null,
+    people: peopleRows,
     country: (hh?.country ?? "").toUpperCase(),
     countryName: hh?.country
       ? (COUNTRY_NAMES[hh.country.toUpperCase()] ?? hh.country)
