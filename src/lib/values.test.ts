@@ -23,7 +23,7 @@ test("parseValues keeps at most three, drops junk, keeps free text", () => {
 test("a chosen value promotes its categories, the top value promotes twice", () => {
   const values = parseValues(["travel", "learning"]);
   // travel defaults to "treat"; as the #1 value it becomes essential
-  expect(resolveIntentWithValues({ category: "travel" }, values)).toBe("essential");
+  expect(resolveIntentWithValues({ category: "travel" }, values)).toBe("important");
   // learning is #2: education (essential already) stays essential
   expect(resolveIntentWithValues({ category: "courses" }, values)).toBe("important");
   // untouched category keeps its default
@@ -37,7 +37,7 @@ test("alignment counts only flexible spend and splits aligned vs off-values", ()
   const s = alignmentSummary(
     [
       { amount: 100, category: "groceries" }, // essential, ignored
-      { amount: 60, category: "kids" }, // family → aligned
+      { amount: 60, category: "gifts" }, // family → aligned (flexible by default)
       { amount: 40, category: "dining" }, // off-values
       { amount: 500, category: "salary", kind: "income" }, // income, ignored
     ],

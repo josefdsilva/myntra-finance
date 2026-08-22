@@ -201,7 +201,12 @@ export function alignmentSummary(
     if (e.kind === "income") continue;
     const amt = Number(e.amount) || 0;
     if (amt <= 0) continue;
-    const level = resolveIntentWithValues(e, values);
+    // Flexibility is judged on the BASE need-level, not the values-promoted one:
+    // otherwise promoting a valued category to "essential" would hide exactly the
+    // spending this measure exists to celebrate.
+    const level = e.intent && (INTENT_LEVELS as string[]).includes(e.intent)
+      ? (e.intent as IntentLevel)
+      : defaultIntentForCategory(e.category);
     if (!isDiscretionary(level)) continue;
     flexible += amt;
     const matched = matchValue(values, e.category);
