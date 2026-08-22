@@ -299,7 +299,7 @@ function Wizard({
     }
   }
 
-  async function finish() {
+  async function finish(to: "/dashboard" | "/journey" = "/journey") {
     setBusy(true);
     try {
       await finishFn({ data: { household_id: householdId } });
@@ -311,7 +311,7 @@ function Wizard({
       // Await the household refetch so onboarded_at is fresh before navigating,
       // otherwise the shell's guard could bounce us back to /onboarding.
       await qc.invalidateQueries({ queryKey: ["household"] });
-      navigate({ to: "/dashboard" });
+      navigate({ to });
     } finally {
       setBusy(false);
     }
@@ -319,16 +319,23 @@ function Wizard({
 
   const back = () => setStep((s) => Math.max(0, s - 1));
   const skip = () => (isLast ? finish() : setStep((s) => s + 1));
+  // Jump straight to the payoff screen — used by the preset and the coach path,
+  // which both collect enough for a journey on their own.
+  const toJourney = () => setStep(journeyIdx);
 
   if (chat) {
     return (
       <CoachOnboarding
         householdId={householdId}
         onSwitchToForms={() => setChat(false)}
-        onDone={finish}
+        onDone={() => {
+          setChat(false);
+          toJourney();
+        }}
       />
     );
   }
+
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
