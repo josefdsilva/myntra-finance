@@ -55,8 +55,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // Four destinations, in the order a household thinks: where am I going
-// (Journey), what comes in and out (Money), what I'm building (Dreams), and who
-// helps me (Coach). Everything else is nested under the destination it belongs
+// (Journey), what comes in and out (Money), what I'm building (Dreams), and my own
+// settings (You) — the coach itself lives in the dock, always one tap away. Everything else is nested under the destination it belongs
 // to, revealed only when that destination is open — progressive disclosure, not
 // a second "advanced" mode.
 const NAV_SECTIONS = [
@@ -87,7 +87,7 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    titleKey: "navGroup.coach",
+    titleKey: "navGroup.you",
     items: [
       { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
       { to: "/households", labelKey: "nav.households", icon: Users },
