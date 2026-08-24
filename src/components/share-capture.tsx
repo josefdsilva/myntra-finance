@@ -93,6 +93,8 @@ type Row = ParsedRow & {
   include: boolean;
   /** The auto-suggested category, so we can learn from a user's correction. */
   suggestedCategory?: string;
+  /** Free-text tags the user adds in review (e.g. "holiday", "reimbursable"). */
+  labels?: string[];
 };
 
 const isCsvFile = (f: File) =>
@@ -165,6 +167,7 @@ export function ShareCapture({
         suggestedCategory: r.category,
         duplicate: false,
         include: true,
+        labels: [],
       };
     });
     const dates = withMeta.map((r) => r.occurred_at).filter(Boolean) as string[];
@@ -369,6 +372,7 @@ export function ShareCapture({
             source: "share" as const,
             kind: r.direction === "in" ? ("income" as const) : ("expense" as const),
             intent: r.direction === "in" ? null : (r.intent ?? null),
+            labels: r.labels ?? [],
             // Fingerprint travels with the row so a future re-import can skip it.
             source_meta: r.fp ? { fp: r.fp } : undefined,
           })),
@@ -503,8 +507,9 @@ export function ShareCapture({
             {rows.map((r, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-2 rounded-md bg-muted/30 p-2 ${!r.include ? "opacity-55" : ""}`}
+                className={`flex flex-col gap-1.5 rounded-md bg-muted/30 p-2 ${!r.include ? "opacity-55" : ""}`}
               >
+                <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={r.include}
@@ -576,6 +581,20 @@ export function ShareCapture({
                   <X className="size-4" />
                 </Button>
                 </div>
+                </div>
+                <input
+                  className="ml-6 rounded-md border border-input bg-transparent px-2 py-1 text-xs"
+                  placeholder={t("share.labelsPlaceholder")}
+                  value={(r.labels ?? []).join(", ")}
+                  onChange={(e) =>
+                    update(i, {
+                      labels: e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                />
               </div>
             ))}
           </div>

@@ -7,7 +7,12 @@ import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
-import { deleteExpense, addExpensesBulk, setExpenseIntent } from "@/lib/budget.functions";
+import {
+  deleteExpense,
+  addExpensesBulk,
+  setExpenseIntent,
+  setExpenseLabels,
+} from "@/lib/budget.functions";
 import { resolveIntent, INTENT_LEVELS, intentLabelKey, type IntentLevel } from "@/lib/intent";
 import { parseBankStatement } from "@/lib/ai-parse.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -31,11 +36,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { computeCycle, computeTimeCycle, cycleFor, cycleConfigForSpace } from "@/lib/cycle";
 
 import { toast } from "sonner";
-import { FileUp, Loader2, Trash2, Paperclip } from "lucide-react";
+import { FileUp, Loader2, Trash2, Paperclip, Tag, X } from "lucide-react";
 import { useT, type MessageKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
@@ -368,6 +374,11 @@ function ExpensesPage() {
                             onChanged={() => refetch()}
                           />
                         )}
+                        <LabelsEditor
+                          id={e.id}
+                          labels={Array.isArray(e.labels) ? (e.labels as string[]) : []}
+                          onChanged={() => refetch()}
+                        />
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
@@ -471,6 +482,99 @@ function IntentSelect({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+/**
+ * Add/remove free-text labels on one expense. Shown as a subtle "＋ tag"
+ * affordance next to the need-level; opens a small popover with the current
+ * labels (each removable) and an input (Enter or comma to add).
+ */
+function LabelsEditor({
+  id,
+  labels,
+  onChanged,
+}: {
+  id: string;
+  labels: string[];
+  onChanged: () => void;
+}) {
+  const t = useT();
+  const setLabels = useServerFn(setExpenseLabels);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const current = Array.isArray(labels) ? labels : [];
+
+  async function commit(next: string[]) {
+    setSaving(true);
+    try {
+      await setLabels({ data: { id, labels: next } });
+      onChanged();
+    } catch {
+      toast.error(t("exp.labelSaveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+  function addFromDraft() {
+    const add = draft
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    if (!add.length) return;
+    const next = Array.from(new Set([...current, ...add])).slice(0, 20);
+    setDraft("");
+    void commit(next);
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-[10px] text-muted-foreground hover:border-solid hover:text-foreground"
+          title={t("exp.editLabels")}
+        >
+          {saving ? <Loader2 className="size-3 animate-spin" /> : <Tag className="size-3" />}
+          {t("exp.addLabel")}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 space-y-2">
+        <p className="text-xs font-medium">{t("exp.labelsHeading")}</p>
+        {current.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {current.map((l) => (
+              <span
+                key={l}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary"
+              >
+                {l}
+                <button
+                  type="button"
+                  onClick={() => commit(current.filter((x) => x !== l))}
+                  aria-label={t("exp.removeLabel")}
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addFromDraft();
+            }
+          }}
+          placeholder={t("exp.newLabelPh")}
+          className="h-8 text-xs"
+          disabled={saving}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 

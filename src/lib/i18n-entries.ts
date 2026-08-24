@@ -2339,6 +2339,13 @@ export const ENTRIES = {
     de: "Nichts zum Importieren ausgewählt.",
     fr: "Rien de sélectionné à importer.",
   },
+  "share.labelsPlaceholder": {
+    en: "Labels (comma-separated) — optional",
+    pt: "Etiquetas (separadas por vírgula) — opcional",
+    es: "Etiquetas (separadas por comas) — opcional",
+    de: "Labels (durch Komma getrennt) — optional",
+    fr: "Étiquettes (séparées par des virgules) — facultatif",
+  },
   "share.cancel": {
     en: "Cancel",
     pt: "Cancelar",

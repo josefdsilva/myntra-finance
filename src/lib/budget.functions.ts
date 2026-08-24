@@ -151,6 +151,29 @@ export const setExpenseIntent = createServerFn({ method: "POST" })
     return row;
   });
 
+// Set an expense's labels (free-text tags). Normalised (lowercased, deduped,
+// capped at 20). RLS scopes the update to the caller's households.
+export const setExpenseLabels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        labels: z.array(z.string().min(1).max(40)).max(20),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: row, error } = await context.supabase
+      .from("expenses")
+      .update({ labels: normalizeLabels(data.labels) })
+      .eq("id", data.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
 // Mark a specific recurring income as received for the current cycle. Records a
 // money-in receipt linked back to that income (income_id) so a cycle can show
 // which expected inflows have arrived. Only the cycle-anchor income's receipt
