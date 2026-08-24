@@ -17,7 +17,15 @@ type ExpenseRow = {
   category: string | null;
   intent: string | null;
   kind: string | null;
+  labels: string[] | null;
 };
+
+type RecurringRow = {
+  label: string | null;
+  category: string | null;
+  monthly_amount: number | string;
+};
+
 
 /**
  * "Money on what matters" — the values ratios that steer the journey. Of the
