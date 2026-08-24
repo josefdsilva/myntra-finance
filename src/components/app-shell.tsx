@@ -104,21 +104,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
-  // Advanced nav group is collapsed by default; the choice is remembered.
-  const [showAdvanced, setShowAdvanced] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("nav-advanced") === "1";
-  });
-  const toggleAdvanced = () =>
-    setShowAdvanced((s) => {
-      const next = !s;
-      try {
-        localStorage.setItem("nav-advanced", next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  // Only one destination is expanded at a time: the one you're in. Tapping a
+  // heading opens that destination and folds the others away.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+
   // Initialise from the saved choice (falling back to the OS setting) so the
   // very first render already has the right theme. Starting at "light" and
   // correcting in an effect caused a flash back to light when the shell
