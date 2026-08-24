@@ -139,15 +139,14 @@ function SnapshotPage() {
       );
       const cycleProgress = elapsed / totalDays;
 
-      // Real money set aside THIS CYCLE. Cycles are payday-anchored and can
-      // straddle two calendar months (e.g. 25 Jul – 25 Aug), so the old
-      // calendar-month window wrongly read 0 at the start of a new month even
-      // when the cycle's saving happened in the previous month. Scope it to the
-      // cycle window instead: allocations are keyed by the month the cycle
-      // STARTS in, and deposits are counted by timestamp within [start, end).
+      // Real money set aside THIS CYCLE. A cycle can start on any day (a payday
+      // cycle on the 25th, a non-day-1 or non-monthly time cycle), so the old
+      // `-01` key only matched the default (monthly, day-1) config and otherwise
+      // read 0. Allocations are keyed by the cycle's real START DATE — the exact
+      // key the allocations page writes — so build it the same way here.
       const period = `${cycle.start.getFullYear()}-${String(
         cycle.start.getMonth() + 1,
-      ).padStart(2, "0")}-01`;
+      ).padStart(2, "0")}-${String(cycle.start.getDate()).padStart(2, "0")}`;
       const confirmedThisCycle = (allocs ?? [])
         .filter((a) => a.period === period)
         .reduce((s, a) => s + Number(a.amount), 0);

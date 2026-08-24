@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { cycleFor, computeTimeCycle, cycleConfigForSpace } from "@/lib/cycle";
+import { resolveClosedCycles } from "@/lib/cycle-bounds";
 import { assertHouseholdMember, type Supa } from "@/lib/household-guard.server";
 import { rowsOrEmpty } from "@/lib/query-utils";
 import { LIQUID_ASSET_KINDS } from "@/lib/finance-helpers";
@@ -715,31 +716,50 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   const reserveMonthsOfIncome =
     settingsIncome > 0 ? Math.round((liquidReserve / settingsIncome) * 10) / 10 : null;
   // Realized savings rate: what you actually set aside vs. what you actually
-  // earned, averaged over recent complete months. Real allocations = confirmed
-  // allocations + net bucket movements. Income = actual income events recorded.
-  // Falls back to null when there isn't a complete month of income history yet.
+  // earned, over recent COMPLETE CYCLES. Real allocations = confirmed allocations
+  // + net bucket movements. Income = actual income events recorded. Falls back to
+  // null when there isn't a complete cycle of income history yet.
+  //
+  // The window is built from resolveClosedCycles, so it follows the space's real
+  // rhythm — payday (event) cycles of any length, or fiscal (time) periods of any
+  // length/anchor. The old code keyed allocations by a calendar-month "-01" string
+  // and stepped the window in whole months, which only lined up with the default
+  // monthly/day-1 config and silently mismatched every other one (a payday cycle,
+  // a 15th-anchored month, or a weekly/quarterly space). Closed cycles are
+  // contiguous, so summing over the union window equals summing per cycle.
+  const RATE_WINDOW_CYCLES = 6;
+  const closedCycles = await resolveClosedCycles(supabase, householdId, hh, RATE_WINDOW_CYCLES, now);
+  const rateWinStart = closedCycles.length ? closedCycles[0].start : null;
+  const rateWinEnd = closedCycles.length ? closedCycles[closedCycles.length - 1].end : null;
+  const rateWinStartISO = rateWinStart?.toISOString() ?? null;
+  const rateWinEndISO = rateWinEnd?.toISOString() ?? null;
+
+  // The discretionary/treat baseline below is a per-calendar-month spend footing,
+  // independent of the savings-rate window, so it keeps its own month boundaries.
   const RATE_WINDOW_MONTHS = 6;
   const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const windowStart = new Date(now.getFullYear(), now.getMonth() - RATE_WINDOW_MONTHS, 1);
   const pad = (n: number) => String(n).padStart(2, "0");
-  const windowStartPeriod = `${windowStart.getFullYear()}-${pad(windowStart.getMonth() + 1)}-01`;
-  const curPeriod = `${curMonthStart.getFullYear()}-${pad(curMonthStart.getMonth() + 1)}-01`;
 
   const [{ data: histAllocRows }, { data: histIncomeRows }, { data: histSpendRows }] =
     await Promise.all([
-      supabase
-        .from("bucket_allocations")
-        .select("amount, period")
-        .eq("household_id", householdId)
-        .gte("period", windowStartPeriod)
-        .lt("period", curPeriod),
-      supabase
-        .from("expenses")
-        .select("amount, occurred_at")
-        .eq("household_id", householdId)
-        .eq("kind", "income")
-        .gte("occurred_at", windowStart.toISOString())
-        .lt("occurred_at", curMonthStart.toISOString()),
+      rateWinStartISO
+        ? supabase
+            .from("bucket_allocations")
+            .select("amount, confirmed_at")
+            .eq("household_id", householdId)
+            .gte("confirmed_at", rateWinStartISO)
+            .lt("confirmed_at", rateWinEndISO!)
+        : Promise.resolve({ data: [] as Array<{ amount: number | string; confirmed_at: string }> }),
+      rateWinStartISO
+        ? supabase
+            .from("expenses")
+            .select("amount, occurred_at")
+            .eq("household_id", householdId)
+            .eq("kind", "income")
+            .gte("occurred_at", rateWinStartISO)
+            .lt("occurred_at", rateWinEndISO!)
+        : Promise.resolve({ data: [] as Array<{ amount: number | string; occurred_at: string }> }),
       // Prior complete months of variable spend with need-level, to build a
       // personal baseline for discretionary/treat spend and spot a rising trend.
       supabase
@@ -780,24 +800,29 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   for (const a of rowsOrEmpty<{ amount: number | string }>(histAllocRows)) {
     realAllocWindow += Number(a.amount) || 0;
   }
-  const winStartISO = windowStart.toISOString();
-  const curMonthISO = curMonthStart.toISOString();
   for (const m of rowsOrEmpty<BucketMoveRow>(bucketMoves)) {
-    if (!m.created_at || m.created_at < winStartISO || m.created_at >= curMonthISO) continue;
+    if (!m.created_at || !rateWinStartISO || m.created_at < rateWinStartISO || m.created_at >= rateWinEndISO!)
+      continue;
     if (m.reason === "plan_payment") continue; // spending a plan from a project isn't dis-saving
     const amt = Number(m.amount) || 0;
     if (m.to_type === "bucket") realAllocWindow += amt;
     if (m.from_type === "bucket") realAllocWindow -= amt;
   }
 
+  // Denominator counts CYCLES that actually had income (a cycle with no recorded
+  // income shouldn't drag the per-cycle averages down), matched by mapping each
+  // income event into the closed cycle whose [start, end) contains it.
   let incomeWindow = 0;
-  const incomeMonths = new Set<string>();
+  const cyclesWithIncome = new Set<number>();
   for (const e of rowsOrEmpty<{ amount: number | string; occurred_at: string }>(histIncomeRows)) {
-    incomeWindow += Number(e.amount) || 0;
-    const d = new Date(e.occurred_at);
-    incomeMonths.add(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+    const amt = Number(e.amount) || 0;
+    incomeWindow += amt;
+    if (amt <= 0) continue;
+    const ts = new Date(e.occurred_at).getTime();
+    const idx = closedCycles.findIndex((c) => ts >= c.start.getTime() && ts < c.end.getTime());
+    if (idx >= 0) cyclesWithIncome.add(idx);
   }
-  const savingsRateCycles = incomeMonths.size;
+  const savingsRateCycles = cyclesWithIncome.size;
   const avgIncomePerCycle =
     savingsRateCycles > 0 ? Math.round((incomeWindow / savingsRateCycles) * 100) / 100 : 0;
   const avgRealAllocPerCycle =

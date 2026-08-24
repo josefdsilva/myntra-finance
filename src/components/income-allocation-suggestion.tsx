@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCycleBoundsById } from "@/lib/cycle-bounds";
 import { confirmBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { money } from "@/lib/format";
 import { Loader2, PiggyBank, Wallet, CreditCard, Sparkles } from "lucide-react";
@@ -61,10 +62,25 @@ export function IncomeAllocationSuggestion({
   const t = useT();
 
   const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+
+  // The allocation period key must match the allocations page: the cycle's real
+  // START DATE (fetchCycleBounds resolves event vs time mode and any length or
+  // anchor), NOT the first of the calendar month. Only the default config
+  // (monthly, anchored to day 1) makes those coincide; for a payday cycle or a
+  // non-day-1 / non-monthly cycle the `-01` key would miss the rows the
+  // allocations page wrote, so this dialog would re-suggest funding buckets that
+  // are already full — and write orphaned rows under a key nothing else reads.
+  const { data: cycle } = useQuery({
+    enabled: open && !!householdId,
+    queryKey: ["income-suggestion-cycle", householdId],
+    queryFn: () => fetchCycleBoundsById(supabase, householdId),
+  });
+  const period = cycle
+    ? `${cycle.start.getFullYear()}-${String(cycle.start.getMonth() + 1).padStart(2, "0")}-${String(cycle.start.getDate()).padStart(2, "0")}`
+    : null;
 
   const { data, isLoading } = useQuery({
-    enabled: open && !!householdId,
+    enabled: open && !!householdId && !!period,
     queryKey: ["income-suggestion", householdId, period],
     queryFn: async () => {
       const [buckets, allocs, debts, hh] = await Promise.all([
@@ -77,7 +93,7 @@ export function IncomeAllocationSuggestion({
           .from("bucket_allocations")
           .select("bucket_id, amount")
           .eq("household_id", householdId)
-          .eq("period", period),
+          .eq("period", period!),
         supabase
           .from("debts")
           .select("id, label, monthly_amount, taeg_pct, principal_remaining")
@@ -180,6 +196,7 @@ export function IncomeAllocationSuggestion({
       toast.error(t("incomeSuggestion.overspendError", { amount: money(-keepInAccount) }));
       return;
     }
+    if (!period) return; // cycle not resolved yet — button is disabled below anyway
     setSaving(true);
     try {
       const bucketPromises = Object.entries(parsedBuckets)
