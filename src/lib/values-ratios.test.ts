@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+// Run with: bun test src/lib/values-ratios.test.ts
+import { describe, expect, it } from "bun:test";
 import { valuesRatios, bucketServesValues } from "./values-ratios";
 import type { HouseholdValue } from "./values";
 
