@@ -169,16 +169,19 @@ export function valuesRatios(input: {
   buckets: RatioBucket[];
   /** Alignment ratio from the previous cycle, for the trend arrow. */
   prevAlignmentPct?: number | null;
+  /** Household member names, so buckets named after them count as family. */
+  personNames?: string[];
 }): ValuesRatios {
   const values = input.values ?? [];
   const align = alignmentSummary(input.expenses ?? [], values);
   const income = Math.max(0, Number(input.income) || 0);
   const buckets = input.buckets ?? [];
+  const personNames = input.personNames ?? [];
 
   const savedTotal = round2(buckets.reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0));
   const dreamFunded = round2(
     buckets
-      .filter((b) => bucketServesValues(values, b))
+      .filter((b) => bucketServesValues(values, b, { personNames }))
       .reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0),
   );
 
