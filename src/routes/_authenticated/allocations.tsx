@@ -587,9 +587,6 @@ function AllocationsPage() {
           {householdId && <KpiTargetsTab householdId={householdId} />}
         </TabsContent>
 
-        <TabsContent value="journey">
-          <JourneyPage embedded />
-        </TabsContent>
       </Tabs>
     </div>
   );
