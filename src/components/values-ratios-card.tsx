@@ -44,31 +44,39 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
       const closed = await resolveClosedCycles(supabase, householdId, hh ?? null, 1);
       const prev = closed[closed.length - 1] ?? null;
 
-      const [current, previous, bucketsRes, allocRes, incomesRes] = await Promise.all([
-        supabase
-          .from("expenses")
-          .select("amount, category, intent, kind")
-          .eq("household_id", householdId)
-          .gte("occurred_at", bounds.start.toISOString())
-          .lt("occurred_at", bounds.end.toISOString()),
-        prev
-          ? supabase
-              .from("expenses")
-              .select("amount, category, intent, kind")
-              .eq("household_id", householdId)
-              .gte("occurred_at", prev.start.toISOString())
-              .lt("occurred_at", prev.end.toISOString())
-          : Promise.resolve({ data: [] as ExpenseRow[] }),
-        supabase
-          .from("buckets")
-          .select("id, name, kind, target_type, target_value, initial_balance")
-          .eq("household_id", householdId),
-        supabase
-          .from("bucket_allocations")
-          .select("bucket_id, amount, period")
-          .eq("household_id", householdId),
-        supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
-      ]);
+      const [current, previous, bucketsRes, allocRes, movesRes, incomesRes, peopleRes] =
+        await Promise.all([
+          supabase
+            .from("expenses")
+            .select("amount, category, intent, kind")
+            .eq("household_id", householdId)
+            .gte("occurred_at", bounds.start.toISOString())
+            .lt("occurred_at", bounds.end.toISOString()),
+          prev
+            ? supabase
+                .from("expenses")
+                .select("amount, category, intent, kind")
+                .eq("household_id", householdId)
+                .gte("occurred_at", prev.start.toISOString())
+                .lt("occurred_at", prev.end.toISOString())
+            : Promise.resolve({ data: [] as ExpenseRow[] }),
+          supabase
+            .from("buckets")
+            .select("id, name, kind, target_type, target_value, initial_balance")
+            .eq("household_id", householdId),
+          supabase
+            .from("bucket_allocations")
+            .select("bucket_id, amount, period, confirmed_at")
+            .eq("household_id", householdId),
+          supabase
+            .from("account_movements")
+            .select("to_type, to_id, from_type, from_id, amount, created_at")
+            .eq("household_id", householdId)
+            .gte("created_at", bounds.start.toISOString())
+            .lt("created_at", bounds.end.toISOString()),
+          supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
+          supabase.from("household_people").select("name").eq("household_id", householdId),
+        ]);
 
       const rows = (current.data ?? []) as ExpenseRow[];
       const prevRows = (previous.data ?? []) as ExpenseRow[];
@@ -85,9 +93,35 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
         bucket_id: string;
         amount: number | string;
         period: string;
+        confirmed_at: string | null;
       }>;
       const startMs = bounds.start.getTime();
       const endMs = bounds.end.getTime();
+
+      // Allocations are stamped with a normalised `period` (often the calendar
+      // month start), so a payday cycle that starts mid-month would miss them.
+      // What matters is when the household actually confirmed the money.
+      const inCycle = (a: { period: string; confirmed_at: string | null }) => {
+        const stamp = a.confirmed_at ?? a.period;
+        const ms = new Date(stamp).getTime();
+        return ms >= startMs && ms < endMs;
+      };
+
+      // Money transferred straight into a project account also funds the dream.
+      const moves = (movesRes.data ?? []) as Array<{
+        to_type: string | null;
+        to_id: string | null;
+        from_type: string | null;
+        from_id: string | null;
+        amount: number | string;
+      }>;
+      const movedInto = (bucketId: string) =>
+        moves.reduce((s, m) => {
+          const amt = Number(m.amount) || 0;
+          if (m.to_type === "bucket" && m.to_id === bucketId) return s + amt;
+          if (m.from_type === "bucket" && m.from_id === bucketId) return s - amt;
+          return s;
+        }, 0);
 
       const buckets: RatioBucket[] = ((bucketsRes.data ?? []) as Array<{
         id: string;
@@ -100,12 +134,10 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
         const mine = allocs.filter((a) => a.bucket_id === b.id);
         const balance =
           (Number(b.initial_balance) || 0) + mine.reduce((s, a) => s + (Number(a.amount) || 0), 0);
-        const fundedThisCycle = mine
-          .filter((a) => {
-            const ms = new Date(a.period).getTime();
-            return ms >= startMs && ms < endMs;
-          })
-          .reduce((s, a) => s + (Number(a.amount) || 0), 0);
+        const fundedThisCycle = Math.max(
+          0,
+          mine.filter(inCycle).reduce((s, a) => s + (Number(a.amount) || 0), 0) + movedInto(b.id),
+        );
         const periods = new Set(mine.map((a) => a.period));
         const monthlyPace = periods.size
           ? mine.reduce((s, a) => s + (Number(a.amount) || 0), 0) / periods.size
@@ -128,6 +160,9 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
 
       const values = parseValues(hh?.life_values);
       const prevPct = prevRows.length ? alignmentSummary(prevRows, values).alignedPct : null;
+      const personNames = ((peopleRes.data ?? []) as Array<{ name: string | null }>)
+        .map((p) => p.name ?? "")
+        .filter((n) => n.trim().length >= 2);
 
       return {
         values,
@@ -135,6 +170,7 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
         buckets,
         income: actualIncome > 0 ? actualIncome : expectedIncome,
         prevPct,
+        personNames,
       };
     },
   });
@@ -148,6 +184,7 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
             income: data.income,
             buckets: data.buckets,
             prevAlignmentPct: data.prevPct,
+            personNames: data.personNames,
           })
         : null,
     [data],

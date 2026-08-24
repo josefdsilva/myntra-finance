@@ -76,17 +76,42 @@ export type ValuesRatios = {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Does this bucket serve one of the household's values? */
+/** Lowercase and strip accents so "Óscar" matches "Oscar". */
+const fold = (s: string | null | undefined) =>
+  (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+/**
+ * Does this bucket serve one of the household's values?
+ *
+ * Bucket names are rarely literal ("Óscar Savings" is family money, "Savings"
+ * is the safety net), so we map by kind and by household member names too.
+ */
 export function bucketServesValues(
   values: HouseholdValue[],
   b: { name: string; kind?: string | null },
+  opts?: { personNames?: string[] },
 ): boolean {
   if (matchValue(values, b.name)) return true;
-  // An emergency fund always serves "security"; investing buckets serve
-  // "investing" — the names are rarely literal, so map by kind too.
   const keys = values.filter((v) => v.key !== "other").map((v) => v.key);
-  if (b.kind === "emergency" && keys.includes("security")) return true;
+  // The safety net protects every value, so an emergency fund always counts.
+  if (b.kind === "emergency") return true;
+  // Plain savings serve "security"; investing buckets serve "investing".
+  if (b.kind === "savings" && keys.includes("security")) return true;
   if (b.kind === "investment" && keys.includes("investing")) return true;
+  if (keys.includes("family")) {
+    // "Óscar Savings" belongs to "Oscar da Silva": compare accent-free first
+    // names / tokens rather than the full stored name.
+    const name = fold(b.name);
+    for (const p of opts?.personNames ?? []) {
+      for (const token of fold(p).split(/[^a-z0-9]+/)) {
+        if (token.length >= 3 && name.includes(token)) return true;
+      }
+    }
+  }
   return false;
 }
 
@@ -105,11 +130,15 @@ function bestRedirect(
   buckets: RatioBucket[],
   values: HouseholdValue[],
   drift: number,
+  personNames?: string[],
 ): RedirectGain | null {
   const redirect = Math.floor(drift / 2);
   if (redirect <= 0) return null;
   const candidates = buckets.filter(
-    (b) => bucketServesValues(values, b) && (b.target ?? 0) > 0 && b.balance < (b.target ?? 0),
+    (b) =>
+      bucketServesValues(values, b, { personNames }) &&
+      (b.target ?? 0) > 0 &&
+      b.balance < (b.target ?? 0),
   );
   const pool = candidates.length > 0
     ? candidates
@@ -152,16 +181,19 @@ export function valuesRatios(input: {
   buckets: RatioBucket[];
   /** Alignment ratio from the previous cycle, for the trend arrow. */
   prevAlignmentPct?: number | null;
+  /** Household member names, so buckets named after them count as family. */
+  personNames?: string[];
 }): ValuesRatios {
   const values = input.values ?? [];
   const align = alignmentSummary(input.expenses ?? [], values);
   const income = Math.max(0, Number(input.income) || 0);
   const buckets = input.buckets ?? [];
+  const personNames = input.personNames ?? [];
 
   const savedTotal = round2(buckets.reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0));
   const dreamFunded = round2(
     buckets
-      .filter((b) => bucketServesValues(values, b))
+      .filter((b) => bucketServesValues(values, b, { personNames }))
       .reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0),
   );
 
@@ -194,7 +226,7 @@ export function valuesRatios(input: {
     dreamFundingPct,
     savedTotal,
     driftPerDreamEuro,
-    redirect: align.unset ? null : bestRedirect(buckets, values, drift),
+    redirect: align.unset ? null : bestRedirect(buckets, values, drift, personNames),
     trendPts,
     grade,
   };
