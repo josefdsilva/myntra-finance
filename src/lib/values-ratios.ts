@@ -15,10 +15,16 @@
 
 import {
   alignmentSummary,
+  fold,
   matchValue,
+  matchValueOf,
+  namesAPerson,
+  valueKeysOf,
   type AlignmentSummary,
   type HouseholdValue,
+  type ValueKey,
 } from "@/lib/values";
+
 
 export type RatioBucket = {
   id: string;
@@ -68,21 +74,104 @@ export type ValuesRatios = {
   driftPerDreamEuro: number | null;
   /** The single best swap available right now. */
   redirect: RedirectGain | null;
+  /** Recurring commitments that already serve the values (childcare, school). */
+  commitments: { total: number; byValue: Array<{ key: ValueKey; amount: number }>; items: ValueCommitment[] };
+  /** Essentials + commitments + flexible spend that served the values. */
+  valueSpend: number;
+  /** Per-value totals across flexible, essential and committed money. */
+  valueTotals: Array<{ key: ValueKey; amount: number }>;
+  /** Essential spend above plan — trimmable without giving anything up. */
+  room: EssentialsRoom;
   /** Change in alignment ratio vs the previous cycle, in points. */
   trendPts: number | null;
   grade: ValuesGrade;
 };
 
+
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Lowercase and strip accents so "Óscar" matches "Oscar". */
-const fold = (s: string | null | undefined) =>
-  (s ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+/** Value-serving commitments (childcare, school, rent) — not a choice, but felt. */
+export type ValueCommitment = { name: string; amount: number; key: ValueKey };
+
+/**
+ * Recurring commitments that already serve the household's values. Kindergarten
+ * for two kids is family money even though it is a fixed cost nobody negotiates,
+ * so it belongs in the "money on what matters" picture.
+ */
+export function valueCommitments(input: {
+  values: HouseholdValue[];
+  recurring: Array<{
+    label?: string | null;
+    category?: string | null;
+    monthly_amount: number | string;
+  }>;
+  personNames?: string[];
+}): { total: number; byValue: Array<{ key: ValueKey; amount: number }>; items: ValueCommitment[] } {
+  const values = input.values ?? [];
+  const items: ValueCommitment[] = [];
+  const byValueMap = new Map<ValueKey, number>();
+  for (const r of input.recurring ?? []) {
+    const amount = Number(r.monthly_amount) || 0;
+    if (amount <= 0) continue;
+    let key = matchValueOf(values, r, { personNames: input.personNames });
+    // A commitment named after a child ("Kindergarten — Óscar") is family money
+    // even when its category is generic.
+    if (!key && valueKeysOf(values).includes("family") && namesAPerson(r.label, input.personNames ?? []))
+      key = "family";
+    if (!key) continue;
+    items.push({ name: r.label ?? "", amount: round2(amount), key });
+    byValueMap.set(key, (byValueMap.get(key) ?? 0) + amount);
+  }
+  return {
+    total: round2(items.reduce((s, i) => s + i.amount, 0)),
+    byValue: [...byValueMap.entries()]
+      .map(([key, amount]) => ({ key, amount: round2(amount) }))
+      .sort((a, b) => b.amount - a.amount),
+    items: items.sort((a, b) => b.amount - a.amount),
+  };
+}
+
+export type EssentialsRoom = {
+  /** Essential spend above what the household planned for it. */
+  total: number;
+  /** Per-category overshoot, biggest first. */
+  items: Array<{ category: string; actual: number; planned: number; over: number }>;
+};
+
+/**
+ * "We have to eat" — but are we spending more on food than we need to?
+ *
+ * Essentials are never drift: nobody chooses to stop buying groceries. What IS a
+ * choice is the *amount*, so we compare each essential category against what the
+ * household planned for it and surface only the overshoot. That overshoot is
+ * money that could work for the dreams without giving anything up.
+ */
+export function essentialsRoom(
+  actualByCategory: Array<{ category: string; amount: number }>,
+  plannedByCategory: Array<{ category: string; amount: number }>,
+): EssentialsRoom {
+  const planned = new Map<string, number>();
+  for (const p of plannedByCategory ?? []) {
+    const key = fold(p.category);
+    if (!key) continue;
+    planned.set(key, (planned.get(key) ?? 0) + (Number(p.amount) || 0));
+  }
+  const items: EssentialsRoom["items"] = [];
+  for (const a of actualByCategory ?? []) {
+    const key = fold(a.category);
+    const plan = planned.get(key);
+    // No plan means no yardstick — we say nothing rather than guess.
+    if (plan == null || plan <= 0) continue;
+    const actual = Number(a.amount) || 0;
+    const over = round2(actual - plan);
+    if (over <= 0) continue;
+    items.push({ category: a.category, actual: round2(actual), planned: round2(plan), over });
+  }
+  items.sort((x, y) => y.over - x.over);
+  return { total: round2(items.reduce((s, i) => s + i.over, 0)), items: items.slice(0, 5) };
+}
+
 
 /**
  * Does this bucket serve one of the household's values?
@@ -174,6 +263,7 @@ export function valuesRatios(input: {
     intent?: string | null;
     category?: string | null;
     kind?: string | null;
+    labels?: string[] | null;
   }>;
   values: HouseholdValue[];
   /** Income for the cycle (actual when recorded, otherwise expected). */
@@ -183,12 +273,20 @@ export function valuesRatios(input: {
   prevAlignmentPct?: number | null;
   /** Household member names, so buckets named after them count as family. */
   personNames?: string[];
+  /** Recurring commitments (fixed expenses + variable estimates). */
+  recurring?: Array<{
+    label?: string | null;
+    category?: string | null;
+    monthly_amount: number | string;
+  }>;
+  /** What the household planned per category, for the essentials-room check. */
+  plannedByCategory?: Array<{ category: string; amount: number }>;
 }): ValuesRatios {
   const values = input.values ?? [];
-  const align = alignmentSummary(input.expenses ?? [], values);
+  const personNames = input.personNames ?? [];
+  const align = alignmentSummary(input.expenses ?? [], values, { personNames });
   const income = Math.max(0, Number(input.income) || 0);
   const buckets = input.buckets ?? [];
-  const personNames = input.personNames ?? [];
 
   const savedTotal = round2(buckets.reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0));
   const dreamFunded = round2(
@@ -196,6 +294,30 @@ export function valuesRatios(input: {
       .filter((b) => bucketServesValues(values, b, { personNames }))
       .reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0),
   );
+
+  const commitments = valueCommitments({
+    values,
+    recurring: input.recurring ?? [],
+    personNames,
+  });
+  const room = essentialsRoom(align.essentialsByCategory, input.plannedByCategory ?? []);
+
+  // Per value: the flexible money plus the non-negotiable money. A commitment
+  // that was already recorded as an expense would otherwise be counted twice, so
+  // per value we take whichever of the two is larger, never their sum.
+  const totalsMap = new Map<ValueKey, number>();
+  const bump = (k: ValueKey, amount: number) =>
+    totalsMap.set(k, (totalsMap.get(k) ?? 0) + amount);
+  for (const v of align.byValue) bump(v.key, v.amount);
+  const essentialByKey = new Map(align.essentialsByValue.map((v) => [v.key, v.amount]));
+  const committedByKey = new Map(commitments.byValue.map((v) => [v.key, v.amount]));
+  for (const key of new Set([...essentialByKey.keys(), ...committedByKey.keys()])) {
+    bump(key, Math.max(essentialByKey.get(key) ?? 0, committedByKey.get(key) ?? 0));
+  }
+  const valueTotals = [...totalsMap.entries()]
+    .map(([key, amount]) => ({ key, amount: round2(amount) }))
+    .sort((a, b) => b.amount - a.amount);
+  const valueSpend = round2(valueTotals.reduce((s, v) => s + v.amount, 0));
 
   const drift = align.offValues;
   const driftPct = income > 0 ? round1((drift / income) * 100) : 0;
@@ -226,8 +348,17 @@ export function valuesRatios(input: {
     dreamFundingPct,
     savedTotal,
     driftPerDreamEuro,
-    redirect: align.unset ? null : bestRedirect(buckets, values, drift, personNames),
+    // Essentials above plan are just as spendable on the dreams as drift is, so
+    // both feed the swap suggestion.
+    redirect: align.unset
+      ? null
+      : bestRedirect(buckets, values, drift + room.total, personNames),
+    commitments,
+    valueSpend,
+    valueTotals,
+    room,
     trendPts,
     grade,
   };
+
 }

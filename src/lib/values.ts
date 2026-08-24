@@ -118,6 +118,15 @@ function normalise(c?: string | null): string {
   return (c ?? "").trim().toLowerCase();
 }
 
+/** Lowercase and strip accents so "Óscar" matches "Oscar". */
+export function fold(s?: string | null): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 /**
  * Does this category serve one of the household's values? Returns the matching
  * value key (highest ranked wins) or null. Matching is substring-tolerant so
@@ -136,6 +145,45 @@ export function matchValue(
   }
   return null;
 }
+
+/** Does this free text name a household member? ("Óscar's swimming" → family) */
+export function namesAPerson(text?: string | null, personNames: string[] = []): boolean {
+  const hay = fold(text);
+  if (!hay) return false;
+  for (const p of personNames) {
+    for (const token of fold(p).split(/[^a-z0-9]+/)) {
+      if (token.length >= 3 && hay.includes(token)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * The value an expense (or a recurring commitment) serves. The category is the
+ * strongest signal, but real life is messier: a dinner labelled "kids" is family
+ * time, and "Óscar swimming" is family money even under a generic category. So
+ * we also read the labels and the household members' names.
+ */
+export function matchValueOf(
+  values: HouseholdValue[],
+  e: { category?: string | null; labels?: string[] | null; label?: string | null },
+  opts?: { personNames?: string[] },
+): ValueKey | null {
+  const direct = matchValue(values, e.category);
+  if (direct) return direct;
+  const texts = [...(e.labels ?? []), e.label].filter(Boolean) as string[];
+  for (const text of texts) {
+    const m = matchValue(values, text);
+    if (m) return m;
+  }
+  if (valueKeysOf(values).includes("family")) {
+    for (const text of texts) {
+      if (namesAPerson(text, opts?.personNames ?? [])) return "family";
+    }
+  }
+  return null;
+}
+
 
 function promote(level: IntentLevel, steps: number): IntentLevel {
   const idx = INTENT_LEVELS.indexOf(level);
@@ -174,14 +222,24 @@ export type AlignmentSummary = {
   leaks: Array<{ category: string; amount: number }>;
   /** Aligned totals per value key, biggest first. */
   byValue: Array<{ key: ValueKey; amount: number }>;
+  /** Essential (non-negotiable) spend that serves a value — kindergarten, rent. */
+  essentialsAligned: number;
+  /** Essentials-serving-values totals per value key, biggest first. */
+  essentialsByValue: Array<{ key: ValueKey; amount: number }>;
+  /** All essential spend per category — the baseline for "is this trimmable?". */
+  essentialsByCategory: Array<{ category: string; amount: number }>;
   /** True when the household has not chosen any values yet. */
   unset: boolean;
 };
 
 /**
- * Of the flexible spending in a period, how much served the household's values.
- * Essentials are excluded on purpose: rent and groceries are not a choice, and
- * counting them would flatter every household into looking aligned.
+ * How the money in a period lines up with the household's values.
+ *
+ * Two very different questions live here, and mixing them was misleading:
+ *  - Flexible spend (a real choice): how much served the values, how much drifted.
+ *  - Essential spend (not a choice): rent, groceries, kindergarten. It never
+ *    counts as drift, but when it serves a value it deserves to be *seen* —
+ *    paying for childcare IS family money.
  */
 export function alignmentSummary(
   expenses: Array<{
@@ -189,13 +247,18 @@ export function alignmentSummary(
     intent?: string | null;
     category?: string | null;
     kind?: string | null;
+    labels?: string[] | null;
   }>,
   values: HouseholdValue[] = [],
+  opts?: { personNames?: string[] },
 ): AlignmentSummary {
   let flexible = 0;
   let aligned = 0;
+  let essentialsAligned = 0;
   const leakMap = new Map<string, number>();
   const valueMap = new Map<ValueKey, number>();
+  const essentialValueMap = new Map<ValueKey, number>();
+  const essentialCatMap = new Map<string, number>();
 
   for (const e of expenses) {
     if (e.kind === "income") continue;
@@ -207,9 +270,17 @@ export function alignmentSummary(
     const level = e.intent && (INTENT_LEVELS as string[]).includes(e.intent)
       ? (e.intent as IntentLevel)
       : defaultIntentForCategory(e.category);
-    if (!isDiscretionary(level)) continue;
+    const matched = matchValueOf(values, e, opts);
+    if (!isDiscretionary(level)) {
+      const cat = normalise(e.category) || "other";
+      essentialCatMap.set(cat, (essentialCatMap.get(cat) ?? 0) + amt);
+      if (matched) {
+        essentialsAligned += amt;
+        essentialValueMap.set(matched, (essentialValueMap.get(matched) ?? 0) + amt);
+      }
+      continue;
+    }
     flexible += amt;
-    const matched = matchValue(values, e.category);
     if (matched) {
       aligned += amt;
       valueMap.set(matched, (valueMap.get(matched) ?? 0) + amt);
@@ -221,6 +292,10 @@ export function alignmentSummary(
 
   const round = (n: number) => Math.round(n * 100) / 100;
   const offValues = flexible - aligned;
+  const rank = (m: Map<ValueKey, number>) =>
+    [...m.entries()]
+      .map(([key, amount]) => ({ key, amount: round(amount) }))
+      .sort((a, b) => b.amount - a.amount);
   return {
     flexible: round(flexible),
     aligned: round(aligned),
@@ -230,11 +305,15 @@ export function alignmentSummary(
       .map(([category, amount]) => ({ category, amount: round(amount) }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5),
-    byValue: [...valueMap.entries()]
-      .map(([key, amount]) => ({ key, amount: round(amount) }))
+    byValue: rank(valueMap),
+    essentialsAligned: round(essentialsAligned),
+    essentialsByValue: rank(essentialValueMap),
+    essentialsByCategory: [...essentialCatMap.entries()]
+      .map(([category, amount]) => ({ category, amount: round(amount) }))
       .sort((a, b) => b.amount - a.amount),
     unset: values.length === 0,
   };
+
 }
 
 // ---------------------------------------------------------------------------

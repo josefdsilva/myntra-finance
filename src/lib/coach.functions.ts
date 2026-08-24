@@ -55,6 +55,7 @@ type ExpenseRow = {
   note: string | null;
   occurred_at: string;
   intent: string | null;
+  labels: string[] | null;
 };
 type PrevExpenseRow = Pick<ExpenseRow, "amount" | "kind" | "category">;
 type MonthlyRow = { monthly_amount: number | string };
@@ -359,7 +360,7 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
 
   const { data: cycleExp } = await supabase
     .from("expenses")
-    .select("amount, category, kind, note, occurred_at, intent")
+    .select("amount, category, kind, note, occurred_at, intent, labels")
     .eq("household_id", householdId)
     .gte("occurred_at", startISO)
     .lt("occurred_at", endISO);
@@ -689,10 +690,6 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
   // flexible spend actually served that. This is the coach's frame — money is a
   // means to those ends, not a score to win.
   const hhValues = parseValues((hh as { life_values?: unknown } | null)?.life_values);
-  const valueAlign = alignmentSummary(
-    rowsOrEmpty<ExpenseRow>(cycleExp).filter((e) => e.kind !== "income"),
-    hhValues,
-  );
   const { data: peopleData } = await supabase
     .from("household_people")
     .select("name, age, role")
@@ -700,6 +697,17 @@ async function buildContext(supabase: Supa, householdId: string): Promise<CoachC
     .order("sort_order", { ascending: true });
   const peopleRows = rowsOrEmpty<{ name: string | null; age: number | null; role: string }>(
     peopleData,
+  );
+  // Labels and household names matter here: a dinner labelled "kids" is family
+  // time, so the coach should read it that way too.
+  const valueAlign = alignmentSummary(
+    rowsOrEmpty<ExpenseRow>(cycleExp).filter((e) => e.kind !== "income"),
+    hhValues,
+    {
+      personNames: peopleRows
+        .map((p) => p.name ?? "")
+        .filter((n) => n.trim().length >= 2),
+    },
   );
 
   // Surplus matches the app: Settings income − baseline (baseline already includes

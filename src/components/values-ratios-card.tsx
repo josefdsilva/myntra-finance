@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, TrendingUp, TrendingDown, Target, ArrowRight } from "lucide-react";
+import { Heart, TrendingUp, TrendingDown, Target, ArrowRight, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,15 @@ type ExpenseRow = {
   category: string | null;
   intent: string | null;
   kind: string | null;
+  labels: string[] | null;
 };
+
+type RecurringRow = {
+  label: string | null;
+  category: string | null;
+  monthly_amount: number | string;
+};
+
 
 /**
  * "Money on what matters" — the values ratios that steer the journey. Of the
@@ -44,18 +52,27 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
       const closed = await resolveClosedCycles(supabase, householdId, hh ?? null, 1);
       const prev = closed[closed.length - 1] ?? null;
 
-      const [current, previous, bucketsRes, allocRes, movesRes, incomesRes, peopleRes] =
-        await Promise.all([
+      const [
+        current,
+        previous,
+        bucketsRes,
+        allocRes,
+        movesRes,
+        incomesRes,
+        peopleRes,
+        fixedRes,
+        varRes,
+      ] = await Promise.all([
           supabase
             .from("expenses")
-            .select("amount, category, intent, kind")
+            .select("amount, category, intent, kind, labels")
             .eq("household_id", householdId)
             .gte("occurred_at", bounds.start.toISOString())
             .lt("occurred_at", bounds.end.toISOString()),
           prev
             ? supabase
                 .from("expenses")
-                .select("amount, category, intent, kind")
+                .select("amount, category, intent, kind, labels")
                 .eq("household_id", householdId)
                 .gte("occurred_at", prev.start.toISOString())
                 .lt("occurred_at", prev.end.toISOString())
@@ -76,7 +93,16 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
             .lt("created_at", bounds.end.toISOString()),
           supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
           supabase.from("household_people").select("name").eq("household_id", householdId),
+          supabase
+            .from("fixed_expenses")
+            .select("label, category, monthly_amount")
+            .eq("household_id", householdId),
+          supabase
+            .from("variable_estimates")
+            .select("label, category, monthly_amount")
+            .eq("household_id", householdId),
         ]);
+
 
       const rows = (current.data ?? []) as ExpenseRow[];
       const prevRows = (previous.data ?? []) as ExpenseRow[];
@@ -159,10 +185,26 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
       });
 
       const values = parseValues(hh?.life_values);
-      const prevPct = prevRows.length ? alignmentSummary(prevRows, values).alignedPct : null;
       const personNames = ((peopleRes.data ?? []) as Array<{ name: string | null }>)
         .map((p) => p.name ?? "")
         .filter((n) => n.trim().length >= 2);
+      const prevPct = prevRows.length
+        ? alignmentSummary(prevRows, values, { personNames }).alignedPct
+        : null;
+
+      // Recurring money the household already committed: fixed costs (rent,
+      // kindergarten) and its own variable estimates (groceries, fuel). Both
+      // feed the "already serving your values" total and the essentials yardstick.
+      const recurring = [
+        ...((fixedRes.data ?? []) as RecurringRow[]),
+        ...((varRes.data ?? []) as RecurringRow[]),
+      ];
+      const plannedByCategory = recurring
+        .filter((r) => (r.category ?? "").trim().length > 0)
+        .map((r) => ({
+          category: (r.category ?? "").trim(),
+          amount: Number(r.monthly_amount) || 0,
+        }));
 
       return {
         values,
@@ -171,6 +213,8 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
         income: actualIncome > 0 ? actualIncome : expectedIncome,
         prevPct,
         personNames,
+        recurring,
+        plannedByCategory,
       };
     },
   });
@@ -185,10 +229,13 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
             buckets: data.buckets,
             prevAlignmentPct: data.prevPct,
             personNames: data.personNames,
+            recurring: data.recurring,
+            plannedByCategory: data.plannedByCategory,
           })
         : null,
     [data],
   );
+
 
   if (!r) return null;
 
@@ -300,15 +347,48 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
               </div>
             )}
 
-            {r.align.byValue.length > 0 && (
-              <ul className="mt-4 space-y-1 text-sm">
-                {r.align.byValue.map((v) => (
-                  <li key={v.key} className="flex justify-between">
-                    <span>{t(valueLabelKey(v.key) as MessageKey)}</span>
-                    <span className="tabular-nums">{money(v.amount)}</span>
-                  </li>
-                ))}
-              </ul>
+            {/* ---- Essentials above plan: not drift, but still trimmable ---- */}
+            {r.room.items.length > 0 && (
+              <div className="mt-4 rounded-lg border p-3">
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  <Scale className="size-4 text-muted-foreground" /> {t("ratios.room.title")}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("ratios.room.body", { amount: money(r.room.total) })}
+                </p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {r.room.items.map((i) => (
+                    <li key={i.category} className="flex justify-between">
+                      <span className="capitalize">{i.category}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {money(i.actual)} / {money(i.planned)}
+                        <span className="ml-2 text-foreground">+{money(i.over)}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {r.valueTotals.length > 0 && (
+              <div className="mt-4">
+                <p className="mb-1 text-xs font-medium text-muted-foreground">
+                  {t("ratios.valueSpend", { amount: money(r.valueSpend) })}
+                </p>
+                <ul className="space-y-1 text-sm">
+                  {r.valueTotals.map((v) => (
+                    <li key={v.key} className="flex justify-between">
+                      <span>{t(valueLabelKey(v.key) as MessageKey)}</span>
+                      <span className="tabular-nums">{money(v.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {r.commitments.total > 0 && (
+                  <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                    {t("ratios.commitments.hint", { amount: money(r.commitments.total) })}
+                  </p>
+                )}
+              </div>
             )}
 
             {r.align.leaks.length > 0 && (
@@ -324,8 +404,12 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
                     </li>
                   ))}
                 </ul>
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                  {t("align.leaks.hint")}
+                </p>
               </div>
             )}
+
           </>
         )}
       </CardContent>
