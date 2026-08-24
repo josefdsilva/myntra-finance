@@ -575,6 +575,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
+          emoji: string | null
           household_id: string
           id: string
           initial_balance: number
@@ -586,10 +587,12 @@ export type Database = {
           target_type: Database["public"]["Enums"]["bucket_target_type"]
           target_value: number
           updated_at: string
+          why: string | null
         }
         Insert: {
           color?: string | null
           created_at?: string
+          emoji?: string | null
           household_id: string
           id?: string
           initial_balance?: number
@@ -601,10 +604,12 @@ export type Database = {
           target_type?: Database["public"]["Enums"]["bucket_target_type"]
           target_value?: number
           updated_at?: string
+          why?: string | null
         }
         Update: {
           color?: string | null
           created_at?: string
+          emoji?: string | null
           household_id?: string
           id?: string
           initial_balance?: number
@@ -616,6 +621,7 @@ export type Database = {
           target_type?: Database["public"]["Enums"]["bucket_target_type"]
           target_value?: number
           updated_at?: string
+          why?: string | null
         }
         Relationships: [
           {
