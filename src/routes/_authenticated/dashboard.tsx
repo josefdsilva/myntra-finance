@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { money, fmtDateTime, fmtDate } from "@/lib/format";
 import { SetupChecklist } from "@/components/setup-checklist";
@@ -18,7 +18,6 @@ import {
   fixedExpensesQuery,
   debtsQuery,
 } from "@/lib/household-queries";
-import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { markIncomeReceived } from "@/lib/budget.functions";
@@ -37,7 +36,6 @@ import {
 import { DashboardTips } from "@/components/dashboard-tips";
 import { ChatFirstCard } from "@/components/chat-first-card";
 import { PurchaseCheckButton } from "@/components/purchase-check";
-import { GoalsCard } from "@/components/goals-card";
 import { JourneySummaryCard } from "@/components/journey-summary-card";
 import { pageShellClass } from "@/components/page-shell";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
@@ -210,6 +208,7 @@ function Dashboard() {
   const [plansNudgeDismissed, setPlansNudgeDismissed] = useState(false);
 
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
+  const [showDetail, setShowDetail] = useState(false);
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const income = dashboard?.income ?? 0;
@@ -681,48 +680,49 @@ function Dashboard() {
 
       {householdId && <JourneySummaryCard householdId={householdId} />}
 
-      {householdId && <GoalsCard householdId={householdId} />}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label={t("dashboard.stat.beforeLimit")} value={money(remaining)} highlight />
-        <StatCard
-          label={t("dashboard.stat.projected")}
-          value={money(projectedBalance)}
-          hint={
-            projectedBalance >= 0
-              ? t("dashboard.stat.projectedOnPace", { value: money(avgDaily7) })
-              : t("dashboard.stat.projectedOver", { value: money(-projectedBalance) })
-          }
-          tone={projectedBalance >= 0 ? "good" : "bad"}
-        />
-        <StatCard
-          label={t("dashboard.stat.realSurplus")}
-          value={money(realSurplus)}
-          hint={
-            obligation > 0
-              ? `${t("dashboard.stat.realSurplusHint")} · ${t("plan.dashThisCycle")} ${money(obligation)}`
-              : t("dashboard.stat.realSurplusHint")
-          }
-          tone={realSurplus < 0 ? "bad" : undefined}
-        />
-        <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
+      {/* Progressive disclosure: the headline numbers stay in the hero above;
+          the supporting figures only appear when the user asks for them. Goals
+          live on Save & Invest, and adding an expense is a tap away in the chat
+          or on Expenses — the dashboard stays a place to read, not to fill in. */}
+      <div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground"
+          onClick={() => setShowDetail((v) => !v)}
+          aria-expanded={showDetail}
+        >
+          {showDetail ? t("dashboard.details.hide") : t("dashboard.details.show")}
+        </Button>
       </div>
 
-      {/* Net worth lives on Assets, momentum/trends on Analysis, values alignment
-          and project suggestions on the Journey — the dashboard stays light and
-          points there rather than duplicating them here. */}
+      {showDetail && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard label={t("dashboard.stat.beforeLimit")} value={money(remaining)} highlight />
+          <StatCard
+            label={t("dashboard.stat.projected")}
+            value={money(projectedBalance)}
+            hint={
+              projectedBalance >= 0
+                ? t("dashboard.stat.projectedOnPace", { value: money(avgDaily7) })
+                : t("dashboard.stat.projectedOver", { value: money(-projectedBalance) })
+            }
+            tone={projectedBalance >= 0 ? "good" : "bad"}
+          />
+          <StatCard
+            label={t("dashboard.stat.realSurplus")}
+            value={money(realSurplus)}
+            hint={
+              obligation > 0
+                ? `${t("dashboard.stat.realSurplusHint")} · ${t("plan.dashThisCycle")} ${money(obligation)}`
+                : t("dashboard.stat.realSurplusHint")
+            }
+            tone={realSurplus < 0 ? "bad" : undefined}
+          />
+          <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
+        </div>
+      )}
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>{t("dashboard.quickAdd.title")}</CardTitle>
-            <CardDescription>{t("dashboard.quickAdd.desc")}</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {householdId && <ExpenseQuickAdd householdId={householdId} onAdded={() => refetch()} />}
-        </CardContent>
-      </Card>
 
       <Card id="recent-expenses">
         <CardHeader className="flex flex-row items-center justify-between">
