@@ -215,9 +215,12 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     writeSet(s);
   }
 
+  const cycleStartIso = facts?.cycleStartIso ?? null;
+  const cycleEndIso = facts?.cycleEndIso ?? null;
+
   const { data } = useQuery({
-    queryKey: ["dashboard-tips", householdId, period],
-    enabled: !!householdId,
+    queryKey: ["dashboard-tips", householdId, cycleStartIso ?? period],
+    enabled: !!householdId && !!cycleStartIso,
     queryFn: async () => {
       // Base tables come from the shared cache (already fetched by the Dashboard
       // on this screen); only the allocation/expense counts are tips-specific.
@@ -237,17 +240,22 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
         { count: estFixed },
         { count: estVar },
         { data: debtsDetail },
+        { data: bucketMoves },
       ] = await Promise.all([
         qc.fetchQuery(bucketsQuery(householdId)),
         qc.fetchQuery(incomesQuery(householdId)),
         qc.fetchQuery(fixedExpensesQuery(householdId)),
         qc.fetchQuery(debtsQuery(householdId)),
         qc.fetchQuery(variableEstimatesQuery(householdId)),
+        // Confirmations made inside the ACTUAL cycle window. Keying by calendar
+        // month (`period = YYYY-MM-01`) missed funding confirmed for a payday
+        // cycle whose period key is its start date (e.g. 2026-07-25).
         supabase
           .from("bucket_allocations")
           .select("bucket_id, amount")
           .eq("household_id", householdId)
-          .eq("period", period),
+          .gte("confirmed_at", cycleStartIso!)
+          .lt("confirmed_at", cycleEndIso!),
         // All-time confirmed contributions per bucket (not just this period) — needed to
         // know a goal bucket's real current balance for the feasibility checks below.
         supabase
@@ -289,6 +297,15 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
             "id, label, taeg_pct, tan_pct, deduced_rate_pct, principal_remaining, starting_principal",
           )
           .eq("household_id", householdId),
+        // Money moved straight into a project account this cycle also counts as
+        // "funded" — otherwise the nudge nags about buckets you already fed.
+        supabase
+          .from("account_movements")
+          .select("to_type, to_id, created_at")
+          .eq("household_id", householdId)
+          .eq("to_type", "bucket")
+          .gte("created_at", cycleStartIso!)
+          .lt("created_at", cycleEndIso!),
       ]);
       // When was anything last added? Drives the gentle "time to update" nudge.
       const { data: lastEntry } = await supabase
@@ -308,7 +325,12 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
         incomes,
         fixed: [...fixed, ...debts],
         variables,
-        confirmations: confirmations ?? [],
+        confirmations: [
+          ...(confirmations ?? []),
+          ...((bucketMoves ?? []) as Array<{ to_id: string | null }>)
+            .filter((m) => !!m.to_id)
+            .map((m) => ({ bucket_id: m.to_id as string, amount: 0 })),
+        ],
         allTimeTotals,
         expenseCount: expenseCount ?? 0,
         plans: (plans ?? []) as unknown as Plan[],

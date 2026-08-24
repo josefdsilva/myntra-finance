@@ -59,6 +59,10 @@ export const issueFacts = createServerFn({ method: "GET" })
       daysLeft,
       avgDaily7,
       cycleKey: facts.cycleKey,
+      // Exact cycle window, so client-side tips can count what actually moved in
+      // THIS cycle (payday cycles rarely align with calendar months).
+      cycleStartIso: facts.cycleStart.toISOString(),
+      cycleEndIso: facts.cycleEnd.toISOString(),
       country: (hh.country as string | null) ?? null,
       adults: Number(hh.adults ?? 1),
       children: Number(hh.children ?? 0),
