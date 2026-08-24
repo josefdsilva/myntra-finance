@@ -60,6 +60,8 @@ import { parseValues, type HouseholdValue } from "@/lib/values";
 import { CategoryManager } from "@/components/category-manager";
 import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
+import { EmojiPicker } from "@/components/emoji-picker";
+
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
 import { debtKindOptions, debtKindLabel, type DebtKind } from "@/lib/debt-kinds";
