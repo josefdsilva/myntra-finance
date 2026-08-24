@@ -51,6 +51,7 @@ import {
   draftJourney,
   type JourneyStage,
 } from "@/lib/journey.functions";
+import { TimeToDreamLine } from "@/components/time-to-dream";
 import { JourneyCoach } from "@/components/journey-coach";
 import { listKpiTargets, createKpiTarget, type KpiTarget } from "@/lib/kpi-targets.functions";
 import { metricMeta, formatMetricValue, isTargetMet, computeMetrics, fetchMetricInputs, type MetricKey } from "@/lib/metrics";
@@ -242,31 +243,48 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
       return t("journey.months", { n: cur.toFixed(1) });
     };
 
-    const evalOne = (s: JourneyStage): { complete: boolean; progress: number; value: string | null } => {
+    // What a normal month costs — the denominator behind every "months of cover"
+    // metric, so a months-based rung can be expressed as euros still to save.
+    const monthlyCost = Math.max(
+      1,
+      (metricsData?.essentials ?? 0) + (metricsData?.plannedSpend ?? 0),
+    );
+
+    const evalOne = (
+      s: JourneyStage,
+    ): { complete: boolean; progress: number; value: string | null; gapEur: number | null } => {
       if (s.objective_type === "custom") {
-        return { complete: s.status === "done", progress: s.status === "done" ? 1 : 0, value: null };
+        return {
+          complete: s.status === "done",
+          progress: s.status === "done" ? 1 : 0,
+          value: null,
+          gapEur: null,
+        };
       }
       if (s.objective_type === "project") {
         const cfg = s.objective_config as { bucket_id?: string; debt_id?: string };
         // "Clear this loan" — progress by principal paid down; complete at zero.
         if (cfg.debt_id) {
           const d = metricsData?.debtsById?.[String(cfg.debt_id)];
-          if (!d || d.starting <= 0) return { complete: false, progress: 0, value: null };
+          if (!d || d.starting <= 0)
+            return { complete: false, progress: 0, value: null, gapEur: null };
           return {
             complete: d.remaining <= 0.01,
             progress: clamp01((d.starting - d.remaining) / d.starting),
             value: t("journey.debtRemaining", { amount: money(d.remaining) }),
+            gapEur: Math.max(0, d.remaining),
           };
         }
         const id = String(cfg.bucket_id ?? "");
         const b = metricsData?.buckets.find((x) => x.id === id);
         const bal = metricsData?.balances[id] ?? 0;
         const target = Number(b?.target_value ?? 0);
-        if (!b || target <= 0) return { complete: false, progress: 0, value: null };
+        if (!b || target <= 0) return { complete: false, progress: 0, value: null, gapEur: null };
         return {
           complete: bal >= target - 0.01,
           progress: clamp01(bal / target),
           value: `${money(bal)} / ${money(target)}`,
+          gapEur: Math.max(0, target - bal),
         };
       }
       const cfg = s.objective_config as { key?: string; op?: string; value?: number };
@@ -276,11 +294,23 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
       const raw = m[key];
       // Metric not computable yet (e.g. no cycle closed for spending vs plan) —
       // show 0% and never complete, so no bogus medal is minted.
-      if (raw == null) return { complete: false, progress: 0, value: null };
+      if (raw == null) return { complete: false, progress: 0, value: null, gapEur: null };
       const cur = raw;
       const complete = op === "<=" ? cur <= target : cur >= target;
       const progress = op === "<=" ? (complete ? 1 : clamp01(target / Math.max(cur, 0.0001))) : clamp01(cur / Math.max(target, 0.0001));
-      return { complete, progress, value: fmt(key, cur) };
+      // Only "save up to X" rungs have an honest euro gap: months of cover
+      // convert through a normal month's cost, currency metrics are already
+      // euros. Ratio rungs (debt-to-income, %) don't, so they show no pace.
+      const format = metricMeta(key)?.format;
+      const gapEur =
+        complete || op === "<="
+          ? 0
+          : format === "months"
+            ? Math.max(0, (target - cur) * monthlyCost)
+            : format === "currency" || key === "invested_amount"
+              ? Math.max(0, target - cur)
+              : null;
+      return { complete, progress, value: fmt(key, cur), gapEur };
     };
 
     const withEval = stages.map((s) => {
@@ -336,7 +366,20 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
       )
       .map((b) => ({ id: b.id, name: b.name, balance: metricsData?.balances[b.id] ?? 0 }));
 
-    return { all: withEval, spineNodes, side, doneCount, roleKey, autoQuests, otherProjects };
+    // What the household actually frees up each month — the pace behind every
+    // "at this pace" line. Income minus what a normal month costs.
+    const paceEur = Math.max(0, (metricsData?.income ?? 0) - monthlyCost);
+
+    return {
+      all: withEval,
+      spineNodes,
+      side,
+      doneCount,
+      roleKey,
+      autoQuests,
+      otherProjects,
+      paceEur,
+    };
   }, [stagesQ.data, metrics, metricsData, t]);
 
   const medals = achievements ?? [];
@@ -659,6 +702,9 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
                         <div className="mt-2 h-2 overflow-hidden rounded-full bg-card">
                           <div className="h-full bg-primary" style={{ width: `${Math.round(s.progress * 100)}%` }} />
                         </div>
+                        {s.gapEur != null && s.gapEur > 0 && (
+                          <TimeToDreamLine gapEur={s.gapEur} paceEur={evaluated.paceEur} />
+                        )}
                       </div>
                     ) : (
                       <div>
@@ -678,9 +724,14 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
                           {s.status === "done" ? t("journey.doneLabel") : s.displayObjective}
                         </p>
                         {s.status === "locked" && (
-                          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
-                            <div className="h-full bg-primary/50" style={{ width: `${Math.round(s.progress * 100)}%` }} />
-                          </div>
+                          <>
+                            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                              <div className="h-full bg-primary/50" style={{ width: `${Math.round(s.progress * 100)}%` }} />
+                            </div>
+                            {s.gapEur != null && s.gapEur > 0 && (
+                              <TimeToDreamLine gapEur={s.gapEur} paceEur={evaluated.paceEur} compact />
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -785,6 +836,9 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
                     <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">
                       {t("kpi.now")} {money(q.balance)} · {t("journey.goalShort")} {money(q.target)}
                     </p>
+                    {!q.reached && (
+                      <TimeToDreamLine gapEur={q.target - q.balance} paceEur={evaluated.paceEur} />
+                    )}
                   </div>
                 ))}
                 {evaluated.otherProjects.map((p) => (
