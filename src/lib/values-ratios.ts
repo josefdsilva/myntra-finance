@@ -74,10 +74,19 @@ export type ValuesRatios = {
   driftPerDreamEuro: number | null;
   /** The single best swap available right now. */
   redirect: RedirectGain | null;
+  /** Recurring commitments that already serve the values (childcare, school). */
+  commitments: { total: number; byValue: Array<{ key: ValueKey; amount: number }>; items: ValueCommitment[] };
+  /** Essentials + commitments + flexible spend that served the values. */
+  valueSpend: number;
+  /** Per-value totals across flexible, essential and committed money. */
+  valueTotals: Array<{ key: ValueKey; amount: number }>;
+  /** Essential spend above plan — trimmable without giving anything up. */
+  room: EssentialsRoom;
   /** Change in alignment ratio vs the previous cycle, in points. */
   trendPts: number | null;
   grade: ValuesGrade;
 };
+
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
