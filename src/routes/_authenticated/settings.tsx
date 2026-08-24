@@ -166,6 +166,7 @@ function SettingsPage() {
 
       {householdId && (
         <>
+          <SpacesSection />
           <HouseholdSection
             household={hh!.household!}
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
