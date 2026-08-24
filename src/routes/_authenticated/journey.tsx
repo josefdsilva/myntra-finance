@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { getOrCreateHousehold } from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { supabase } from "@/integrations/supabase/client";
-import { AlignmentCard } from "@/components/alignment-card";
+import { ValuesRatiosCard } from "@/components/values-ratios-card";
 import { pageShellClass } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -545,7 +545,7 @@ export function JourneyPage({ embedded = false }: { embedded?: boolean } = {}) {
 
       {/* The journey is values-first: how much of the flexible money actually
           served those values belongs right under the heading. */}
-      {householdId && <AlignmentCard householdId={householdId} />}
+      {householdId && <ValuesRatiosCard householdId={householdId} />}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t("journey.loading")}</p>
