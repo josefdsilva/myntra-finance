@@ -380,13 +380,12 @@ function Dashboard() {
       variablePool > 0
         ? Math.round(((everydaySpent + estimated) / variablePool) * 100)
         : 0;
-    const paceKey = (
+    const paceKey: "dashboard.cycleHero.paceAhead" | "dashboard.cycleHero.paceBehind" | "dashboard.cycleHero.paceOnTrack" =
       usedPct > cyclePct + 10
         ? "dashboard.cycleHero.paceAhead"
         : usedPct < cyclePct - 10
           ? "dashboard.cycleHero.paceBehind"
-          : "dashboard.cycleHero.paceOnTrack"
-    ) as const;
+          : "dashboard.cycleHero.paceOnTrack";
 
     return {
       totalDays,
