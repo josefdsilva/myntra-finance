@@ -29,6 +29,7 @@ import {
   ScanLine,
   Compass,
   ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -391,7 +392,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             const PrimaryIcon = primary.icon;
             return (
               <Fragment key={section.titleKey}>
-                <div className="mt-1 flex items-center gap-1">
+                <div className="group mt-1 flex items-center gap-0.5 rounded-xl border border-transparent bg-transparent p-1 transition-colors hover:border-border/40 hover:bg-muted/30">
                   <Link
                     to={primary.to}
                     className={cn(
@@ -402,13 +403,19 @@ export function AppShell({ children }: { children: ReactNode }) {
                     )}
                   >
                     <PrimaryIcon className="size-4" />
-                    {t(section.titleKey)}
+                    <span className="flex-1">{t(section.titleKey)}</span>
+                    <ChevronRight
+                      className={cn(
+                        "size-4 shrink-0 text-muted-foreground transition-opacity",
+                        pathname === primary.to ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                      )}
+                    />
                   </Link>
                   <button
                     type="button"
                     onClick={() => setOpenGroup(expanded ? "" : section.titleKey)}
                     aria-expanded={expanded}
-                    aria-label={t(section.titleKey)}
+                    aria-label={`${t(section.titleKey)} ${expanded ? t("common.collapse") : t("common.expand")}`}
                     className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     <ChevronDown
