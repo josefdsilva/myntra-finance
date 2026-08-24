@@ -337,6 +337,84 @@ function Dashboard() {
     sparkAll.slice(-7).reduce((s, d) => s + d.net, 0) / Math.max(1, Math.min(7, sparkAll.length));
   const projectedBalance = remaining - avgDaily7 * daysLeft;
 
+  // --- Cycle-focused hero -------------------------------------------------
+  // The app deliberately does not require every expense to be entered, so the
+  // recorded ledger is usually incomplete. Instead of pretending unrecorded days
+  // were zero-spend days, we estimate the gap and show it as its own slice.
+  const cycleMetrics = useMemo(() => {
+    const dayMs = 86400000;
+    const start = cycle?.start ? new Date(cycle.start) : null;
+    const end = cycle?.end ? new Date(cycle.end) : null;
+    const totalDays = start && end ? Math.max(1, Math.round((+end - +start) / dayMs)) : 30;
+    const elapsedRaw = start ? Math.floor((Date.now() - +start) / dayMs) + 1 : 1;
+    const elapsedDays = Math.min(totalDays, Math.max(1, elapsedRaw));
+
+    // Expected spend by now: the higher of an even pace through the budget and
+    // the household's own recent daily pace — whichever is more honest.
+    const proRata = (variablePool * elapsedDays) / totalDays;
+    const paceSoFar = avgDaily7 * elapsedDays;
+    const expected = Math.max(proRata, paceSoFar);
+    const room = Math.max(0, variablePool - everydaySpent);
+    const estimated = Math.min(room, Math.max(0, expected - everydaySpent));
+    const left = Math.max(0, room - estimated);
+    const perDay = daysLeft > 0 ? left / daysLeft : left;
+
+    // Freshness: how stale the ledger is, which decides whether we nudge.
+    const lastSpendAt = (dashboard?.expenses ?? [])
+      .filter((e) => e.kind !== "income")
+      .map((e) => +new Date(e.occurred_at))
+      .sort((a, b) => b - a)[0];
+    const staleDays = lastSpendAt ? Math.floor((Date.now() - lastSpendAt) / dayMs) : null;
+
+    // Cumulative recorded (+ project-free) everyday spend per elapsed day.
+    const perDayTotals = new Array(elapsedDays).fill(0) as number[];
+    for (const e of dashboard?.expenses ?? []) {
+      if (e.kind === "income") continue;
+      if (planExpenseIds?.has(e.id)) continue;
+      if (!start) continue;
+      const idx = Math.floor((+new Date(e.occurred_at) - +start) / dayMs);
+      if (idx >= 0 && idx < elapsedDays) perDayTotals[idx] += Number(e.amount);
+    }
+    let run = 0;
+    const cumulative = perDayTotals.map((v) => (run += v));
+
+    const cyclePct = Math.round((elapsedDays / totalDays) * 100);
+    const usedPct =
+      variablePool > 0
+        ? Math.round(((everydaySpent + estimated) / variablePool) * 100)
+        : 0;
+    const paceKey =
+      usedPct > cyclePct + 10
+        ? "dashboard.cycleHero.paceAhead"
+        : usedPct < cyclePct - 10
+          ? "dashboard.cycleHero.paceBehind"
+          : "dashboard.cycleHero.paceOnTrack";
+
+    return {
+      totalDays,
+      elapsedDays,
+      estimated,
+      left,
+      perDay,
+      staleDays,
+      cumulative,
+      cyclePct,
+      usedPct,
+      paceKey,
+    };
+  }, [
+    cycle?.start,
+    cycle?.end,
+    variablePool,
+    everydaySpent,
+    avgDaily7,
+    daysLeft,
+    dashboard,
+    planExpenseIds,
+  ]);
+
+
+
   function monthsUntil(dateStr: string | null): number {
     if (!dateStr) return 1;
     const t = new Date(dateStr);
