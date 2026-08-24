@@ -53,7 +53,7 @@ import {
 import { impliedAnnualRate, scheduleSummary, monthlyRateFromTaeg } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
-import { Plus, Trash2, Mail, Copy, Check, Zap, AlertTriangle, Sparkles } from "lucide-react";
+import { Plus, Trash2, Mail, Copy, Check, Zap, AlertTriangle, Sparkles, Users } from "lucide-react";
 import { TOUR_OPEN_EVENT } from "@/components/app-tour";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
