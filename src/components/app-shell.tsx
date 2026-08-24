@@ -38,8 +38,7 @@ import { runDailyCoach } from "@/lib/coach-run.functions";
 import { setCurrentCurrency } from "@/lib/format";
 import { BetaGate } from "@/components/beta-gate";
 import { CoachDock } from "@/components/coach-dock";
-import { CoachInbox } from "@/components/coach-inbox";
-import { IssuesBell } from "@/components/dashboard-tips";
+import { AttentionBell } from "@/components/attention-bell";
 import { InstallApp } from "@/components/install-app";
 import { AppTour } from "@/components/app-tour";
 
@@ -339,8 +338,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="font-display text-lg">Budget</span>
         </Link>
         <div className="flex items-center gap-1">
-          <IssuesBell householdId={resolvedId} />
-          <CoachInbox householdId={resolvedId} />
+          <AttentionBell householdId={resolvedId} />
           <Button
             variant="ghost"
             size="icon"
@@ -386,15 +384,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <img src={appIcon.url} alt="bynku household budget logo" className="size-9 rounded-xl" />
           {HouseholdSwitcher}
           <div className="ml-auto">
-            <CoachInbox householdId={resolvedId} align="left" />
+            <AttentionBell householdId={resolvedId} align="left" />
           </div>
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
-          {/* Contextual entry to the household's issues & tips — only appears when
-              something needs attention. Opens the same panel the dashboard card shows. */}
-          <div className="mb-1">
-            <IssuesBell householdId={resolvedId} align="left" variant="nav" />
-          </div>
           {NAV_SECTIONS.map((section, si) => (
             <Fragment key={section.titleKey ?? si}>
               {section.advanced ? (

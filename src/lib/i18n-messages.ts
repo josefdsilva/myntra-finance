@@ -689,8 +689,8 @@ const en = {
     "That's money left after your everyday spending, your cushion and what your projects need. Rather than let it drift, put it to work — ask the coach for the best move for your situation, like extra debt payments, topping up your emergency fund, or investing.",
   "tips.unallocatedSurplus.chat":
     "I have about {value} of monthly surplus beyond my everyday spending, my cushion and my project funding. Given my debts and their interest rates, my emergency buffer and my investments, what's the best use for it right now?",
-  "tips.confirmAllocations.title": "Confirm this month's allocations ({count} pending)",
-  "tips.confirmAllocations.detail": "Month ends in {days} days — lock in {names}.",
+  "tips.confirmAllocations.title": "Confirm this cycle's allocations ({count} pending)",
+  "tips.confirmAllocations.detail": "Cycle ends in {days} days — lock in {names}.",
   "tips.noFixed.title": "Track your fixed expenses",
   "tips.noFixed.detail":
     "Recording rent, utilities and subscriptions makes the baseline realistic and the burndown chart accurate.",
@@ -2174,8 +2174,8 @@ const pt: Record<BaseKey, string> = {
     "É dinheiro que sobra depois dos gastos do dia a dia, da tua almofada e do que os teus projetos precisam. Em vez de o deixar parado, põe-no a trabalhar — pede ao coach a melhor jogada para a tua situação, como pagamentos extra de dívida, reforçar o fundo de emergência ou investir.",
   "tips.unallocatedSurplus.chat":
     "Tenho cerca de {value} de excedente mensal para além dos gastos do dia a dia, da almofada e do financiamento dos projetos. Tendo em conta as minhas dívidas e as respetivas taxas de juro, o meu fundo de emergência e os meus investimentos, qual é o melhor uso para ele agora?",
-  "tips.confirmAllocations.title": "Confirme as alocações deste mês ({count} pendentes)",
-  "tips.confirmAllocations.detail": "O mês termina em {days} dias — confirme {names}.",
+  "tips.confirmAllocations.title": "Confirme as alocações deste ciclo ({count} pendentes)",
+  "tips.confirmAllocations.detail": "O ciclo termina em {days} dias — confirme {names}.",
   "tips.noFixed.title": "Registe as suas despesas fixas",
   "tips.noFixed.detail":
     "Registar renda, serviços e subscrições torna a base realista e o gráfico de consumo preciso.",
@@ -3652,8 +3652,8 @@ const es: Record<BaseKey, string> = {
     "Es dinero que queda después del gasto del día a día, tu colchón y lo que necesitan tus proyectos. En vez de dejarlo parado, ponlo a trabajar — pide al coach la mejor jugada para tu situación, como pagos extra de deuda, reforzar el fondo de emergencia o invertir.",
   "tips.unallocatedSurplus.chat":
     "Tengo unos {value} de excedente mensual más allá del gasto del día a día, el colchón y la financiación de proyectos. Teniendo en cuenta mis deudas y sus tipos de interés, mi fondo de emergencia y mis inversiones, ¿cuál es el mejor uso ahora?",
-  "tips.confirmAllocations.title": "Confirme las asignaciones de este mes ({count} pendientes)",
-  "tips.confirmAllocations.detail": "El mes termina en {days} días — confirme {names}.",
+  "tips.confirmAllocations.title": "Confirma las asignaciones de este ciclo ({count} pendientes)",
+  "tips.confirmAllocations.detail": "El ciclo termina en {days} días — confirma {names}.",
   "tips.noFixed.title": "Registre sus gastos fijos",
   "tips.noFixed.detail":
     "Registrar el alquiler, servicios y suscripciones hace que la base sea realista y el gráfico de consumo preciso.",
@@ -5136,8 +5136,8 @@ const de: Record<BaseKey, string> = {
   "tips.unallocatedSurplus.chat":
     "Ich habe etwa {value} monatlichen Überschuss über meine Alltagsausgaben, meinen Puffer und die Projektfinanzierung hinaus. Was ist angesichts meiner Schulden und ihrer Zinssätze, meines Notgroschens und meiner Investitionen die beste Verwendung dafür?",
   "tips.confirmAllocations.title":
-    "Bestätigen Sie die Zuweisungen dieses Monats ({count} ausstehend)",
-  "tips.confirmAllocations.detail": "Der Monat endet in {days} Tagen — bestätigen Sie {names}.",
+    "Bestätigen Sie die Zuweisungen dieses Zyklus ({count} ausstehend)",
+  "tips.confirmAllocations.detail": "Der Zyklus endet in {days} Tagen — bestätigen Sie {names}.",
   "tips.noFixed.title": "Erfassen Sie Ihre Fixkosten",
   "tips.noFixed.detail":
     "Das Erfassen von Miete, Nebenkosten und Abos macht das Grundbudget realistisch und das Burndown-Diagramm genau.",

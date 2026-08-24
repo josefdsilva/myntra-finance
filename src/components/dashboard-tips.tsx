@@ -643,19 +643,17 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     });
   }
 
-  // ---- Cycle confirmations near month end ----
-  const daysToMonthEnd =
-    new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  // ---- Confirmations near the end of the payday cycle ----
   const unconfirmed = data.buckets.filter(
     (b) => !data.confirmations.some((c) => c.bucket_id === b.id),
   );
-  if (data.buckets.length && daysToMonthEnd <= 7 && unconfirmed.length) {
+  if (data.buckets.length && daysLeft <= 7 && unconfirmed.length) {
     tips.push({
       id: "confirm-allocations",
       severity: "warning",
       title: t("tips.confirmAllocations.title", { count: unconfirmed.length }),
       detail: t("tips.confirmAllocations.detail", {
-        days: daysToMonthEnd,
+        days: daysLeft,
         names: `${unconfirmed
           .map((b) => b.name)
           .slice(0, 3)
