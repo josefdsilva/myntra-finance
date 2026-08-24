@@ -30,6 +30,7 @@ import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
 import { Route as AuthenticatedJobChangeRouteImport } from './routes/_authenticated/job-change'
 import { Route as AuthenticatedHouseholdsRouteImport } from './routes/_authenticated/households'
+import { Route as AuthenticatedHeroOptionsRouteImport } from './routes/_authenticated/hero-options'
 import { Route as AuthenticatedFastForwardRouteImport } from './routes/_authenticated/fast-forward'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -155,6 +156,12 @@ const AuthenticatedHouseholdsRoute = AuthenticatedHouseholdsRouteImport.update({
   path: '/households',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHeroOptionsRoute =
+  AuthenticatedHeroOptionsRouteImport.update({
+    id: '/hero-options',
+    path: '/hero-options',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFastForwardRoute =
   AuthenticatedFastForwardRouteImport.update({
     id: '/fast-forward',
@@ -275,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fast-forward': typeof AuthenticatedFastForwardRoute
+  '/hero-options': typeof AuthenticatedHeroOptionsRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/job-change': typeof AuthenticatedJobChangeRoute
   '/journey': typeof AuthenticatedJourneyRoute
@@ -316,6 +324,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fast-forward': typeof AuthenticatedFastForwardRoute
+  '/hero-options': typeof AuthenticatedHeroOptionsRoute
   '/households': typeof AuthenticatedHouseholdsRoute
   '/job-change': typeof AuthenticatedJobChangeRoute
   '/journey': typeof AuthenticatedJourneyRoute
@@ -359,6 +368,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/fast-forward': typeof AuthenticatedFastForwardRoute
+  '/_authenticated/hero-options': typeof AuthenticatedHeroOptionsRoute
   '/_authenticated/households': typeof AuthenticatedHouseholdsRoute
   '/_authenticated/job-change': typeof AuthenticatedJobChangeRoute
   '/_authenticated/journey': typeof AuthenticatedJourneyRoute
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/fast-forward'
+    | '/hero-options'
     | '/households'
     | '/job-change'
     | '/journey'
@@ -443,6 +454,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/fast-forward'
+    | '/hero-options'
     | '/households'
     | '/job-change'
     | '/journey'
@@ -485,6 +497,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
     | '/_authenticated/fast-forward'
+    | '/_authenticated/hero-options'
     | '/_authenticated/households'
     | '/_authenticated/job-change'
     | '/_authenticated/journey'
@@ -684,6 +697,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHouseholdsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hero-options': {
+      id: '/_authenticated/hero-options'
+      path: '/hero-options'
+      fullPath: '/hero-options'
+      preLoaderRoute: typeof AuthenticatedHeroOptionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/fast-forward': {
       id: '/_authenticated/fast-forward'
       path: '/fast-forward'
@@ -829,6 +849,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFastForwardRoute: typeof AuthenticatedFastForwardRoute
+  AuthenticatedHeroOptionsRoute: typeof AuthenticatedHeroOptionsRoute
   AuthenticatedHouseholdsRoute: typeof AuthenticatedHouseholdsRoute
   AuthenticatedJobChangeRoute: typeof AuthenticatedJobChangeRoute
   AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
@@ -854,6 +875,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFastForwardRoute: AuthenticatedFastForwardRoute,
+  AuthenticatedHeroOptionsRoute: AuthenticatedHeroOptionsRoute,
   AuthenticatedHouseholdsRoute: AuthenticatedHouseholdsRoute,
   AuthenticatedJobChangeRoute: AuthenticatedJobChangeRoute,
   AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
