@@ -82,13 +82,87 @@ export type ValuesRatios = {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Lowercase and strip accents so "Óscar" matches "Oscar". */
-const fold = (s: string | null | undefined) =>
-  (s ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+/** Value-serving commitments (childcare, school, rent) — not a choice, but felt. */
+export type ValueCommitment = { name: string; amount: number; key: ValueKey };
+
+/**
+ * Recurring commitments that already serve the household's values. Kindergarten
+ * for two kids is family money even though it is a fixed cost nobody negotiates,
+ * so it belongs in the "money on what matters" picture.
+ */
+export function valueCommitments(input: {
+  values: HouseholdValue[];
+  recurring: Array<{
+    label?: string | null;
+    category?: string | null;
+    monthly_amount: number | string;
+  }>;
+  personNames?: string[];
+}): { total: number; byValue: Array<{ key: ValueKey; amount: number }>; items: ValueCommitment[] } {
+  const values = input.values ?? [];
+  const items: ValueCommitment[] = [];
+  const byValueMap = new Map<ValueKey, number>();
+  for (const r of input.recurring ?? []) {
+    const amount = Number(r.monthly_amount) || 0;
+    if (amount <= 0) continue;
+    let key = matchValueOf(values, r, { personNames: input.personNames });
+    // A commitment named after a child ("Kindergarten — Óscar") is family money
+    // even when its category is generic.
+    if (!key && valueKeysOf(values).includes("family") && namesAPerson(r.label, input.personNames ?? []))
+      key = "family";
+    if (!key) continue;
+    items.push({ name: r.label ?? "", amount: round2(amount), key });
+    byValueMap.set(key, (byValueMap.get(key) ?? 0) + amount);
+  }
+  return {
+    total: round2(items.reduce((s, i) => s + i.amount, 0)),
+    byValue: [...byValueMap.entries()]
+      .map(([key, amount]) => ({ key, amount: round2(amount) }))
+      .sort((a, b) => b.amount - a.amount),
+    items: items.sort((a, b) => b.amount - a.amount),
+  };
+}
+
+export type EssentialsRoom = {
+  /** Essential spend above what the household planned for it. */
+  total: number;
+  /** Per-category overshoot, biggest first. */
+  items: Array<{ category: string; actual: number; planned: number; over: number }>;
+};
+
+/**
+ * "We have to eat" — but are we spending more on food than we need to?
+ *
+ * Essentials are never drift: nobody chooses to stop buying groceries. What IS a
+ * choice is the *amount*, so we compare each essential category against what the
+ * household planned for it and surface only the overshoot. That overshoot is
+ * money that could work for the dreams without giving anything up.
+ */
+export function essentialsRoom(
+  actualByCategory: Array<{ category: string; amount: number }>,
+  plannedByCategory: Array<{ category: string; amount: number }>,
+): EssentialsRoom {
+  const planned = new Map<string, number>();
+  for (const p of plannedByCategory ?? []) {
+    const key = fold(p.category);
+    if (!key) continue;
+    planned.set(key, (planned.get(key) ?? 0) + (Number(p.amount) || 0));
+  }
+  const items: EssentialsRoom["items"] = [];
+  for (const a of actualByCategory ?? []) {
+    const key = fold(a.category);
+    const plan = planned.get(key);
+    // No plan means no yardstick — we say nothing rather than guess.
+    if (plan == null || plan <= 0) continue;
+    const actual = Number(a.amount) || 0;
+    const over = round2(actual - plan);
+    if (over <= 0) continue;
+    items.push({ category: a.category, actual: round2(actual), planned: round2(plan), over });
+  }
+  items.sort((x, y) => y.over - x.over);
+  return { total: round2(items.reduce((s, i) => s + i.over, 0)), items: items.slice(0, 5) };
+}
+
 
 /**
  * Does this bucket serve one of the household's values?
