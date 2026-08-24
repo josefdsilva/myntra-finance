@@ -297,6 +297,8 @@ const en = {
   "common.auto": "Auto (browser)",
   "common.saveChanges": "Save changes",
   "common.total": "Total",
+  "dashboard.details.show": "Show more detail",
+  "dashboard.details.hide": "Hide detail",
 
   // Settings
   "settings.title": "Settings",
@@ -1787,6 +1789,8 @@ const pt: Record<BaseKey, string> = {
   "common.auto": "Automático (navegador)",
   "common.saveChanges": "Guardar alterações",
   "common.total": "Total",
+  "dashboard.details.show": "Ver mais detalhe",
+  "dashboard.details.hide": "Ocultar detalhe",
 
   "settings.title": "Definições",
   "settings.subtitle": "Configure o orçamento do agregado familiar.",
@@ -3268,6 +3272,8 @@ const es: Record<BaseKey, string> = {
   "common.auto": "Automático (navegador)",
   "common.saveChanges": "Guardar cambios",
   "common.total": "Total",
+  "dashboard.details.show": "Ver más detalle",
+  "dashboard.details.hide": "Ocultar detalle",
 
   "settings.title": "Ajustes",
   "settings.subtitle": "Configura el presupuesto de tu hogar.",
@@ -4748,6 +4754,8 @@ const de: Record<BaseKey, string> = {
   "common.auto": "Automatisch (Browser)",
   "common.saveChanges": "Änderungen speichern",
   "common.total": "Gesamt",
+  "dashboard.details.show": "Mehr Details anzeigen",
+  "dashboard.details.hide": "Details ausblenden",
 
   "settings.title": "Einstellungen",
   "settings.subtitle": "Verwalte das Haushaltsbudget.",
@@ -6236,6 +6244,8 @@ const fr: Record<BaseKey, string> = {
   "common.auto": "Automatique (navigateur)",
   "common.saveChanges": "Enregistrer les modifications",
   "common.total": "Total",
+  "dashboard.details.show": "Voir plus de détails",
+  "dashboard.details.hide": "Masquer les détails",
 
   "settings.title": "Paramètres",
   "settings.subtitle": "Configurez le budget du foyer.",
