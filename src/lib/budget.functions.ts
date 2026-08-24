@@ -548,6 +548,10 @@ export const upsertBucket = createServerFn({ method: "POST" })
         initial_balance: z.number().min(0).optional(),
         initial_funds_date: z.string().date().nullable().optional(),
         kind: z.enum(["savings", "emergency", "investment"]).optional(),
+        // The dream, not the percentage: a face (emoji) and the household's own
+        // reason for saving, shown wherever the project appears.
+        emoji: z.string().max(8).nullable().optional(),
+        why: z.string().max(140).nullable().optional(),
       })
       .parse(input),
   )

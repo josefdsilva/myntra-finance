@@ -11,6 +11,7 @@ import { MoveFundsCard } from "@/components/move-funds-card";
 import { BucketsSection } from "@/routes/_authenticated/settings";
 import { pageShellClass } from "@/components/page-shell";
 import { EmptyState } from "@/components/empty-state";
+import { TimeToDreamLine } from "@/components/time-to-dream";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
@@ -62,6 +63,8 @@ type Bucket = {
   target_deadline: string | null;
   color: string | null;
   initial_balance: number;
+  emoji?: string | null;
+  why?: string | null;
 };
 
 function AllocationsPage() {
@@ -436,8 +439,18 @@ function AllocationsPage() {
                             className="size-2.5 rounded-full shrink-0"
                             style={{ background: b.color ?? "var(--primary)" }}
                           />
+                          {b.emoji ? (
+                            <span aria-hidden className="shrink-0 text-base leading-none">
+                              {b.emoji}
+                            </span>
+                          ) : null}
                           <span className="font-medium truncate">{b.name}</span>
                         </div>
+                        {b.why ? (
+                          <span className="mt-0.5 block text-xs italic text-muted-foreground">
+                            {b.why}
+                          </span>
+                        ) : null}
                         <span className="mt-0.5 block text-xs text-muted-foreground">
                           {b.target_type === "pct_surplus"
                             ? t("alloc.target.pctSurplus", { pct: b.target_value })
@@ -451,6 +464,9 @@ function AllocationsPage() {
                                     months: monthsUntil(b.target_deadline),
                                   })}
                         </span>
+                        {isGoal && !goalMet ? (
+                          <TimeToDreamLine gapEur={goalTarget - saved} paceEur={surplus} />
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:shrink-0 sm:justify-end">
                         <div className="text-right">

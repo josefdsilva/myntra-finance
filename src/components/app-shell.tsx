@@ -54,43 +54,48 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Minimal by default. The core is what a household does week to week; everything
-// analytical/advanced is tucked behind a collapsible "Advanced" group so a less
-// technical user isn't overwhelmed (progressive disclosure, not a second mode).
+// Four destinations, in the order a household thinks: where am I going
+// (Journey), what comes in and out (Money), what I'm building (Dreams), and my own
+// settings (You) — the coach itself lives in the dock, always one tap away. Everything else is nested under the destination it belongs
+// to, revealed only when that destination is open — progressive disclosure, not
+// a second "advanced" mode.
 const NAV_SECTIONS = [
   {
-    titleKey: null,
-    advanced: false,
+    titleKey: "navGroup.journey",
     items: [
-      { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
       { to: "/journey", labelKey: "nav.journey", icon: Compass },
-      { to: "/share", labelKey: "nav.import", icon: ScanLine },
-      { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
-      { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
-    ],
-  },
-  {
-    titleKey: "navSection.advanced",
-    advanced: true,
-    items: [
-      { to: "/loans", labelKey: "nav.loans", icon: Landmark },
-      { to: "/assets", labelKey: "nav.assets", icon: Gem },
-      { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+      { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
       { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
       { to: "/fast-forward", labelKey: "nav.fastForward", icon: FastForward },
-      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
-      { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
     ],
   },
   {
-    titleKey: "navSection.account",
-    advanced: false,
+    titleKey: "navGroup.money",
     items: [
+      { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
+      { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
+      { to: "/share", labelKey: "nav.import", icon: ScanLine },
+      { to: "/loans", labelKey: "nav.loans", icon: Landmark },
+    ],
+  },
+  {
+    titleKey: "navGroup.dreams",
+    items: [
+      { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+      { to: "/assets", labelKey: "nav.assets", icon: Gem },
+      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
+    ],
+  },
+  {
+    titleKey: "navGroup.you",
+    items: [
+      { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
       { to: "/households", labelKey: "nav.households", icon: Users },
       { to: "/settings", labelKey: "nav.settings", icon: Settings },
     ],
   },
 ] as const;
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -99,21 +104,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [privacy, setPrivacy] = useState(false);
-  // Advanced nav group is collapsed by default; the choice is remembered.
-  const [showAdvanced, setShowAdvanced] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("nav-advanced") === "1";
-  });
-  const toggleAdvanced = () =>
-    setShowAdvanced((s) => {
-      const next = !s;
-      try {
-        localStorage.setItem("nav-advanced", next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  // Only one destination is expanded at a time: the one you're in. Tapping a
+  // heading opens that destination and folds the others away.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+
   // Initialise from the saved choice (falling back to the OS setting) so the
   // very first render already has the right theme. Starting at "light" and
   // correcting in an effect caused a flash back to light when the shell
@@ -388,50 +382,64 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
-          {NAV_SECTIONS.map((section, si) => (
-            <Fragment key={section.titleKey ?? si}>
-              {section.advanced ? (
-                <button
-                  type="button"
-                  onClick={toggleAdvanced}
-                  aria-expanded={showAdvanced}
-                  className="mt-2 flex w-full items-center justify-between px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-foreground"
-                >
-                  {t(section.titleKey)}
-                  <ChevronDown
-                    className={cn("size-3.5 transition-transform", showAdvanced && "rotate-180")}
-                  />
-                </button>
-              ) : (
-                section.titleKey && (
-                  <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 first:pt-1">
+          {NAV_SECTIONS.map((section) => {
+            const primary = section.items[0];
+            const rest = section.items.slice(1);
+            const inGroup = section.items.some((i) => i.to === pathname);
+            const expanded = openGroup === section.titleKey || (openGroup === null && inGroup);
+            const PrimaryIcon = primary.icon;
+            return (
+              <Fragment key={section.titleKey}>
+                <div className="mt-1 flex items-center gap-1">
+                  <Link
+                    to={primary.to}
+                    className={cn(
+                      "flex flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      pathname === primary.to
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-foreground hover:bg-muted",
+                    )}
+                  >
+                    <PrimaryIcon className="size-4" />
                     {t(section.titleKey)}
-                  </p>
-                )
-              )}
-              {(!section.advanced || showAdvanced) &&
-                section.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = pathname === item.to;
-                  return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                        active
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      )}
-                    >
-                      <Icon className="size-4" />
-                      {t(item.labelKey)}
-                    </Link>
-                  );
-                })}
-            </Fragment>
-          ))}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setOpenGroup(expanded ? "" : section.titleKey)}
+                    aria-expanded={expanded}
+                    aria-label={t(section.titleKey)}
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <ChevronDown
+                      className={cn("size-3.5 transition-transform", expanded && "rotate-180")}
+                    />
+                  </button>
+                </div>
+                {expanded &&
+                  rest.map((item) => {
+                    const Icon = item.icon;
+                    const active = pathname === item.to;
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        className={cn(
+                          "ml-4 flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors",
+                          active
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="size-4" />
+                        {t(item.labelKey)}
+                      </Link>
+                    );
+                  })}
+              </Fragment>
+            );
+          })}
         </nav>
+
         <div className="p-3 border-t space-y-1">
           <InstallApp />
           <Button

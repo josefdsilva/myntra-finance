@@ -1465,6 +1465,8 @@ export function BucketsSection({ householdId }: { householdId: string }) {
         initial_balance: Number(b.initial_balance ?? 0),
         initial_funds_date: b.initial_funds_date ?? null,
         kind: (b.kind as "savings" | "emergency" | "investment") ?? "savings",
+        emoji: (b.emoji as string | null) ?? null,
+        why: (b.why as string | null) ?? null,
       },
     });
     qc.invalidateQueries({ queryKey: ["allocations"] });
@@ -1543,6 +1545,8 @@ type BucketRowShape = {
   initial_balance?: number | string | null;
   initial_funds_date?: string | null;
   kind?: "savings" | "emergency" | "investment" | null;
+  emoji?: string | null;
+  why?: string | null;
   [key: string]: unknown;
 };
 
@@ -1561,7 +1565,14 @@ function BucketRow<T extends BucketRowShape>({
 
   return (
     <div className="rounded-lg border p-3 space-y-2">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 items-center">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] gap-2 items-center">
+        <Input
+          value={b.emoji ?? ""}
+          onChange={(e) => setB({ ...b, emoji: e.target.value.slice(0, 4) || null })}
+          className="h-8 w-12 text-center text-base"
+          placeholder="🏖️"
+          aria-label={t("buckets.emoji")}
+        />
         <Input
           value={b.name}
           onChange={(e) => setB({ ...b, name: e.target.value })}
@@ -1584,6 +1595,15 @@ function BucketRow<T extends BucketRowShape>({
         >
           <Trash2 className="size-4" />
         </Button>
+      </div>
+      <div>
+        <Label className="text-xs">{t("buckets.why")}</Label>
+        <Input
+          value={b.why ?? ""}
+          onChange={(e) => setB({ ...b, why: e.target.value.slice(0, 140) || null })}
+          className="h-8"
+          placeholder={t("buckets.whyPlaceholder")}
+        />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div>
