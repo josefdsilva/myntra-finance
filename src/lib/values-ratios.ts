@@ -94,10 +94,13 @@ export function bucketServesValues(
   if ((b.kind === "emergency" || b.kind === "savings") && keys.includes("security")) return true;
   if (b.kind === "investment" && keys.includes("investing")) return true;
   if (keys.includes("family")) {
-    const name = (b.name ?? "").toLowerCase();
+    // "Óscar Savings" belongs to "Oscar da Silva": compare accent-free first
+    // names / tokens rather than the full stored name.
+    const name = fold(b.name);
     for (const p of opts?.personNames ?? []) {
-      const n = (p ?? "").trim().toLowerCase();
-      if (n.length >= 2 && name.includes(n)) return true;
+      for (const token of fold(p).split(/[^a-z0-9]+/)) {
+        if (token.length >= 3 && name.includes(token)) return true;
+      }
     }
   }
   return false;
