@@ -14,7 +14,7 @@ describe("valuesRatios", () => {
   it("splits flexible spend into aligned and drifting", () => {
     const r = valuesRatios({
       expenses: [
-        { amount: 100, category: "kids", kind: "expense" },
+        { amount: 100, category: "travel", kind: "expense" },
         { amount: 300, category: "shopping", kind: "expense" },
         { amount: 800, category: "rent", kind: "expense" },
       ],
@@ -32,7 +32,7 @@ describe("valuesRatios", () => {
   it("counts funding of value-serving buckets and grades on course", () => {
     const r = valuesRatios({
       expenses: [
-        { amount: 300, category: "kids", kind: "expense" },
+        { amount: 300, category: "travel", kind: "expense" },
         { amount: 100, category: "shopping", kind: "expense" },
       ],
       values: family,
