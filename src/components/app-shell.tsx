@@ -67,6 +67,7 @@ const NAV_SECTIONS = [
       { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
       { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
       { to: "/fast-forward", labelKey: "nav.fastForward", icon: FastForward },
+      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
     ],
   },
   {
@@ -89,7 +90,6 @@ const NAV_SECTIONS = [
     titleKey: "navGroup.you",
     items: [
       { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
-      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
     ],
   },
 
