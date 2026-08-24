@@ -296,6 +296,15 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
             "id, label, taeg_pct, tan_pct, deduced_rate_pct, principal_remaining, starting_principal",
           )
           .eq("household_id", householdId),
+        // Money moved straight into a project account this cycle also counts as
+        // "funded" — otherwise the nudge nags about buckets you already fed.
+        supabase
+          .from("account_movements")
+          .select("to_type, to_id, created_at")
+          .eq("household_id", householdId)
+          .eq("to_type", "bucket")
+          .gte("created_at", cycleStartIso!)
+          .lt("created_at", cycleEndIso!),
       ]);
       // When was anything last added? Drives the gentle "time to update" nudge.
       const { data: lastEntry } = await supabase
