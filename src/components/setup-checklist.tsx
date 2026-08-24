@@ -154,6 +154,23 @@ export function SetupChecklist({
     }
   }
 
+  function snooze(key: string) {
+    setSnoozed((s) => {
+      const next = [...s, key];
+      try {
+        localStorage.setItem(snoozeKey, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
+
+  const pending = items.filter((i) => !i.done);
+  // Ask ONE thing at a time, in the coach's voice. "Not now" moves to the next
+  // question instead of burying the household in a form.
+  const question = pending.find((i) => !snoozed.includes(i.key)) ?? null;
+
   return (
     <Card className="border-primary/25 bg-primary/5">
       <CardContent className="pt-6">
@@ -177,36 +194,74 @@ export function SetupChecklist({
           </button>
         </div>
 
-        <ul className="mt-3 divide-y rounded-lg border bg-card">
-          {items.map((it) =>
-            it.done ? (
-              <li
-                key={it.key}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
+        {question && !showAll && (
+          <div className="mt-3 rounded-lg border bg-card p-4">
+            <p className="text-sm">{t(question.label)}</p>
+            {question.hint && (
+              <p className="mt-1 text-xs text-muted-foreground">{t(question.hint)}</p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Link
+                to={question.to}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
-                <Check className="size-4 shrink-0 text-primary" />
-                <span className="line-through">{t(it.label)}</span>
-              </li>
-            ) : (
-              <li key={it.key}>
-                <Link
-                  to={it.to}
-                  className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                {t("setup.answer")}
+                <ArrowRight className="size-4" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => snooze(question.key)}
+                className="rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+              >
+                {t("setup.notNow")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(!question || showAll) && (
+          <ul className="mt-3 divide-y rounded-lg border bg-card">
+            {items.map((it) =>
+              it.done ? (
+                <li
+                  key={it.key}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
                 >
-                  <span className="size-4 shrink-0 rounded-full border border-muted-foreground/40" />
-                  <span className="min-w-0 flex-1">
-                    <span>{t(it.label)}</span>
-                    {it.hint && (
-                      <span className="block text-xs text-muted-foreground">{t(it.hint)}</span>
-                    )}
-                  </span>
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-                </Link>
-              </li>
-            ),
-          )}
-        </ul>
+                  <Check className="size-4 shrink-0 text-primary" />
+                  <span className="line-through">{t(it.label)}</span>
+                </li>
+              ) : (
+                <li key={it.key}>
+                  <Link
+                    to={it.to}
+                    className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                  >
+                    <span className="size-4 shrink-0 rounded-full border border-muted-foreground/40" />
+                    <span className="min-w-0 flex-1">
+                      <span>{t(it.label)}</span>
+                      {it.hint && (
+                        <span className="block text-xs text-muted-foreground">{t(it.hint)}</span>
+                      )}
+                    </span>
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+                  </Link>
+                </li>
+              ),
+            )}
+          </ul>
+        )}
+
+        {question && (
+          <button
+            type="button"
+            onClick={() => setShowAll((s) => !s)}
+            className="mt-2 text-xs text-muted-foreground underline-offset-2 hover:underline"
+          >
+            {showAll ? t("setup.hideAll") : t("setup.showAll", { n: pending.length })}
+          </button>
+        )}
       </CardContent>
     </Card>
   );
 }
+
