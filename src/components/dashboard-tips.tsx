@@ -325,7 +325,12 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
         incomes,
         fixed: [...fixed, ...debts],
         variables,
-        confirmations: confirmations ?? [],
+        confirmations: [
+          ...(confirmations ?? []),
+          ...((bucketMoves ?? []) as Array<{ to_id: string | null }>)
+            .filter((m) => !!m.to_id)
+            .map((m) => ({ bucket_id: m.to_id as string, amount: 0 })),
+        ],
         allTimeTotals,
         expenseCount: expenseCount ?? 0,
         plans: (plans ?? []) as unknown as Plan[],
