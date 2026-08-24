@@ -15,10 +15,16 @@
 
 import {
   alignmentSummary,
+  fold,
   matchValue,
+  matchValueOf,
+  namesAPerson,
+  valueKeysOf,
   type AlignmentSummary,
   type HouseholdValue,
+  type ValueKey,
 } from "@/lib/values";
+
 
 export type RatioBucket = {
   id: string;
