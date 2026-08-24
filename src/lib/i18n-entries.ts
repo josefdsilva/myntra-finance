@@ -14,6 +14,109 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  // Four destinations: where am I going, money in/out, what I'm building, and me.
+  "navGroup.journey": {
+    en: "Journey",
+    pt: "Percurso",
+    es: "Camino",
+    de: "Weg",
+    fr: "Parcours",
+  },
+  "navGroup.money": {
+    en: "Money",
+    pt: "Dinheiro",
+    es: "Dinero",
+    de: "Geld",
+    fr: "Argent",
+  },
+  "navGroup.dreams": {
+    en: "Dreams",
+    pt: "Sonhos",
+    es: "Sueños",
+    de: "Träume",
+    fr: "Rêves",
+  },
+  "navGroup.you": {
+    en: "You",
+    pt: "Você",
+    es: "Tú",
+    de: "Sie",
+    fr: "Vous",
+  },
+  // Time to dream
+  "pace.atThisPace": {
+    en: "At this pace: {months} months ({when})",
+    pt: "A este ritmo: {months} meses ({when})",
+    es: "A este ritmo: {months} meses ({when})",
+    de: "In diesem Tempo: {months} Monate ({when})",
+    fr: "À ce rythme : {months} mois ({when})",
+  },
+  "pace.swap": {
+    en: "· {amount} more a month → {months} months sooner",
+    pt: "· {amount} a mais por mês → {months} meses mais cedo",
+    es: "· {amount} más al mes → {months} meses antes",
+    de: "· {amount} mehr pro Monat → {months} Monate früher",
+    fr: "· {amount} de plus par mois → {months} mois plus tôt",
+  },
+  "pace.noPace": {
+    en: "No money left over yet, so there's no date to show. Free up a little and this fills in.",
+    pt: "Ainda não sobra dinheiro, por isso não há data. Liberte um pouco e isto aparece.",
+    es: "Aún no sobra dinero, así que no hay fecha. Libera un poco y esto aparecerá.",
+    de: "Es bleibt noch nichts übrig, daher gibt es kein Datum. Sobald etwas frei wird, erscheint es hier.",
+    fr: "Rien ne reste encore, donc pas de date. Libérez un peu et cela s'affichera.",
+  },
+  // One question at a time
+  "setup.answer": {
+    en: "Answer this",
+    pt: "Responder",
+    es: "Responder",
+    de: "Beantworten",
+    fr: "Répondre",
+  },
+  "setup.notNow": {
+    en: "Not now",
+    pt: "Agora não",
+    es: "Ahora no",
+    de: "Nicht jetzt",
+    fr: "Pas maintenant",
+  },
+  "setup.showAll": {
+    en: "Show all {n} remaining",
+    pt: "Ver os {n} restantes",
+    es: "Ver los {n} restantes",
+    de: "Alle {n} offenen anzeigen",
+    fr: "Voir les {n} restants",
+  },
+  "setup.hideAll": {
+    en: "Just one at a time",
+    pt: "Um de cada vez",
+    es: "Uno a la vez",
+    de: "Nur eins auf einmal",
+    fr: "Un seul à la fois",
+  },
+  // Dreams with a face
+  "buckets.emoji": {
+    en: "Emoji",
+    pt: "Emoji",
+    es: "Emoji",
+    de: "Emoji",
+    fr: "Emoji",
+  },
+  "buckets.why": {
+    en: "Why this matters to us",
+    pt: "Porque é que isto nos importa",
+    es: "Por qué nos importa",
+    de: "Warum uns das wichtig ist",
+    fr: "Pourquoi c'est important pour nous",
+  },
+  "buckets.whyPlaceholder": {
+    en: "Two weeks by the sea, all four of us",
+    pt: "Duas semanas na praia, os quatro",
+    es: "Dos semanas en la playa, los cuatro",
+    de: "Zwei Wochen am Meer, alle vier",
+    fr: "Deux semaines à la mer, tous les quatre",
+  },
+
   // Save, Invest & Improve — section rename + tabs (overrides legacy alloc.* / nav.allocations)
   "nav.allocations": {
     en: "Grow",
