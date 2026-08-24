@@ -11,6 +11,7 @@ import { MoveFundsCard } from "@/components/move-funds-card";
 import { BucketsSection } from "@/routes/_authenticated/settings";
 import { pageShellClass } from "@/components/page-shell";
 import { EmptyState } from "@/components/empty-state";
+import { TimeToDreamLine } from "@/components/time-to-dream";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
