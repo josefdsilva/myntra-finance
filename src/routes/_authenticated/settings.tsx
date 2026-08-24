@@ -60,6 +60,8 @@ import { parseValues, type HouseholdValue } from "@/lib/values";
 import { CategoryManager } from "@/components/category-manager";
 import { CategorySelect } from "@/components/category-select";
 import { useCategoryNames } from "@/hooks/use-categories";
+import { EmojiPicker } from "@/components/emoji-picker";
+
 import { useT, type MessageKey } from "@/lib/i18n";
 import { AGE_BANDS } from "@/lib/benchmarks";
 import { debtKindOptions, debtKindLabel, type DebtKind } from "@/lib/debt-kinds";
@@ -1566,13 +1568,12 @@ function BucketRow<T extends BucketRowShape>({
   return (
     <div className="rounded-lg border p-3 space-y-2">
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] gap-2 items-center">
-        <Input
-          value={b.emoji ?? ""}
-          onChange={(e) => setB({ ...b, emoji: e.target.value.slice(0, 4) || null })}
-          className="h-8 w-12 text-center text-base"
-          placeholder="🏖️"
-          aria-label={t("buckets.emoji")}
+        <EmojiPicker
+          value={b.emoji ?? null}
+          onChange={(emoji) => setB({ ...b, emoji })}
+          ariaLabel={t("buckets.emoji")}
         />
+
         <Input
           value={b.name}
           onChange={(e) => setB({ ...b, name: e.target.value })}

@@ -95,7 +95,57 @@ export const ENTRIES = {
     fr: "Un seul à la fois",
   },
   // Dreams with a face
+  "emoji.pick": {
+    en: "Pick an icon",
+    pt: "Escolher ícone",
+    es: "Elegir icono",
+    de: "Symbol wählen",
+    fr: "Choisir une icône",
+  },
+  "emoji.clear": {
+    en: "No icon",
+    pt: "Sem ícone",
+    es: "Sin icono",
+    de: "Kein Symbol",
+    fr: "Aucune icône",
+  },
+  "emoji.custom": {
+    en: "Paste any emoji",
+    pt: "Colar outro emoji",
+    es: "Pega otro emoji",
+    de: "Anderes Emoji einfügen",
+    fr: "Coller un autre emoji",
+  },
+  "emoji.group.goals": {
+    en: "Money goals",
+    pt: "Objetivos",
+    es: "Objetivos",
+    de: "Geldziele",
+    fr: "Objectifs",
+  },
+  "emoji.group.life": {
+    en: "Life",
+    pt: "Vida",
+    es: "Vida",
+    de: "Leben",
+    fr: "Vie",
+  },
+  "emoji.group.family": {
+    en: "Family & fun",
+    pt: "Família e lazer",
+    es: "Familia y ocio",
+    de: "Familie & Freizeit",
+    fr: "Famille et loisirs",
+  },
+  "emoji.group.more": {
+    en: "More",
+    pt: "Mais",
+    es: "Más",
+    de: "Mehr",
+    fr: "Plus",
+  },
   "buckets.emoji": {
+
     en: "Emoji",
     pt: "Emoji",
     es: "Emoji",
