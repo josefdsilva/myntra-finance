@@ -37,11 +37,11 @@ export const ENTRIES = {
     fr: "Faire croître",
   },
   "navGroup.you": {
-    en: "Settings",
-    pt: "Configurações",
-    es: "Ajustes",
-    de: "Einstellungen",
-    fr: "Réglages",
+    en: "Wiki",
+    pt: "Wiki",
+    es: "Wiki",
+    de: "Wiki",
+    fr: "Wiki",
   },
 
   // Time to dream
