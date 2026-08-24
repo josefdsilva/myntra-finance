@@ -209,6 +209,8 @@ function Dashboard() {
 
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
   const [showDetail, setShowDetail] = useState(false);
+  const [recentExpanded, setRecentExpanded] = useState(false);
+  const RECENT_PREVIEW_COUNT = 5;
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const income = dashboard?.income ?? 0;
