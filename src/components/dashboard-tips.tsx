@@ -215,9 +215,12 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
     writeSet(s);
   }
 
+  const cycleStartIso = facts?.cycleStartIso ?? null;
+  const cycleEndIso = facts?.cycleEndIso ?? null;
+
   const { data } = useQuery({
-    queryKey: ["dashboard-tips", householdId, period],
-    enabled: !!householdId,
+    queryKey: ["dashboard-tips", householdId, cycleStartIso ?? period],
+    enabled: !!householdId && !!cycleStartIso,
     queryFn: async () => {
       // Base tables come from the shared cache (already fetched by the Dashboard
       // on this screen); only the allocation/expense counts are tips-specific.
