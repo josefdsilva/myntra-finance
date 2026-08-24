@@ -394,19 +394,19 @@ const en = {
   "buckets.color": "Color",
   "buckets.targetType": "Target type",
   "buckets.kindLabel": "Project type",
-  "buckets.kindSavings": "Savings goal",
+  "buckets.kindSavings": "Savings",
   "buckets.kindEmergency": "Emergency fund",
   "buckets.kindInvestment": "Investment",
   "buckets.kindHint": "Helps the coach prioritise: emergency fund first, then invest.",
   "buckets.pctSurplus": "% of monthly surplus",
   "buckets.fixedMonthly": "Fixed € per month",
   "buckets.fixedYearly": "Fixed € per year",
-  "buckets.goalByDate": "Goal € by date",
+  "buckets.goalByDate": "Target € by date",
   "buckets.targetPct": "Target: {value}%",
-  "buckets.goalAmount": "Goal amount (€)",
+  "buckets.goalAmount": "Target amount (€)",
   "buckets.targetAmount": "Target amount (€)",
   "buckets.reachBy": "Reach by",
-  "buckets.reachByHint": "Monthly contribution = goal ÷ months remaining.",
+  "buckets.reachByHint": "Monthly contribution = target ÷ months remaining.",
   "buckets.initialBalance": "Initial funds (optional)",
   "buckets.initialBalanceHint":
     "The money this project already held when you started tracking it. This is a one-time starting point, not the current balance, so set the date it was true.",
@@ -469,7 +469,7 @@ const en = {
   "notif.weeklyDigestDesc":
     "Monday 08:00 (Porto): last-week spending, top items, WoW change, AI outlook.",
   "notif.baselineWarn": "Baseline limit warnings",
-  "notif.baselineWarnDesc": "Alert when the variable pool is at 80% and when it's fully consumed.",
+  "notif.baselineWarnDesc": "Alert when your everyday spending reaches 80% of budget and when it's fully used up.",
   "notif.emergencyWarn": "Emergency pool warnings",
   "notif.emergencyWarnDesc": "Alert when overspend starts eating the monthly surplus (80% & 100%).",
   "notif.iosHint":
@@ -500,7 +500,7 @@ const en = {
     "Under GDPR you can erase your data at any time. These actions are permanent. See our privacy notice for details.",
   "danger.export.title": "Export my data",
   "danger.export.body":
-    "Download a JSON file containing your profile, memberships, and every record from the households you belong to (incomes, fixed costs, buckets, expenses, allocations, notifications). GDPR right to data portability.",
+    "Download a JSON file containing your profile, memberships, and every record from the households you belong to (incomes, fixed costs, projects, expenses, allocations, notifications). GDPR right to data portability.",
   "danger.export.button": "Download JSON",
   "danger.export.busy": "Preparing…",
   "danger.leave.title": "Leave this household",
@@ -509,11 +509,11 @@ const en = {
   "danger.leave.button": "Leave household",
   "danger.leave.confirmTitle": "Leave “{name}”?",
   "danger.leave.confirmBody":
-    "You will lose access to this household's budget, expenses, and buckets. If you are the only owner you must delete the household or promote another owner first.",
+    "You will lose access to this household's budget, expenses, and projects. If you are the only owner you must delete the household or promote another owner first.",
   "danger.leave.confirmAction": "Yes, leave",
   "danger.deleteHh.title": "Delete this household",
   "danger.deleteHh.body":
-    "Permanently erase “{name}” and every associated record — incomes, fixed costs, buckets, expenses, allocations, invitations. This cannot be undone and also affects other members.",
+    "Permanently erase “{name}” and every associated record — incomes, fixed costs, projects, expenses, allocations, invitations. This cannot be undone and also affects other members.",
   "danger.deleteHh.button": "Delete household",
   "danger.deleteHh.confirmTitle": "Delete “{name}”?",
   "danger.deleteHh.confirmBody":
@@ -630,7 +630,7 @@ const en = {
   "tips.cta.addEstimates": "Add estimates",
   "tips.cta.manageBuckets": "Manage projects",
   "tips.cta.review": "Review",
-  "tips.cta.adjustGoal": "Adjust goal",
+  "tips.cta.adjustGoal": "Adjust target",
   "tips.noBaseline.title": "Set your monthly baseline budget",
   "tips.noBaseline.detail": "Without a baseline we can't compute your safe-to-spend or surplus.",
   "tips.noBaseline.chat":
@@ -641,9 +641,9 @@ const en = {
     "I haven't recorded any income sources. What should I include and how do I estimate monthly amounts for variable income?",
   "tips.noBuckets.title": "Create your first savings project",
   "tips.noBuckets.detail":
-    "Buckets turn surplus into concrete goals (emergency fund, holiday, house…). The earlier the better.",
+    "Projects turn surplus into concrete targets (emergency fund, holiday, house…). The earlier the better.",
   "tips.noBuckets.chat":
-    "I have no savings buckets yet. Given my situation, which buckets should I create first and how much should I aim for in each?",
+    "I have no savings projects yet. Given my situation, which projects should I create first and how much should I aim for in each?",
   "tips.singleIncome.title": "All your income comes from a single source",
   "tips.singleIncome.detail":
     '"{label}" covers 100% of household income ({income}/mo). A job loss or reduction would eliminate all cash flow — building a larger emergency fund and diversifying income reduces this risk.',
@@ -683,9 +683,9 @@ const en = {
   "tips.bell.openFull": "Open the full list",
   "tips.overAllocated.title": "Project targets exceed surplus by {excess}",
   "tips.overAllocated.detail":
-    "Your monthly bucket targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
+    "Your monthly project targets add up to more than your surplus. Rebalance the targets or increase your baseline gap.",
   "tips.overAllocated.chat":
-    "My bucket targets add up to {allocated} but my surplus is only {surplus}. Which buckets should I trim first?",
+    "My project targets add up to {allocated} but my surplus is only {surplus}. Which projects should I trim first?",
   "tips.unallocatedSurplus.title": "{value} of surplus isn't working yet",
   "tips.unallocatedSurplus.detail":
     "That's money left after your everyday spending, your cushion and what your projects need. Rather than let it drift, put it to work — ask the coach for the best move for your situation, like extra debt payments, topping up your emergency fund, or investing.",
@@ -703,9 +703,9 @@ const en = {
     "My variable spending pace ({pace}/mo) is much higher than my planned estimate ({planned}/mo). Which categories usually drive that gap and how do I close it?",
   "tips.estimatesTooHigh.title": "Your variable estimates may be too high",
   "tips.estimatesTooHigh.detail":
-    "Planned {planned}/month but actual pace is only {actual}. You may be able to redirect the difference into a bucket.",
+    "Planned {planned}/month but actual pace is only {actual}. You may be able to redirect the difference into a project.",
   "tips.estimatesTooHigh.chat":
-    "I've been consistently spending less than my variable estimate. Should I lower the estimate or redirect the difference into a specific bucket?",
+    "I've been consistently spending less than my variable estimate. Should I lower the estimate or redirect the difference into a specific project?",
   "tips.noVariableEstimates.title": "Add variable expense estimates",
   "tips.noVariableEstimates.detail":
     "Estimating groceries, transport, etc. sharpens your baseline and improves the analysis view.",
@@ -713,12 +713,12 @@ const en = {
   "tips.overpace.detail":
     "At {avgDaily}/day average, you'll end the cycle over budget. Slow down or top up from surplus.",
   "tips.overpace.chat":
-    "I'm on pace to overspend my variable pool by about {value} this cycle. What are the fastest levers to slow down without hurting the family?",
+    "I'm on pace to overspend my everyday spending budget by about {value} this cycle. What are the fastest levers to slow down without hurting the family?",
   "tips.noEmergency.title": "No dedicated emergency fund",
   "tips.noEmergency.detail":
-    "You don't have a bucket earmarked for emergencies. Renaming or repurposing an existing bucket (not adding new money) gives that safety net a clear home — a common target is 3–6× monthly baseline ({low}–{high}).",
+    "You don't have a project earmarked for emergencies. Renaming or repurposing an existing project (not adding new money) gives that safety net a clear home — a common target is 3–6× monthly baseline ({low}–{high}).",
   "tips.noEmergency.chat":
-    "I don't have a dedicated emergency fund bucket. How large should it be for a family of four in Portugal, and how should I fund it without hurting my other goals?",
+    "I don't have a dedicated emergency fund project. How large should it be for a family of four in Portugal, and how should I fund it without hurting my other projects?",
   "tips.overInvest.title": "Emergency fund is thin",
   "tips.overInvest.detail":
     "You're adding to investments while your safety net covers only {months} months of baseline. Topping the emergency fund toward {target} usually comes first — investments shouldn't be your fallback for a rainy day.",
@@ -729,29 +729,29 @@ const en = {
     "Your emergency fund looks healthy and about {surplus}/mo of surplus is sitting idle. Once any high-interest debt is cleared, investing it could grow your money over the long term.",
   "tips.underInvest.chat":
     "My emergency fund is set and I have surplus left over. How should I start investing it?",
-  "tips.goalClose.title": 'Goal "{name}" deadline is close',
+  "tips.goalClose.title": 'Project "{name}" deadline is close',
   "tips.goalClose.detail": "{months} months left — check whether the target is reachable.",
   "tips.goalClose.chat":
-    'My goal "{name}" is due in {months} months. Is it still realistic given my surplus, and what should I do if it isn\'t?',
-  "tips.goalUnrealistic.title": 'Goal "{name}" may be unrealistic',
+    'My project "{name}" is due in {months} months. Is it still realistic given my surplus, and what should I do if it isn\'t?',
+  "tips.goalUnrealistic.title": 'Project "{name}" may be unrealistic',
   "tips.goalUnrealistic.detail":
     "Reaching it by {date} needs {required}/mo — {pct}% of your {surplus} surplus. Extend the deadline or lower the target so it doesn't crowd out everything else.",
   "tips.goalUnrealistic.chat":
-    'My goal "{name}" needs {required}/month to hit {target} by {date}, which is {pct}% of my {surplus} surplus. Should I push the deadline back or lower the target, and by how much?',
-  "tips.goalTooEasy.title": 'Goal "{name}" could be more ambitious',
+    'My project "{name}" needs {required}/month to hit {target} by {date}, which is {pct}% of my {surplus} surplus. Should I push the deadline back or lower the target, and by how much?',
+  "tips.goalTooEasy.title": 'Project "{name}" could be more ambitious',
   "tips.goalTooEasy.detail":
     "Only {required}/mo ({pct}% of surplus) is needed to hit {target} by {date}, with {months} months to go. You could pull the deadline in or raise the target instead of leaving surplus idle.",
   "tips.goalTooEasy.chat":
-    'My goal "{name}" only needs {required}/month ({pct}% of my surplus) to hit {target} by {date}. Should I raise the target or move the deadline closer, and to what?',
+    'My project "{name}" only needs {required}/month ({pct}% of my surplus) to hit {target} by {date}. Should I raise the target or move the deadline closer, and to what?',
   "incomeSuggestion.title": "What should we do with {amount}?",
   "incomeSuggestion.description":
-    "A suggested split based on your buckets and debts this cycle. Tweak any row before confirming — anything left over stays in your bank account.",
+    "A suggested split based on your projects and debts this cycle. Tweak any row before confirming — anything left over stays in your bank account.",
   "incomeSuggestion.priorityTitle": "A good order to think about it",
   "incomeSuggestion.priorityBody":
     "Top up your emergency fund first, then pay down high-interest debt, then invest the rest for long-term growth. There's no single right answer — adjust the amounts to fit your situation.",
   "incomeSuggestion.moveToBuckets": "Move to projects",
   "incomeSuggestion.noBuckets":
-    "No buckets set up yet — the full amount will stay in your account. Create buckets on the Allocations page to see suggestions here.",
+    "No projects set up yet — the full amount will stay in your account. Create projects on the Allocations page to see suggestions here.",
   "incomeSuggestion.extraDebtPayment": "Extra debt payment",
   "incomeSuggestion.taeg": "· APR {pct}%",
   "incomeSuggestion.debtNote":
@@ -1046,7 +1046,7 @@ const en = {
   "households.deleteConfirmTitle": 'Delete "{name}"?',
   "households.leaveConfirmTitle": 'Leave "{name}"?',
   "households.deleteConfirmBody":
-    "This permanently deletes the household and every expense, bucket, income and member link inside it. This cannot be undone.",
+    "This permanently deletes the household and every expense, project, income and member link inside it. This cannot be undone.",
   "households.leaveConfirmBody":
     "You will no longer see this household's data. The owner can invite you back later.",
   "households.deleteHousehold": "Delete household",
@@ -1070,7 +1070,7 @@ const en = {
   "cycleReport.movedToBucketsLabel": "Moved to projects",
   "cycleReport.leftOverBody": "{amount} was left over from this cycle",
   "cycleReport.leftOverHint":
-    "Decide where it should go — buckets, debt, or keep it in the account.",
+    "Decide where it should go — projects, debt, or keep it in the account.",
   "cycleReport.decideWhatToDo": "Decide what to do with it",
   "cycleReport.wentWellTitle": "What went well · areas to improve",
   "cycleReport.wentWellDescription":
@@ -1882,19 +1882,19 @@ const pt: Record<BaseKey, string> = {
   "buckets.color": "Cor",
   "buckets.targetType": "Tipo de objetivo",
   "buckets.kindLabel": "Tipo de projeto",
-  "buckets.kindSavings": "Meta de poupança",
+  "buckets.kindSavings": "Poupança",
   "buckets.kindEmergency": "Fundo de emergência",
   "buckets.kindInvestment": "Investimento",
   "buckets.kindHint": "Ajuda o coach a priorizar: primeiro o fundo de emergência, depois investir.",
   "buckets.pctSurplus": "% do excedente mensal",
   "buckets.fixedMonthly": "€ fixo por mês",
   "buckets.fixedYearly": "€ fixo por ano",
-  "buckets.goalByDate": "Objetivo € até uma data",
+  "buckets.goalByDate": "Meta € até uma data",
   "buckets.targetPct": "Objetivo: {value}%",
-  "buckets.goalAmount": "Valor do objetivo (€)",
+  "buckets.goalAmount": "Valor da meta (€)",
   "buckets.targetAmount": "Valor alvo (€)",
   "buckets.reachBy": "Atingir até",
-  "buckets.reachByHint": "Contribuição mensal = objetivo ÷ meses restantes.",
+  "buckets.reachByHint": "Contribuição mensal = meta ÷ meses restantes.",
   "buckets.initialBalance": "Fundos iniciais (opcional)",
   "buckets.initialBalanceHint":
     "O dinheiro que este projeto já tinha quando começou a acompanhá-lo. É um ponto de partida único, não o saldo atual, por isso indique a data em que era verdade.",
@@ -1955,7 +1955,7 @@ const pt: Record<BaseKey, string> = {
     "Segunda 08:00 (Porto): gastos da semana, principais itens, variação semanal, perspetiva IA.",
   "notif.baselineWarn": "Avisos de limite da base",
   "notif.baselineWarnDesc":
-    "Alerta quando o pool variável atinge 80% e quando está totalmente consumido.",
+    "Alerta quando os gastos do dia a dia atingem 80% do orçamento e quando estão totalmente esgotados.",
   "notif.emergencyWarn": "Avisos do pool de emergência",
   "notif.emergencyWarnDesc":
     "Alerta quando o excesso começa a consumir o excedente mensal (80% e 100%).",
@@ -1987,7 +1987,7 @@ const pt: Record<BaseKey, string> = {
     "Ao abrigo do RGPD pode apagar os seus dados a qualquer momento. Estas ações são permanentes. Consulte a nossa política de privacidade.",
   "danger.export.title": "Exportar os meus dados",
   "danger.export.body":
-    "Descarregue um ficheiro JSON com o seu perfil, associações e todos os registos dos agregados a que pertence (rendimentos, custos fixos, baldes, despesas, alocações, notificações). Direito RGPD à portabilidade.",
+    "Descarregue um ficheiro JSON com o seu perfil, associações e todos os registos dos agregados a que pertence (rendimentos, custos fixos, projetos, despesas, alocações, notificações). Direito RGPD à portabilidade.",
   "danger.export.button": "Descarregar JSON",
   "danger.export.busy": "A preparar…",
   "danger.leave.title": "Sair deste agregado",
@@ -1996,11 +1996,11 @@ const pt: Record<BaseKey, string> = {
   "danger.leave.button": "Sair do agregado",
   "danger.leave.confirmTitle": "Sair de “{name}”?",
   "danger.leave.confirmBody":
-    "Vai perder acesso ao orçamento, despesas e baldes deste agregado. Se for o único proprietário, tem de eliminar o agregado ou promover outro proprietário primeiro.",
+    "Vai perder acesso ao orçamento, despesas e projetos deste agregado. Se for o único proprietário, tem de eliminar o agregado ou promover outro proprietário primeiro.",
   "danger.leave.confirmAction": "Sim, sair",
   "danger.deleteHh.title": "Eliminar este agregado",
   "danger.deleteHh.body":
-    "Apaga permanentemente “{name}” e todos os registos associados — rendimentos, custos fixos, baldes, despesas, alocações, convites. Não pode ser desfeito e afeta os outros membros.",
+    "Apaga permanentemente “{name}” e todos os registos associados — rendimentos, custos fixos, projetos, despesas, alocações, convites. Não pode ser desfeito e afeta os outros membros.",
   "danger.deleteHh.button": "Eliminar agregado",
   "danger.deleteHh.confirmTitle": "Eliminar “{name}”?",
   "danger.deleteHh.confirmBody":
@@ -2068,7 +2068,7 @@ const pt: Record<BaseKey, string> = {
   "tips.showCountDismissed": "Mostrar {count} dispensados",
   "tips.allGood": "Tudo em ordem — nenhum problema detetado",
   "tips.allAcknowledged": "Todas as sugestões foram reconhecidas neste ciclo",
-  "tips.healthyBody": "O seu orçamento, baldes e ritmo parecem saudáveis neste ciclo.",
+  "tips.healthyBody": "O seu orçamento, projetos e ritmo parecem saudáveis neste ciclo.",
   "tips.dismissedUntilNext": "{count} sugestões dispensadas até ao próximo ciclo.",
   "tips.cta.openSettings": "Abrir definições",
   "tips.cta.openPlan": "Abrir planeamento",
@@ -2117,7 +2117,7 @@ const pt: Record<BaseKey, string> = {
   "tips.cta.addEstimates": "Adicionar estimativas",
   "tips.cta.manageBuckets": "Gerir projetos",
   "tips.cta.review": "Rever",
-  "tips.cta.adjustGoal": "Ajustar objetivo",
+  "tips.cta.adjustGoal": "Ajustar meta",
   "tips.noBaseline.title": "Defina o seu orçamento base mensal",
   "tips.noBaseline.detail":
     "Sem uma base não conseguimos calcular o seu valor seguro para gastar nem o excedente.",
@@ -2125,14 +2125,14 @@ const pt: Record<BaseKey, string> = {
     "Ainda não defini um orçamento base mensal. Como devo decidir uma base razoável tendo em conta o meu rendimento e custos fixos?",
   "tips.noIncome.title": "Adicione o seu rendimento mensal",
   "tips.noIncome.detail":
-    "O rendimento alimenta o excedente, a deteção de salário e as alocações aos baldes.",
+    "O rendimento alimenta o excedente, a deteção de salário e as alocações aos projetos.",
   "tips.noIncome.chat":
     "Ainda não registei nenhuma fonte de rendimento. O que devo incluir e como estimo valores mensais para rendimento variável?",
-  "tips.noBuckets.title": "Crie o seu primeiro balde de poupança",
+  "tips.noBuckets.title": "Crie o seu primeiro projeto de poupança",
   "tips.noBuckets.detail":
-    "Os baldes transformam o excedente em objetivos concretos (fundo de emergência, férias, casa…). Quanto mais cedo, melhor.",
+    "Os projetos transformam o excedente em metas concretas (fundo de emergência, férias, casa…). Quanto mais cedo, melhor.",
   "tips.noBuckets.chat":
-    "Ainda não tenho baldes de poupança. Dada a minha situação, que baldes devo criar primeiro e quanto devo visar em cada um?",
+    "Ainda não tenho projetos de poupança. Dada a minha situação, que projetos devo criar primeiro e quanto devo visar em cada um?",
   "tips.singleIncome.title": "Todo o seu rendimento vem de uma única fonte",
   "tips.singleIncome.detail":
     '"{label}" cobre 100% do rendimento do agregado ({income}/mês). A perda ou redução de emprego eliminaria todo o fluxo de caixa — construir um fundo de emergência maior e diversificar o rendimento reduz este risco.',
@@ -2170,11 +2170,11 @@ const pt: Record<BaseKey, string> = {
   "tips.bell.aria": "Abrir problemas e dicas",
   "tips.bell.empty": "Está tudo em dia — nenhum problema de momento.",
   "tips.bell.openFull": "Abrir a lista completa",
-  "tips.overAllocated.title": "Os objetivos dos baldes excedem o excedente em {excess}",
+  "tips.overAllocated.title": "Os objetivos dos projetos excedem o excedente em {excess}",
   "tips.overAllocated.detail":
-    "Os objetivos mensais dos baldes somam mais do que o seu excedente. Reequilibre os objetivos ou aumente a folga na base.",
+    "Os objetivos mensais dos projetos somam mais do que o seu excedente. Reequilibre os objetivos ou aumente a folga na base.",
   "tips.overAllocated.chat":
-    "Os objetivos dos meus baldes somam {allocated} mas o meu excedente é apenas {surplus}. Que baldes devo reduzir primeiro?",
+    "Os objetivos dos meus projetos somam {allocated} mas o meu excedente é apenas {surplus}. Que projetos devo reduzir primeiro?",
   "tips.unallocatedSurplus.title": "{value} de excedente ainda não está a render",
   "tips.unallocatedSurplus.detail":
     "É dinheiro que sobra depois dos gastos do dia a dia, da tua almofada e do que os teus projetos precisam. Em vez de o deixar parado, põe-no a trabalhar — pede ao coach a melhor jogada para a tua situação, como pagamentos extra de dívida, reforçar o fundo de emergência ou investir.",
@@ -2192,9 +2192,9 @@ const pt: Record<BaseKey, string> = {
     "O meu ritmo de gastos variáveis ({pace}/mês) é muito superior à estimativa planeada ({planned}/mês). Que categorias costumam causar essa diferença e como a fecho?",
   "tips.estimatesTooHigh.title": "As suas estimativas variáveis podem estar altas demais",
   "tips.estimatesTooHigh.detail":
-    "Planeou {planned}/mês mas o ritmo real é apenas {actual}. Poderá redirecionar a diferença para um balde.",
+    "Planeou {planned}/mês mas o ritmo real é apenas {actual}. Poderá redirecionar a diferença para um projeto.",
   "tips.estimatesTooHigh.chat":
-    "Tenho gasto consistentemente menos do que a minha estimativa variável. Devo reduzir a estimativa ou redirecionar a diferença para um balde específico?",
+    "Tenho gasto consistentemente menos do que a minha estimativa variável. Devo reduzir a estimativa ou redirecionar a diferença para um projeto específico?",
   "tips.noVariableEstimates.title": "Adicione estimativas de despesas variáveis",
   "tips.noVariableEstimates.detail":
     "Estimar mercearia, transporte, etc. aprimora a sua base e melhora a vista de análise.",
@@ -2202,12 +2202,12 @@ const pt: Record<BaseKey, string> = {
   "tips.overpace.detail":
     "Com uma média de {avgDaily}/dia, terminará o ciclo acima do orçamento. Abrande ou reforce com o excedente.",
   "tips.overpace.chat":
-    "Estou no ritmo de gastar cerca de {value} a mais do que a minha reserva variável neste ciclo. Quais são as formas mais rápidas de abrandar sem prejudicar a família?",
+    "Estou no ritmo de gastar cerca de {value} a mais do que o meu orçamento do dia a dia neste ciclo. Quais são as formas mais rápidas de abrandar sem prejudicar a família?",
   "tips.noEmergency.title": "Sem fundo de emergência dedicado",
   "tips.noEmergency.detail":
-    "Não tem um balde reservado para emergências. Renomear ou reutilizar um balde existente (sem adicionar dinheiro novo) dá a essa rede de segurança um lugar claro — um objetivo comum é 3–6× a base mensal ({low}–{high}).",
+    "Não tem um projeto reservado para emergências. Renomear ou reutilizar um projeto existente (sem adicionar dinheiro novo) dá a essa rede de segurança um lugar claro — um objetivo comum é 3–6× a base mensal ({low}–{high}).",
   "tips.noEmergency.chat":
-    "Não tenho um balde dedicado a fundo de emergência. Qual deve ser o tamanho para uma família de quatro pessoas em Portugal, e como devo financiá-lo sem prejudicar os meus outros objetivos?",
+    "Não tenho um projeto dedicado a fundo de emergência. Qual deve ser o tamanho para uma família de quatro pessoas em Portugal, e como devo financiá-lo sem prejudicar os meus outros projetos?",
   "tips.overInvest.title": "Fundo de emergência reduzido",
   "tips.overInvest.detail":
     "Está a reforçar investimentos enquanto a sua rede de segurança cobre apenas {months} meses da base. Reforçar o fundo de emergência até {target} costuma vir primeiro — os investimentos não devem ser o recurso para um imprevisto.",
@@ -2218,29 +2218,29 @@ const pt: Record<BaseKey, string> = {
     "O seu fundo de emergência parece saudável e cerca de {surplus}/mês de excedente está parado. Depois de liquidar dívida de juro alto, investi-lo pode fazer crescer o seu dinheiro a longo prazo.",
   "tips.underInvest.chat":
     "O meu fundo de emergência está feito e sobra excedente. Como devo começar a investi-lo?",
-  "tips.goalClose.title": 'O prazo do objetivo "{name}" está próximo',
+  "tips.goalClose.title": 'O prazo do projeto "{name}" está próximo',
   "tips.goalClose.detail": "Faltam {months} meses — verifique se o objetivo é alcançável.",
   "tips.goalClose.chat":
-    'O meu objetivo "{name}" vence em {months} meses. Ainda é realista dado o meu excedente, e o que devo fazer se não for?',
-  "tips.goalUnrealistic.title": 'O objetivo "{name}" pode não ser realista',
+    'O meu projeto "{name}" vence em {months} meses. Ainda é realista dado o meu excedente, e o que devo fazer se não for?',
+  "tips.goalUnrealistic.title": 'O projeto "{name}" pode não ser realista',
   "tips.goalUnrealistic.detail":
     "Alcançá-lo até {date} exige {required}/mês — {pct}% do seu excedente de {surplus}. Prolongue o prazo ou reduza o objetivo para não sufocar tudo o resto.",
   "tips.goalUnrealistic.chat":
-    'O meu objetivo "{name}" precisa de {required}/mês para atingir {target} até {date}, o que é {pct}% do meu excedente de {surplus}. Devo adiar o prazo ou reduzir o objetivo, e em quanto?',
-  "tips.goalTooEasy.title": 'O objetivo "{name}" podia ser mais ambicioso',
+    'O meu projeto "{name}" precisa de {required}/mês para atingir {target} até {date}, o que é {pct}% do meu excedente de {surplus}. Devo adiar o prazo ou reduzir o objetivo, e em quanto?',
+  "tips.goalTooEasy.title": 'O projeto "{name}" podia ser mais ambicioso',
   "tips.goalTooEasy.detail":
     "São necessários apenas {required}/mês ({pct}% do excedente) para atingir {target} até {date}, com {months} meses pela frente. Podia antecipar o prazo ou aumentar o objetivo em vez de deixar o excedente parado.",
   "tips.goalTooEasy.chat":
-    'O meu objetivo "{name}" só precisa de {required}/mês ({pct}% do meu excedente) para atingir {target} até {date}. Devo aumentar o objetivo ou aproximar o prazo, e para que valor?',
+    'O meu projeto "{name}" só precisa de {required}/mês ({pct}% do meu excedente) para atingir {target} até {date}. Devo aumentar o objetivo ou aproximar o prazo, e para que valor?',
   "incomeSuggestion.title": "O que devemos fazer com {amount}?",
   "incomeSuggestion.description":
-    "Uma divisão sugerida com base nas suas reservas e dívidas deste ciclo. Ajuste qualquer linha antes de confirmar — o que sobrar permanece na sua conta bancária.",
+    "Uma divisão sugerida com base nos seus projetos e dívidas deste ciclo. Ajuste qualquer linha antes de confirmar — o que sobrar permanece na sua conta bancária.",
   "incomeSuggestion.priorityTitle": "Uma boa ordem para pensar nisto",
   "incomeSuggestion.priorityBody":
     "Reforce primeiro o fundo de emergência, depois amortize dívida de juro alto e por fim invista o restante para crescimento a longo prazo. Não há uma resposta única — ajuste os valores à sua situação.",
-  "incomeSuggestion.moveToBuckets": "Mover para reservas",
+  "incomeSuggestion.moveToBuckets": "Mover para projetos",
   "incomeSuggestion.noBuckets":
-    "Ainda não há reservas configuradas — o valor total permanecerá na sua conta. Crie reservas na página de Alocações para ver sugestões aqui.",
+    "Ainda não há projetos configurados — o valor total permanecerá na sua conta. Crie projetos na página de Alocações para ver sugestões aqui.",
   "incomeSuggestion.extraDebtPayment": "Pagamento extra de dívida",
   "incomeSuggestion.taeg": "· TAEG {pct}%",
   "incomeSuggestion.debtNote":
@@ -2254,7 +2254,7 @@ const pt: Record<BaseKey, string> = {
   "incomeSuggestion.applyDistribution": "Aplicar distribuição",
   "incomeSuggestion.noteFromReceived": "De dinheiro recebido",
   "incomeSuggestion.overspendError": "A distribuição excede o valor recebido em {amount}",
-  "incomeSuggestion.partBuckets": "{amount} para reservas",
+  "incomeSuggestion.partBuckets": "{amount} para projetos",
   "incomeSuggestion.partDebt": "{amount} anotado para dívida",
   "incomeSuggestion.partKeep": "{amount} mantido na conta",
   "incomeSuggestion.doneToast": "Concluído — {parts}",
@@ -2560,9 +2560,9 @@ const pt: Record<BaseKey, string> = {
   "cycleReport.fixedBaselineLabel": "Fixo (base)",
   "cycleReport.variableSpentLabel": "Variável gasto",
   "cycleReport.ofPool": "de {pool} disponível",
-  "cycleReport.movedToBucketsLabel": "Movido para reservas",
+  "cycleReport.movedToBucketsLabel": "Movido para projetos",
   "cycleReport.leftOverBody": "Sobraram {amount} neste ciclo",
-  "cycleReport.leftOverHint": "Decida para onde deve ir — reservas, dívida, ou manter na conta.",
+  "cycleReport.leftOverHint": "Decida para onde deve ir — projetos, dívida, ou manter na conta.",
   "cycleReport.decideWhatToDo": "Decidir o que fazer com isso",
   "cycleReport.wentWellTitle": "O que correu bem · áreas a melhorar",
   "cycleReport.wentWellDescription":
@@ -2578,12 +2578,12 @@ const pt: Record<BaseKey, string> = {
   "cycleReport.suggestedHeader": "Sugerido",
   "cycleReport.apply": "Aplicar",
   "cycleReport.inLine": "dentro do previsto",
-  "cycleReport.bucketsTitle": "Reservas",
+  "cycleReport.bucketsTitle": "Projetos",
   "cycleReport.bucketsDescription": "Alocado neste ciclo vs. saldo total atual.",
-  "cycleReport.bucketHeader": "Reserva",
+  "cycleReport.bucketHeader": "Projeto",
   "cycleReport.allocatedThisCycleHeader": "Alocado neste ciclo",
   "cycleReport.currentBalanceHeader": "Saldo atual",
-  "cycleReport.noBucketsConfigured": "Nenhuma reserva configurada.",
+  "cycleReport.noBucketsConfigured": "Nenhum projeto configurado.",
   "cycleReport.notConfirmed": "não confirmado",
   "cycleReport.biggestExpensesTitle": "Maiores despesas neste ciclo",
   "cycleReport.dateHeader": "Data",
@@ -2625,7 +2625,7 @@ const pt: Record<BaseKey, string> = {
   "auth.mobileHeroSubtitle": "Planeiem juntos. Gastem com confiança.",
   "auth.mobileFeature1Title": "Seguro-para-gastar",
   "auth.mobileFeature1Body": "Orçamento diário, calculado automaticamente.",
-  "auth.mobileFeature2Title": "Reservas inteligentes",
+  "auth.mobileFeature2Title": "Projetos inteligentes",
   "auth.mobileFeature2Body": "ETFs, poupanças, objetivos.",
   "auth.mobileFeature3Title": "Captura com IA",
   "auth.mobileFeature3Body": "Voz, texto, recibos.",
@@ -2808,7 +2808,7 @@ const pt: Record<BaseKey, string> = {
   "ana.noActivity": "Ainda não há atividade neste ciclo.",
   "ana.balanceLegend": "Saldo",
   "ana.emptyOverdraft": "Vazio (descoberto abaixo)",
-  "ana.bucketFundingFloor": "Limite de financiamento de reservas {amount} (não gastar abaixo)",
+  "ana.bucketFundingFloor": "Limite de financiamento de projetos {amount} (não gastar abaixo)",
   "ana.subtitle.cycles": "Últimos {n} ciclos salariais · ",
   "ana.subtitle.cycle": "Último ciclo salarial · ",
   "ana.subtitle.range": "{start} → {end} · {n} despesas",
@@ -3367,7 +3367,7 @@ const es: Record<BaseKey, string> = {
   "buckets.color": "Color",
   "buckets.targetType": "Tipo de objetivo",
   "buckets.kindLabel": "Tipo de proyecto",
-  "buckets.kindSavings": "Meta de ahorro",
+  "buckets.kindSavings": "Ahorro",
   "buckets.kindEmergency": "Fondo de emergencia",
   "buckets.kindInvestment": "Inversión",
   "buckets.kindHint": "Ayuda al coach a priorizar: primero el fondo de emergencia, luego invertir.",
@@ -3376,7 +3376,7 @@ const es: Record<BaseKey, string> = {
   "buckets.fixedYearly": "€ fijo al año",
   "buckets.goalByDate": "Meta € para una fecha",
   "buckets.targetPct": "Objetivo: {value}%",
-  "buckets.goalAmount": "Importe objetivo (€)",
+  "buckets.goalAmount": "Importe de la meta (€)",
   "buckets.targetAmount": "Importe objetivo (€)",
   "buckets.reachBy": "Alcanzar para",
   "buckets.reachByHint": "Aporte mensual = meta ÷ meses restantes.",
@@ -3439,7 +3439,7 @@ const es: Record<BaseKey, string> = {
   "notif.weeklyDigestDesc":
     "Lunes 08:00 (Porto): gasto de la semana anterior, principales artículos, cambio semanal, perspectiva IA.",
   "notif.baselineWarn": "Avisos de límite de base",
-  "notif.baselineWarnDesc": "Alerta cuando el pool variable llega al 80% y cuando se agota.",
+  "notif.baselineWarnDesc": "Avisa cuando tus gastos diarios llegan al 80% del presupuesto y cuando se agotan.",
   "notif.emergencyWarn": "Avisos del pool de emergencia",
   "notif.emergencyWarnDesc":
     "Alerta cuando el sobregasto empieza a consumir el excedente mensual (80% y 100%).",
@@ -3471,7 +3471,7 @@ const es: Record<BaseKey, string> = {
     "Según el RGPD puedes borrar tus datos en cualquier momento. Estas acciones son permanentes. Consulta nuestra política de privacidad.",
   "danger.export.title": "Exportar mis datos",
   "danger.export.body":
-    "Descarga un archivo JSON con tu perfil, membresías y todos los registros de los hogares a los que perteneces (ingresos, costes fijos, cubos, gastos, asignaciones, notificaciones). Derecho RGPD a la portabilidad.",
+    "Descarga un archivo JSON con tu perfil, membresías y todos los registros de los hogares a los que perteneces (ingresos, costes fijos, proyectos, gastos, asignaciones, notificaciones). Derecho RGPD a la portabilidad.",
   "danger.export.button": "Descargar JSON",
   "danger.export.busy": "Preparando…",
   "danger.leave.title": "Salir de este hogar",
@@ -3480,11 +3480,11 @@ const es: Record<BaseKey, string> = {
   "danger.leave.button": "Salir del hogar",
   "danger.leave.confirmTitle": "¿Salir de “{name}”?",
   "danger.leave.confirmBody":
-    "Perderás el acceso al presupuesto, gastos y cubos del hogar. Si eres el único propietario debes eliminar el hogar o promover otro propietario primero.",
+    "Perderás el acceso al presupuesto, gastos y proyectos del hogar. Si eres el único propietario debes eliminar el hogar o promover otro propietario primero.",
   "danger.leave.confirmAction": "Sí, salir",
   "danger.deleteHh.title": "Eliminar este hogar",
   "danger.deleteHh.body":
-    "Borra permanentemente “{name}” y todos los registros asociados — ingresos, costes fijos, cubos, gastos, asignaciones, invitaciones. No se puede deshacer y también afecta a otros miembros.",
+    "Borra permanentemente “{name}” y todos los registros asociados — ingresos, costes fijos, proyectos, gastos, asignaciones, invitaciones. No se puede deshacer y también afecta a otros miembros.",
   "danger.deleteHh.button": "Eliminar hogar",
   "danger.deleteHh.confirmTitle": "¿Eliminar “{name}”?",
   "danger.deleteHh.confirmBody":
@@ -3551,7 +3551,7 @@ const es: Record<BaseKey, string> = {
   "tips.showCountDismissed": "Mostrar {count} descartados",
   "tips.allGood": "Todo en orden — no se detectaron problemas",
   "tips.allAcknowledged": "Todas las sugerencias fueron reconocidas en este ciclo",
-  "tips.healthyBody": "Su presupuesto, cubos y ritmo se ven saludables en este ciclo.",
+  "tips.healthyBody": "Su presupuesto, proyectos y ritmo se ven saludables en este ciclo.",
   "tips.dismissedUntilNext": "{count} sugerencias descartadas hasta el próximo ciclo.",
   "tips.cta.openSettings": "Abrir ajustes",
   "tips.cta.openPlan": "Abrir planificación",
@@ -3607,14 +3607,14 @@ const es: Record<BaseKey, string> = {
     "Todavía no he definido un presupuesto base mensual. ¿Cómo debo decidir una base razonable teniendo en cuenta mis ingresos y costos fijos?",
   "tips.noIncome.title": "Añada su ingreso mensual",
   "tips.noIncome.detail":
-    "El ingreso alimenta el excedente, la detección de salario y las asignaciones a los cubos.",
+    "El ingreso alimenta el excedente, la detección de salario y las asignaciones a los proyectos.",
   "tips.noIncome.chat":
     "Todavía no he registrado ninguna fuente de ingresos. ¿Qué debo incluir y cómo estimo montos mensuales para ingresos variables?",
-  "tips.noBuckets.title": "Cree su primer cubo de ahorro",
+  "tips.noBuckets.title": "Cree su primer proyecto de ahorro",
   "tips.noBuckets.detail":
-    "Los cubos convierten el excedente en metas concretas (fondo de emergencia, vacaciones, casa…). Cuanto antes, mejor.",
+    "Los proyectos convierten el excedente en metas concretas (fondo de emergencia, vacaciones, casa…). Cuanto antes, mejor.",
   "tips.noBuckets.chat":
-    "Todavía no tengo cubos de ahorro. Dada mi situación, ¿qué cubos debo crear primero y cuánto debo apuntar en cada uno?",
+    "Todavía no tengo proyectos de ahorro. Dada mi situación, ¿qué proyectos debo crear primero y cuánto debo apuntar en cada uno?",
   "tips.singleIncome.title": "Todo su ingreso proviene de una sola fuente",
   "tips.singleIncome.detail":
     '"{label}" cubre el 100% del ingreso del hogar ({income}/mes). Una pérdida o reducción de empleo eliminaría todo el flujo de caja — construir un fondo de emergencia mayor y diversificar el ingreso reduce este riesgo.',
@@ -3652,11 +3652,11 @@ const es: Record<BaseKey, string> = {
   "tips.bell.aria": "Abrir problemas y consejos",
   "tips.bell.empty": "Todo al día — ningún problema ahora mismo.",
   "tips.bell.openFull": "Abrir la lista completa",
-  "tips.overAllocated.title": "Las metas de los cubos superan el excedente en {excess}",
+  "tips.overAllocated.title": "Las metas de los proyectos superan el excedente en {excess}",
   "tips.overAllocated.detail":
-    "Las metas mensuales de los cubos suman más que su excedente. Reequilibre las metas o aumente su margen de base.",
+    "Las metas mensuales de los proyectos suman más que su excedente. Reequilibre las metas o aumente su margen de base.",
   "tips.overAllocated.chat":
-    "Las metas de mis cubos suman {allocated} pero mi excedente es solo {surplus}. ¿Qué cubos debo reducir primero?",
+    "Las metas de mis proyectos suman {allocated} pero mi excedente es solo {surplus}. ¿Qué proyectos debo reducir primero?",
   "tips.unallocatedSurplus.title": "{value} de excedente aún no está trabajando",
   "tips.unallocatedSurplus.detail":
     "Es dinero que queda después del gasto del día a día, tu colchón y lo que necesitan tus proyectos. En vez de dejarlo parado, ponlo a trabajar — pide al coach la mejor jugada para tu situación, como pagos extra de deuda, reforzar el fondo de emergencia o invertir.",
@@ -3674,9 +3674,9 @@ const es: Record<BaseKey, string> = {
     "Mi ritmo de gasto variable ({pace}/mes) es mucho mayor que mi estimación planeada ({planned}/mes). ¿Qué categorías suelen causar esa diferencia y cómo la cierro?",
   "tips.estimatesTooHigh.title": "Sus estimaciones variables pueden ser demasiado altas",
   "tips.estimatesTooHigh.detail":
-    "Planeó {planned}/mes pero el ritmo real es solo {actual}. Podría redirigir la diferencia a un cubo.",
+    "Planeó {planned}/mes pero el ritmo real es solo {actual}. Podría redirigir la diferencia a un proyecto.",
   "tips.estimatesTooHigh.chat":
-    "He estado gastando consistentemente menos que mi estimación variable. ¿Debo reducir la estimación o redirigir la diferencia a un cubo específico?",
+    "He estado gastando consistentemente menos que mi estimación variable. ¿Debo reducir la estimación o redirigir la diferencia a un proyecto específico?",
   "tips.noVariableEstimates.title": "Añada estimaciones de gastos variables",
   "tips.noVariableEstimates.detail":
     "Estimar comestibles, transporte, etc. afina su base y mejora la vista de análisis.",
@@ -3684,12 +3684,12 @@ const es: Record<BaseKey, string> = {
   "tips.overpace.detail":
     "Con un promedio de {avgDaily}/día, terminará el ciclo por encima del presupuesto. Reduzca el ritmo o refuerce con el excedente.",
   "tips.overpace.chat":
-    "Estoy en ritmo de gastar unos {value} de más de mi fondo variable en este ciclo. ¿Cuáles son las formas más rápidas de reducir el ritmo sin perjudicar a la familia?",
+    "Estoy en ritmo de gastar unos {value} de más de mi presupuesto de gastos diarios en este ciclo. ¿Cuáles son las formas más rápidas de reducir el ritmo sin perjudicar a la familia?",
   "tips.noEmergency.title": "Sin fondo de emergencia dedicado",
   "tips.noEmergency.detail":
-    "No tiene un cubo reservado para emergencias. Renombrar o reutilizar un cubo existente (sin añadir dinero nuevo) le da a esa red de seguridad un lugar claro — un objetivo común es 3–6× la base mensual ({low}–{high}).",
+    "No tiene un proyecto reservado para emergencias. Renombrar o reutilizar un proyecto existente (sin añadir dinero nuevo) le da a esa red de seguridad un lugar claro — un objetivo común es 3–6× la base mensual ({low}–{high}).",
   "tips.noEmergency.chat":
-    "No tengo un cubo dedicado a fondo de emergencia. ¿Qué tamaño debería tener para una familia de cuatro en Portugal, y cómo debería financiarlo sin perjudicar mis otras metas?",
+    "No tengo un proyecto dedicado a fondo de emergencia. ¿Qué tamaño debería tener para una familia de cuatro en Portugal, y cómo debería financiarlo sin perjudicar mis otros proyectos?",
   "tips.overInvest.title": "Fondo de emergencia escaso",
   "tips.overInvest.detail":
     "Estás aportando a inversiones mientras tu red de seguridad cubre solo {months} meses de la base. Reforzar el fondo de emergencia hasta {target} suele ir primero — las inversiones no deberían ser tu recurso ante un imprevisto.",
@@ -3700,29 +3700,29 @@ const es: Record<BaseKey, string> = {
     "Tu fondo de emergencia parece saludable y unos {surplus}/mes de excedente están parados. Tras saldar la deuda de interés alto, invertirlo podría hacer crecer tu dinero a largo plazo.",
   "tips.underInvest.chat":
     "Mi fondo de emergencia está listo y me sobra excedente. ¿Cómo debería empezar a invertirlo?",
-  "tips.goalClose.title": 'El plazo de la meta "{name}" está cerca',
+  "tips.goalClose.title": 'El plazo del proyecto "{name}" está cerca',
   "tips.goalClose.detail": "Quedan {months} meses — verifique si la meta es alcanzable.",
   "tips.goalClose.chat":
-    'Mi meta "{name}" vence en {months} meses. ¿Sigue siendo realista dado mi excedente, y qué debo hacer si no lo es?',
-  "tips.goalUnrealistic.title": 'La meta "{name}" puede no ser realista',
+    'Mi proyecto "{name}" vence en {months} meses. ¿Sigue siendo realista dado mi excedente, y qué debo hacer si no lo es?',
+  "tips.goalUnrealistic.title": 'El proyecto "{name}" puede no ser realista',
   "tips.goalUnrealistic.detail":
     "Alcanzarla para {date} requiere {required}/mes — {pct}% de su excedente de {surplus}. Amplíe el plazo o reduzca la meta para que no desplace todo lo demás.",
   "tips.goalUnrealistic.chat":
-    'Mi meta "{name}" necesita {required}/mes para alcanzar {target} para {date}, que es {pct}% de mi excedente de {surplus}. ¿Debo retrasar el plazo o reducir la meta, y en cuánto?',
-  "tips.goalTooEasy.title": 'La meta "{name}" podría ser más ambiciosa',
+    'Mi proyecto "{name}" necesita {required}/mes para alcanzar {target} para {date}, que es {pct}% de mi excedente de {surplus}. ¿Debo retrasar el plazo o reducir la meta, y en cuánto?',
+  "tips.goalTooEasy.title": 'El proyecto "{name}" podría ser más ambicioso',
   "tips.goalTooEasy.detail":
     "Solo se necesitan {required}/mes ({pct}% del excedente) para alcanzar {target} para {date}, con {months} meses por delante. Podría adelantar el plazo o aumentar la meta en lugar de dejar el excedente inactivo.",
   "tips.goalTooEasy.chat":
-    'Mi meta "{name}" solo necesita {required}/mes ({pct}% de mi excedente) para alcanzar {target} para {date}. ¿Debo aumentar la meta o adelantar el plazo, y a qué valor?',
+    'Mi proyecto "{name}" solo necesita {required}/mes ({pct}% de mi excedente) para alcanzar {target} para {date}. ¿Debo aumentar la meta o adelantar el plazo, y a qué valor?',
   "incomeSuggestion.title": "¿Qué deberíamos hacer con {amount}?",
   "incomeSuggestion.description":
-    "Una distribución sugerida según tus reservas y deudas de este ciclo. Ajusta cualquier fila antes de confirmar — lo que sobre permanecerá en tu cuenta bancaria.",
+    "Una distribución sugerida según tus proyectos y deudas de este ciclo. Ajusta cualquier fila antes de confirmar — lo que sobre permanecerá en tu cuenta bancaria.",
   "incomeSuggestion.priorityTitle": "Un buen orden para pensarlo",
   "incomeSuggestion.priorityBody":
     "Refuerza primero el fondo de emergencia, luego amortiza la deuda de interés alto y por último invierte el resto para crecimiento a largo plazo. No hay una única respuesta correcta — ajusta los importes a tu situación.",
-  "incomeSuggestion.moveToBuckets": "Mover a reservas",
+  "incomeSuggestion.moveToBuckets": "Mover a proyectos",
   "incomeSuggestion.noBuckets":
-    "Aún no hay reservas configuradas — el monto total permanecerá en tu cuenta. Crea reservas en la página de Asignaciones para ver sugerencias aquí.",
+    "Aún no hay proyectos configurados — el monto total permanecerá en tu cuenta. Crea proyectos en la página de Asignaciones para ver sugerencias aquí.",
   "incomeSuggestion.extraDebtPayment": "Pago extra de deuda",
   "incomeSuggestion.taeg": "· TAE {pct}%",
   "incomeSuggestion.debtNote":
@@ -3736,7 +3736,7 @@ const es: Record<BaseKey, string> = {
   "incomeSuggestion.applyDistribution": "Aplicar distribución",
   "incomeSuggestion.noteFromReceived": "De dinero recibido",
   "incomeSuggestion.overspendError": "La distribución supera el monto recibido en {amount}",
-  "incomeSuggestion.partBuckets": "{amount} a reservas",
+  "incomeSuggestion.partBuckets": "{amount} a proyectos",
   "incomeSuggestion.partDebt": "{amount} anotado para deuda",
   "incomeSuggestion.partKeep": "{amount} mantenido en la cuenta",
   "incomeSuggestion.doneToast": "Listo — {parts}",
@@ -4043,10 +4043,10 @@ const es: Record<BaseKey, string> = {
   "cycleReport.fixedBaselineLabel": "Fijo (base)",
   "cycleReport.variableSpentLabel": "Variable gastado",
   "cycleReport.ofPool": "de {pool} disponible",
-  "cycleReport.movedToBucketsLabel": "Movido a reservas",
+  "cycleReport.movedToBucketsLabel": "Movido a proyectos",
   "cycleReport.leftOverBody": "Sobraron {amount} en este ciclo",
   "cycleReport.leftOverHint":
-    "Decide adónde debería ir — reservas, deuda, o mantenerlo en la cuenta.",
+    "Decide adónde debería ir — proyectos, deuda, o mantenerlo en la cuenta.",
   "cycleReport.decideWhatToDo": "Decidir qué hacer con ello",
   "cycleReport.wentWellTitle": "Qué salió bien · áreas a mejorar",
   "cycleReport.wentWellDescription":
@@ -4062,12 +4062,12 @@ const es: Record<BaseKey, string> = {
   "cycleReport.suggestedHeader": "Sugerido",
   "cycleReport.apply": "Aplicar",
   "cycleReport.inLine": "dentro de lo previsto",
-  "cycleReport.bucketsTitle": "Reservas",
+  "cycleReport.bucketsTitle": "Proyectos",
   "cycleReport.bucketsDescription": "Asignado en este ciclo vs. saldo total actual.",
-  "cycleReport.bucketHeader": "Reserva",
+  "cycleReport.bucketHeader": "Proyecto",
   "cycleReport.allocatedThisCycleHeader": "Asignado en este ciclo",
   "cycleReport.currentBalanceHeader": "Saldo actual",
-  "cycleReport.noBucketsConfigured": "No hay reservas configuradas.",
+  "cycleReport.noBucketsConfigured": "No hay proyectos configurados.",
   "cycleReport.notConfirmed": "no confirmado",
   "cycleReport.biggestExpensesTitle": "Mayores gastos en este ciclo",
   "cycleReport.dateHeader": "Fecha",
@@ -4109,7 +4109,7 @@ const es: Record<BaseKey, string> = {
   "auth.mobileHeroSubtitle": "Planificad juntos. Gastad con confianza.",
   "auth.mobileFeature1Title": "Seguro para gastar",
   "auth.mobileFeature1Body": "Presupuesto diario, calculado automáticamente.",
-  "auth.mobileFeature2Title": "Reservas inteligentes",
+  "auth.mobileFeature2Title": "Proyectos inteligentes",
   "auth.mobileFeature2Body": "ETFs, ahorros, metas.",
   "auth.mobileFeature3Title": "Captura con IA",
   "auth.mobileFeature3Body": "Voz, texto, recibos.",
@@ -4292,7 +4292,7 @@ const es: Record<BaseKey, string> = {
   "ana.noActivity": "Aún no hay actividad en este ciclo.",
   "ana.balanceLegend": "Saldo",
   "ana.emptyOverdraft": "Vacío (descubierto abajo)",
-  "ana.bucketFundingFloor": "Límite de financiación de reservas {amount} (no gastar por debajo)",
+  "ana.bucketFundingFloor": "Límite de financiación de proyectos {amount} (no gastar por debajo)",
   "ana.subtitle.cycles": "Últimos {n} ciclos · ",
   "ana.subtitle.cycle": "Último ciclo · ",
   "ana.subtitle.range": "{start} → {end} · {n} gastos",
@@ -4852,7 +4852,7 @@ const de: Record<BaseKey, string> = {
   "buckets.color": "Farbe",
   "buckets.targetType": "Zielart",
   "buckets.kindLabel": "Projektart",
-  "buckets.kindSavings": "Sparziel",
+  "buckets.kindSavings": "Sparen",
   "buckets.kindEmergency": "Notgroschen",
   "buckets.kindInvestment": "Investition",
   "buckets.kindHint": "Hilft dem Coach zu priorisieren: erst der Notgroschen, dann investieren.",
@@ -4925,7 +4925,7 @@ const de: Record<BaseKey, string> = {
     "Montag 08:00 (Porto): Ausgaben der letzten Woche, Top-Posten, WoW-Änderung, KI-Ausblick.",
   "notif.baselineWarn": "Basis-Warnungen",
   "notif.baselineWarnDesc":
-    "Warnung, wenn der variable Pool 80% erreicht und vollständig verbraucht ist.",
+    "Warnung, wenn deine Alltagsausgaben 80% des Budgets erreichen und vollständig verbraucht sind.",
   "notif.emergencyWarn": "Notfall-Pool-Warnungen",
   "notif.emergencyWarnDesc":
     "Warnung, wenn Überziehungen den monatlichen Überschuss aufzehren (80% & 100%).",
@@ -4957,7 +4957,7 @@ const de: Record<BaseKey, string> = {
     "Nach DSGVO kannst du deine Daten jederzeit löschen. Diese Aktionen sind endgültig. Details in unserer Datenschutzerklärung.",
   "danger.export.title": "Meine Daten exportieren",
   "danger.export.body":
-    "Lade eine JSON-Datei mit deinem Profil, Mitgliedschaften und allen Datensätzen der Haushalte herunter, in denen du bist (Einkommen, Fixkosten, Töpfe, Ausgaben, Zuweisungen, Benachrichtigungen). DSGVO-Recht auf Datenübertragbarkeit.",
+    "Lade eine JSON-Datei mit deinem Profil, Mitgliedschaften und allen Datensätzen der Haushalte herunter, in denen du bist (Einkommen, Fixkosten, Projekte, Ausgaben, Zuweisungen, Benachrichtigungen). DSGVO-Recht auf Datenübertragbarkeit.",
   "danger.export.button": "JSON herunterladen",
   "danger.export.busy": "Wird vorbereitet…",
   "danger.leave.title": "Diesen Haushalt verlassen",
@@ -4966,11 +4966,11 @@ const de: Record<BaseKey, string> = {
   "danger.leave.button": "Haushalt verlassen",
   "danger.leave.confirmTitle": "„{name}“ verlassen?",
   "danger.leave.confirmBody":
-    "Du verlierst den Zugriff auf Budget, Ausgaben und Töpfe. Bist du einziger Eigentümer, musst du zuerst den Haushalt löschen oder einen anderen Eigentümer ernennen.",
+    "Du verlierst den Zugriff auf Budget, Ausgaben und Projekte. Bist du einziger Eigentümer, musst du zuerst den Haushalt löschen oder einen anderen Eigentümer ernennen.",
   "danger.leave.confirmAction": "Ja, verlassen",
   "danger.deleteHh.title": "Diesen Haushalt löschen",
   "danger.deleteHh.body":
-    "Löscht „{name}“ und alle zugehörigen Datensätze dauerhaft — Einkommen, Fixkosten, Töpfe, Ausgaben, Zuweisungen, Einladungen. Nicht rückgängig zu machen und betrifft auch andere Mitglieder.",
+    "Löscht „{name}“ und alle zugehörigen Datensätze dauerhaft — Einkommen, Fixkosten, Projekte, Ausgaben, Zuweisungen, Einladungen. Nicht rückgängig zu machen und betrifft auch andere Mitglieder.",
   "danger.deleteHh.button": "Haushalt löschen",
   "danger.deleteHh.confirmTitle": "„{name}“ löschen?",
   "danger.deleteHh.confirmBody":
@@ -5037,7 +5037,7 @@ const de: Record<BaseKey, string> = {
   "tips.showCountDismissed": "{count} verworfene anzeigen",
   "tips.allGood": "Alles gut — keine Probleme erkannt",
   "tips.allAcknowledged": "Alle Tipps für diesen Zyklus bestätigt",
-  "tips.healthyBody": "Ihr Budget, Ihre Töpfe und Ihr Tempo sehen in diesem Zyklus gesund aus.",
+  "tips.healthyBody": "Ihr Budget, Ihre Projekte und Ihr Tempo sehen in diesem Zyklus gesund aus.",
   "tips.dismissedUntilNext": "{count} Tipps bis zum nächsten Zyklus ausgeblendet.",
   "tips.cta.openSettings": "Einstellungen öffnen",
   "tips.cta.openPlan": "Planung öffnen",
@@ -5094,14 +5094,14 @@ const de: Record<BaseKey, string> = {
     "Ich habe noch kein monatliches Grundbudget festgelegt. Wie sollte ich angesichts meines Einkommens und meiner Fixkosten ein angemessenes Grundbudget bestimmen?",
   "tips.noIncome.title": "Fügen Sie Ihr monatliches Einkommen hinzu",
   "tips.noIncome.detail":
-    "Das Einkommen bestimmt den Überschuss, die Gehaltserkennung und die Topf-Zuweisungen.",
+    "Das Einkommen bestimmt den Überschuss, die Gehaltserkennung und die Projekt-Zuweisungen.",
   "tips.noIncome.chat":
     "Ich habe noch keine Einkommensquellen erfasst. Was sollte ich einschließen und wie schätze ich monatliche Beträge für variables Einkommen?",
-  "tips.noBuckets.title": "Erstellen Sie Ihren ersten Spartopf",
+  "tips.noBuckets.title": "Erstellen Sie Ihr erstes Sparprojekt",
   "tips.noBuckets.detail":
-    "Töpfe verwandeln Überschuss in konkrete Ziele (Notgroschen, Urlaub, Haus…). Je früher, desto besser.",
+    "Projekte verwandeln Überschuss in konkrete Ziele (Notgroschen, Urlaub, Haus…). Je früher, desto besser.",
   "tips.noBuckets.chat":
-    "Ich habe noch keine Spartöpfe. Welche Töpfe sollte ich angesichts meiner Situation zuerst anlegen und welchen Betrag sollte ich jeweils anstreben?",
+    "Ich habe noch keine Sparprojekte. Welche Projekte sollte ich angesichts meiner Situation zuerst anlegen und welchen Betrag sollte ich jeweils anstreben?",
   "tips.singleIncome.title": "Ihr gesamtes Einkommen stammt aus einer einzigen Quelle",
   "tips.singleIncome.detail":
     '"{label}" deckt 100 % des Haushaltseinkommens ({income}/Monat). Ein Jobverlust oder eine Kürzung würde den gesamten Cashflow eliminieren — ein größerer Notgroschen und diversifiziertes Einkommen verringern dieses Risiko.',
@@ -5139,11 +5139,11 @@ const de: Record<BaseKey, string> = {
   "tips.bell.aria": "Hinweise und Tipps öffnen",
   "tips.bell.empty": "Alles erledigt — aktuell keine Hinweise.",
   "tips.bell.openFull": "Vollständige Liste öffnen",
-  "tips.overAllocated.title": "Die Topfziele übersteigen den Überschuss um {excess}",
+  "tips.overAllocated.title": "Die Projektziele übersteigen den Überschuss um {excess}",
   "tips.overAllocated.detail":
-    "Ihre monatlichen Topfziele summieren sich auf mehr als Ihren Überschuss. Balancieren Sie die Ziele neu aus oder vergrößern Sie Ihre Grundbudget-Lücke.",
+    "Ihre monatlichen Projektziele summieren sich auf mehr als Ihren Überschuss. Balancieren Sie die Ziele neu aus oder vergrößern Sie Ihre Grundbudget-Lücke.",
   "tips.overAllocated.chat":
-    "Meine Topfziele summieren sich auf {allocated}, aber mein Überschuss beträgt nur {surplus}. Welche Töpfe sollte ich zuerst kürzen?",
+    "Meine Projektziele summieren sich auf {allocated}, aber mein Überschuss beträgt nur {surplus}. Welche Projekte sollte ich zuerst kürzen?",
   "tips.unallocatedSurplus.title": "{value} Überschuss arbeitet noch nicht",
   "tips.unallocatedSurplus.detail":
     "Das ist Geld, das nach deinen Alltagsausgaben, deinem Puffer und dem Bedarf deiner Projekte übrig bleibt. Lass es nicht liegen, sondern setz es ein — frag den Coach nach dem besten Schritt für deine Situation, etwa zusätzliche Schuldentilgung, den Notgroschen aufstocken oder investieren.",
@@ -5162,9 +5162,9 @@ const de: Record<BaseKey, string> = {
     "Mein Tempo bei variablen Ausgaben ({pace}/Monat) liegt deutlich über meiner geplanten Schätzung ({planned}/Monat). Welche Kategorien verursachen diese Lücke meist, und wie schließe ich sie?",
   "tips.estimatesTooHigh.title": "Ihre variablen Schätzungen könnten zu hoch sein",
   "tips.estimatesTooHigh.detail":
-    "Geplant waren {planned}/Monat, das tatsächliche Tempo liegt aber nur bei {actual}. Sie könnten die Differenz in einen Topf umleiten.",
+    "Geplant waren {planned}/Monat, das tatsächliche Tempo liegt aber nur bei {actual}. Sie könnten die Differenz in ein Projekt umleiten.",
   "tips.estimatesTooHigh.chat":
-    "Ich gebe konsequent weniger aus als meine variable Schätzung. Sollte ich die Schätzung senken oder die Differenz in einen bestimmten Topf umleiten?",
+    "Ich gebe konsequent weniger aus als meine variable Schätzung. Sollte ich die Schätzung senken oder die Differenz in ein bestimmtes Projekt umleiten?",
   "tips.noVariableEstimates.title": "Fügen Sie Schätzungen für variable Ausgaben hinzu",
   "tips.noVariableEstimates.detail":
     "Das Schätzen von Lebensmitteln, Transport usw. verfeinert Ihr Grundbudget und verbessert die Analyseansicht.",
@@ -5172,12 +5172,12 @@ const de: Record<BaseKey, string> = {
   "tips.overpace.detail":
     "Bei einem Durchschnitt von {avgDaily}/Tag werden Sie den Zyklus über dem Budget beenden. Bremsen Sie ab oder gleichen Sie mit dem Überschuss aus.",
   "tips.overpace.chat":
-    "Ich bin auf Kurs, meinen variablen Puffer in diesem Zyklus um etwa {value} zu überschreiten. Was sind die schnellsten Hebel, um zu bremsen, ohne der Familie zu schaden?",
+    "Ich bin auf Kurs, mein Alltagsausgaben-Budget in diesem Zyklus um etwa {value} zu überschreiten. Was sind die schnellsten Hebel, um zu bremsen, ohne der Familie zu schaden?",
   "tips.noEmergency.title": "Kein eigener Notgroschen",
   "tips.noEmergency.detail":
-    "Sie haben keinen Topf für Notfälle reserviert. Einen bestehenden Topf umzubenennen oder umzuwidmen (ohne neues Geld hinzuzufügen) gibt diesem Sicherheitsnetz einen klaren Platz — ein üblicher Zielwert ist das 3- bis 6-Fache des monatlichen Grundbudgets ({low}–{high}).",
+    "Sie haben kein Projekt für Notfälle reserviert. Ein bestehendes Projekt umzubenennen oder umzuwidmen (ohne neues Geld hinzuzufügen) gibt diesem Sicherheitsnetz einen klaren Platz — ein üblicher Zielwert ist das 3- bis 6-Fache des monatlichen Grundbudgets ({low}–{high}).",
   "tips.noEmergency.chat":
-    "Ich habe keinen eigenen Notgroschen-Topf. Wie groß sollte er für eine vierköpfige Familie in Portugal sein, und wie sollte ich ihn finanzieren, ohne meine anderen Ziele zu beeinträchtigen?",
+    "Ich habe kein eigenes Notgroschen-Projekt. Wie groß sollte er für eine vierköpfige Familie in Portugal sein, und wie sollte ich ihn finanzieren, ohne meine anderen Projekte zu beeinträchtigen?",
   "tips.overInvest.title": "Notgroschen ist knapp",
   "tips.overInvest.detail":
     "Du investierst, während dein Sicherheitspolster nur {months} Monate der Basis abdeckt. Den Notgroschen bis {target} aufzufüllen geht meist vor — Investitionen sollten nicht dein Rückgriff für einen Notfall sein.",
@@ -5188,29 +5188,29 @@ const de: Record<BaseKey, string> = {
     "Dein Notgroschen wirkt gesund und rund {surplus}/Monat Überschuss liegt ungenutzt. Sobald hochverzinste Schulden getilgt sind, könnte investieren dein Geld langfristig wachsen lassen.",
   "tips.underInvest.chat":
     "Mein Notgroschen steht und ich habe Überschuss übrig. Wie sollte ich mit dem Investieren beginnen?",
-  "tips.goalClose.title": 'Die Frist für das Ziel "{name}" naht',
+  "tips.goalClose.title": 'Die Frist für das Projekt "{name}" naht',
   "tips.goalClose.detail": "Noch {months} Monate — prüfen Sie, ob das Ziel erreichbar ist.",
   "tips.goalClose.chat":
-    'Mein Ziel "{name}" ist in {months} Monaten fällig. Ist es angesichts meines Überschusses noch realistisch, und was sollte ich tun, wenn nicht?',
-  "tips.goalUnrealistic.title": 'Ziel "{name}" könnte unrealistisch sein',
+    'Mein Projekt "{name}" ist in {months} Monaten fällig. Ist es angesichts meines Überschusses noch realistisch, und was sollte ich tun, wenn nicht?',
+  "tips.goalUnrealistic.title": 'Projekt "{name}" könnte unrealistisch sein',
   "tips.goalUnrealistic.detail":
     "Um es bis {date} zu erreichen, sind {required}/Monat nötig — {pct}% Ihres Überschusses von {surplus}. Verlängern Sie die Frist oder senken Sie das Ziel, damit es nicht alles andere verdrängt.",
   "tips.goalUnrealistic.chat":
-    'Mein Ziel "{name}" benötigt {required}/Monat, um {target} bis {date} zu erreichen — das sind {pct}% meines Überschusses von {surplus}. Sollte ich die Frist verschieben oder das Ziel senken, und um wie viel?',
-  "tips.goalTooEasy.title": 'Ziel "{name}" könnte ehrgeiziger sein',
+    'Mein Projekt "{name}" benötigt {required}/Monat, um {target} bis {date} zu erreichen — das sind {pct}% meines Überschusses von {surplus}. Sollte ich die Frist verschieben oder das Ziel senken, und um wie viel?',
+  "tips.goalTooEasy.title": 'Projekt "{name}" könnte ehrgeiziger sein',
   "tips.goalTooEasy.detail":
     "Es werden nur {required}/Monat ({pct}% des Überschusses) benötigt, um {target} bis {date} zu erreichen, bei noch {months} Monaten Zeit. Sie könnten die Frist vorziehen oder das Ziel erhöhen, statt den Überschuss ungenutzt zu lassen.",
   "tips.goalTooEasy.chat":
-    'Mein Ziel "{name}" benötigt nur {required}/Monat ({pct}% meines Überschusses), um {target} bis {date} zu erreichen. Sollte ich das Ziel erhöhen oder die Frist vorziehen, und auf welchen Wert?',
+    'Mein Projekt "{name}" benötigt nur {required}/Monat ({pct}% meines Überschusses), um {target} bis {date} zu erreichen. Sollte ich das Ziel erhöhen oder die Frist vorziehen, und auf welchen Wert?',
   "incomeSuggestion.title": "Was sollen wir mit {amount} tun?",
   "incomeSuggestion.description":
-    "Ein vorgeschlagener Split basierend auf deinen Töpfen und Schulden in diesem Zyklus. Passe jede Zeile vor der Bestätigung an — alles, was übrig bleibt, verbleibt auf deinem Bankkonto.",
+    "Ein vorgeschlagener Split basierend auf deinen Projekten und Schulden in diesem Zyklus. Passe jede Zeile vor der Bestätigung an — alles, was übrig bleibt, verbleibt auf deinem Bankkonto.",
   "incomeSuggestion.priorityTitle": "Eine gute Reihenfolge dafür",
   "incomeSuggestion.priorityBody":
     "Fülle zuerst den Notgroschen auf, tilge dann hochverzinste Schulden und investiere zuletzt den Rest für langfristiges Wachstum. Es gibt keine einzige richtige Antwort — passe die Beträge an deine Situation an.",
-  "incomeSuggestion.moveToBuckets": "In Töpfe verschieben",
+  "incomeSuggestion.moveToBuckets": "In Projekte verschieben",
   "incomeSuggestion.noBuckets":
-    "Noch keine Töpfe eingerichtet — der gesamte Betrag verbleibt auf deinem Konto. Erstelle Töpfe auf der Zuweisungsseite, um hier Vorschläge zu sehen.",
+    "Noch keine Projekte eingerichtet — der gesamte Betrag verbleibt auf deinem Konto. Erstelle Projekte auf der Zuweisungsseite, um hier Vorschläge zu sehen.",
   "incomeSuggestion.extraDebtPayment": "Zusätzliche Schuldenzahlung",
   "incomeSuggestion.taeg": "· Effektivzins {pct}%",
   "incomeSuggestion.debtNote":
@@ -5224,7 +5224,7 @@ const de: Record<BaseKey, string> = {
   "incomeSuggestion.applyDistribution": "Verteilung anwenden",
   "incomeSuggestion.noteFromReceived": "Von erhaltenem Geld",
   "incomeSuggestion.overspendError": "Die Verteilung übersteigt den erhaltenen Betrag um {amount}",
-  "incomeSuggestion.partBuckets": "{amount} in Töpfe",
+  "incomeSuggestion.partBuckets": "{amount} in Projekte",
   "incomeSuggestion.partDebt": "{amount} für Schulden vermerkt",
   "incomeSuggestion.partKeep": "{amount} auf dem Konto behalten",
   "incomeSuggestion.doneToast": "Fertig — {parts}",
@@ -5510,7 +5510,7 @@ const de: Record<BaseKey, string> = {
   "households.deleteConfirmTitle": '"{name}" löschen?',
   "households.leaveConfirmTitle": '"{name}" verlassen?',
   "households.deleteConfirmBody":
-    "Dies löscht den Haushalt und alle Ausgaben, Töpfe, Einnahmen und Mitgliederverknüpfungen darin dauerhaft. Dies kann nicht rückgängig gemacht werden.",
+    "Dies löscht den Haushalt und alle Ausgaben, Projekte, Einnahmen und Mitgliederverknüpfungen darin dauerhaft. Dies kann nicht rückgängig gemacht werden.",
   "households.leaveConfirmBody":
     "Du siehst die Daten dieses Haushalts nicht mehr. Der Eigentümer kann dich später wieder einladen.",
   "households.deleteHousehold": "Haushalt löschen",
@@ -5532,10 +5532,10 @@ const de: Record<BaseKey, string> = {
   "cycleReport.fixedBaselineLabel": "Fix (Basis)",
   "cycleReport.variableSpentLabel": "Variabel ausgegeben",
   "cycleReport.ofPool": "von {pool} Pool",
-  "cycleReport.movedToBucketsLabel": "In Töpfe verschoben",
+  "cycleReport.movedToBucketsLabel": "In Projekte verschoben",
   "cycleReport.leftOverBody": "{amount} sind aus diesem Zyklus übrig geblieben",
   "cycleReport.leftOverHint":
-    "Entscheide, wohin es gehen soll — Töpfe, Schulden oder auf dem Konto behalten.",
+    "Entscheide, wohin es gehen soll — Projekte, Schulden oder auf dem Konto behalten.",
   "cycleReport.decideWhatToDo": "Entscheiden, was damit geschehen soll",
   "cycleReport.wentWellTitle": "Was gut lief · Verbesserungsbereiche",
   "cycleReport.wentWellDescription":
@@ -5551,12 +5551,12 @@ const de: Record<BaseKey, string> = {
   "cycleReport.suggestedHeader": "Vorgeschlagen",
   "cycleReport.apply": "Anwenden",
   "cycleReport.inLine": "im Rahmen",
-  "cycleReport.bucketsTitle": "Töpfe",
+  "cycleReport.bucketsTitle": "Projekte",
   "cycleReport.bucketsDescription": "Zugewiesen in diesem Zyklus vs. aktueller Gesamtsaldo.",
-  "cycleReport.bucketHeader": "Topf",
+  "cycleReport.bucketHeader": "Projekt",
   "cycleReport.allocatedThisCycleHeader": "Zugewiesen in diesem Zyklus",
   "cycleReport.currentBalanceHeader": "Aktueller Saldo",
-  "cycleReport.noBucketsConfigured": "Keine Töpfe konfiguriert.",
+  "cycleReport.noBucketsConfigured": "Keine Projekte konfiguriert.",
   "cycleReport.notConfirmed": "nicht bestätigt",
   "cycleReport.biggestExpensesTitle": "Größte Ausgaben in diesem Zyklus",
   "cycleReport.dateHeader": "Datum",
@@ -5599,7 +5599,7 @@ const de: Record<BaseKey, string> = {
   "auth.mobileHeroSubtitle": "Gemeinsam planen. Mit Zuversicht ausgeben.",
   "auth.mobileFeature1Title": "Sicher ausgebbar",
   "auth.mobileFeature1Body": "Tagesbudget, automatisch berechnet.",
-  "auth.mobileFeature2Title": "Intelligente Töpfe",
+  "auth.mobileFeature2Title": "Intelligente Projekte",
   "auth.mobileFeature2Body": "ETFs, Ersparnisse, Ziele.",
   "auth.mobileFeature3Title": "KI-Erfassung",
   "auth.mobileFeature3Body": "Sprache, Text, Belege.",
@@ -5784,7 +5784,7 @@ const de: Record<BaseKey, string> = {
   "ana.noActivity": "Noch keine Aktivität in diesem Zyklus.",
   "ana.balanceLegend": "Saldo",
   "ana.emptyOverdraft": "Leer (Überziehung darunter)",
-  "ana.bucketFundingFloor": "Finanzierungsuntergrenze der Töpfe {amount} (nicht darunter ausgeben)",
+  "ana.bucketFundingFloor": "Finanzierungsuntergrenze der Projekte {amount} (nicht darunter ausgeben)",
   "ana.subtitle.cycles": "Letzte {n} Zyklen · ",
   "ana.subtitle.cycle": "Letzter Zyklus · ",
   "ana.subtitle.range": "{start} → {end} · {n} Ausgaben",
@@ -6344,7 +6344,7 @@ const fr: Record<BaseKey, string> = {
   "buckets.color": "Couleur",
   "buckets.targetType": "Type d'objectif",
   "buckets.kindLabel": "Type de projet",
-  "buckets.kindSavings": "Objectif d'épargne",
+  "buckets.kindSavings": "Épargne",
   "buckets.kindEmergency": "Fonds d'urgence",
   "buckets.kindInvestment": "Investissement",
   "buckets.kindHint": "Aide le coach à prioriser : d'abord le fonds d'urgence, puis investir.",
@@ -6417,7 +6417,7 @@ const fr: Record<BaseKey, string> = {
   "notif.weeklyDigestDesc":
     "Lundi 08:00 (Porto) : dépenses de la semaine, principaux postes, évolution S/S, perspective IA.",
   "notif.baselineWarn": "Alertes de limite de base",
-  "notif.baselineWarnDesc": "Alerte quand le pool variable atteint 80% et quand il est épuisé.",
+  "notif.baselineWarnDesc": "Alerte quand vos dépenses du quotidien atteignent 80% du budget et quand elles sont épuisées.",
   "notif.emergencyWarn": "Alertes du pool d'urgence",
   "notif.emergencyWarnDesc": "Alerte quand le dépassement entame l'excédent mensuel (80% et 100%).",
   "notif.iosHint":
@@ -6448,7 +6448,7 @@ const fr: Record<BaseKey, string> = {
     "Selon le RGPD, vous pouvez effacer vos données à tout moment. Ces actions sont définitives. Voir notre politique de confidentialité.",
   "danger.export.title": "Exporter mes données",
   "danger.export.body":
-    "Téléchargez un fichier JSON avec votre profil, adhésions et tous les enregistrements des foyers dont vous faites partie (revenus, coûts fixes, enveloppes, dépenses, répartitions, notifications). Droit RGPD à la portabilité.",
+    "Téléchargez un fichier JSON avec votre profil, adhésions et tous les enregistrements des foyers dont vous faites partie (revenus, coûts fixes, projets, dépenses, répartitions, notifications). Droit RGPD à la portabilité.",
   "danger.export.button": "Télécharger le JSON",
   "danger.export.busy": "Préparation…",
   "danger.leave.title": "Quitter ce foyer",
@@ -6457,11 +6457,11 @@ const fr: Record<BaseKey, string> = {
   "danger.leave.button": "Quitter le foyer",
   "danger.leave.confirmTitle": "Quitter « {name} » ?",
   "danger.leave.confirmBody":
-    "Vous perdrez l'accès au budget, aux dépenses et aux enveloppes. Si vous êtes le seul propriétaire, vous devez d'abord supprimer le foyer ou promouvoir un autre propriétaire.",
+    "Vous perdrez l'accès au budget, aux dépenses et aux projets. Si vous êtes le seul propriétaire, vous devez d'abord supprimer le foyer ou promouvoir un autre propriétaire.",
   "danger.leave.confirmAction": "Oui, quitter",
   "danger.deleteHh.title": "Supprimer ce foyer",
   "danger.deleteHh.body":
-    "Efface définitivement « {name} » et tous les enregistrements associés — revenus, coûts fixes, enveloppes, dépenses, répartitions, invitations. Irréversible et affecte aussi les autres membres.",
+    "Efface définitivement « {name} » et tous les enregistrements associés — revenus, coûts fixes, projets, dépenses, répartitions, invitations. Irréversible et affecte aussi les autres membres.",
   "danger.deleteHh.button": "Supprimer le foyer",
   "danger.deleteHh.confirmTitle": "Supprimer « {name} » ?",
   "danger.deleteHh.confirmBody":
@@ -6529,7 +6529,7 @@ const fr: Record<BaseKey, string> = {
   "tips.showCountDismissed": "Afficher {count} ignorés",
   "tips.allGood": "Tout va bien — aucun problème détecté",
   "tips.allAcknowledged": "Tous les conseils ont été pris en compte pour ce cycle",
-  "tips.healthyBody": "Votre budget, vos paniers et votre rythme semblent sains ce cycle.",
+  "tips.healthyBody": "Votre budget, vos projets et votre rythme semblent sains ce cycle.",
   "tips.dismissedUntilNext": "{count} conseils ignorés jusqu'au prochain cycle.",
   "tips.cta.openSettings": "Ouvrir les paramètres",
   "tips.cta.openPlan": "Ouvrir la planification",
@@ -6576,7 +6576,7 @@ const fr: Record<BaseKey, string> = {
   "tips.cta.reviewEstimates": "Revoir les estimations",
   "tips.cta.adjustEstimates": "Ajuster les estimations",
   "tips.cta.addEstimates": "Ajouter des estimations",
-  "tips.cta.manageBuckets": "Gérer les paniers",
+  "tips.cta.manageBuckets": "Gérer les projets",
   "tips.cta.review": "Revoir",
   "tips.cta.adjustGoal": "Ajuster l'objectif",
   "tips.noBaseline.title": "Définissez votre budget de base mensuel",
@@ -6586,14 +6586,14 @@ const fr: Record<BaseKey, string> = {
     "Je n'ai pas encore défini de budget de base mensuel. Comment devrais-je décider d'une base raisonnable compte tenu de mes revenus et de mes charges fixes ?",
   "tips.noIncome.title": "Ajoutez votre revenu mensuel",
   "tips.noIncome.detail":
-    "Le revenu alimente l'excédent, la détection du salaire et les répartitions vers les paniers.",
+    "Le revenu alimente l'excédent, la détection du salaire et les répartitions vers les projets.",
   "tips.noIncome.chat":
     "Je n'ai enregistré aucune source de revenu. Que dois-je inclure et comment estimer les montants mensuels pour un revenu variable ?",
-  "tips.noBuckets.title": "Créez votre premier panier d'épargne",
+  "tips.noBuckets.title": "Créez votre premier projet d'épargne",
   "tips.noBuckets.detail":
-    "Les paniers transforment l'excédent en objectifs concrets (fonds d'urgence, vacances, maison…). Plus tôt, mieux c'est.",
+    "Les projets transforment l'excédent en objectifs concrets (fonds d'urgence, vacances, maison…). Plus tôt, mieux c'est.",
   "tips.noBuckets.chat":
-    "Je n'ai pas encore de paniers d'épargne. Compte tenu de ma situation, quels paniers devrais-je créer en premier et quel montant viser pour chacun ?",
+    "Je n'ai pas encore de projets d'épargne. Compte tenu de ma situation, quels projets devrais-je créer en premier et quel montant viser pour chacun ?",
   "tips.singleIncome.title": "Tout votre revenu provient d'une seule source",
   "tips.singleIncome.detail":
     "« {label} » couvre 100 % du revenu du foyer ({income}/mois). Une perte ou réduction d'emploi éliminerait tous les flux de trésorerie — constituer un fonds d'urgence plus important et diversifier vos revenus réduit ce risque.",
@@ -6631,11 +6631,11 @@ const fr: Record<BaseKey, string> = {
   "tips.bell.aria": "Ouvrir les problèmes et conseils",
   "tips.bell.empty": "Tout est à jour — aucun problème pour le moment.",
   "tips.bell.openFull": "Ouvrir la liste complète",
-  "tips.overAllocated.title": "Les objectifs des paniers dépassent l'excédent de {excess}",
+  "tips.overAllocated.title": "Les objectifs des projets dépassent l'excédent de {excess}",
   "tips.overAllocated.detail":
-    "Vos objectifs mensuels de paniers dépassent votre excédent. Rééquilibrez les objectifs ou augmentez votre marge de base.",
+    "Vos objectifs mensuels de projets dépassent votre excédent. Rééquilibrez les objectifs ou augmentez votre marge de base.",
   "tips.overAllocated.chat":
-    "Mes objectifs de paniers totalisent {allocated} mais mon excédent n'est que de {surplus}. Quels paniers devrais-je réduire en premier ?",
+    "Mes objectifs de projets totalisent {allocated} mais mon excédent n'est que de {surplus}. Quels projets devrais-je réduire en premier ?",
   "tips.unallocatedSurplus.title": "{value} d'excédent ne travaille pas encore",
   "tips.unallocatedSurplus.detail":
     "C'est l'argent qui reste après tes dépenses courantes, ton coussin et ce dont tes projets ont besoin. Plutôt que de le laisser dormir, fais-le travailler — demande au coach le meilleur choix pour ta situation, comme des remboursements de dette supplémentaires, renforcer le fonds d'urgence ou investir.",
@@ -6653,9 +6653,9 @@ const fr: Record<BaseKey, string> = {
     "Mon rythme de dépenses variables ({pace}/mois) est bien plus élevé que mon estimation prévue ({planned}/mois). Quelles catégories creusent généralement cet écart et comment le combler ?",
   "tips.estimatesTooHigh.title": "Vos estimations variables sont peut-être trop élevées",
   "tips.estimatesTooHigh.detail":
-    "Vous aviez prévu {planned}/mois mais le rythme réel n'est que de {actual}. Vous pourriez rediriger la différence vers un panier.",
+    "Vous aviez prévu {planned}/mois mais le rythme réel n'est que de {actual}. Vous pourriez rediriger la différence vers un projet.",
   "tips.estimatesTooHigh.chat":
-    "Je dépense systématiquement moins que mon estimation variable. Devrais-je réduire l'estimation ou rediriger la différence vers un panier spécifique ?",
+    "Je dépense systématiquement moins que mon estimation variable. Devrais-je réduire l'estimation ou rediriger la différence vers un projet spécifique ?",
   "tips.noVariableEstimates.title": "Ajoutez des estimations de dépenses variables",
   "tips.noVariableEstimates.detail":
     "Estimer l'épicerie, le transport, etc. affine votre base et améliore la vue d'analyse.",
@@ -6663,12 +6663,12 @@ const fr: Record<BaseKey, string> = {
   "tips.overpace.detail":
     "Avec une moyenne de {avgDaily}/jour, vous terminerez le cycle au-delà du budget. Ralentissez ou complétez avec l'excédent.",
   "tips.overpace.chat":
-    "Je suis en voie de dépasser mon enveloppe variable d'environ {value} ce cycle. Quels sont les leviers les plus rapides pour ralentir sans pénaliser la famille ?",
+    "Je suis en voie de dépasser mon budget de dépenses du quotidien d'environ {value} ce cycle. Quels sont les leviers les plus rapides pour ralentir sans pénaliser la famille ?",
   "tips.noEmergency.title": "Aucun fonds d'urgence dédié",
   "tips.noEmergency.detail":
-    "Vous n'avez pas de panier réservé aux urgences. Renommer ou réaffecter un panier existant (sans ajouter de nouvel argent) donne à ce filet de sécurité une place claire — un objectif courant est 3 à 6× la base mensuelle ({low}–{high}).",
+    "Vous n'avez pas de projet réservé aux urgences. Renommer ou réaffecter un projet existant (sans ajouter de nouvel argent) donne à ce filet de sécurité une place claire — un objectif courant est 3 à 6× la base mensuelle ({low}–{high}).",
   "tips.noEmergency.chat":
-    "Je n'ai pas de panier dédié au fonds d'urgence. Quelle taille devrait-il avoir pour une famille de quatre personnes au Portugal, et comment devrais-je le financer sans nuire à mes autres objectifs ?",
+    "Je n'ai pas de projet dédié au fonds d'urgence. Quelle taille devrait-il avoir pour une famille de quatre personnes au Portugal, et comment devrais-je le financer sans nuire à mes autres projets ?",
   "tips.overInvest.title": "Fonds d'urgence trop mince",
   "tips.overInvest.detail":
     "Vous alimentez des investissements alors que votre filet de sécurité ne couvre que {months} mois de la base. Renforcer le fonds d'urgence jusqu'à {target} passe généralement d'abord — les investissements ne devraient pas être votre recours en cas d'imprévu.",
@@ -6679,29 +6679,29 @@ const fr: Record<BaseKey, string> = {
     "Votre fonds d'urgence semble sain et environ {surplus}/mois d'excédent dort. Une fois toute dette à taux élevé remboursée, l'investir pourrait faire croître votre argent à long terme.",
   "tips.underInvest.chat":
     "Mon fonds d'urgence est constitué et il me reste de l'excédent. Comment devrais-je commencer à l'investir ?",
-  "tips.goalClose.title": "L'échéance de l'objectif « {name} » approche",
+  "tips.goalClose.title": "L'échéance du projet « {name} » approche",
   "tips.goalClose.detail": "Il reste {months} mois — vérifiez si l'objectif est atteignable.",
   "tips.goalClose.chat":
-    "Mon objectif « {name} » arrive à échéance dans {months} mois. Est-il toujours réaliste compte tenu de mon excédent, et que dois-je faire si ce n'est pas le cas ?",
-  "tips.goalUnrealistic.title": "L'objectif « {name} » pourrait être irréaliste",
+    "Mon projet « {name} » arrive à échéance dans {months} mois. Est-il toujours réaliste compte tenu de mon excédent, et que dois-je faire si ce n'est pas le cas ?",
+  "tips.goalUnrealistic.title": "Le projet « {name} » pourrait être irréaliste",
   "tips.goalUnrealistic.detail":
     "L'atteindre d'ici {date} nécessite {required}/mois — {pct}% de votre excédent de {surplus}. Prolongez l'échéance ou réduisez l'objectif pour qu'il n'écrase pas tout le reste.",
   "tips.goalUnrealistic.chat":
-    "Mon objectif « {name} » nécessite {required}/mois pour atteindre {target} d'ici {date}, soit {pct}% de mon excédent de {surplus}. Devrais-je reporter l'échéance ou réduire l'objectif, et de combien ?",
-  "tips.goalTooEasy.title": "L'objectif « {name} » pourrait être plus ambitieux",
+    "Mon projet « {name} » nécessite {required}/mois pour atteindre {target} d'ici {date}, soit {pct}% de mon excédent de {surplus}. Devrais-je reporter l'échéance ou réduire l'objectif, et de combien ?",
+  "tips.goalTooEasy.title": "Le projet « {name} » pourrait être plus ambitieux",
   "tips.goalTooEasy.detail":
     "Seuls {required}/mois ({pct}% de l'excédent) sont nécessaires pour atteindre {target} d'ici {date}, avec {months} mois restants. Vous pourriez avancer l'échéance ou augmenter l'objectif plutôt que de laisser l'excédent inactif.",
   "tips.goalTooEasy.chat":
-    "Mon objectif « {name} » ne nécessite que {required}/mois ({pct}% de mon excédent) pour atteindre {target} d'ici {date}. Devrais-je augmenter l'objectif ou rapprocher l'échéance, et à combien ?",
+    "Mon projet « {name} » ne nécessite que {required}/mois ({pct}% de mon excédent) pour atteindre {target} d'ici {date}. Devrais-je augmenter l'objectif ou rapprocher l'échéance, et à combien ?",
   "incomeSuggestion.title": "Que devrions-nous faire de {amount} ?",
   "incomeSuggestion.description":
-    "Une répartition suggérée en fonction de vos réserves et dettes de ce cycle. Ajustez chaque ligne avant de confirmer — ce qui reste restera sur votre compte bancaire.",
+    "Une répartition suggérée en fonction de vos projets et dettes de ce cycle. Ajustez chaque ligne avant de confirmer — ce qui reste restera sur votre compte bancaire.",
   "incomeSuggestion.priorityTitle": "Un bon ordre pour y réfléchir",
   "incomeSuggestion.priorityBody":
     "Renflouez d'abord le fonds d'urgence, remboursez ensuite les dettes à taux élevé, puis investissez le reste pour une croissance à long terme. Il n'y a pas de réponse unique — ajustez les montants à votre situation.",
-  "incomeSuggestion.moveToBuckets": "Transférer vers les réserves",
+  "incomeSuggestion.moveToBuckets": "Transférer vers les projets",
   "incomeSuggestion.noBuckets":
-    "Aucune réserve configurée pour l'instant — le montant total restera sur votre compte. Créez des réserves sur la page Allocations pour voir des suggestions ici.",
+    "Aucun projet configuré pour l'instant — le montant total restera sur votre compte. Créez des projets sur la page Allocations pour voir des suggestions ici.",
   "incomeSuggestion.extraDebtPayment": "Paiement de dette supplémentaire",
   "incomeSuggestion.taeg": "· TAEG {pct}%",
   "incomeSuggestion.debtNote":
@@ -6715,7 +6715,7 @@ const fr: Record<BaseKey, string> = {
   "incomeSuggestion.applyDistribution": "Appliquer la répartition",
   "incomeSuggestion.noteFromReceived": "De l'argent reçu",
   "incomeSuggestion.overspendError": "La répartition dépasse le montant reçu de {amount}",
-  "incomeSuggestion.partBuckets": "{amount} vers les réserves",
+  "incomeSuggestion.partBuckets": "{amount} vers les projets",
   "incomeSuggestion.partDebt": "{amount} noté pour la dette",
   "incomeSuggestion.partKeep": "{amount} conservé sur le compte",
   "incomeSuggestion.doneToast": "Terminé — {parts}",
@@ -7024,10 +7024,10 @@ const fr: Record<BaseKey, string> = {
   "cycleReport.fixedBaselineLabel": "Fixe (base)",
   "cycleReport.variableSpentLabel": "Variable dépensé",
   "cycleReport.ofPool": "sur {pool} disponible",
-  "cycleReport.movedToBucketsLabel": "Transféré vers les réserves",
+  "cycleReport.movedToBucketsLabel": "Transféré vers les projets",
   "cycleReport.leftOverBody": "{amount} restants de ce cycle",
   "cycleReport.leftOverHint":
-    "Décidez où cela doit aller — réserves, dette, ou le conserver sur le compte.",
+    "Décidez où cela doit aller — projets, dette, ou le conserver sur le compte.",
   "cycleReport.decideWhatToDo": "Décider quoi en faire",
   "cycleReport.wentWellTitle": "Ce qui a bien fonctionné · points à améliorer",
   "cycleReport.wentWellDescription":
@@ -7043,12 +7043,12 @@ const fr: Record<BaseKey, string> = {
   "cycleReport.suggestedHeader": "Suggéré",
   "cycleReport.apply": "Appliquer",
   "cycleReport.inLine": "conforme",
-  "cycleReport.bucketsTitle": "Réserves",
+  "cycleReport.bucketsTitle": "Projets",
   "cycleReport.bucketsDescription": "Alloué ce cycle vs. solde total actuel.",
-  "cycleReport.bucketHeader": "Réserve",
+  "cycleReport.bucketHeader": "Projet",
   "cycleReport.allocatedThisCycleHeader": "Alloué ce cycle",
   "cycleReport.currentBalanceHeader": "Solde actuel",
-  "cycleReport.noBucketsConfigured": "Aucune réserve configurée.",
+  "cycleReport.noBucketsConfigured": "Aucun projet configuré.",
   "cycleReport.notConfirmed": "non confirmé",
   "cycleReport.biggestExpensesTitle": "Plus grosses dépenses de ce cycle",
   "cycleReport.dateHeader": "Date",
@@ -7090,7 +7090,7 @@ const fr: Record<BaseKey, string> = {
   "auth.mobileHeroSubtitle": "Planifiez ensemble. Dépensez en toute confiance.",
   "auth.mobileFeature1Title": "Sécurisé à dépenser",
   "auth.mobileFeature1Body": "Budget quotidien, calculé automatiquement.",
-  "auth.mobileFeature2Title": "Réserves intelligentes",
+  "auth.mobileFeature2Title": "Projets intelligents",
   "auth.mobileFeature2Body": "ETF, épargne, objectifs.",
   "auth.mobileFeature3Title": "Saisie IA",
   "auth.mobileFeature3Body": "Voix, texte, reçus.",
@@ -7276,7 +7276,7 @@ const fr: Record<BaseKey, string> = {
   "ana.balanceLegend": "Solde",
   "ana.emptyOverdraft": "Vide (découvert en dessous)",
   "ana.bucketFundingFloor":
-    "Plancher de financement des réserves {amount} (ne pas dépenser en dessous)",
+    "Plancher de financement des projets {amount} (ne pas dépenser en dessous)",
   "ana.subtitle.cycles": "{n} derniers cycles · ",
   "ana.subtitle.cycle": "Dernier cycle · ",
   "ana.subtitle.range": "{start} → {end} · {n} dépenses",
