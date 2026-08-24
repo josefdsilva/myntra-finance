@@ -4888,6 +4888,36 @@ export const ENTRIES = {
     fr: "Déplacer {amount} par cycle vers {bucket} le boucleraient en environ {after} mois.",
   },
   "ratios.redirect.cta": { en: "Adjust allocations", pt: "Ajustar alocações", es: "Ajustar asignaciones", de: "Zuweisungen anpassen", fr: "Ajuster les allocations" },
+  "ratios.room.title": { en: "Essentials: room without giving anything up", pt: "Essenciais: margem sem abdicar de nada", es: "Esenciales: margen sin renunciar a nada", de: "Grundausgaben: Luft, ohne zu verzichten", fr: "Essentiels : de la marge sans rien sacrifier" },
+  "ratios.room.body": {
+    en: "You have to eat — but this cycle {amount} of essential spending went above your own plan. That part could work for your dreams instead.",
+    pt: "Temos de comer — mas neste ciclo {amount} dos gastos essenciais ficaram acima do teu próprio plano. Essa parte poderia trabalhar para os teus sonhos.",
+    es: "Hay que comer — pero este ciclo {amount} del gasto esencial superó tu propio plan. Esa parte podría trabajar para tus sueños.",
+    de: "Essen muss sein — aber in diesem Zyklus lagen {amount} der Grundausgaben über deinem eigenen Plan. Dieser Teil könnte für deine Träume arbeiten.",
+    fr: "Il faut bien manger — mais ce cycle, {amount} de dépenses essentielles ont dépassé votre propre plan. Cette part pourrait servir vos rêves.",
+  },
+  "ratios.valueSpend": {
+    en: "Money serving your values · {amount}",
+    pt: "Dinheiro ao serviço dos teus valores · {amount}",
+    es: "Dinero al servicio de tus valores · {amount}",
+    de: "Geld im Dienst deiner Werte · {amount}",
+    fr: "Argent au service de vos valeurs · {amount}",
+  },
+  "ratios.commitments.hint": {
+    en: "Includes {amount} of recurring commitments that serve your values, like childcare or school.",
+    pt: "Inclui {amount} de compromissos recorrentes que servem os teus valores, como creche ou escola.",
+    es: "Incluye {amount} de compromisos recurrentes que sirven a tus valores, como guardería o colegio.",
+    de: "Enthält {amount} laufende Verpflichtungen für deine Werte, etwa Kita oder Schule.",
+    fr: "Inclut {amount} d'engagements récurrents au service de vos valeurs, comme la crèche ou l'école.",
+  },
+  "align.leaks.hint": {
+    en: "Flexible spending only — essentials are never counted here. Add a label like a child's name so family spending is recognised.",
+    pt: "Só gastos flexíveis — os essenciais nunca contam aqui. Adiciona uma etiqueta (ex.: o nome de um filho) para que os gastos de família sejam reconhecidos.",
+    es: "Solo gasto flexible — los esenciales nunca cuentan aquí. Añade una etiqueta (p. ej. el nombre de un hijo) para que el gasto familiar se reconozca.",
+    de: "Nur flexible Ausgaben — Grundausgaben zählen hier nie. Setze ein Label, z. B. den Namen eines Kindes, damit Familienausgaben erkannt werden.",
+    fr: "Dépenses flexibles uniquement — les essentiels n'y figurent jamais. Ajoutez une étiquette (le prénom d'un enfant) pour que les dépenses familiales soient reconnues.",
+  },
+
 
   // ---- Suggested projects ------------------------------------------------
   "suggest.title": { en: "Projects that fit your values", pt: "Projetos que encaixam nos teus valores", es: "Proyectos que encajan con tus valores", de: "Projekte, die zu deinen Werten passen", fr: "Des projets qui collent à vos valeurs" },
