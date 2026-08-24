@@ -76,17 +76,30 @@ export type ValuesRatios = {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Does this bucket serve one of the household's values? */
+/**
+ * Does this bucket serve one of the household's values?
+ *
+ * Bucket names are rarely literal ("Óscar Savings" is family money, "Savings"
+ * is the safety net), so we map by kind and by household member names too.
+ */
 export function bucketServesValues(
   values: HouseholdValue[],
   b: { name: string; kind?: string | null },
+  opts?: { personNames?: string[] },
 ): boolean {
   if (matchValue(values, b.name)) return true;
-  // An emergency fund always serves "security"; investing buckets serve
-  // "investing" — the names are rarely literal, so map by kind too.
   const keys = values.filter((v) => v.key !== "other").map((v) => v.key);
-  if (b.kind === "emergency" && keys.includes("security")) return true;
+  // Safety net / savings buckets serve "security"; investing buckets serve
+  // "investing"; a bucket named after a household member serves "family".
+  if ((b.kind === "emergency" || b.kind === "savings") && keys.includes("security")) return true;
   if (b.kind === "investment" && keys.includes("investing")) return true;
+  if (keys.includes("family")) {
+    const name = (b.name ?? "").toLowerCase();
+    for (const p of opts?.personNames ?? []) {
+      const n = (p ?? "").trim().toLowerCase();
+      if (n.length >= 2 && name.includes(n)) return true;
+    }
+  }
   return false;
 }
 
