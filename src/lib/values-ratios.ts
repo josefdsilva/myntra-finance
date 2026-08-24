@@ -76,6 +76,14 @@ export type ValuesRatios = {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** Lowercase and strip accents so "Óscar" matches "Oscar". */
+const fold = (s: string | null | undefined) =>
+  (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 /**
  * Does this bucket serve one of the household's values?
  *
