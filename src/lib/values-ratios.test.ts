@@ -78,3 +78,70 @@ describe("valuesRatios", () => {
     expect(bucketServesValues([{ key: "family" }], { name: "ETF", kind: "investment" })).toBe(false);
   });
 });
+
+describe("essentials and commitments", () => {
+  const values: HouseholdValue[] = [{ key: "family" }, { key: "security" }];
+
+  it("counts a dinner labelled with a child's name as family time", () => {
+    const r = valuesRatios({
+      expenses: [
+        { amount: 60, category: "dining", labels: ["Óscar birthday"] },
+        { amount: 40, category: "dining" },
+      ],
+      values,
+      income: 1000,
+      buckets: [],
+      personNames: ["Oscar da Silva"],
+    });
+    expect(r.align.aligned).toBe(60);
+    expect(r.align.offValues).toBe(40);
+  });
+
+  it("shows kindergarten as family money without double counting it", () => {
+    const r = valuesRatios({
+      expenses: [{ amount: 300, category: "childcare" }],
+      values,
+      income: 2000,
+      buckets: [],
+      recurring: [{ label: "Kindergarten", category: "childcare", monthly_amount: 400 }],
+    });
+    // Essentials never drift.
+    expect(r.drift).toBe(0);
+    expect(r.commitments.total).toBe(400);
+    // max(recorded 300, committed 400) — not 700.
+    expect(r.valueSpend).toBe(400);
+    expect(r.valueTotals[0]).toEqual({ key: "family", amount: 400 });
+  });
+
+  it("flags essentials above plan instead of calling them drift", () => {
+    const r = valuesRatios({
+      expenses: [
+        { amount: 620, category: "groceries" },
+        { amount: 100, category: "utilities" },
+      ],
+      values,
+      income: 2000,
+      buckets: [],
+      plannedByCategory: [
+        { category: "Groceries", amount: 450 },
+        { category: "utilities", amount: 120 },
+      ],
+    });
+    expect(r.drift).toBe(0);
+    expect(r.room.total).toBe(170);
+    expect(r.room.items).toEqual([
+      { category: "groceries", actual: 620, planned: 450, over: 170 },
+    ]);
+  });
+
+  it("says nothing about essentials with no plan to compare against", () => {
+    const r = valuesRatios({
+      expenses: [{ amount: 300, category: "groceries" }],
+      values,
+      income: 1000,
+      buckets: [],
+    });
+    expect(r.room.total).toBe(0);
+    expect(r.room.items).toEqual([]);
+  });
+});
