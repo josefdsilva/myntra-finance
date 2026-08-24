@@ -214,7 +214,7 @@ export function valuesRatios(input: {
     dreamFundingPct,
     savedTotal,
     driftPerDreamEuro,
-    redirect: align.unset ? null : bestRedirect(buckets, values, drift),
+    redirect: align.unset ? null : bestRedirect(buckets, values, drift, personNames),
     trendPts,
     grade,
   };
