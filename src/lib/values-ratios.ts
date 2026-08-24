@@ -120,8 +120,10 @@ function bestRedirect(
     const pace = Math.max(0, b.monthlyPace ?? b.fundedThisCycle ?? 0);
     const monthsNow = monthsToFill(remaining, pace);
     const monthsAfter = monthsToFill(remaining, pace + redirect);
-    if (monthsAfter == null) continue;
-    const saved = monthsNow == null ? Infinity : monthsNow - monthsAfter;
+    // A dream that still takes a decade after the swap is not a motivating
+    // suggestion, so only offer swaps that actually land within 10 years.
+    if (monthsAfter == null || monthsAfter > 120) continue;
+    const saved = monthsNow == null ? monthsAfter : monthsNow - monthsAfter;
     if (saved <= 0) continue;
     const gain: RedirectGain = {
       bucketId: b.id,
@@ -130,7 +132,7 @@ function bestRedirect(
       remaining,
       monthsNow,
       monthsAfter,
-      monthsSaved: monthsNow == null ? monthsAfter : saved,
+      monthsSaved: saved,
     };
     if (!best || gain.monthsAfter! < best.monthsAfter! ) best = gain;
   }

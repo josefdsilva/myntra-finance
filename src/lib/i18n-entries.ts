@@ -4881,11 +4881,11 @@ export const ENTRIES = {
   "ratios.grade.off_course": { en: "Off course", pt: "Fora do caminho", es: "Fuera de rumbo", de: "Vom Kurs ab", fr: "Hors trajectoire" },
   "ratios.redirect.title": { en: "One swap worth making", pt: "Uma troca que vale a pena", es: "Un cambio que vale la pena", de: "Ein Tausch, der sich lohnt", fr: "Un échange qui vaut le coup" },
   "ratios.redirect.body": {
-    en: "Moving {amount} a cycle into {bucket} would get you there about {months} month(s) sooner.",
-    pt: "Mover {amount} por ciclo para {bucket} chegaria lá cerca de {months} mês(es) mais cedo.",
-    es: "Mover {amount} por ciclo a {bucket} llegaría unos {months} mes(es) antes.",
-    de: "{amount} pro Zyklus in {bucket} würde dich etwa {months} Monat(e) früher ans Ziel bringen.",
-    fr: "Déplacer {amount} par cycle vers {bucket} vous y mènerait environ {months} mois plus tôt.",
+    en: "Moving {amount} a cycle into {bucket} would complete it in about {after} month(s) at today's pace.",
+    pt: "Mover {amount} por ciclo para {bucket} completá-lo-ia em cerca de {after} mês(es) ao ritmo atual.",
+    es: "Mover {amount} por ciclo a {bucket} lo completaría en unos {after} mes(es) al ritmo actual.",
+    de: "{amount} pro Zyklus in {bucket} würde es in etwa {after} Monat(en) abschließen.",
+    fr: "Déplacer {amount} par cycle vers {bucket} le boucleraient en environ {after} mois.",
   },
   "ratios.redirect.cta": { en: "Adjust allocations", pt: "Ajustar alocações", es: "Ajustar asignaciones", de: "Zuweisungen anpassen", fr: "Ajuster les allocations" },
 

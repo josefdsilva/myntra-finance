@@ -252,7 +252,7 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
                   {t("ratios.redirect.body", {
                     amount: money(r.redirect.redirect),
                     bucket: r.redirect.bucketName,
-                    months: r.redirect.monthsSaved,
+                    after: r.redirect.monthsAfter ?? 0,
                   })}
                 </p>
                 <Button asChild size="sm" variant="outline" className="mt-2">
