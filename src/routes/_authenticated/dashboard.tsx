@@ -513,16 +513,16 @@ function Dashboard() {
           everyday numbers. */}
       {householdId && <DashboardTips householdId={householdId} />}
 
-      {/* Hero: honest safe-to-spend per day + two lenses */}
+      {/* Hero: cycle-focused headline, honest estimation bar and cycle-to-date curve */}
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
           <div className="mb-1 flex items-center gap-1.5">
-            <p className="text-sm text-muted-foreground">{t("dashboard.safe.perDayLabel")}</p>
+            <p className="text-sm text-muted-foreground">{t("dashboard.cycleHero.label")}</p>
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  aria-label={t("dashboard.safe.perDayLabel")}
+                  aria-label={t("dashboard.cycleHero.label")}
                   className="text-muted-foreground/70 transition-colors hover:text-foreground"
                 >
                   <Info className="size-4" />
@@ -534,56 +534,120 @@ function Dashboard() {
                 className="w-72 space-y-2 text-xs leading-relaxed"
               >
                 <p className="text-sm font-medium text-foreground">
-                  {t("dashboard.safe.perDayLabel")}
+                  {t("dashboard.cycleHero.label")}
                 </p>
-                <p className="text-muted-foreground">{t("dashboard.safe.infoEveryday")}</p>
+                <p className="text-muted-foreground">{t("dashboard.cycleHero.info")}</p>
                 {variablePool > 0 && (
                   <p className="tabular-nums text-muted-foreground">
                     {t("dashboard.safe.infoBreakdown", {
-                      remaining: money(everydayLeft),
+                      remaining: money(cycleMetrics.left),
                       days: daysLeft,
-                      perDay: money(safeToday),
+                      perDay: money(cycleMetrics.perDay),
                     })}
                   </p>
                 )}
               </PopoverContent>
             </Popover>
           </div>
-          <div className="flex items-baseline gap-2">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p
               className={`text-5xl md:text-6xl font-display ${overspent ? "text-destructive" : "text-primary"}`}
             >
               {isLoading ? (
                 <span className="inline-block h-12 w-40 rounded-md bg-muted animate-pulse align-middle" />
               ) : (
-                money(safeToday)
+                money(cycleMetrics.left)
               )}
             </p>
-            {!isLoading && (
-              <span className="text-base text-muted-foreground">{t("dashboard.safe.perDayUnit")}</span>
+            {!isLoading && daysLeft > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {t("dashboard.cycleHero.perDayHint", { perDay: money(cycleMetrics.perDay) })}
+              </span>
             )}
           </div>
-          {!isLoading && (
+          {!isLoading && variablePool > 0 && (
             <p className="mt-1.5 text-sm text-muted-foreground">
-              {t("dashboard.safe.subline", {
-                week: money(safeWeek),
-                cycle: money(everydayLeft),
-              })}
+              {t("dashboard.cycleHero.pace", {
+                cyclePct: cycleMetrics.cyclePct,
+                budgetPct: cycleMetrics.usedPct,
+              })}{" "}
+              —{" "}
+              <span className={`font-medium ${overspent ? "text-destructive" : "text-primary"}`}>
+                {t(cycleMetrics.paceKey)}
+              </span>
             </p>
           )}
           {cycle?.source === "calendar" && (
             <p className="text-xs text-muted-foreground mt-2">{t("dashboard.safe.calendarTip")}</p>
           )}
 
-          {/* Compact 7-day trend of everyday spend */}
-          {!isLoading && (
+          {/* Honesty bar: recorded · estimated gap · left */}
+          {!isLoading && variablePool > 0 && (
             <div className="mt-5">
-              <Sparkline days={spark} max={sparkMax} threshold={safeToday} />
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                {t("dashboard.spark.caption.week", { days: spark.length })}
+              <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>{t("dashboard.cycleHero.budgetLabel", { budget: money(variablePool) })}</span>
+                <span className="tabular-nums">
+                  {cycleMetrics.estimated > 0.01
+                    ? t("dashboard.cycleHero.legend", {
+                        recorded: money(everydaySpent),
+                        estimated: money(cycleMetrics.estimated),
+                        left: money(cycleMetrics.left),
+                      })
+                    : t("dashboard.cycleHero.legendNoEstimate", {
+                        recorded: money(everydaySpent),
+                        left: money(cycleMetrics.left),
+                      })}
+                </span>
+              </div>
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={`h-full ${overspent ? "bg-destructive" : "bg-primary"}`}
+                  style={{
+                    width: `${Math.min(100, (everydaySpent / variablePool) * 100)}%`,
+                  }}
+                />
+                <div
+                  className="h-full bg-primary/35"
+                  style={{
+                    width: `${Math.min(100, (cycleMetrics.estimated / variablePool) * 100)}%`,
+                    backgroundImage:
+                      "repeating-linear-gradient(45deg, color-mix(in srgb, var(--primary) 45%, transparent) 0 4px, transparent 4px 8px)",
+                  }}
+                />
+                <div className="h-full flex-1" />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {cycleMetrics.staleDays === null
+                  ? t("dashboard.cycleHero.freshNone")
+                  : cycleMetrics.staleDays <= 1
+                    ? t("dashboard.cycleHero.freshToday")
+                    : t("dashboard.cycleHero.freshDays", { days: cycleMetrics.staleDays })}{" "}
+                <Link
+                  to="/statement-import"
+                  className="font-medium text-primary underline underline-offset-2"
+                >
+                  {t("dashboard.cycleHero.reconcile")} →
+                </Link>
               </p>
             </div>
           )}
+
+          {/* Cycle-to-date cumulative spend vs an even pace */}
+          {!isLoading && variablePool > 0 && cycleMetrics.cumulative.length > 1 && (
+            <div className="mt-5">
+              <CycleCurve
+                cumulative={cycleMetrics.cumulative}
+                budget={variablePool}
+                totalDays={cycleMetrics.totalDays}
+              />
+              <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span>{t("dashboard.cycleHero.dayLabel", { n: 1 })}</span>
+                <span>{t("dashboard.cycleHero.curveCaption")}</span>
+                <span>{t("dashboard.cycleHero.dayLabel", { n: cycleMetrics.totalDays })}</span>
+              </div>
+            </div>
+          )}
+
 
           {/* Two lenses: cash in/out, and the spending plan */}
           {!isLoading && (
