@@ -118,11 +118,15 @@ function bestRedirect(
   buckets: RatioBucket[],
   values: HouseholdValue[],
   drift: number,
+  personNames?: string[],
 ): RedirectGain | null {
   const redirect = Math.floor(drift / 2);
   if (redirect <= 0) return null;
   const candidates = buckets.filter(
-    (b) => bucketServesValues(values, b) && (b.target ?? 0) > 0 && b.balance < (b.target ?? 0),
+    (b) =>
+      bucketServesValues(values, b, { personNames }) &&
+      (b.target ?? 0) > 0 &&
+      b.balance < (b.target ?? 0),
   );
   const pool = candidates.length > 0
     ? candidates
