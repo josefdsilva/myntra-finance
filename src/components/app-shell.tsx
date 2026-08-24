@@ -89,9 +89,7 @@ const NAV_SECTIONS = [
     titleKey: "navGroup.you",
     items: [
       { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
-      { to: "/households", labelKey: "nav.households", icon: Users },
       { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
-      { to: "/settings", labelKey: "nav.settings", icon: Settings },
     ],
   },
 
