@@ -83,7 +83,6 @@ const NAV_SECTIONS = [
     items: [
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/assets", labelKey: "nav.assets", icon: Gem },
-      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
     ],
   },
   {
@@ -91,9 +90,11 @@ const NAV_SECTIONS = [
     items: [
       { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
       { to: "/households", labelKey: "nav.households", icon: Users },
+      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
       { to: "/settings", labelKey: "nav.settings", icon: Settings },
     ],
   },
+
 ] as const;
 
 
