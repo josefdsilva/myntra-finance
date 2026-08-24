@@ -52,18 +52,27 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
       const closed = await resolveClosedCycles(supabase, householdId, hh ?? null, 1);
       const prev = closed[closed.length - 1] ?? null;
 
-      const [current, previous, bucketsRes, allocRes, movesRes, incomesRes, peopleRes] =
-        await Promise.all([
+      const [
+        current,
+        previous,
+        bucketsRes,
+        allocRes,
+        movesRes,
+        incomesRes,
+        peopleRes,
+        fixedRes,
+        varRes,
+      ] = await Promise.all([
           supabase
             .from("expenses")
-            .select("amount, category, intent, kind")
+            .select("amount, category, intent, kind, labels")
             .eq("household_id", householdId)
             .gte("occurred_at", bounds.start.toISOString())
             .lt("occurred_at", bounds.end.toISOString()),
           prev
             ? supabase
                 .from("expenses")
-                .select("amount, category, intent, kind")
+                .select("amount, category, intent, kind, labels")
                 .eq("household_id", householdId)
                 .gte("occurred_at", prev.start.toISOString())
                 .lt("occurred_at", prev.end.toISOString())
@@ -84,7 +93,16 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
             .lt("created_at", bounds.end.toISOString()),
           supabase.from("incomes").select("monthly_amount").eq("household_id", householdId),
           supabase.from("household_people").select("name").eq("household_id", householdId),
+          supabase
+            .from("fixed_expenses")
+            .select("label, category, monthly_amount")
+            .eq("household_id", householdId),
+          supabase
+            .from("variable_estimates")
+            .select("label, category, monthly_amount")
+            .eq("household_id", householdId),
         ]);
+
 
       const rows = (current.data ?? []) as ExpenseRow[];
       const prevRows = (previous.data ?? []) as ExpenseRow[];
