@@ -118,6 +118,15 @@ function normalise(c?: string | null): string {
   return (c ?? "").trim().toLowerCase();
 }
 
+/** Lowercase and strip accents so "Óscar" matches "Oscar". */
+export function fold(s?: string | null): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 /**
  * Does this category serve one of the household's values? Returns the matching
  * value key (highest ranked wins) or null. Matching is substring-tolerant so
@@ -136,6 +145,45 @@ export function matchValue(
   }
   return null;
 }
+
+/** Does this free text name a household member? ("Óscar's swimming" → family) */
+export function namesAPerson(text?: string | null, personNames: string[] = []): boolean {
+  const hay = fold(text);
+  if (!hay) return false;
+  for (const p of personNames) {
+    for (const token of fold(p).split(/[^a-z0-9]+/)) {
+      if (token.length >= 3 && hay.includes(token)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * The value an expense (or a recurring commitment) serves. The category is the
+ * strongest signal, but real life is messier: a dinner labelled "kids" is family
+ * time, and "Óscar swimming" is family money even under a generic category. So
+ * we also read the labels and the household members' names.
+ */
+export function matchValueOf(
+  values: HouseholdValue[],
+  e: { category?: string | null; labels?: string[] | null; label?: string | null },
+  opts?: { personNames?: string[] },
+): ValueKey | null {
+  const direct = matchValue(values, e.category);
+  if (direct) return direct;
+  const texts = [...(e.labels ?? []), e.label].filter(Boolean) as string[];
+  for (const text of texts) {
+    const m = matchValue(values, text);
+    if (m) return m;
+  }
+  if (valueKeysOf(values).includes("family")) {
+    for (const text of texts) {
+      if (namesAPerson(text, opts?.personNames ?? [])) return "family";
+    }
+  }
+  return null;
+}
+
 
 function promote(level: IntentLevel, steps: number): IntentLevel {
   const idx = INTENT_LEVELS.indexOf(level);
