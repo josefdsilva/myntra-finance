@@ -347,15 +347,48 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
               </div>
             )}
 
-            {r.align.byValue.length > 0 && (
-              <ul className="mt-4 space-y-1 text-sm">
-                {r.align.byValue.map((v) => (
-                  <li key={v.key} className="flex justify-between">
-                    <span>{t(valueLabelKey(v.key) as MessageKey)}</span>
-                    <span className="tabular-nums">{money(v.amount)}</span>
-                  </li>
-                ))}
-              </ul>
+            {/* ---- Essentials above plan: not drift, but still trimmable ---- */}
+            {r.room.items.length > 0 && (
+              <div className="mt-4 rounded-lg border p-3">
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  <Scale className="size-4 text-muted-foreground" /> {t("ratios.room.title")}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("ratios.room.body", { amount: money(r.room.total) })}
+                </p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {r.room.items.map((i) => (
+                    <li key={i.category} className="flex justify-between">
+                      <span className="capitalize">{i.category}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {money(i.actual)} / {money(i.planned)}
+                        <span className="ml-2 text-foreground">+{money(i.over)}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {r.valueTotals.length > 0 && (
+              <div className="mt-4">
+                <p className="mb-1 text-xs font-medium text-muted-foreground">
+                  {t("ratios.valueSpend", { amount: money(r.valueSpend) })}
+                </p>
+                <ul className="space-y-1 text-sm">
+                  {r.valueTotals.map((v) => (
+                    <li key={v.key} className="flex justify-between">
+                      <span>{t(valueLabelKey(v.key) as MessageKey)}</span>
+                      <span className="tabular-nums">{money(v.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {r.commitments.total > 0 && (
+                  <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                    {t("ratios.commitments.hint", { amount: money(r.commitments.total) })}
+                  </p>
+                )}
+              </div>
             )}
 
             {r.align.leaks.length > 0 && (
@@ -371,8 +404,12 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
                     </li>
                   ))}
                 </ul>
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                  {t("align.leaks.hint")}
+                </p>
               </div>
             )}
+
           </>
         )}
       </CardContent>
