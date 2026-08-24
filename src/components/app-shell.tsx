@@ -29,6 +29,7 @@ import {
   ScanLine,
   Compass,
   ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
