@@ -246,11 +246,15 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
         qc.fetchQuery(fixedExpensesQuery(householdId)),
         qc.fetchQuery(debtsQuery(householdId)),
         qc.fetchQuery(variableEstimatesQuery(householdId)),
+        // Confirmations made inside the ACTUAL cycle window. Keying by calendar
+        // month (`period = YYYY-MM-01`) missed funding confirmed for a payday
+        // cycle whose period key is its start date (e.g. 2026-07-25).
         supabase
           .from("bucket_allocations")
           .select("bucket_id, amount")
           .eq("household_id", householdId)
-          .eq("period", period),
+          .gte("confirmed_at", cycleStartIso!)
+          .lt("confirmed_at", cycleEndIso!),
         // All-time confirmed contributions per bucket (not just this period) — needed to
         // know a goal bucket's real current balance for the feasibility checks below.
         supabase
