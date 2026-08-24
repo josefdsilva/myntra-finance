@@ -240,6 +240,7 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
         { count: estFixed },
         { count: estVar },
         { data: debtsDetail },
+        { data: bucketMoves },
       ] = await Promise.all([
         qc.fetchQuery(bucketsQuery(householdId)),
         qc.fetchQuery(incomesQuery(householdId)),
