@@ -462,11 +462,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Settings className="size-4" /> {t("nav.settings")}
             </Link>
           </Button>
-          <Button variant="ghost" className="w-full justify-start" asChild>
-            <Link to="/households">
-              <Users className="size-4" /> {t("nav.households")}
-            </Link>
-          </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" /> {t("shell.signOut")}
           </Button>
