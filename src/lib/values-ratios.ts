@@ -263,6 +263,7 @@ export function valuesRatios(input: {
     intent?: string | null;
     category?: string | null;
     kind?: string | null;
+    labels?: string[] | null;
   }>;
   values: HouseholdValue[];
   /** Income for the cycle (actual when recorded, otherwise expected). */
@@ -272,12 +273,20 @@ export function valuesRatios(input: {
   prevAlignmentPct?: number | null;
   /** Household member names, so buckets named after them count as family. */
   personNames?: string[];
+  /** Recurring commitments (fixed expenses + variable estimates). */
+  recurring?: Array<{
+    label?: string | null;
+    category?: string | null;
+    monthly_amount: number | string;
+  }>;
+  /** What the household planned per category, for the essentials-room check. */
+  plannedByCategory?: Array<{ category: string; amount: number }>;
 }): ValuesRatios {
   const values = input.values ?? [];
-  const align = alignmentSummary(input.expenses ?? [], values);
+  const personNames = input.personNames ?? [];
+  const align = alignmentSummary(input.expenses ?? [], values, { personNames });
   const income = Math.max(0, Number(input.income) || 0);
   const buckets = input.buckets ?? [];
-  const personNames = input.personNames ?? [];
 
   const savedTotal = round2(buckets.reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0));
   const dreamFunded = round2(
@@ -285,6 +294,30 @@ export function valuesRatios(input: {
       .filter((b) => bucketServesValues(values, b, { personNames }))
       .reduce((s, b) => s + (Number(b.fundedThisCycle) || 0), 0),
   );
+
+  const commitments = valueCommitments({
+    values,
+    recurring: input.recurring ?? [],
+    personNames,
+  });
+  const room = essentialsRoom(align.essentialsByCategory, input.plannedByCategory ?? []);
+
+  // Per value: the flexible money plus the non-negotiable money. A commitment
+  // that was already recorded as an expense would otherwise be counted twice, so
+  // per value we take whichever of the two is larger, never their sum.
+  const totalsMap = new Map<ValueKey, number>();
+  const bump = (k: ValueKey, amount: number) =>
+    totalsMap.set(k, (totalsMap.get(k) ?? 0) + amount);
+  for (const v of align.byValue) bump(v.key, v.amount);
+  const essentialByKey = new Map(align.essentialsByValue.map((v) => [v.key, v.amount]));
+  const committedByKey = new Map(commitments.byValue.map((v) => [v.key, v.amount]));
+  for (const key of new Set([...essentialByKey.keys(), ...committedByKey.keys()])) {
+    bump(key, Math.max(essentialByKey.get(key) ?? 0, committedByKey.get(key) ?? 0));
+  }
+  const valueTotals = [...totalsMap.entries()]
+    .map(([key, amount]) => ({ key, amount: round2(amount) }))
+    .sort((a, b) => b.amount - a.amount);
+  const valueSpend = round2(valueTotals.reduce((s, v) => s + v.amount, 0));
 
   const drift = align.offValues;
   const driftPct = income > 0 ? round1((drift / income) * 100) : 0;
@@ -315,8 +348,17 @@ export function valuesRatios(input: {
     dreamFundingPct,
     savedTotal,
     driftPerDreamEuro,
-    redirect: align.unset ? null : bestRedirect(buckets, values, drift, personNames),
+    // Essentials above plan are just as spendable on the dreams as drift is, so
+    // both feed the swap suggestion.
+    redirect: align.unset
+      ? null
+      : bestRedirect(buckets, values, drift + room.total, personNames),
+    commitments,
+    valueSpend,
+    valueTotals,
+    room,
     trendPts,
     grade,
   };
+
 }
