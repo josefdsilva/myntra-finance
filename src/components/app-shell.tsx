@@ -387,6 +387,28 @@ export function AppShell({ children }: { children: ReactNode }) {
             const inGroup = section.items.some((i) => i.to === pathname);
             const expanded = openGroup === section.titleKey || (openGroup === null && inGroup);
             const PrimaryIcon = primary.icon;
+
+            // Single-entry destinations (e.g. Wiki) are just a flat link — no
+            // expand/collapse affordance needed.
+            if (section.items.length === 1) {
+              const active = pathname === primary.to;
+              return (
+                <Link
+                  key={section.titleKey}
+                  to={primary.to}
+                  className={cn(
+                    "mt-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-foreground hover:bg-muted hover:text-primary",
+                  )}
+                >
+                  <PrimaryIcon className="size-4" />
+                  <span className="flex-1">{t(section.titleKey)}</span>
+                </Link>
+              );
+            }
+
             return (
               <Fragment key={section.titleKey}>
                 <div className="group mt-1 flex items-center rounded-xl border border-transparent p-1 transition-colors hover:border-border/40">
