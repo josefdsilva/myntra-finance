@@ -97,9 +97,10 @@ export function bucketServesValues(
 ): boolean {
   if (matchValue(values, b.name)) return true;
   const keys = values.filter((v) => v.key !== "other").map((v) => v.key);
-  // Safety net / savings buckets serve "security"; investing buckets serve
-  // "investing"; a bucket named after a household member serves "family".
-  if ((b.kind === "emergency" || b.kind === "savings") && keys.includes("security")) return true;
+  // The safety net protects every value, so an emergency fund always counts.
+  if (b.kind === "emergency") return true;
+  // Plain savings serve "security"; investing buckets serve "investing".
+  if (b.kind === "savings" && keys.includes("security")) return true;
   if (b.kind === "investment" && keys.includes("investing")) return true;
   if (keys.includes("family")) {
     // "Óscar Savings" belongs to "Oscar da Silva": compare accent-free first
