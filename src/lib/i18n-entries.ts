@@ -4844,6 +4844,51 @@ export const ENTRIES = {
   },
   "align.setValues": { en: "Choose your values", pt: "Escolher os meus valores", es: "Elegir mis valores", de: "Werte wählen", fr: "Choisir mes valeurs" },
   "align.because": { en: "Because you value {value}", pt: "Porque valorizas {value}", es: "Porque valoras {value}", de: "Weil dir {value} wichtig ist", fr: "Parce que vous tenez à {value}" },
+  // ---- Values ratios (journey steering) ----------------------------------
+  "ratios.alignment": { en: "On your values", pt: "Nos teus valores", es: "En tus valores", de: "Für deine Werte", fr: "Sur vos valeurs" },
+  "ratios.alignment.hint": {
+    en: "Share of your flexible spending that served what you said matters.",
+    pt: "Parte dos gastos flexíveis que servem o que disseste que importa.",
+    es: "Parte de tu gasto flexible que sirvió a lo que dijiste que importa.",
+    de: "Anteil deiner flexiblen Ausgaben, der deinen Werten dient.",
+    fr: "Part de vos dépenses flexibles au service de ce qui compte.",
+  },
+  "ratios.drift": { en: "Drifting away", pt: "A escapar", es: "Se escapa", de: "Abdriftend", fr: "À côté" },
+  "ratios.drift.hint": {
+    en: "{amount} of your income went to flexible things outside your values.",
+    pt: "{amount} do teu rendimento foi para coisas flexíveis fora dos teus valores.",
+    es: "{amount} de tus ingresos fueron a cosas flexibles fuera de tus valores.",
+    de: "{amount} deines Einkommens ging an Flexibles außerhalb deiner Werte.",
+    fr: "{amount} de vos revenus sont partis hors de vos valeurs.",
+  },
+  "ratios.dream": { en: "Funding your dreams", pt: "A financiar os sonhos", es: "Financiando tus sueños", de: "Träume finanziert", fr: "Vos rêves financés" },
+  "ratios.dream.hint": {
+    en: "For every €1 you put into your dreams, €{ratio} drifted elsewhere.",
+    pt: "Por cada 1 € para os teus sonhos, {ratio} € escaparam para outras coisas.",
+    es: "Por cada 1 € para tus sueños, {ratio} € se fueron a otras cosas.",
+    de: "Für jeden 1 € in deine Träume gingen {ratio} € an anderes.",
+    fr: "Pour chaque 1 € vers vos rêves, {ratio} € sont partis ailleurs.",
+  },
+  "ratios.dream.none": {
+    en: "No money reached a values project this cycle yet.",
+    pt: "Ainda não entrou dinheiro num projeto de valores neste ciclo.",
+    es: "Aún no ha entrado dinero en un proyecto de tus valores este ciclo.",
+    de: "In diesem Zyklus floss noch kein Geld in ein Werte-Projekt.",
+    fr: "Aucun euro n'est encore allé vers un projet de vos valeurs ce cycle.",
+  },
+  "ratios.grade.on_course": { en: "On course", pt: "No caminho", es: "En rumbo", de: "Auf Kurs", fr: "Sur la bonne voie" },
+  "ratios.grade.drifting": { en: "Drifting", pt: "A desviar", es: "Desviándose", de: "Abdriftend", fr: "En dérive" },
+  "ratios.grade.off_course": { en: "Off course", pt: "Fora do caminho", es: "Fuera de rumbo", de: "Vom Kurs ab", fr: "Hors trajectoire" },
+  "ratios.redirect.title": { en: "One swap worth making", pt: "Uma troca que vale a pena", es: "Un cambio que vale la pena", de: "Ein Tausch, der sich lohnt", fr: "Un échange qui vaut le coup" },
+  "ratios.redirect.body": {
+    en: "Moving {amount} a cycle into {bucket} would get you there about {months} month(s) sooner.",
+    pt: "Mover {amount} por ciclo para {bucket} chegaria lá cerca de {months} mês(es) mais cedo.",
+    es: "Mover {amount} por ciclo a {bucket} llegaría unos {months} mes(es) antes.",
+    de: "{amount} pro Zyklus in {bucket} würde dich etwa {months} Monat(e) früher ans Ziel bringen.",
+    fr: "Déplacer {amount} par cycle vers {bucket} vous y mènerait environ {months} mois plus tôt.",
+  },
+  "ratios.redirect.cta": { en: "Adjust allocations", pt: "Ajustar alocações", es: "Ajustar asignaciones", de: "Zuweisungen anpassen", fr: "Ajuster les allocations" },
+
   // ---- Suggested projects ------------------------------------------------
   "suggest.title": { en: "Projects that fit your values", pt: "Projetos que encaixam nos teus valores", es: "Proyectos que encajan con tus valores", de: "Projekte, die zu deinen Werten passen", fr: "Des projets qui collent à vos valeurs" },
   "suggest.subtitle": {
