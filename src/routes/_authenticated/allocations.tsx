@@ -17,7 +17,6 @@ import { money, yearBounds, monthBounds, fmtDate } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { KpiTargetsTab } from "@/components/kpi-targets-tab";
-import { JourneyPage } from "@/routes/_authenticated/journey";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -339,7 +338,6 @@ function AllocationsPage() {
         <TabsList>
           <TabsTrigger value="projects">{t("alloc.tab.projects")}</TabsTrigger>
           <TabsTrigger value="targets">{t("alloc.tab.targets")}</TabsTrigger>
-          <TabsTrigger value="journey">{t("nav.journey")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="projects" className="space-y-6">
@@ -587,9 +585,6 @@ function AllocationsPage() {
           {householdId && <KpiTargetsTab householdId={householdId} />}
         </TabsContent>
 
-        <TabsContent value="journey">
-          <JourneyPage embedded />
-        </TabsContent>
       </Tabs>
     </div>
   );
