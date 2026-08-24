@@ -1359,11 +1359,11 @@ export const ENTRIES = {
     fr: "Un mois de charges essentielles de côté",
   },
   "journey.stage.debt.title": {
-    en: "Tame expensive debt",
-    pt: "Domar a dívida cara",
-    es: "Domar la deuda cara",
-    de: "Teure Schulden zähmen",
-    fr: "Maîtriser la dette coûteuse",
+    en: "Trim your debt-to-income ratio",
+    pt: "Reduzir a taxa dívida/rendimento",
+    es: "Recortar la ratio deuda/ingresos",
+    de: "Schulden-Einkommens-Quote senken",
+    fr: "Réduire le taux d'endettement",
   },
   "journey.stage.debt.obj": {
     en: "Bring debt-to-income under 15%",
