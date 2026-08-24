@@ -54,43 +54,48 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Minimal by default. The core is what a household does week to week; everything
-// analytical/advanced is tucked behind a collapsible "Advanced" group so a less
-// technical user isn't overwhelmed (progressive disclosure, not a second mode).
+// Four destinations, in the order a household thinks: where am I going
+// (Journey), what comes in and out (Money), what I'm building (Dreams), and who
+// helps me (Coach). Everything else is nested under the destination it belongs
+// to, revealed only when that destination is open — progressive disclosure, not
+// a second "advanced" mode.
 const NAV_SECTIONS = [
   {
-    titleKey: null,
-    advanced: false,
+    titleKey: "navGroup.journey",
     items: [
-      { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
       { to: "/journey", labelKey: "nav.journey", icon: Compass },
-      { to: "/share", labelKey: "nav.import", icon: ScanLine },
-      { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
-      { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
-    ],
-  },
-  {
-    titleKey: "navSection.advanced",
-    advanced: true,
-    items: [
-      { to: "/loans", labelKey: "nav.loans", icon: Landmark },
-      { to: "/assets", labelKey: "nav.assets", icon: Gem },
-      { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+      { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
       { to: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
       { to: "/fast-forward", labelKey: "nav.fastForward", icon: FastForward },
-      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
-      { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
     ],
   },
   {
-    titleKey: "navSection.account",
-    advanced: false,
+    titleKey: "navGroup.money",
     items: [
+      { to: "/cashflow", labelKey: "nav.cashflow", icon: ArrowLeftRight },
+      { to: "/expenses", labelKey: "nav.expenses", icon: Receipt },
+      { to: "/share", labelKey: "nav.import", icon: ScanLine },
+      { to: "/loans", labelKey: "nav.loans", icon: Landmark },
+    ],
+  },
+  {
+    titleKey: "navGroup.dreams",
+    items: [
+      { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+      { to: "/assets", labelKey: "nav.assets", icon: Gem },
+      { to: "/snapshot", labelKey: "nav.snapshot", icon: Sparkles },
+    ],
+  },
+  {
+    titleKey: "navGroup.coach",
+    items: [
+      { to: "/wiki", labelKey: "nav.wiki", icon: BookOpen },
       { to: "/households", labelKey: "nav.households", icon: Users },
       { to: "/settings", labelKey: "nav.settings", icon: Settings },
     ],
   },
 ] as const;
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
