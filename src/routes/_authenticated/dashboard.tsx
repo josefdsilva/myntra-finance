@@ -18,7 +18,6 @@ import {
   fixedExpensesQuery,
   debtsQuery,
 } from "@/lib/household-queries";
-import { ExpenseQuickAdd } from "@/components/expense-quick-add";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { markIncomeReceived } from "@/lib/budget.functions";
@@ -37,7 +36,6 @@ import {
 import { DashboardTips } from "@/components/dashboard-tips";
 import { ChatFirstCard } from "@/components/chat-first-card";
 import { PurchaseCheckButton } from "@/components/purchase-check";
-import { GoalsCard } from "@/components/goals-card";
 import { JourneySummaryCard } from "@/components/journey-summary-card";
 import { pageShellClass } from "@/components/page-shell";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
@@ -210,6 +208,7 @@ function Dashboard() {
   const [plansNudgeDismissed, setPlansNudgeDismissed] = useState(false);
 
   const [expenseFilter, setExpenseFilter] = useState<"all" | "spent" | "received">("all");
+  const [showDetail, setShowDetail] = useState(false);
 
   const baseline = Number(hh?.household?.baseline_budget ?? 0);
   const income = dashboard?.income ?? 0;
