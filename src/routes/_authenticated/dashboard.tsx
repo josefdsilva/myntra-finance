@@ -1144,59 +1144,50 @@ function StatCard({
   );
 }
 
-function Sparkline({
-  days,
-  max,
-  threshold,
+function CycleCurve({
+  cumulative,
+  budget,
+  totalDays,
 }: {
-  days: { key: string; label: string; net: number }[];
-  max: number;
-  threshold: number;
+  cumulative: number[];
+  budget: number;
+  totalDays: number;
 }) {
   const t = useT();
-  const w = 280;
-  const h = 44;
-  const pad = 2;
-  const step = (w - pad * 2) / Math.max(1, days.length - 1);
-  const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
-  const pts = days.map((d, i) => `${pad + i * step},${y(d.net)}`).join(" ");
-  const thY = y(threshold);
+  const w = 320;
+  const h = 90;
+  const max = Math.max(budget, ...cumulative, 1);
+  const x = (i: number) => (i / Math.max(1, totalDays - 1)) * w;
+  const y = (v: number) => h - (v / max) * h;
+  const path = cumulative
+    .map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`)
+    .join(" ");
+  const lastI = cumulative.length - 1;
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
-      className="w-full h-11 overflow-visible"
-      aria-label={t("dashboard.sparklineAria")}
+      className="h-24 w-full"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label={t("dashboard.cycleHero.curveAria")}
     >
-      <line
-        x1={pad}
-        x2={w - pad}
-        y1={thY}
-        y2={thY}
-        stroke="currentColor"
-        strokeWidth={1}
-        strokeDasharray="3 3"
-        className="text-muted-foreground/50"
-      />
-      <polyline
+      <path
+        d={`M0,${y(0)} L${w},${y(budget)}`}
+        className="stroke-muted-foreground/40"
+        strokeDasharray="4 4"
         fill="none"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        points={pts}
-        className="text-primary"
+        vectorEffect="non-scaling-stroke"
       />
-      {days.map((d, i) => (
-        <g key={d.key}>
-          <circle
-            cx={pad + i * step}
-            cy={y(d.net)}
-            r={2}
-            className={d.net > threshold ? "fill-orange-500" : "fill-primary"}
-          />
-          <title>
-            {d.label} · {money(d.net)}
-          </title>
-        </g>
-      ))}
+      <path
+        d={path}
+        className="stroke-primary"
+        strokeWidth={2}
+        fill="none"
+        vectorEffect="non-scaling-stroke"
+      />
+      {lastI >= 0 && (
+        <circle cx={x(lastI)} cy={y(cumulative[lastI])} r={3} className="fill-primary" />
+      )}
     </svg>
   );
 }
