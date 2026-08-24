@@ -826,6 +826,25 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
     qc.invalidateQueries({ queryKey: ["household"] });
     invalidateHouseholdData(qc);
   }
+  // The category decides how an estimate is read: "kids" money is family money,
+  // and it is the yardstick for "are we above our own plan?", so it is editable
+  // right here instead of only at creation time.
+  async function setRowCategory(
+    r: { id: string; label: string; monthly_amount: number | string },
+    next: string,
+  ) {
+    await upsert({
+      data: {
+        id: r.id,
+        household_id: householdId,
+        label: r.label,
+        category: next,
+        monthly_amount: Number(r.monthly_amount) || 0,
+      },
+    });
+    refetch();
+    invalidateHouseholdData(qc);
+  }
 
   const total = (rows ?? []).reduce((s, r) => s + Number(r.monthly_amount), 0);
 
@@ -846,12 +865,21 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
       <CardContent className="space-y-3">
         <ul className="divide-y">
           {(rows ?? []).map((r) => (
-            <li key={r.id} className="flex items-center justify-between py-2">
-              <div>
-                <p>{r.label}</p>
-                <p className="text-xs text-muted-foreground">{r.category}</p>
+            <li key={r.id} className="flex items-center justify-between gap-2 py-2">
+              <div className="min-w-0">
+                <p className="truncate">{r.label}</p>
+                <div className="mt-0.5">
+                  <CategorySelect
+                    householdId={householdId}
+                    value={r.category ?? categoryOptions[0]}
+                    onChange={(v) => setRowCategory(r, v)}
+                    fallback={categoryOptions}
+                    triggerClassName="h-6 w-auto gap-1 border-none bg-muted/60 px-2 text-[11px] text-muted-foreground"
+                    ariaLabel={t("categoryMgr.title")}
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 <span className="tabular-nums font-medium">{money(r.monthly_amount)}</span>
                 <Button
                   aria-label={t("common.delete")}
@@ -865,6 +893,7 @@ export function VariableEstimatesSection({ householdId }: { householdId: string 
             </li>
           ))}
         </ul>
+
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-2">
           <Input
             placeholder={t("var.placeholder")}
