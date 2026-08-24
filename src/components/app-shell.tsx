@@ -457,6 +457,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             {privacy ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             {privacy ? t("shell.showNumbers") : t("shell.hideNumbers")}
           </Button>
+          <Button variant="ghost" className="w-full justify-start" asChild>
+            <Link to="/settings">
+              <Settings className="size-4" /> {t("nav.settings")}
+            </Link>
+          </Button>
+          <Button variant="ghost" className="w-full justify-start" asChild>
+            <Link to="/households">
+              <Users className="size-4" /> {t("nav.households")}
+            </Link>
+          </Button>
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" /> {t("shell.signOut")}
           </Button>
