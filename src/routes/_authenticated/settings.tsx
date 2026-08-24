@@ -5,7 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateHousehold, updateHousehold, inviteMember } from "@/lib/household.functions";
+import {
+  getOrCreateHousehold,
+  updateHousehold,
+  inviteMember,
+  listMyHouseholds,
+} from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { invalidateHouseholdData } from "@/lib/household-queries";
 import { pageShellClass } from "@/components/page-shell";
