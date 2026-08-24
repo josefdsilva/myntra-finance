@@ -894,27 +894,51 @@ function Dashboard() {
             );
             if (!list.length)
               return <p className="text-sm text-muted-foreground">{t("dashboard.recent.none")}</p>;
+            const visible = recentExpanded ? list : list.slice(0, RECENT_PREVIEW_COUNT);
+            const canExpand = list.length > RECENT_PREVIEW_COUNT;
             return (
-              <ul className="divide-y">
-                {list.map((e) => {
-                  const isIncome = e.kind === "income";
-                  return (
-                    <li key={e.id} className="flex items-center justify-between py-3">
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {fmtDateTime(e.occurred_at)} · {e.category}
-                          {isIncome ? ` · ${t("dashboard.recent.received")}` : ""}
+              <div className="space-y-3">
+                <ul className="divide-y">
+                  {visible.map((e) => {
+                    const isIncome = e.kind === "income";
+                    return (
+                      <li key={e.id} className="flex items-center justify-between py-3">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{e.merchant || e.note || e.category}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {fmtDateTime(e.occurred_at)} · {e.category}
+                            {isIncome ? ` · ${t("dashboard.recent.received")}` : ""}
+                          </p>
+                        </div>
+                        <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
+                          {isIncome ? "+" : "−"}
+                          {money(e.amount)}
                         </p>
-                      </div>
-                      <p className={`font-medium tabular-nums ${isIncome ? "text-primary" : ""}`}>
-                        {isIncome ? "+" : "−"}
-                        {money(e.amount)}
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {canExpand && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs text-muted-foreground"
+                    onClick={() => setRecentExpanded((v) => !v)}
+                    aria-expanded={recentExpanded}
+                  >
+                    {recentExpanded ? (
+                      <>
+                        {t("dashboard.recent.showLess")} <ChevronUp className="ml-1 size-3.5" />
+                      </>
+                    ) : (
+                      <>
+                        {t("dashboard.recent.showMore", { count: list.length - RECENT_PREVIEW_COUNT })}{" "}
+                        <ChevronDown className="ml-1 size-3.5" />
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             );
           })()}
         </CardContent>
