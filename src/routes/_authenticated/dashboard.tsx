@@ -22,7 +22,7 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { markIncomeReceived } from "@/lib/budget.functions";
 import { toast } from "sonner";
-import { Wallet, Loader2, Info, CalendarClock, X } from "lucide-react";
+import { Wallet, Loader2, Info, CalendarClock, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
