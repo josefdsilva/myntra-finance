@@ -4901,6 +4901,8 @@ export const ENTRIES = {
     de: "Menü öffnen",
     fr: "Ouvrir le menu",
   },
+  "common.expand": { en: "Expand", pt: "Expandir", es: "Expandir", de: "Erweitern", fr: "Développer" },
+  "common.collapse": { en: "Collapse", pt: "Colapsar", es: "Colapsar", de: "Einklappen", fr: "Réduire" },
   "common.send": {
     en: "Send message",
     pt: "Enviar mensagem",
