@@ -382,50 +382,64 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
-          {NAV_SECTIONS.map((section, si) => (
-            <Fragment key={section.titleKey ?? si}>
-              {section.advanced ? (
-                <button
-                  type="button"
-                  onClick={toggleAdvanced}
-                  aria-expanded={showAdvanced}
-                  className="mt-2 flex w-full items-center justify-between px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-foreground"
-                >
-                  {t(section.titleKey)}
-                  <ChevronDown
-                    className={cn("size-3.5 transition-transform", showAdvanced && "rotate-180")}
-                  />
-                </button>
-              ) : (
-                section.titleKey && (
-                  <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 first:pt-1">
+          {NAV_SECTIONS.map((section) => {
+            const primary = section.items[0];
+            const rest = section.items.slice(1);
+            const inGroup = section.items.some((i) => i.to === pathname);
+            const expanded = openGroup === section.titleKey || (openGroup === null && inGroup);
+            const PrimaryIcon = primary.icon;
+            return (
+              <Fragment key={section.titleKey}>
+                <div className="mt-1 flex items-center gap-1">
+                  <Link
+                    to={primary.to}
+                    className={cn(
+                      "flex flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      pathname === primary.to
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-foreground hover:bg-muted",
+                    )}
+                  >
+                    <PrimaryIcon className="size-4" />
                     {t(section.titleKey)}
-                  </p>
-                )
-              )}
-              {(!section.advanced || showAdvanced) &&
-                section.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = pathname === item.to;
-                  return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                        active
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      )}
-                    >
-                      <Icon className="size-4" />
-                      {t(item.labelKey)}
-                    </Link>
-                  );
-                })}
-            </Fragment>
-          ))}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setOpenGroup(expanded ? "" : section.titleKey)}
+                    aria-expanded={expanded}
+                    aria-label={t(section.titleKey)}
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <ChevronDown
+                      className={cn("size-3.5 transition-transform", expanded && "rotate-180")}
+                    />
+                  </button>
+                </div>
+                {expanded &&
+                  rest.map((item) => {
+                    const Icon = item.icon;
+                    const active = pathname === item.to;
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        className={cn(
+                          "ml-4 flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors",
+                          active
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="size-4" />
+                        {t(item.labelKey)}
+                      </Link>
+                    );
+                  })}
+              </Fragment>
+            );
+          })}
         </nav>
+
         <div className="p-3 border-t space-y-1">
           <InstallApp />
           <Button
