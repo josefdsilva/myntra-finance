@@ -273,7 +273,6 @@ function Dashboard() {
   const showPlansNudge = !plansNudgeDismissed && daysSinceCycleStart <= 3 && upcomingPlanCount > 0;
 
   const safeToday = daysLeft > 0 ? remaining / daysLeft : 0;
-  const safeWeek = safeToday * Math.min(7, daysLeft);
   const pctEveryday = variablePool > 0 ? Math.min(100, (everydaySpent / variablePool) * 100) : 0;
   const buckets = dashboard?.buckets ?? [];
 
@@ -331,8 +330,6 @@ function Dashboard() {
     return days;
   }, [sparkRows, sparkWindowDays]);
   // Show the last 7 days of everyday spend as a compact trend under the hero.
-  const spark = useMemo(() => sparkAll.slice(Math.max(0, sparkAll.length - 7)), [sparkAll]);
-  const sparkMax = Math.max(safeToday, ...spark.map((d) => d.net), 1);
   const avgDaily7 =
     sparkAll.slice(-7).reduce((s, d) => s + d.net, 0) / Math.max(1, Math.min(7, sparkAll.length));
   const projectedBalance = remaining - avgDaily7 * daysLeft;
