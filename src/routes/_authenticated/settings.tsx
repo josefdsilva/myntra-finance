@@ -5,7 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateHousehold, updateHousehold, inviteMember } from "@/lib/household.functions";
+import {
+  getOrCreateHousehold,
+  updateHousehold,
+  inviteMember,
+  listMyHouseholds,
+} from "@/lib/household.functions";
 import { useActiveHouseholdId } from "@/lib/active-household";
 import { invalidateHouseholdData } from "@/lib/household-queries";
 import { pageShellClass } from "@/components/page-shell";
@@ -48,7 +53,7 @@ import {
 import { impliedAnnualRate, scheduleSummary, monthlyRateFromTaeg } from "@/lib/amortization";
 import { differenceInCalendarMonths } from "date-fns";
 import { toast } from "sonner";
-import { Plus, Trash2, Mail, Copy, Check, Zap, AlertTriangle, Sparkles } from "lucide-react";
+import { Plus, Trash2, Mail, Copy, Check, Zap, AlertTriangle, Sparkles, Users } from "lucide-react";
 import { TOUR_OPEN_EVENT } from "@/components/app-tour";
 import { NotificationSettings } from "@/components/notification-settings";
 import { DangerZone } from "@/components/danger-zone";
@@ -161,6 +166,7 @@ function SettingsPage() {
 
       {householdId && (
         <>
+          <SpacesSection />
           <HouseholdSection
             household={hh!.household!}
             onChange={() => qc.invalidateQueries({ queryKey: ["household"] })}
@@ -178,6 +184,56 @@ function SettingsPage() {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Spaces overview: show the households the user belongs to and link to the
+ * full management screen. Kept inside Settings so space-level actions live in
+ * one place.
+ */
+function SpacesSection() {
+  const t = useT();
+  const activeId = useActiveHouseholdId();
+  const list = useServerFn(listMyHouseholds);
+  const { data: households = [], isLoading } = useQuery({
+    queryKey: ["my-households"],
+    queryFn: () => list(),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="size-5 text-primary" />
+          {t("shell.yourSpaces")}
+        </CardTitle>
+        <CardDescription>{t("households.description")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading && <div className="h-16 rounded-lg bg-muted animate-pulse" />}
+        {!isLoading && households.length === 0 && (
+          <p className="text-sm text-muted-foreground">{t("households.noHouseholds")}</p>
+        )}
+        {!isLoading && households.length > 0 && (
+          <ul className="divide-y">
+            {households.map((h) => (
+              <li key={h.household.id} className="flex items-center justify-between py-2">
+                <span className="truncate">{h.household.name || t("households.untitled")}</span>
+                {h.household.id === activeId && (
+                  <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wide text-primary">
+                    <Check className="size-3" /> {t("households.active")}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <Button variant="outline" asChild className="w-full">
+          <Link to="/households">{t("shell.manageSpaces")}</Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
