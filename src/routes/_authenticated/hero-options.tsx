@@ -12,6 +12,7 @@ import { pageShellClass } from "@/components/page-shell";
 export const Route = createFileRoute("/_authenticated/hero-options")({
   head: () =>
     pageMeta({
+      path: "/hero-options",
       title: "Dashboard hero options · bynku",
       description:
         "Three candidate versions of the bynku dashboard hero, comparing a daily framing with a cycle-focused one.",
