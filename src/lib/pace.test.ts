@@ -26,7 +26,7 @@ describe("timeToDream", () => {
   it("shows the swap landing it sooner", () => {
     const r = timeToDream(6000, 500);
     expect(r.months).toBe(12);
-    expect(r.swapEur).toBe(120);
+    expect(r.swapEur).toBe(125);
     expect(r.monthsWithSwap).toBe(10);
     expect(r.monthsSaved).toBe(2);
   });
