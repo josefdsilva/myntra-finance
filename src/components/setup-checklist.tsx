@@ -33,15 +33,21 @@ export function SetupChecklist({
 }) {
   const t = useT();
   const dismissKey = `bynku.setup.dismissed.${householdId}`;
+  const snoozeKey = `bynku.setup.snoozed.${householdId}`;
   const [dismissed, setDismissed] = useState(true);
+  const [snoozed, setSnoozed] = useState<string[]>([]);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     try {
       setDismissed(localStorage.getItem(dismissKey) === "1");
+      const raw = localStorage.getItem(snoozeKey);
+      setSnoozed(raw ? (JSON.parse(raw) as string[]) : []);
     } catch {
       setDismissed(false);
     }
-  }, [dismissKey]);
+  }, [dismissKey, snoozeKey]);
+
 
   const { data: counts } = useQuery({
     queryKey: ["setup-counts", householdId],
