@@ -36,14 +36,10 @@ import {
 } from "@/components/ui/dialog";
 import { DashboardTips } from "@/components/dashboard-tips";
 import { ChatFirstCard } from "@/components/chat-first-card";
-import { MomentumCard } from "@/components/score-trend";
 import { PurchaseCheckButton } from "@/components/purchase-check";
 import { GoalsCard } from "@/components/goals-card";
-import { AlignmentCard } from "@/components/alignment-card";
-import { ProjectSuggestions } from "@/components/project-suggestions";
 import { JourneySummaryCard } from "@/components/journey-summary-card";
 import { pageShellClass } from "@/components/page-shell";
-import { NetWorthCard } from "@/components/net-worth-card";
 import { IncomeAllocationSuggestion } from "@/components/income-allocation-suggestion";
 import { useT } from "@/lib/i18n";
 
@@ -436,6 +432,10 @@ function Dashboard() {
         </Card>
       )}
 
+      {/* Attention first — whatever needs action reaches the eye before the
+          everyday numbers. */}
+      {householdId && <DashboardTips householdId={householdId} />}
+
       {/* Hero: honest safe-to-spend per day + two lenses */}
       <Card className="overflow-hidden">
         <CardContent className="pt-8 pb-8">
@@ -708,22 +708,9 @@ function Dashboard() {
         <StatCard label={t("dashboard.stat.monthlyIncome")} value={money(dashboard?.income ?? 0)} />
       </div>
 
-      {/* Issues & tips sit high on the page — above net worth / momentum — so the
-          things that need attention (an unsustainable baseline, an expensive
-          debt) reach the eye immediately rather than after a long scroll. */}
-      {/* Is the money going where the household said it matters? Sits with the
-          tips so intent and action are read together. */}
-      {householdId && <AlignmentCard householdId={householdId} />}
-
-      {householdId && (
-        <ProjectSuggestions householdId={householdId} monthlySurplus={realSurplus} />
-      )}
-
-      {householdId && <DashboardTips householdId={householdId} />}
-
-      {householdId && <NetWorthCard householdId={householdId} />}
-
-      {householdId && <MomentumCard householdId={householdId} />}
+      {/* Net worth lives on Assets, momentum/trends on Analysis, values alignment
+          and project suggestions on the Journey — the dashboard stays light and
+          points there rather than duplicating them here. */}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

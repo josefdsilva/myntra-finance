@@ -21,6 +21,9 @@ export function JourneySummaryCard({ householdId }: { householdId: string }) {
   const activeTitle = active
     ? active.title ?? (active.template_key ? t(`journey.stage.${active.template_key}.title` as MessageKey) : t("journey.heading"))
     : null;
+  const activeObjective = active
+    ? active.objective ?? (active.template_key ? t(`journey.stage.${active.template_key}.obj` as MessageKey) : "")
+    : "";
 
   return (
     <Card className="border-primary/20">
@@ -36,6 +39,9 @@ export function JourneySummaryCard({ householdId }: { householdId: string }) {
                 {t(`journey.role.${active.template_key ?? "custom"}` as MessageKey)}
               </p>
               <p className="truncate font-medium">{activeTitle}</p>
+              {activeObjective && (
+                <p className="mt-0.5 truncate text-xs text-primary/90">{activeObjective}</p>
+              )}
               <div className="mt-1.5 h-1.5 w-40 max-w-full overflow-hidden rounded-full bg-muted">
                 <div className="h-full bg-primary" style={{ width: `${Math.round(active.progress * 100)}%` }} />
               </div>

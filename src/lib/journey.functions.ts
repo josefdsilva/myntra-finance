@@ -439,15 +439,21 @@ export const journeySummary = createServerFn({ method: "GET" })
       context.supabase.from("fixed_expenses").select("monthly_amount").eq("household_id", hid),
       context.supabase
         .from("journey_stages")
-        .select("template_key, title, objective_type, objective_config, optional, status")
+        .select("template_key, title, objective, objective_type, objective_config, optional, status")
         .eq("household_id", hid)
         .order("sort_order", { ascending: true }),
     ]);
 
-    type Active = { template_key: string | null; title: string | null; progress: number } | null;
+    type Active = {
+      template_key: string | null;
+      title: string | null;
+      objective: string | null;
+      progress: number;
+    } | null;
     const stages = (stagesR.data ?? []) as Array<{
       template_key: string | null;
       title: string | null;
+      objective: string | null;
       objective_type: string;
       objective_config: Record<string, unknown>;
       optional: boolean;
@@ -546,7 +552,13 @@ export const journeySummary = createServerFn({ method: "GET" })
     for (const s of spine) {
       const e = evalStage(s);
       if (e.complete) level++;
-      else if (!active) active = { template_key: s.template_key, title: s.title, progress: e.progress };
+      else if (!active)
+        active = {
+          template_key: s.template_key,
+          title: s.title,
+          objective: s.objective,
+          progress: e.progress,
+        };
     }
     return { hasStages: true, level, total: spine.length, active };
   });
