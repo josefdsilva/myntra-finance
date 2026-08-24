@@ -185,10 +185,26 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
       });
 
       const values = parseValues(hh?.life_values);
-      const prevPct = prevRows.length ? alignmentSummary(prevRows, values).alignedPct : null;
       const personNames = ((peopleRes.data ?? []) as Array<{ name: string | null }>)
         .map((p) => p.name ?? "")
         .filter((n) => n.trim().length >= 2);
+      const prevPct = prevRows.length
+        ? alignmentSummary(prevRows, values, { personNames }).alignedPct
+        : null;
+
+      // Recurring money the household already committed: fixed costs (rent,
+      // kindergarten) and its own variable estimates (groceries, fuel). Both
+      // feed the "already serving your values" total and the essentials yardstick.
+      const recurring = [
+        ...((fixedRes.data ?? []) as RecurringRow[]),
+        ...((varRes.data ?? []) as RecurringRow[]),
+      ];
+      const plannedByCategory = recurring
+        .filter((r) => (r.category ?? "").trim().length > 0)
+        .map((r) => ({
+          category: (r.category ?? "").trim(),
+          amount: Number(r.monthly_amount) || 0,
+        }));
 
       return {
         values,
@@ -197,6 +213,8 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
         income: actualIncome > 0 ? actualIncome : expectedIncome,
         prevPct,
         personNames,
+        recurring,
+        plannedByCategory,
       };
     },
   });
@@ -211,10 +229,13 @@ export function ValuesRatiosCard({ householdId }: { householdId: string }) {
             buckets: data.buckets,
             prevAlignmentPct: data.prevPct,
             personNames: data.personNames,
+            recurring: data.recurring,
+            plannedByCategory: data.plannedByCategory,
           })
         : null,
     [data],
   );
+
 
   if (!r) return null;
 
