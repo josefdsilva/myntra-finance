@@ -83,6 +83,7 @@ const NAV_SECTIONS = [
     titleKey: "navGroup.dreams",
     items: [
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
+      { to: "/targets", labelKey: "nav.targets", icon: Target },
       { to: "/assets", labelKey: "nav.assets", icon: Gem },
     ],
   },
