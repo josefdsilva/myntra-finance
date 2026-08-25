@@ -14,6 +14,28 @@ import type { Locale } from "./i18n-messages";
  *   "greeting.hi": { en: "Hi", pt: "Olá", es: "Hola", de: "Hallo", fr: "Salut" },
  */
 export const ENTRIES = {
+  "incomeSuggestion.livingReserve": {
+    en: "Kept for living costs",
+    pt: "Reservado para custos de vida",
+    es: "Reservado para gastos de vida",
+    de: "Für Lebenshaltung zurückgehalten",
+    fr: "Réservé aux dépenses courantes",
+  },
+  "incomeSuggestion.livingReserveNote": {
+    en: "Fixed costs, loan payments and everyday spending come first. {amount} of this money is free to commit.",
+    pt: "Custos fixos, prestações e despesas do dia a dia vêm primeiro. {amount} deste dinheiro está livre para comprometer.",
+    es: "Los costes fijos, las cuotas y el gasto diario van primero. {amount} de este dinero está libre para comprometer.",
+    de: "Feste Kosten, Kreditraten und Alltagsausgaben kommen zuerst. {amount} dieses Geldes ist frei verfügbar.",
+    fr: "Charges fixes, mensualités de prêt et dépenses du quotidien d'abord. {amount} de cet argent est libre à engager.",
+  },
+  "incomeSuggestion.eatsIntoLiving": {
+    en: "This takes {amount} from your living costs for this cycle.",
+    pt: "Isto retira {amount} dos seus custos de vida deste ciclo.",
+    es: "Esto quita {amount} de tus gastos de vida de este ciclo.",
+    de: "Das nimmt {amount} von deinen Lebenshaltungskosten in diesem Zyklus.",
+    fr: "Cela retire {amount} de vos dépenses courantes de ce cycle.",
+  },
+
   // Four destinations: where am I going, money in/out, what I'm building, and me.
   "navGroup.journey": {
     en: "Journey",
