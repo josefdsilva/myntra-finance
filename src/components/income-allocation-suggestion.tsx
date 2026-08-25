@@ -359,6 +359,15 @@ export function IncomeAllocationSuggestion({
 
             <div className="rounded-md border p-3 space-y-1.5 text-sm bg-muted/30">
               <div className="flex justify-between">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="size-3.5" /> {t("incomeSuggestion.livingReserve")}
+                </span>
+                <span className="tabular-nums font-medium">{money(livingReserve)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("incomeSuggestion.livingReserveNote", { amount: money(allocatable) })}
+              </p>
+              <div className="flex justify-between pt-1 border-t">
                 <span className="text-muted-foreground">{t("incomeSuggestion.distributed")}</span>
                 <span className="tabular-nums font-medium">{money(distributedTotal)}</span>
               </div>
@@ -375,6 +384,14 @@ export function IncomeAllocationSuggestion({
               {overspend && (
                 <p className="text-xs text-destructive">{t("incomeSuggestion.overspendWarning")}</p>
               )}
+              {!overspend && distributedTotal > allocatable + 0.005 && (
+                <p className="text-xs text-amber-600">
+                  {t("incomeSuggestion.eatsIntoLiving", {
+                    amount: money(distributedTotal - allocatable),
+                  })}
+                </p>
+              )}
+
               <div className="pt-1">
                 <Label htmlFor="income-received-total" className="sr-only">
                   {t("incomeSuggestion.received")}
