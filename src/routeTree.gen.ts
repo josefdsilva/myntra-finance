@@ -35,6 +35,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
 import { Route as AuthenticatedSnapshotRouteImport } from './routes/_authenticated/snapshot'
 import { Route as AuthenticatedStatementImportRouteImport } from './routes/_authenticated/statement-import'
+import { Route as AuthenticatedTargetsRouteImport } from './routes/_authenticated/targets'
 import { Route as AuthenticatedWikiRouteImport } from './routes/_authenticated/wiki'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -183,6 +184,11 @@ const AuthenticatedStatementImportRoute =
     path: '/statement-import',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTargetsRoute = AuthenticatedTargetsRouteImport.update({
+  id: '/targets',
+  path: '/targets',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedWikiRoute = AuthenticatedWikiRouteImport.update({
   id: '/wiki',
   path: '/wiki',
@@ -288,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/share': typeof AuthenticatedShareRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
+  '/targets': typeof AuthenticatedTargetsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -329,6 +336,7 @@ export interface FileRoutesByTo {
   '/share': typeof AuthenticatedShareRoute
   '/snapshot': typeof AuthenticatedSnapshotRoute
   '/statement-import': typeof AuthenticatedStatementImportRoute
+  '/targets': typeof AuthenticatedTargetsRoute
   '/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -372,6 +380,7 @@ export interface FileRoutesById {
   '/_authenticated/share': typeof AuthenticatedShareRoute
   '/_authenticated/snapshot': typeof AuthenticatedSnapshotRoute
   '/_authenticated/statement-import': typeof AuthenticatedStatementImportRoute
+  '/_authenticated/targets': typeof AuthenticatedTargetsRoute
   '/_authenticated/wiki': typeof AuthenticatedWikiRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -415,6 +424,7 @@ export interface FileRouteTypes {
     | '/share'
     | '/snapshot'
     | '/statement-import'
+    | '/targets'
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/share'
     | '/snapshot'
     | '/statement-import'
+    | '/targets'
     | '/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/_authenticated/share'
     | '/_authenticated/snapshot'
     | '/_authenticated/statement-import'
+    | '/_authenticated/targets'
     | '/_authenticated/wiki'
     | '/email/unsubscribe'
     | '/invite/$token'
@@ -719,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStatementImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/targets': {
+      id: '/_authenticated/targets'
+      path: '/targets'
+      fullPath: '/targets'
+      preLoaderRoute: typeof AuthenticatedTargetsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/wiki': {
       id: '/_authenticated/wiki'
       path: '/wiki'
@@ -842,6 +861,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
   AuthenticatedSnapshotRoute: typeof AuthenticatedSnapshotRoute
   AuthenticatedStatementImportRoute: typeof AuthenticatedStatementImportRoute
+  AuthenticatedTargetsRoute: typeof AuthenticatedTargetsRoute
   AuthenticatedWikiRoute: typeof AuthenticatedWikiRoute
 }
 
@@ -867,6 +887,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedShareRoute: AuthenticatedShareRoute,
   AuthenticatedSnapshotRoute: AuthenticatedSnapshotRoute,
   AuthenticatedStatementImportRoute: AuthenticatedStatementImportRoute,
+  AuthenticatedTargetsRoute: AuthenticatedTargetsRoute,
   AuthenticatedWikiRoute: AuthenticatedWikiRoute,
 }
 
