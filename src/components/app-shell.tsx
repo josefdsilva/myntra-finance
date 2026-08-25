@@ -30,6 +30,7 @@ import {
   ScanLine,
   Compass,
   ChevronDown,
+  Sprout,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,6 +83,9 @@ const NAV_SECTIONS = [
   },
   {
     titleKey: "navGroup.dreams",
+    // Grow is a container, not a page: the heading only expands/collapses.
+    toggleOnly: true,
+    icon: Sprout,
     items: [
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/targets", labelKey: "nav.targets", icon: Target },
@@ -384,15 +388,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
           {NAV_SECTIONS.map((section) => {
+            const toggleOnly = "toggleOnly" in section && section.toggleOnly;
             const primary = section.items[0];
-            const rest = section.items.slice(1);
+            const rest = toggleOnly ? section.items : section.items.slice(1);
             const inGroup = section.items.some((i) => i.to === pathname);
             const expanded = openGroup === section.titleKey || (openGroup === null && inGroup);
-            const PrimaryIcon = primary.icon;
+            const PrimaryIcon = ("icon" in section && section.icon) || primary.icon;
 
             // Single-entry destinations (e.g. Wiki) are just a flat link — no
             // expand/collapse affordance needed.
-            if (section.items.length === 1) {
+            if (section.items.length === 1 && !toggleOnly) {
               const active = pathname === primary.to;
               return (
                 <Link
@@ -413,6 +418,28 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             return (
               <Fragment key={section.titleKey}>
+                {toggleOnly ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpenGroup(expanded ? "" : section.titleKey)}
+                    aria-expanded={expanded}
+                    className={cn(
+                      "mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      inGroup
+                        ? "text-primary font-medium"
+                        : "text-foreground hover:bg-muted hover:text-primary",
+                    )}
+                  >
+                    <PrimaryIcon className="size-4" />
+                    <span className="flex-1 text-left">{t(section.titleKey)}</span>
+                    <ChevronDown
+                      className={cn(
+                        "size-4 text-muted-foreground transition-transform",
+                        expanded && "rotate-180",
+                      )}
+                    />
+                  </button>
+                ) : (
                 <div className="group mt-1 flex items-center rounded-xl border border-transparent p-1 transition-colors hover:border-border/40">
                   <Link
                     to={primary.to}
@@ -438,6 +465,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     />
                   </button>
                 </div>
+                )}
                 {expanded &&
                   rest.map((item) => {
                     const Icon = item.icon;
