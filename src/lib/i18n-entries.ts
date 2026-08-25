@@ -170,11 +170,25 @@ export const ENTRIES = {
 
   // Save, Invest & Improve — section rename + tabs (overrides legacy alloc.* / nav.allocations)
   "nav.allocations": {
-    en: "Grow",
-    pt: "Crescer",
-    es: "Crecer",
-    de: "Wachsen",
-    fr: "Croître",
+    en: "Projects",
+    pt: "Projetos",
+    es: "Proyectos",
+    de: "Projekte",
+    fr: "Projets",
+  },
+  "nav.targets": {
+    en: "Targets",
+    pt: "Metas",
+    es: "Metas",
+    de: "Ziele",
+    fr: "Objectifs",
+  },
+  "targets.subtitle": {
+    en: "Set the key numbers you want to hit and follow your progress.",
+    pt: "Defina os números-chave que quer atingir e acompanhe o progresso.",
+    es: "Define las cifras clave que quieres alcanzar y sigue tu progreso.",
+    de: "Legen Sie Ihre Zielkennzahlen fest und verfolgen Sie den Fortschritt.",
+    fr: "Fixez les chiffres clés à atteindre et suivez vos progrès.",
   },
   "alloc.title": {
     en: "Grow",
