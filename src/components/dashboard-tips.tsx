@@ -748,7 +748,8 @@ export function useHouseholdIssues(householdId: string): IssuesResult {
   }
 
   // ---- Cycle pace projection ----
-  if (variablePool > 0 && avgDaily7 > 0) {
+  // Only project a pace once something has actually been spent in THIS cycle.
+  if (variablePool > 0 && avgDaily7 > 0 && netSpent > 0) {
     const projected = netSpent + avgDaily7 * daysLeft;
     if (projected > variablePool * 1.05) {
       tips.push({

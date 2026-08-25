@@ -45,7 +45,9 @@ export const issueFacts = createServerFn({ method: "GET" })
     const windowStart = new Date(
       Math.max(now.getTime() - 7 * msDay, facts.cycleStart.getTime()),
     );
-    const windowDays = Math.max(1, (now.getTime() - windowStart.getTime()) / msDay);
+    // Floor at 3 days so the first hours of a cycle don't extrapolate one coffee
+    // into a month of overspending.
+    const windowDays = Math.max(3, (now.getTime() - windowStart.getTime()) / msDay);
     const { data: recent } = await context.supabase
       .from("expenses")
       .select("amount")
