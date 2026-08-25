@@ -80,10 +80,10 @@ export function IncomeAllocationSuggestion({
     : null;
 
   const { data, isLoading } = useQuery({
-    enabled: open && !!householdId && !!period,
+    enabled: open && !!householdId && !!period && !!cycle,
     queryKey: ["income-suggestion", householdId, period],
     queryFn: async () => {
-      const [buckets, allocs, debts, hh] = await Promise.all([
+      const [buckets, allocs, debts, hh, spent] = await Promise.all([
         supabase
           .from("buckets")
           .select("id, name, target_type, target_value, target_deadline, color, kind")
@@ -99,15 +99,26 @@ export function IncomeAllocationSuggestion({
           .select("id, label, monthly_amount, taeg_pct, principal_remaining")
           .eq("household_id", householdId),
         supabase.from("households").select("baseline_budget").eq("id", householdId).maybeSingle(),
+        supabase
+          .from("expenses")
+          .select("amount, kind")
+          .eq("household_id", householdId)
+          .gte("occurred_at", cycle!.start.toISOString())
+          .lt("occurred_at", cycle!.end.toISOString()),
       ]);
+      const spentSoFar = (spent.data ?? [])
+        .filter((r) => r.kind !== "income")
+        .reduce((s, r) => s + Number(r.amount), 0);
       return {
         buckets: (buckets.data ?? []) as Bucket[],
         allocations: (allocs.data ?? []) as { bucket_id: string; amount: number }[],
         debts: (debts.data ?? []) as Debt[],
         baseline: Number(hh.data?.baseline_budget ?? 0),
+        spentSoFar,
       };
     },
   });
+
 
   // Estimate a monthly target per bucket (matches the allocations page math)
   const computeMonthly = (b: Bucket, surplus: number): number => {
