@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchCycleBoundsById } from "@/lib/cycle-bounds";
 import { confirmBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { money } from "@/lib/format";
-import { Loader2, PiggyBank, Wallet, CreditCard, Sparkles } from "lucide-react";
+import { Loader2, PiggyBank, Wallet, CreditCard, Sparkles, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
