@@ -14,6 +14,7 @@ import {
   EyeOff,
   BarChart3,
   Landmark,
+  Target,
   Gem,
   Sun,
   Moon,
