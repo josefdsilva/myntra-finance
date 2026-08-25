@@ -397,7 +397,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             // Single-entry destinations (e.g. Wiki) are just a flat link — no
             // expand/collapse affordance needed.
-            if (section.items.length === 1) {
+            if (section.items.length === 1 && !toggleOnly) {
               const active = pathname === primary.to;
               return (
                 <Link
