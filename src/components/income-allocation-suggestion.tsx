@@ -143,10 +143,18 @@ export function IncomeAllocationSuggestion({
   const [debtAmt, setDebtAmt] = useState("0");
   const [saving, setSaving] = useState(false);
 
+  // Cost of living still to cover this cycle: the baseline (fixed costs + debt
+  // installments + everyday estimates + margin) minus what has already been
+  // spent. That money is NOT free to commit to projects, so it is reserved
+  // before anything is suggested — otherwise a full salary would be swallowed
+  // by the projects and there would be nothing left for groceries or the loans.
+  const livingReserve = data ? Math.min(amount, Math.max(0, data.baseline - data.spentSoFar)) : 0;
+  const allocatable = Math.max(0, amount - livingReserve);
+
   // Seed suggestions when data arrives / dialog opens
   useEffect(() => {
     if (!data || !open) return;
-    const surplus = Math.max(0, amount - 0); // caller says this is a top-up income
+    const surplus = allocatable;
     const missingPerBucket = data.buckets.map((b) => {
       const monthly = computeMonthly(b, surplus);
       const alreadyMoved = data.allocations
@@ -156,8 +164,8 @@ export function IncomeAllocationSuggestion({
       return { b, missing };
     });
     const totalMissing = missingPerBucket.reduce((s, x) => s + x.missing, 0);
-    // If buckets need topping up, allocate up to that total from this income.
-    const towardsBuckets = Math.min(amount, totalMissing);
+    // Only what is left after living costs can go to projects.
+    const towardsBuckets = Math.min(allocatable, totalMissing);
     const seededBuckets: Record<string, string> = {};
     for (const { b, missing } of missingPerBucket) {
       const share =
@@ -170,7 +178,7 @@ export function IncomeAllocationSuggestion({
     const eligibleDebts = [...data.debts]
       .filter((d) => (d.principal_remaining ?? 0) > 0)
       .sort((a, b) => (b.taeg_pct ?? 0) - (a.taeg_pct ?? 0));
-    const remainderAfterBuckets = Math.max(0, amount - towardsBuckets);
+    const remainderAfterBuckets = Math.max(0, allocatable - towardsBuckets);
     if (eligibleDebts.length > 0 && (eligibleDebts[0].taeg_pct ?? 0) >= 3) {
       // Suggest 30% of the remainder toward high-TAEG debt
       const debtSuggested = Math.min(
@@ -184,7 +192,8 @@ export function IncomeAllocationSuggestion({
       setDebtAmt("0.00");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, open, amount]);
+  }, [data, open, amount, allocatable]);
+
 
   const parsedBuckets = useMemo(
     () =>
