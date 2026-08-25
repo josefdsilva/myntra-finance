@@ -388,11 +388,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
           {NAV_SECTIONS.map((section) => {
+            const toggleOnly = "toggleOnly" in section && section.toggleOnly;
             const primary = section.items[0];
-            const rest = section.items.slice(1);
+            const rest = toggleOnly ? section.items : section.items.slice(1);
             const inGroup = section.items.some((i) => i.to === pathname);
             const expanded = openGroup === section.titleKey || (openGroup === null && inGroup);
-            const PrimaryIcon = primary.icon;
+            const PrimaryIcon = ("icon" in section && section.icon) || primary.icon;
 
             // Single-entry destinations (e.g. Wiki) are just a flat link — no
             // expand/collapse affordance needed.
