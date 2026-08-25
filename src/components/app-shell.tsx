@@ -418,6 +418,28 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             return (
               <Fragment key={section.titleKey}>
+                {toggleOnly ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpenGroup(expanded ? "" : section.titleKey)}
+                    aria-expanded={expanded}
+                    className={cn(
+                      "mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      inGroup
+                        ? "text-primary font-medium"
+                        : "text-foreground hover:bg-muted hover:text-primary",
+                    )}
+                  >
+                    <PrimaryIcon className="size-4" />
+                    <span className="flex-1 text-left">{t(section.titleKey)}</span>
+                    <ChevronDown
+                      className={cn(
+                        "size-4 text-muted-foreground transition-transform",
+                        expanded && "rotate-180",
+                      )}
+                    />
+                  </button>
+                ) : (
                 <div className="group mt-1 flex items-center rounded-xl border border-transparent p-1 transition-colors hover:border-border/40">
                   <Link
                     to={primary.to}
@@ -443,6 +465,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     />
                   </button>
                 </div>
+                )}
                 {expanded &&
                   rest.map((item) => {
                     const Icon = item.icon;
