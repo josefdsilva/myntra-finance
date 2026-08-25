@@ -579,13 +579,6 @@ function AllocationsPage() {
         ytdTotals={ytdTotals ?? {}}
         allTimeTotals={contributionsByBucket}
       />
-        </TabsContent>
-
-        <TabsContent value="targets">
-          {householdId && <KpiTargetsTab householdId={householdId} />}
-        </TabsContent>
-
-      </Tabs>
     </div>
   );
 }
