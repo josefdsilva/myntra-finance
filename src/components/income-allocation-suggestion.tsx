@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchCycleBoundsById } from "@/lib/cycle-bounds";
 import { confirmBucketAllocation } from "@/lib/bucket-allocations.functions";
 import { money } from "@/lib/format";
-import { Loader2, PiggyBank, Wallet, CreditCard, Sparkles } from "lucide-react";
+import { Loader2, PiggyBank, Wallet, CreditCard, Sparkles, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
@@ -80,10 +80,10 @@ export function IncomeAllocationSuggestion({
     : null;
 
   const { data, isLoading } = useQuery({
-    enabled: open && !!householdId && !!period,
+    enabled: open && !!householdId && !!period && !!cycle,
     queryKey: ["income-suggestion", householdId, period],
     queryFn: async () => {
-      const [buckets, allocs, debts, hh] = await Promise.all([
+      const [buckets, allocs, debts, hh, spent] = await Promise.all([
         supabase
           .from("buckets")
           .select("id, name, target_type, target_value, target_deadline, color, kind")
@@ -99,15 +99,26 @@ export function IncomeAllocationSuggestion({
           .select("id, label, monthly_amount, taeg_pct, principal_remaining")
           .eq("household_id", householdId),
         supabase.from("households").select("baseline_budget").eq("id", householdId).maybeSingle(),
+        supabase
+          .from("expenses")
+          .select("amount, kind")
+          .eq("household_id", householdId)
+          .gte("occurred_at", cycle!.start.toISOString())
+          .lt("occurred_at", cycle!.end.toISOString()),
       ]);
+      const spentSoFar = (spent.data ?? [])
+        .filter((r) => r.kind !== "income")
+        .reduce((s, r) => s + Number(r.amount), 0);
       return {
         buckets: (buckets.data ?? []) as Bucket[],
         allocations: (allocs.data ?? []) as { bucket_id: string; amount: number }[],
         debts: (debts.data ?? []) as Debt[],
         baseline: Number(hh.data?.baseline_budget ?? 0),
+        spentSoFar,
       };
     },
   });
+
 
   // Estimate a monthly target per bucket (matches the allocations page math)
   const computeMonthly = (b: Bucket, surplus: number): number => {
@@ -132,10 +143,18 @@ export function IncomeAllocationSuggestion({
   const [debtAmt, setDebtAmt] = useState("0");
   const [saving, setSaving] = useState(false);
 
+  // Cost of living still to cover this cycle: the baseline (fixed costs + debt
+  // installments + everyday estimates + margin) minus what has already been
+  // spent. That money is NOT free to commit to projects, so it is reserved
+  // before anything is suggested — otherwise a full salary would be swallowed
+  // by the projects and there would be nothing left for groceries or the loans.
+  const livingReserve = data ? Math.min(amount, Math.max(0, data.baseline - data.spentSoFar)) : 0;
+  const allocatable = Math.max(0, amount - livingReserve);
+
   // Seed suggestions when data arrives / dialog opens
   useEffect(() => {
     if (!data || !open) return;
-    const surplus = Math.max(0, amount - 0); // caller says this is a top-up income
+    const surplus = allocatable;
     const missingPerBucket = data.buckets.map((b) => {
       const monthly = computeMonthly(b, surplus);
       const alreadyMoved = data.allocations
@@ -145,8 +164,8 @@ export function IncomeAllocationSuggestion({
       return { b, missing };
     });
     const totalMissing = missingPerBucket.reduce((s, x) => s + x.missing, 0);
-    // If buckets need topping up, allocate up to that total from this income.
-    const towardsBuckets = Math.min(amount, totalMissing);
+    // Only what is left after living costs can go to projects.
+    const towardsBuckets = Math.min(allocatable, totalMissing);
     const seededBuckets: Record<string, string> = {};
     for (const { b, missing } of missingPerBucket) {
       const share =
@@ -159,7 +178,7 @@ export function IncomeAllocationSuggestion({
     const eligibleDebts = [...data.debts]
       .filter((d) => (d.principal_remaining ?? 0) > 0)
       .sort((a, b) => (b.taeg_pct ?? 0) - (a.taeg_pct ?? 0));
-    const remainderAfterBuckets = Math.max(0, amount - towardsBuckets);
+    const remainderAfterBuckets = Math.max(0, allocatable - towardsBuckets);
     if (eligibleDebts.length > 0 && (eligibleDebts[0].taeg_pct ?? 0) >= 3) {
       // Suggest 30% of the remainder toward high-TAEG debt
       const debtSuggested = Math.min(
@@ -173,7 +192,8 @@ export function IncomeAllocationSuggestion({
       setDebtAmt("0.00");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, open, amount]);
+  }, [data, open, amount, allocatable]);
+
 
   const parsedBuckets = useMemo(
     () =>
@@ -339,6 +359,15 @@ export function IncomeAllocationSuggestion({
 
             <div className="rounded-md border p-3 space-y-1.5 text-sm bg-muted/30">
               <div className="flex justify-between">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="size-3.5" /> {t("incomeSuggestion.livingReserve")}
+                </span>
+                <span className="tabular-nums font-medium">{money(livingReserve)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("incomeSuggestion.livingReserveNote", { amount: money(allocatable) })}
+              </p>
+              <div className="flex justify-between pt-1 border-t">
                 <span className="text-muted-foreground">{t("incomeSuggestion.distributed")}</span>
                 <span className="tabular-nums font-medium">{money(distributedTotal)}</span>
               </div>
@@ -355,6 +384,14 @@ export function IncomeAllocationSuggestion({
               {overspend && (
                 <p className="text-xs text-destructive">{t("incomeSuggestion.overspendWarning")}</p>
               )}
+              {!overspend && distributedTotal > allocatable + 0.005 && (
+                <p className="text-xs text-amber-600">
+                  {t("incomeSuggestion.eatsIntoLiving", {
+                    amount: money(distributedTotal - allocatable),
+                  })}
+                </p>
+              )}
+
               <div className="pt-1">
                 <Label htmlFor="income-received-total" className="sr-only">
                   {t("incomeSuggestion.received")}
