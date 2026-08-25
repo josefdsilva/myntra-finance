@@ -38,17 +38,25 @@ export const issueFacts = createServerFn({ method: "GET" })
     const msDay = 86_400_000;
     const daysLeft = Math.max(1, Math.ceil((facts.cycleEnd.getTime() - now.getTime()) / msDay));
 
-    // Everyday spend pace over the last 7 days — feeds the overspend-pace and
-    // estimates-realism tips.
-    const weekAgo = new Date(now.getTime() - 7 * msDay).toISOString();
+    // Everyday spend pace — feeds the overspend-pace and estimates-realism tips.
+    // The window never reaches back before the current cycle started: spend from
+    // the previous cycle (typically a big payday-week purchase) would otherwise
+    // project an overspend onto a cycle where nothing has been spent yet.
+    const windowStart = new Date(
+      Math.max(now.getTime() - 7 * msDay, facts.cycleStart.getTime()),
+    );
+    // Floor at 3 days so the first hours of a cycle don't extrapolate one coffee
+    // into a month of overspending.
+    const windowDays = Math.max(3, (now.getTime() - windowStart.getTime()) / msDay);
     const { data: recent } = await context.supabase
       .from("expenses")
       .select("amount")
       .eq("household_id", hid)
       .eq("kind", "expense")
-      .gte("occurred_at", weekAgo);
+      .gte("occurred_at", windowStart.toISOString());
     const spent7 = (recent ?? []).reduce((s, r) => s + Number(r.amount), 0);
-    const avgDaily7 = spent7 / 7;
+    const avgDaily7 = spent7 / windowDays;
+
 
     return {
       baseline: facts.baseline,
