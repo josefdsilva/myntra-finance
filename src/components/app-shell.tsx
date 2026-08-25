@@ -30,6 +30,7 @@ import {
   ScanLine,
   Compass,
   ChevronDown,
+  Sprout,
 } from "lucide-react";
 import appIcon from "@/assets/app-icon.svg.asset.json";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
