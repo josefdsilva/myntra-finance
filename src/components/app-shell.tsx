@@ -82,6 +82,9 @@ const NAV_SECTIONS = [
   },
   {
     titleKey: "navGroup.dreams",
+    // Grow is a container, not a page: the heading only expands/collapses.
+    toggleOnly: true,
+    icon: Sprout,
     items: [
       { to: "/allocations", labelKey: "nav.allocations", icon: PiggyBank },
       { to: "/targets", labelKey: "nav.targets", icon: Target },
